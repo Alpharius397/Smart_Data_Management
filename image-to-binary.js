@@ -36,9 +36,9 @@ function get_buffer_content(buffer, file_path=null){
 async function main() {
     res = await extract_image(IMAGE)
     text = get_buffer_content(res,IMAGE_CONTENT);
-    dump_json(JSON.stringify({image:text.toString()}),JSON_PATH);
+    dump_json(JSON.stringify({image:text}),JSON_PATH);
     json_data = await get_json(JSON_PATH);
-    get_image(json_data.image,GENERATED,{width:300,height:300});
+    get_image(json_data.image,GENERATED,{width:780,height:438});
 }
 
 function dump_json(data,file_path){
