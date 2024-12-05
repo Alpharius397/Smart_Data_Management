@@ -1,7 +1,8 @@
 const fs = require('fs');
 const zlib = require('zlib');
 const crypto = require('crypto');
-const path = require("path")
+const path = require("path");
+const { extract_image,get_buffer_content,get_image } = require('./image-to-binary');
 
 // Encryption parameters
 const initial_vector = 8;
@@ -29,45 +30,64 @@ fs.readFile('output_csv/SEM-1.csv', 'utf8', (err, data) => {
         
         // Extract the card number from the current line
         const cardNumber = jsonObject['SMART_CARD_NO']; // Adjust column name if different
+        const image = jsonObject['IMAGE']; // Adjust column name if different
+
         if (!cardNumber) {
             console.error(`Card number missing in line ${index + 2}`);
             return;
         }
         
-        // Compress the JSON string of the row
-        const jsonString = JSON.stringify(jsonObject);
-        zlib.gzip(jsonString, (err, compressedData) => {
-            if (err) {
-                console.error(`Compression error for line ${index + 2}:`, err);
-                return;
-            }
-            
-            // Encrypt the compressed data using 3-DES
-            const iv = crypto.randomBytes(initial_vector); // 8-byte initialization vector
-            const cipher = crypto.createCipheriv('des-ede3-cbc', encryptionKey, iv);
-            let encryptedData = cipher.update(compressedData);
-            encryptedData = Buffer.concat([iv,encryptedData, cipher.final()]); //  added iv into encrypted data for decryption later
-            
-            // Output the object
-            const output = {
-                card_number: cardNumber,
-                encrypted_data: encryptedData.toString('base64') // Base64 encoded
-            };
+        if (!image) {
+            console.error(`Image missing in line ${index + 2}`);
+            return;
+        }
 
-            // fs.writeFileSync(json_content,JSON.stringify(output)); // testing file size
+        // adding image data to JSON
 
-            const decompressed = decompress_decrypt(output,encryptionKey);
+        extract_image(jsonObject.IMAGE).then(res => {
 
-            console.log(output,decompressed);
-            
-        })
+            const {result, width, height} = res;
+
+            jsonObject.IMAGE = {result:get_buffer_content(result),width,height};
+            // Compress the JSON string of the row
+            const jsonString = JSON.stringify(jsonObject);
+            zlib.gzip(jsonString, (err, compressedData) => {
+                if (err) {
+                    console.error(`Compression error for line ${index + 2}:`, err);
+                    return;
+                }
+                
+                // Encrypt the compressed data using 3-DES
+                const iv = crypto.randomBytes(initial_vector); // 8-byte initialization vector
+                const cipher = crypto.createCipheriv('des-ede3-cbc', encryptionKey, iv);
+                let encryptedData = cipher.update(compressedData);
+                encryptedData = Buffer.concat([iv,encryptedData, cipher.final()]); //  added iv into encrypted data for decryption later
+                
+                // Output the object
+                const output = {
+                    card_number: cardNumber,
+                    encrypted_data: encryptedData.toString('base64') // Base64 encoded
+                };
+    
+                fs.writeFileSync(json_content,JSON.stringify(output)); // testing file size
+    
+                const decompressed = decompress_decrypt(output,encryptionKey);
+    
+                console.log(output,decompressed);
+                
+            });}).catch(err => {console.error(err)});
         });
 
 
 
     });
 
-// Decompress and decrypted the json object
+/**
+ * @description Decompress and decrypted the json object
+ * @param {JSON} encrypted_json 
+ * @param {string} encryptionKey 
+ * @returns {JSON}
+ */
 function decompress_decrypt(encrypted_json,encryptionKey){
     
     keys = new Set(Object.keys(encrypted_json));
