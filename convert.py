@@ -1,4 +1,8 @@
 import pandas as pd
+import os
+
+SAMPLE_IMAGE = os.path.join(os.path.dirname(__file__),'img','sample-1.jpg')
+""" Sample Image """
 
 def convert_all_sheets_to_csv(input_file, output_folder):
     """
@@ -13,6 +17,7 @@ def convert_all_sheets_to_csv(input_file, output_folder):
         
         # Iterate through all sheets and save each as a CSV
         for sheet_name, data in all_sheets.items():
+            data['IMAGE'] = SAMPLE_IMAGE # adding image path to csv
             output_file = f"{output_folder}/{sheet_name}.csv"
             data.to_csv(output_file, index=False)
             print(f"Saved sheet '{sheet_name}' to '{output_file}'.")
