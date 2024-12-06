@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import { main } from '../scripts/decrypt';
 
 export default function Login({ navigation }) {
   const [email, setEmail] = useState('');
@@ -7,11 +8,12 @@ export default function Login({ navigation }) {
 
   const handleLogin = () => {
     // Add your login logic here
+    main().then(res => {console.log(res);})
+
     if(email=='test' && password=='1234'){
         alert('Login successful!');
     }
     else{
-        alert('Login successful!');
         alert('Login failed!');
     }
 
