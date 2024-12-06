@@ -7,7 +7,15 @@ export default function Login({ navigation }) {
 
   const handleLogin = () => {
     // Add your login logic here
-    alert('Login successful!');
+    if(email=='test' && password=='1234'){
+        alert('Login successful!');
+    }
+    else{
+        alert('Login successful!');
+        alert('Login failed!');
+    }
+
+
   };
 
   return (
