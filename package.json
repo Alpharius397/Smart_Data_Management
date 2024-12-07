@@ -24,6 +24,7 @@
     "react-native-gesture-handler": "^2.21.2",
     "react-native-safe-area-context": "^4.14.0",
     "react-native-screens": "^4.3.0",
+    "sharp": "^0.33.5",
     "zlib": "^1.0.5"
   },
   "devDependencies": {
