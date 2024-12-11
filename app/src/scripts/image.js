@@ -1,6 +1,7 @@
 /** NodeJS Code */
 
 const {Image} = require('image-js');
+const { Buffer } = require('buffer');
 //const sharp = require('sharp');
 const path = require('path');
 //const { writeFileSync } = require('fs');
@@ -38,7 +39,7 @@ async function generate_image(a) {
 
     var image = await Image.load(Buffer.from(data,'base64'));
     // writeFileSync('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/src/scripts/asd.json',JSON.stringify(a));
-    return image.resize({width:width,height:height,interpolation:"nearestNeighbor"}).toDataURL('image/jpeg');
+    return image.resize({width:width,height:height,interpolation:"nearestNeighbor"}).toDataURL();
 
 }
 
