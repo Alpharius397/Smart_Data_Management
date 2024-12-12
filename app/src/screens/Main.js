@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, Icon, TouchableHighlight } from 'react-native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Button, Image, Icon, TouchableHighlight, Alert } from 'react-native';
+import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
 import { NavigationContainer,NavigationIndependentTree } from '@react-navigation/native';
 import sample_data from '../scripts/text';
 import {decrypt_data} from '../scripts/encryption';
@@ -12,8 +12,14 @@ const Drawer = createDrawerNavigator();
 function HomeScreen() {
 
   const [image,setImage] = useState('');
-  const data = decrypt_data(sample_data,"123456789123456789");
-  generate_image(data.IMAGE).then((res) => {setImage(res)});
+  const [data,setData] = useState([]);
+
+  useEffect(()=>{
+    let data = decrypt_data(sample_data,"123456789123456789");
+    setData(dataLoad(data));
+    generate_image(data.IMAGE).then((res) => {setImage(res)});
+
+  },[]);
 
   function dataLoad(jsonObject) {
     let tableData = [];
@@ -31,7 +37,7 @@ function HomeScreen() {
         <View style={styles.imageRow}>
           <Image source={{ uri: image }} style={styles.image} />
           </View>
-        {dataLoad(data).map((row, index) => (
+        {data.map((row, index) => (
           <View style={styles.tableRow} key={index}>
             <Text style={styles.tableCell}>{row.key}</Text>
             <Text style={styles.tableCell}>{row.value}</Text>
@@ -43,9 +49,9 @@ function HomeScreen() {
 }
 
 // Custom Drawer Content Component
-function CustomDrawerContent(props) {
-  const userName = "Aryan Mandke"; // Replace with dynamic user data if needed
+function CustomDrawerContent({props,params}) {
 
+  const userName = params.user;
   const closeDrawer = () => {props.navigation.closeDrawer()}
 
   return (
@@ -54,34 +60,35 @@ function CustomDrawerContent(props) {
       <TouchableHighlight onPress={closeDrawer} style={styles.close_style}>
       <Image source={require('../../../assets/images/close.png')} style={styles.close_style}/>
       </TouchableHighlight>
-      <View style={styles.userSection}>
-        <Text style={styles.userName}>Hello, {userName}</Text>
+
+      <View style={{flexDirection:'row', alignItems:'center'}}>
+        <Image source={require('../../../assets/images/defaultUser.png')} style={styles.user_image} />
+        <Text style={styles.userName}> {`Hello User,\n ${userName}`} </Text>
       </View>
 
-      {/* Other Drawer Items */}
-      <View style={styles.drawerContent}>
-        <Button
-          title="Logout"
-          color="#d9534f"
-          onPress={() => {
-            alert('You have been logged out!'); // Replace with your logout logic
-            // props.navigation.navigate("Login");
-            props.navigation.closeDrawer();
-          }}
-        />
-      </View>
+
+      <DrawerItemList {...props} />
     </View>
   );
 }
 
+function Logout({navigation}){
+  navigation.navigate("Login");
+  Alert.alert("Logout", "Logout Successfully",[{text: 'Ok',style: 'cancel'}],{cancelable: true});
+
+  return (<View></View>);
+
+}
+
 // Main App Component
-export default function App() {
+export default function App({navigation,route}) {
   return (
     <NavigationIndependentTree>
       <Drawer.Navigator
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
+        drawerContent={(props) => <CustomDrawerContent props={{...props}} params={route.params} />}
       >
-        <Drawer.Screen name="Home" component={HomeScreen} />
+        <Drawer.Screen name="Home" component={HomeScreen} options={{drawerItemStyle: {marginBottom:10}}}/>
+        <Drawer.Screen name="Logout" component={Logout} />
       </Drawer.Navigator>
     </NavigationIndependentTree>
   );
@@ -149,5 +156,10 @@ const styles = StyleSheet.create({
       width:20,
       height:20,
       cursor:'pointer'
+    },
+    user_image:{
+      width:50,
+      height:50,
+      margin:10
     }
 });

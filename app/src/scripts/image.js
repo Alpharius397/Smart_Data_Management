@@ -3,7 +3,7 @@
 const {Image} = require('image-js');
 const { Buffer } = require('buffer');
 //const sharp = require('sharp');
-const path = require('path');
+// const path = require('path');
 //const { writeFileSync } = require('fs');
 
 //const IMAGE = path.join(path.dirname(path.dirname(__dirname)),'img','sample-1.jpg');
