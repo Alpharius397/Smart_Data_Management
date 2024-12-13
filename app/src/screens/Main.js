@@ -14,13 +14,6 @@ function HomeScreen() {
   const [image,setImage] = useState('');
   const [data,setData] = useState([]);
 
-  useEffect(()=>{
-    let data = decrypt_data(sample_data,"123456789123456789");
-    setData(dataLoad(data));
-    generate_image(data.IMAGE).then((res) => {setImage(res)});
-
-  },[]);
-
   function dataLoad(jsonObject) {
     let tableData = [];
     Object.keys(jsonObject).forEach((key) => {
@@ -31,9 +24,16 @@ function HomeScreen() {
     return tableData;
   }
 
-  return (
+  function scanning(){
+      let data = decrypt_data(sample_data,"123456789123456789");
+      setData(dataLoad(data));
+      generate_image(data.IMAGE).then((res) => {setImage(res)});  
+  }
+
+
+    return (    
     <ScrollView contentContainerStyle={styles.scroll}>
-      <View style={styles.table}>
+      {(image!='') ? (<View style={styles.table}>
         <View style={styles.imageRow}>
           <Image source={{ uri: image }} style={styles.image} />
           </View>
@@ -43,9 +43,10 @@ function HomeScreen() {
             <Text style={styles.tableCell}>{row.value}</Text>
           </View>
         ))}
-      </View>
-    </ScrollView>
-  );
+      </View>):(<Button onPress={scanning} style={styles.button} title='Scan'/>)}
+    </ScrollView>);
+
+
 }
 
 // Custom Drawer Content Component
@@ -117,6 +118,8 @@ const styles = StyleSheet.create({
   },
   scroll: {
       padding: 16,
+      alignContent:'center',
+      justifyContent:'center',
     },
     image: {
       width: 200,
@@ -161,5 +164,9 @@ const styles = StyleSheet.create({
       width:50,
       height:50,
       margin:10
+    },
+    button:{
+      width:80,
+      height:40
     }
 });
