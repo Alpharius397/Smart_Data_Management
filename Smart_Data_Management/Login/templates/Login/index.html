@@ -133,6 +133,8 @@
 
         {% if alert %}
             alert("{{ alert }}");
+        {% elif request.GET.alert %}
+            alert("{{ request.GET.alert }}");
         {% endif %}
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Form</title>
+    <title>Upload Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +15,7 @@
             background-color: #f4f4f9;
         }
 
-        .register-container {
+        .upload-container {
             background: #fff;
             padding: 20px 30px;
             border-radius: 8px;
@@ -23,7 +23,7 @@
             width: 300px;
         }
 
-        .register-container h2 {
+        .upload-container h2 {
             text-align: center;
             margin-bottom: 20px;
             color: #333;
@@ -54,7 +54,7 @@
             outline: none;
         }
 
-        .register-button {
+        .upload-button {
             width: 100%;
             padding: 10px;
             background-color: #28a745;
@@ -65,7 +65,7 @@
             cursor: pointer;
         }
 
-        .register-button:hover {
+        .upload-button:hover {
             background-color: #218838;
         }
 
@@ -102,9 +102,9 @@
     </style>
 </head>
 <body>
-    <div class="register-container">
+    <div class="upload-container">
         <h2>Register</h2>
-        <form action="{% url 'Register:register' %}" method="POST">
+        <form action="{% url 'Excel:upload' %}" method="POST">
             {% csrf_token %}
 
             {% for field in form %}
@@ -121,7 +121,7 @@
                     
                 </div>
             {% endfor %}
-            <button type="submit" class="register-button">Register</button>
+            <button type="submit" class="upload-button">Register</button>
         </form>
         <div class="form-footer">
             <p>Already have an account? <a href="{% url 'Login:login' %}">Login</a></p>
@@ -132,6 +132,8 @@
 
         {% if alert %}
             alert("{{ alert }}");
+        {% elif request.GET.alert %}
+            alert("{{ request.GET.alert }}");
         {% endif %}
     </script>
 </body>
