@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 import pymongo
 from bson.objectid import ObjectId
-
+from django.forms import forms
 
 class VerificationTable(models.Model):
     mongo_id = models.CharField(max_length=24,null=False,verbose_name="Mongo Object ID")
@@ -16,7 +16,7 @@ class VerificationTable(models.Model):
     verify_3_done = models.BooleanField(verbose_name="Verify Guy 3 done",null=False,default=False)
 
     
-    def save(self):
+    def clean(self):
         connect = pymongo.MongoClient(settings.MONGO_URL)
     
         excel = connect["smart"]["excel"]
@@ -27,9 +27,14 @@ class VerificationTable(models.Model):
         if(((not any(verify)) or all(verify)) and (self.mongo_id and self.belongs)):
             update = [{'user':self.__getattribute__("verify_%s" % i).username,'verify':False} for i in range(1,4) if self.__getattribute__("verify_%s" % i) is not None]
             excel.update_one({"_id":ObjectId(self.mongo_id)},{"$set":{"verify":update}})
-            super().save()
         else:
-            raise ValueError("Verify Users must be either all empty or all filled")
+            raise forms.ValidationError("Verify Users must be either all empty or all filled")
+        
+        super().clean()
+        
+    def save(self):
+        self.clean()
+        return super().save()
         
             
         
