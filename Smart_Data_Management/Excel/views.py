@@ -3,6 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from Excel.forms import ExcelForm
 from django.contrib.auth import models
 from Main.tools import *
+from Excel.models import VerificationTable
 from django.urls import reverse
 from django.conf import settings
 import pymongo
@@ -66,8 +67,10 @@ def upload_screen(req:HttpRequest):
             file_name = req.POST.get("file_name")
             template = MongoTemplate(file_name,pd_data,user).get_json()
             
-            print(template)
             res = excel.insert_one(template)
+            
+            verify = VerificationTable(mongo_id=res.inserted_id,belongs=req.user)
+            verify.save()
             
             
             return render(req,'Excel/index.html',{'form':f,'alert':'Excel Extraction Success'})
@@ -75,7 +78,7 @@ def upload_screen(req:HttpRequest):
         return render(req,'Excel/index.html',{'form':f,'alert':'Something Went Wrong'})
         
     else:
-        f = ExcelForm({'username':req.user.username,'file_name':None,'file':None})
+        f = ExcelForm({'username':req.user.username})
     
     return render(req,'Excel/index.html',{'form':f})
 
@@ -115,4 +118,4 @@ def view_screen(req: HttpRequest,id) -> HttpResponse:
     
     pd_data = pd.read_json(json.dumps(result['excel']['data']))
     
-    return render(req,'Excel/dash.html',{'column':pd_data.columns,'result':pd_data.iterrows()})
+    return render(req,'Excel/view.html',{'column':pd_data.columns,'result':pd_data.iterrows()})

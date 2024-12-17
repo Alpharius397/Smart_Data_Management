@@ -34,17 +34,101 @@
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            overflow-y: scroll;
-            overflow-x: scroll;
         }
 
-        table th,td{
-            padding: 15;
+        .task-list {
+            margin: 20px 0;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            background: #f9f9f9;
+        }
+
+        .task-item h3 {
             margin: 0;
+            font-size: 18px;
+            color: #333;
         }
 
-        table {
-            border: 1px solid black;
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        header .add-task{
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        header .add-task:hover {
+            background-color: #e8f5e9;
+        }
+
+        header .user-log{
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        header .user-log:hover {
+            background-color: #e8f5e9;
+        }
+
+        .title-tag{
+            text-align: center;
+        }
+
+        .task-info{
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+
+        button.drop-down {
+            padding: 8px 12px;
+            background-color: #fff;
+            color: #535353;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .drop-down:hover{
+            background-color: #bababa;
         }
 
         
@@ -60,23 +144,41 @@
     </header>
 
     <div class="container">
-        <table>
-            <tr>
-            {% for i in column %}
-                <th>{{i}}</th>
+        <h2>Uploaded Tasks</h2>
+        <div class="task-list" id="up">
+
+            {% for i in upload %}
+            <div class="task-item">
+                <h3>Upload {{ forloop.counter }}: {{i.belongs}}</h3>
+                <button class="drop-down" id="up_{{forloop.counter}}"><i class="fa-solid fa-caret-down"></i></button>
+            </div>
+            <div class="task-info" id="up_{{forloop.counter}}">
+                <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
+            </div>
+
+            {% empty %}
+                <h3 class="title-tag">No Sheets Uploaded</h3>
             {% endfor %}
-            </tr>
+        </div>
+    </div>
 
-            {% for _,i in result %}
-                <tr>
-                    {% for j in i.values %}
-                        <td>{{j}}</td>
-                    {% endfor %}
-                </tr>
+    <div class="container">
+        <h2>Uploaded Tasks</h2>
+        <div class="task-list" id="as">
+
+            {% for i in upload %}
+            <div class="task-item">
+                <h3>Upload {{ forloop.counter }}: {{i.belongs}}</h3>
+                <button class="drop-down" id="as_{{forloop.counter}}"><i class="fa-solid fa-caret-down"></i></button>
+            </div>
+            <div class="task-info" id="as_{{forloop.counter}}">
+                <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
+            </div>
+
+            {% empty %}
+                <h3 class="title-tag">No Sheets Uploaded</h3>
             {% endfor %}
-
-        </table>
-
+        </div>
     </div>
 
     <!-- <footer>
