@@ -1,0 +1,106 @@
+{% load template %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Task Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            width: 100;
+            position: relative;
+        }
+
+        .container {
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: scroll;
+            overflow-x: scroll;
+        }
+
+        table th,td{
+            padding: 15;
+            margin: 0;
+        }
+
+        table {
+            border: 1px solid black;
+        }
+
+        
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <button class="user-log">Hello {{request.user.username}}</button>
+        <h1>Task Dashboard</h1>
+        <a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a>
+    </header>
+
+    <div class="container">
+        <table>
+            <tr>
+            {% for i in column %}
+                <th>{{i}}</th>
+            {% endfor %}
+            </tr>
+
+            {% for _,i in result %}
+                <tr>
+                    {% for j in i.values %}
+                        <td>{{j}}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+
+        </table>
+
+    </div>
+
+    <!-- <footer>
+        <p>&copy; 2024 Task Management System</p>
+    </footer> -->
+</body>
+<script src="https://kit.fontawesome.com/9709fae26f.js" crossorigin="anonymous"></script>
+<script>
+
+    function attach_event(){
+        const elements = document.querySelectorAll(".drop-down");
+
+
+        elements.forEach((element) => {
+            const id = element.id;
+
+            element.addEventListener('click', ()=>{
+                document.querySelector(`.task-info#${id}`).style.display='block';
+            })
+        })
+    }
+
+    attach_event();
+
+</script>
+
+</html>

@@ -103,8 +103,8 @@
 </head>
 <body>
     <div class="upload-container">
-        <h2>Register</h2>
-        <form action="{% url 'Excel:upload' %}" method="POST">
+        <h2>Upload Excel</h2>
+        <form action="{% url 'Excel:upload' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
 
             {% for field in form %}
@@ -114,6 +114,7 @@
 
                     {% if field.errors %}
                         {{ field.errors }}
+
                     {% else %}
                         <p class="help_text">{{ field.help_text }} </p>
                     
@@ -121,11 +122,9 @@
                     
                 </div>
             {% endfor %}
-            <button type="submit" class="upload-button">Register</button>
+            <button type="submit" class="upload-button">Upload</button>
         </form>
-        <div class="form-footer">
-            <p>Already have an account? <a href="{% url 'Login:login' %}">Login</a></p>
-        </div>
+
     </div>
 
     <script>
