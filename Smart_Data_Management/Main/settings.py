@@ -11,6 +11,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import typing
+
+class MongoDB(typing.NamedTuple):
+    database:str
+    collection:str
+    
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -132,8 +139,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-import os
+    
 MEDIA_ROOT = os.path.join(BASE_DIR, '')  # Directory for storing media files
 MEDIA_URL = '/'  # URL prefix for accessing media files
 LOGIN_URL = 'Login:login'
 MONGO_URL = "mongodb://127.0.0.1:27017/"
+MONGO_CRED = MongoDB("smart","excel")
+
