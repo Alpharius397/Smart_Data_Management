@@ -1,5 +1,0 @@
-pip install pymongo==4.10.1
-pip3 install django==5.0.7
-pip3 install Pillow==10.4.0
-pip3 install psycopg2==2.9.10
-pip3 install django[argon2]
