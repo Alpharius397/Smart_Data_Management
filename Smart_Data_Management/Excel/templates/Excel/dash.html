@@ -113,9 +113,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px;
-            border: 1px solid #ddd;
+            border: 1px solid #666;
+            border-top: 0px;
             margin-bottom: 10px;
-            background: #f9f9f9;
+            background: #fff;
         }
 
         button.drop-down {
@@ -130,6 +131,17 @@
         .drop-down:hover{
             background-color: #bababa;
         }
+
+        button.drop-down.up{
+            rotate: 180deg;
+        }
+
+        button.drop-down.down{
+            rotate: 0deg;
+
+        }
+
+        
 
         
 
@@ -150,9 +162,28 @@
             {% for i in upload %}
             <div class="task-item">
                 <h3>Upload {{ forloop.counter }}: {{i.belongs}}</h3>
-                <button class="drop-down" id="up_{{forloop.counter}}"><i class="fa-solid fa-caret-down"></i></button>
+                <button class="drop-down down" id="up_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="up_{{forloop.counter}}"></i></button>
             </div>
             <div class="task-info" id="up_{{forloop.counter}}">
+                <ol>
+                {% for j in i.verify %}
+                    <li>{{ j.user  }}
+
+                        {% if j.status is None  %}
+                            <i class="fa-solid fa-minus"></i>
+                        {% elif j.status is True %}
+                            <i class="fa-solid fa-check"></i>
+
+                        {% elif j.status is False %}
+                            <i class="fa-solid fa-xmark"></i>
+                            
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <h3>No one Assigned</h3>
+                {% endfor %}
+
+                </ol>
                 <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
             </div>
 
@@ -163,20 +194,39 @@
     </div>
 
     <div class="container">
-        <h2>Uploaded Tasks</h2>
-        <div class="task-list" id="as">
+        <h2>Assigned Tasks</h2>
+        <div class="task-list" id="up">
 
-            {% for i in upload %}
+            {% for i in verify %}
             <div class="task-item">
-                <h3>Upload {{ forloop.counter }}: {{i.belongs}}</h3>
-                <button class="drop-down" id="as_{{forloop.counter}}"><i class="fa-solid fa-caret-down"></i></button>
+                <h3>Assign {{ forloop.counter }}: {{i.belongs}}</h3>
+                <button class="drop-down ass down" id="ass_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="up_{{forloop.counter}}"></i></button>
             </div>
-            <div class="task-info" id="as_{{forloop.counter}}">
+            <div class="task-info" id="ass_{{forloop.counter}}">
+                <ol>
+                {% for j in i.verify %}
+                    <li>{{ j.user  }}
+
+                        {% if j.status is None  %}
+                            <i class="fa-solid fa-minus"></i>
+                        {% elif j.status is True %}
+                            <i class="fa-solid fa-check"></i>
+
+                        {% elif j.status is False %}
+                            <i class="fa-solid fa-xmark"></i>
+                            
+                        {% endif %}
+                    </li>
+                {% empty %}
+                    <h3>No one Assigned</h3>
+                {% endfor %}
+
+                </ol>
                 <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
             </div>
 
             {% empty %}
-                <h3 class="title-tag">No Sheets Uploaded</h3>
+                <h3 class="title-tag">No Sheets Assigned</h3>
             {% endfor %}
         </div>
     </div>
@@ -196,7 +246,16 @@
             const id = element.id;
 
             element.addEventListener('click', ()=>{
-                document.querySelector(`.task-info#${id}`).style.display='block';
+                
+                if (element.classList.contains('up')) {
+                    element.classList.replace('up','down');
+                    document.querySelector(`.task-info#${id}`).style.display = 'none';
+                } else {
+                    element.classList.replace('down','up');
+                    document.querySelector(`.task-info#${id}`).style.display = 'block';
+                }
+
+
             })
         })
     }

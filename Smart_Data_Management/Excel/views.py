@@ -15,20 +15,12 @@ from bson.objectid import ObjectId
 
 class MongoTemplate:
         
-    def __init__(self, file_name:str ,data:dict[str,Any], belongs:str, verify_numbers:int = 3) -> None:
+    def __init__(self, file_name:str ,data:dict[str,Any], belongs:str) -> None:
         
         self.excel = {'data':data,'name':file_name}
         self.belongs = belongs
         self.verify = []
-        self.__count = verify_numbers
 
-    def set_verify(self, users:list[str]) -> None:
-        if(len(users)!=self.__count):
-            raise ValueError("Needs %(need)s user for verification. Got %(got)s" % {'need':self.__count,'got':len(users)})
-        
-        for i in users:
-            self.verify.append({'user':i,'verified':False})
-                        
     def get_json(self):
         
         to_get = ['excel','belongs','verify']
@@ -56,9 +48,8 @@ def upload_screen(req:HttpRequest):
             excel_file = req.FILES["file"]
         
             pd_data = None
-            with excel_file.open() as file, BytesIO() as b:
-                b = file.read()
-                pd_data = json.loads(pd.read_excel(BytesIO(b)).to_json())
+            with excel_file.open() as file:
+                pd_data = json.loads(pd.read_excel(BytesIO(file.read())).to_json())
         
         
             if(pd_data is None):
@@ -78,7 +69,7 @@ def upload_screen(req:HttpRequest):
         return render(req,'Excel/index.html',{'form':f,'alert':'Something Went Wrong'})
         
     else:
-        f = ExcelForm({'username':req.user.username})
+        f = ExcelForm(initial={'username':req.user.username})
     
     return render(req,'Excel/index.html',{'form':f})
 
@@ -95,6 +86,7 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     
     upload = excel.find({"belongs":{"$eq":user}}).to_list()
     verify = excel.find({"verify.user":{"$eq":user}}).to_list()
+    
     
     
     return render(req,'Excel/dash.html',{'upload':upload,'verify':verify})

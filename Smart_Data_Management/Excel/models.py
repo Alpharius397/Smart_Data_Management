@@ -96,7 +96,7 @@ class VerificationTable(models.Model):
         
         verify_status:list[bool] = [self.__getattribute__("verify_%s_status" % (i+1)) for i in range(VERIFY_COUNT)]
         
-        update = [{'user':i.username if (i is not None) else None,'verify':j} for i,j in zip(verify,verify_status)]
+        update = [{'user':i.username if (i is not None) else None,'status':j} for i,j in zip(verify,verify_status)]
         
         excel = mongo_conn.connect(settings.MONGO_CRED) if mongo_conn else None
         
