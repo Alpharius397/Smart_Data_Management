@@ -19,7 +19,7 @@ def login_view(req:HttpRequest) -> HttpResponse:
             
             if(user is not None):
                 login(req,user)
-                return redirect(reverse('Excel:upload') + '?alert=Login Successful')
+                return redirect(reverse('Excel:dash') + '?alert=Login Successful')
             else:
                 return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
         

@@ -9,4 +9,5 @@ urlpatterns = [
  	path('',dash_board,name='dash'),
  	path('upload/',upload_screen,name='upload'),
  	path('view/<str:id>/',view_screen,name='view'),
+
 ]

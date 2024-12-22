@@ -63,7 +63,14 @@ class VerificationTable(models.Model):
         SINGLE_RE = r'^(\d+)$'
         RANGE_RE = r'^(\d+)\-(\d+)$'
         
-        for i in verify_assign:
+        for idx,i in enumerate(verify_assign):
+            
+            if(verify[idx] is None): continue
+            
+            
+            if(i is None):
+                raise forms.ValidationError("Must assign rows to user")
+            
             comma = i.split(',')
             
             for j in comma:
@@ -93,13 +100,23 @@ class VerificationTable(models.Model):
                     raise forms.ValidationError("Numbering range should be of form: 1-100 or 4 (separated by comma)")
                 
                 
-        if(count!=self.no_of_rows):
+        if(all(verify) and count!=self.no_of_rows):
             raise forms.ValidationError("All rows must be assigned")
         
         if(any(verify) and (not all(verify))):
             raise forms.ValidationError("Verify Users must be either all empty or all filled")
         
+        if(len(set(verify))<len(verify)):
+            raise forms.ValidationError("Different user must be assigned to each task")
+        
         super().clean()
+                
+        
+    def clean_belongs(self):
+        verify:list[User] = [self.__getattribute__("verify_%s" % i) for i in range(1,VERIFY_COUNT+1)]
+        
+        if(self.belongs in verify):
+            raise forms.ValidationError("Uploader cannot also be in verification team")
                 
     def save(self):
         

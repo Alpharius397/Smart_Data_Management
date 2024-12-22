@@ -166,7 +166,7 @@
             </div>
             <div class="task-info" id="up_{{forloop.counter}}">
                 <ol>
-                {% for j in i.verify %}
+                {% for j in i.verify|all:'user' %}
                     <li>{{ j.user  }}
 
                         {% if j.status is None  %}
