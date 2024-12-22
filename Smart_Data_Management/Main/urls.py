@@ -8,7 +8,7 @@ urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('login/',include('Login.urls','Login')),
 	path('register/',include('Register.urls','Register')),
-	path('',include('Excel.urls','Excel'))
+	path('excel/',include('Excel.urls','Excel'))
 ]
 admin.site.site_header = "System Admin"
 admin.site.site_title = "Admin Portal"
