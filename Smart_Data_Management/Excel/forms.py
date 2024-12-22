@@ -28,21 +28,5 @@ class ExcelForm(Form):
         
         return file
     
-class SearchQuery(Form):
-    
-    def __init__(self):
-        super().__init__()
-        
-    # def add_field(self, name, type) -> None:
-        
-        
-    def get_field_type(self, type):
-        
-        match(type):
-            case 'char': return forms.CharField()
-            case 'int': return forms.IntegerField()
-            case 'date': return forms.CharField()
-    
-    
         
 

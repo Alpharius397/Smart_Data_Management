@@ -6,7 +6,7 @@ from .views import home
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
-	path('login/',include('Login.urls','Login')),
+	path('',include('Login.urls','Login')),
 	path('register/',include('Register.urls','Register')),
 	path('excel/',include('Excel.urls','Excel'))
 ]

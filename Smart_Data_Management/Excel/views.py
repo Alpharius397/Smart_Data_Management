@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.conf import settings
 import pymongo
 import pandas as pd
-from io import BytesIO
+from io import BytesIO,StringIO
 from typing import Any
 import json
 from bson.objectid import ObjectId
@@ -87,8 +87,6 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     upload = excel.find({"belongs":{"$eq":user}}).to_list()
     verify = excel.find({"verify.user":{"$eq":user}}).to_list()
     
-    
-    
     return render(req,'Excel/dash.html',{'upload':upload,'verify':verify})
 
 
@@ -108,6 +106,6 @@ def view_screen(req: HttpRequest,id) -> HttpResponse:
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
     
-    pd_data = pd.read_json(json.dumps(result['excel']['data']))
+    pd_data = pd.read_json(StringIO(json.dumps(result['excel']['data'])))
     
     return render(req,'Excel/view.html',{'column':pd_data.columns,'result':pd_data.iterrows()})

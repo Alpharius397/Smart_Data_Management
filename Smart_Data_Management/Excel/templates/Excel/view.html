@@ -35,6 +35,17 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             overflow-y: scroll;
+            overflow-x: scroll;
+        }
+
+        .tableView{
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: scroll;
             display: flex;
             overflow-x: scroll;
         }
@@ -69,6 +80,35 @@
             font-weight: bold;
         }
 
+        .searchQuery{
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        select, #search{
+            border-radius:20px ;
+            padding: 5px;
+        }
+
+        button{
+            font-weight: bold;
+            padding: 15px;
+            color: #fff;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover{
+            background-color: #09430e;
+
+        }
+
+
+
 
         
 
@@ -82,6 +122,30 @@
     </header>
 
     <div class="container">
+
+        <div class="searchQuery">
+            <h2>Search Columns: </h2>
+            <form action="url 'Excel:view' " method="get">
+                <label for="column">Column: </label>
+                <select name="column">
+                    {% for i in column %}
+                        <option value="{{ i }}"> {{ i }}</option>
+
+                    {% endfor %}
+                </select>
+
+                <label for="search">Containg: </label>
+
+                <input type="search" name="search" id="search">
+
+                <button type="submit"> Search </button>
+
+            </form>
+
+        </div>
+
+
+        <div clas="tableView">
         <table>
             <tr>
             {% for i in column %}
@@ -99,7 +163,7 @@
 
         </table>
 
-    </div>
+    </div></div>
 
     <!-- <footer>
         <p>&copy; 2024 Task Management System</p>
