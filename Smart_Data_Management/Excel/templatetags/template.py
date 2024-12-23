@@ -9,3 +9,7 @@ def get_id(obj, attr):
 @register.filter(name='all')
 def all_check(obj:list,attr:str):
     return obj if all(i['user'] for i in obj) else []
+
+@register.filter(name='str')
+def str_convert(obj):
+    return str(obj)

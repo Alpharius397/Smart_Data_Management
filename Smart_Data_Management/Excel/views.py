@@ -108,4 +108,17 @@ def view_screen(req: HttpRequest,id) -> HttpResponse:
     
     pd_data = pd.read_json(StringIO(json.dumps(result['excel']['data'])))
     
+    column = req.GET.get('column','')
+    value = req.GET.get('search','')
+    
+    if((column) and (column not in pd_data.columns)):
+        return render(req,'Excel/view.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found'})
+    
+    
+    print(pd_data)
+    if(column and (value)):
+        pd_data = pd_data[pd_data[column].astype(str).str.contains(value)]
+    print(pd_data[column])
+        
+    
     return render(req,'Excel/view.html',{'column':pd_data.columns,'result':pd_data.iterrows()})
