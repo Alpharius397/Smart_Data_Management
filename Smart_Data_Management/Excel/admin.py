@@ -72,8 +72,8 @@ class AssignedFilter(admin.SimpleListFilter):
         username = self.value()
         query = Q()
         
-        for i in range(1,VERIFY_COUNT+1):
-            query = query | Q(**{"verify_%s__username" % i:username})
+        for i in range(VERIFY_COUNT):
+            query = query | Q(**{"verify_%s__username" % (i+1):username})
         
         return queryset.filter(query)
     

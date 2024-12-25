@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     'Main',
     'Login',
     'Register',
-    'Excel'
+    'Excel',
+    'Logout'
 ]
 
 MIDDLEWARE = [
