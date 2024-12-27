@@ -7,7 +7,7 @@ from django.forms import forms
 from typing import NamedTuple
 import pymongo.client_session
 import pymongo.collection
-
+from Main.models import Uploader, Manager
 
 class MongoDB(NamedTuple):
     database:str
@@ -45,10 +45,10 @@ class MongoConnection:
 
 class VerificationTable(models.Model):
     mongo_id = models.CharField(max_length=24,null=False,verbose_name="Mongo Object ID",primary_key=True)
-    belongs = models.ForeignKey(to=User,null=False,verbose_name="Belongs to ",on_delete=models.CASCADE,related_name="belongs")
+    belongs = models.ForeignKey(to=Uploader,null=False,verbose_name="Belongs to ",on_delete=models.CASCADE,related_name="belongs")
 
     for i in range(VERIFY_COUNT):
-        locals()["verify_%s" % (i+1)] = models.ForeignKey(to=User,null=True,blank=True,on_delete=models.SET_NULL,verbose_name="Verify Guy %s" % (i+1),related_name="Verify_%s" % (i+1))
+        locals()["verify_%s" % (i+1)] = models.ForeignKey(to=Manager,null=True,blank=True,on_delete=models.SET_NULL,verbose_name="Verify Guy %s" % (i+1),related_name="Verify_%s" % (i+1))
         locals()["verify_%s_status" % (i+1)] = models.BooleanField(max_length=12,verbose_name="Verify Guy %s status" % (i+1),null=True,blank=True,default=None,choices=CHOICE)
         locals()["verify_%s_feedback" % (i+1)] = models.CharField(max_length=255,verbose_name="Verify Guy %s Feedback" % (i+1),null=True,blank=True,default='')
     
@@ -115,7 +115,7 @@ class VerificationTable(models.Model):
         return verify.index(username) + 1 if(username in verify) else None
     
     def is_owner(self, username):
-        return self.belongs==username   
+        return self.belongs.user==username   
     
     def set(self, attr, value):
         self.__setattr__(attr,value)
@@ -137,7 +137,7 @@ class VerificationTable(models.Model):
         verify_status:list[bool] = self.get_verify_status()
         verify_feed:list[str] = self.get_feedback()
 
-        update = [{'user':i.username if (i is not None) else None,'status':j,'feedback':k} for i,j,k in zip(verify,verify_status,verify_feed)]
+        update = [{'user':i.user.username if (i is not None) else None,'status':j,'feedback':k} for i,j,k in zip(verify,verify_status,verify_feed)]
         
         excel = mongo_conn.connect(settings.MONGO_CRED) if mongo_conn else None
         
@@ -152,4 +152,4 @@ class VerificationTable(models.Model):
         
         
     def __str__(self):
-        return f"{self.belongs} - {self.mongo_id}"
+        return f"{self.belongs.user} - {self.mongo_id}"

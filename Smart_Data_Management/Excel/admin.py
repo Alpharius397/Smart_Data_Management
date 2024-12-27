@@ -10,12 +10,13 @@ class BelongToFilter(admin.SimpleListFilter):
     parameter_name = "belongsTo"
     
     def lookups(self, request, model_admin:admin.ModelAdmin):
+        print(model_admin.get_queryset(request).all())
         return [(i.belongs,i.belongs) for i in model_admin.get_queryset(request).all()]
     
     def queryset(self, request, queryset):
         if(self.value() is None): return queryset
         
-        return queryset.filter(belongs__username=self.value())
+        return queryset.filter(belongs__user__username=self.value())
     
 class VerifyFilter(admin.SimpleListFilter):
     title = "Verification Status"
