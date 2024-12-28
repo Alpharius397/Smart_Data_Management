@@ -6,7 +6,7 @@ from Main.tools import *
 from Excel.models import VerificationTable,MongoConnection,VERIFY_COUNT
 from django.urls import reverse
 from django.conf import settings
-import pymongo
+from Main.views import is_manager, is_uploader
 import pandas as pd
 from io import BytesIO,StringIO
 from typing import Any
@@ -36,7 +36,7 @@ def mongo_setup_failed(req, **kwargs):
 
 # Create your views here.
 def upload_screen(req:HttpRequest):
-    if(not req.user.is_authenticated):
+    if(not ((req.user.is_authenticated) and (is_uploader(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     user = req.user.username
@@ -65,7 +65,7 @@ def upload_screen(req:HttpRequest):
             
             res = excel.insert_one(template)
             
-            verify = VerificationTable(mongo_id=res.inserted_id,belongs=req.user)
+            verify = VerificationTable(mongo_id=res.inserted_id,belongs=req.user.uploader)
             verify.save()
             
             
@@ -79,28 +79,37 @@ def upload_screen(req:HttpRequest):
     return render(req,'Excel/index.html',{'form':f})
 
 def dash_board(req: HttpRequest) -> HttpResponse:
-    if(not req.user.is_authenticated):
+    if(not ((req.user.is_authenticated) and (is_uploader(req.user) or is_manager(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    user = req.user.username
+    user = req.user
+    username = req.user.username
     
-    connection = MongoConnection(settings.MONGO_URL)
-    excel = connection.connect(settings.MONGO_CRED)
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     
+    if(excel is None):
+        return mongo_setup_failed(req)
     
-    upload = excel.find({"belongs":{"$eq":user}}).to_list()
-    verify = excel.find({"verify.user":{"$eq":user}}).to_list()
+    verify:list = None
+    upload:list = None
     
+    available_id = [ ObjectId(i.mongo_id) for i in VerificationTable.objects.only('mongo_id')]
+    
+    if(is_manager(user)):
+        verify = excel.find({"_id":{"$in":available_id},"verify.user":{"$eq":username}}).to_list()
+        
+    elif(is_uploader(user)):
+        upload = excel.find({"_id":{"$in":available_id},"belongs":{"$eq":username}}).to_list()
+        
     return render(req,'Excel/dash.html',{'upload':upload,'verify':verify})
 
 def owner_view(req: HttpRequest,id) -> HttpResponse:
-    if(not req.user.is_authenticated):
+    if(not ((req.user.is_authenticated) and (is_uploader(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     user = req.user.username
     
-    connection = MongoConnection(settings.MONGO_URL)
-    excel = connection.connect(settings.MONGO_CRED)
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     
     result = excel.find_one({"$and":[{"_id":ObjectId(id)},{"belongs":user}]})
 
@@ -109,10 +118,10 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
     
     pd_data = pd.read_json(StringIO(json.dumps(result['excel']['data'])))
     
-    column = req.GET.get('column','')
-    value = req.GET.get('search','')
+    column = req.GET.get('column',None)
+    value = req.GET.get('search',None)
     
-    if((column) and (column not in pd_data.columns)):
+    if((column) and (column not in pd_data.columns.to_list())):
         return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found'})
     
     if(column and (value)):
@@ -128,13 +137,12 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
 
 
 def assign_view(req: HttpRequest,id) -> HttpResponse:
-    if(not req.user.is_authenticated):
+    if(not ((req.user.is_authenticated) and (is_manager(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     user = req.user.username
     
-    connection = MongoConnection(settings.MONGO_URL)
-    excel = connection.connect(settings.MONGO_CRED)
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     
     result = excel.find_one({"$and":[{"_id":ObjectId(id)},{"verify.user":{"$eq":user}}]})
 
@@ -158,10 +166,8 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
         
         pd_data = sample
     
-    query = Q(mongo_id=id)
-    
-    record = VerificationTable.objects.filter(query)[0]
-    idx = record.get_user(req.user)
+    record = VerificationTable.objects.filter(Q(mongo_id=id))[0]
+    idx = record.get_user(req.user.manager)
     if(idx is None): return redirect(reverse('Excel:dash')+'?alert=Not authorized for this task')
     
     if(req.method=='POST'):

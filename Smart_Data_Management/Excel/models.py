@@ -73,7 +73,6 @@ class VerificationTable(models.Model):
             raise forms.ValidationError("Different user must be assigned to each task")
         
         super().clean()
-                
         
     def clean_belongs(self):
         verify:list[User] = self.get_verify()

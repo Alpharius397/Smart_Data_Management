@@ -17,3 +17,6 @@ def str_convert(obj):
 @register.filter(name='addOne')
 def addOne(obj:int | float):
     return int(obj)+1
+
+@register.filter(name='check')
+def check(obj) -> bool: return obj is not None

@@ -168,9 +168,11 @@
     <header>
         <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
         <h1>Task Dashboard</h1>
-        <a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a>
+        {% if upload|check %}<a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a> {% endif %}
     </header>
 
+
+    {% if upload|check %}
     <div class="container">
         <h2>Uploaded Tasks</h2>
         <div class="task-list" id="up">
@@ -208,6 +210,8 @@
             {% endfor %}
         </div>
     </div>
+
+    {% elif verify|check %}
 
     <div class="container">
         <h2>Assigned Tasks</h2>
@@ -247,9 +251,8 @@
         </div>
     </div>
 
-    <!-- <footer>
-        <p>&copy; 2024 Task Management System</p>
-    </footer> -->
+    {% endif %}
+    
 </body>
 <script src="https://kit.fontawesome.com/9709fae26f.js" crossorigin="anonymous"></script>
 <script>

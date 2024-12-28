@@ -18,14 +18,13 @@ def login_view(req:HttpRequest) -> HttpResponse:
         if(f.is_valid()):
             
             username = f.cleaned_data.get("username")
-            level = f.cleaned_data.get("level")
             password = f.cleaned_data.get("password")
             
             user = authenticate(req,username=username,password=password)
             
             if(user is not None):
                 
-                if((level=='Uploader' and is_uploader(user)) or (level=='Manager' and is_manager(user))):                
+                if((is_uploader(user)) or (is_manager(user))):                
                     login(req,user)
                     return redirect(reverse('Excel:dash') + '?alert=Login Successful')            
 
