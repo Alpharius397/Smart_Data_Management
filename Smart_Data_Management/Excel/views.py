@@ -122,18 +122,18 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
     value = req.GET.get('search',None)
     
     if((column) and (column not in pd_data.columns.to_list())):
-        return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found'})
+        return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found','feed':result.get('verify',[])})
     
     if(column and (value)):
         sample = pd_data[pd_data[column].astype(str).str.contains(value)]
         
         if(sample.empty):
-            return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Data was not found!'})
+            return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Data was not found!','feed':result.get('verify',[])})
         
         pd_data = sample
             
     
-    return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'feed':result['verify']})
+    return render(req,'Excel/owner.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'feed':result.get('verify',[])})
 
 
 def assign_view(req: HttpRequest,id) -> HttpResponse:
@@ -145,6 +145,7 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
     excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     
     result = excel.find_one({"$and":[{"_id":ObjectId(id)},{"verify.user":{"$eq":user}}]})
+    
 
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
@@ -155,19 +156,24 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
     column = req.GET.get('column','')
     value = req.GET.get('search','')
     
+    record = VerificationTable.objects.filter(Q(mongo_id=id))[0]
+    idx = record.get_user(req.user.manager)
+    
+    other_feed = [{'user':record.get("verify_%s" % (i), "").__str__(),'status':record.get("verify_%s_status" % (i),""),'feedback':record.get("verify_%s_feedback" % (i),"")} for i in range(1,VERIFY_COUNT+1) if(i!=idx)]
+    print(other_feed)
+    f=VerifyForm(initial={'status':record.get("verify_%s_status" % (idx),""),'feedback':record.get("verify_%s_feedback" % (idx),"")})
+    
     if((column) and (column not in pd_data.columns)):
-        return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found'})
+        return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Column Not found','form':f,'other':other_feed})
     
     if(column and (value)):
         sample = pd_data[pd_data[column].astype(str).str.contains(value)]
         
         if(sample.empty):
-            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Data was not found!'})
+            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'alert':'Data was not found!','form':f,'other':other_feed})
         
         pd_data = sample
     
-    record = VerificationTable.objects.filter(Q(mongo_id=id))[0]
-    idx = record.get_user(req.user.manager)
     if(idx is None): return redirect(reverse('Excel:dash')+'?alert=Not authorized for this task')
     
     if(req.method=='POST'):
@@ -188,12 +194,11 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
             record.set_verify(idx,status,feedback)
             
             record.save()
-            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'form':f,'alert':'Task Submission done'})
+            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'form':f,'alert':'Task Submission done','other':other_feed})
             
             
     
     else:
-        f=VerifyForm(initial={'status':record.get("verify_%s_status" % (idx),""),'feedback':record.get("verify_%s_feedback" % (idx),"")})
         
-        return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'form':f})
+        return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'form':f,'other':other_feed})
         
