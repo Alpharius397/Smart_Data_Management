@@ -199,7 +199,7 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
     
-    pd_data = pd.read_json(json.loads(result['excel']['data']))
+    pd_data = pd.read_json(StringIO(result['excel']['data']))
     
     idx = None
     
