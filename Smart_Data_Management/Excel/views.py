@@ -11,7 +11,11 @@ import pandas as pd
 from io import BytesIO,StringIO
 from typing import Any
 import json
+import openpyxl as op
 from bson.objectid import ObjectId
+from tools.get_image import get_image_data
+from base64 import b64encode, b64decode
+from PIL import Image
 
 class MongoTemplate:
         
@@ -56,8 +60,8 @@ def upload_screen(req:HttpRequest):
             file_name = f.cleaned_data.get("file_name")
         
             with excel_file.open() as file:
-                pd_data = json.loads(pd.read_excel(BytesIO(file.read())).to_json())
-        
+                pd_data = image_load(file.read()).to_json()
+            
             if(pd_data is None):
                 return mongo_setup_failed(req,form=f)
                 
@@ -77,6 +81,35 @@ def upload_screen(req:HttpRequest):
         f = ExcelForm(initial={'username':req.user.username})
     
     return render(req,'Excel/index.html',{'form':f})
+
+def image_load(data: bytes) -> pd.DataFrame:
+    pd_data = pd.read_excel(BytesIO(data))
+    op_data = op.load_workbook(BytesIO(data))
+    
+    # Do something about this
+    # if(len(op_data.sheetnames)==0):
+    #     raise ValueError("empty excel")
+    
+    op_sheet = op_data[op_data.sheetnames[0]]
+    image = get_image_data(op_sheet)
+    
+    converted:set[int] = set()
+    
+    for i, row in pd_data.iterrows():
+        for j, col in enumerate(row):
+            if((i+1,j) in image):
+                
+                if(j not in converted):
+                    pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)
+                    
+                    converted.add(j)
+                    
+                pd_data.iat[i,j] = image[(i+1,j)]
+                
+    print(pd_data)
+    
+    return pd_data
+        
 
 def dash_board(req: HttpRequest) -> HttpResponse:
     if(not ((req.user.is_authenticated) and (is_uploader(req.user) or is_manager(req.user)))):
@@ -116,7 +149,22 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
-    pd_data = pd.read_json(StringIO(json.dumps(result['excel']['data'])))
+    pd_data = pd.read_json(StringIO(result['excel']['data']))
+    
+    idx = None
+    
+    for i,j in enumerate(pd_data.columns):
+        if(j.lower()=='image'):
+            idx=i
+            break
+    
+    if(idx is not None):
+        for i,row in pd_data.iterrows():
+            img_raw:str = row[idx]
+            
+            pd_data.iat[i,idx] = f"<img src='data:image/jpeg;base64,{img_raw.replace('\\','')}' width=200 height=200>"
+            
+
     
     column = req.GET.get('column',None)
     value = req.GET.get('search',None)
@@ -151,7 +199,21 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
     
-    pd_data = pd.read_json(StringIO(json.dumps(result['excel']['data'])))
+    pd_data = pd.read_json(json.loads(result['excel']['data']))
+    
+    idx = None
+    
+    for i,j in enumerate(pd_data.columns):
+        if(j.lower()=='image'):
+            idx=i
+            break
+    
+    if(idx is not None):
+        for i,row in pd_data.iterrows():
+            img_raw:str = row[idx]
+            
+            pd_data.iat[i,idx] = f"<img src='data:image/jpeg;base64,{img_raw.replace('\\','')}' width=200 height=200>"
+            
     
     column = req.GET.get('column','')
     value = req.GET.get('search','')

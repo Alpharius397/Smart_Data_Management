@@ -229,7 +229,7 @@
                         {% endfor %}
                     </tr>
                 </thead>
-
+                {% autoescape off %}
                 <tbody >
                     {% for idx,i in result %}
                         <tr>
@@ -240,6 +240,8 @@
                         </tr>
                     {% endfor %}
                 </tbody>
+                {% endautoescape %}
+
             </table>
 
         </div>

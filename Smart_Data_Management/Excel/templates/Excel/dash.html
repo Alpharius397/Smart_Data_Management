@@ -171,7 +171,6 @@
         {% if upload|check %}<a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a> {% endif %}
     </header>
 
-
     {% if upload|check %}
     <div class="container">
         <h2>Uploaded Tasks</h2>
@@ -279,6 +278,9 @@
         })
     }
 
+
+
+
     attach_event();
 
     {% if alert %}
@@ -286,6 +288,7 @@
     {% elif request.GET.alert %}
         alert("{{ request.GET.alert }}");
     {% endif %}
+
 
 </script>
 

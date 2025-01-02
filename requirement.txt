@@ -3,3 +3,5 @@ django==5.0.7
 Pillow==10.4.0
 psycopg2==2.9.10
 django[argon2]
+django-cors-headers==4.6.0
+pycryptodome==3.21.0
