@@ -1,10 +1,15 @@
 from django.forms import Form
 from django import forms
+from University.models import University, Institute, Branch
+
 
 class RegisterForm(Form):
     username = forms.CharField(max_length=100, required=True,help_text='Enter the username')
-    level = forms.ChoiceField(help_text='Enter the role',required=True,choices=[('Uploader','Uploader'),('Manager','Manager')])
     email = forms.EmailField(max_length=255,required=True,help_text='Enter the email')
+    university = forms.ModelChoiceField(help_text='Enter the University',required=True,queryset=University.objects.all(),widget=forms.Select(attrs={'hx-get':'uni/','hx-target':'#id_institute','hx-swap':'innerHTML'}))
+    institute = forms.ChoiceField(help_text='Enter the Institute',required=True,choices=[("","---------")],widget=forms.Select(attrs={'hx-get':'insti/','hx-target':'#id_branch','hx-swap':'innerHTML'}))
+    branch = forms.ChoiceField(help_text='Enter the Branch',required=True,choices=[("","---------")],widget=forms.Select())
+    level = forms.ChoiceField(help_text='Enter the role',required=True,choices=[('Uploader','Uploader'),('Manager','Manager')])
     password = forms.CharField(widget=forms.PasswordInput(),help_text='Enter the password')
     confirm_password = forms.CharField(widget=forms.PasswordInput(),help_text='Re-enter the password')
     

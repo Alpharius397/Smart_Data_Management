@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'Login',
     'Register',
     'Excel',
-    'Logout'
+    'Logout',
+    'University',
+    'User'
 ]
 
 MIDDLEWARE = [

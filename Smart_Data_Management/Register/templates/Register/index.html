@@ -10,9 +10,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
             margin: 0;
             background-color: #f4f4f9;
+            overflow-x: scroll;
         }
 
         .register-container {
@@ -21,6 +21,8 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 300px;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         .register-container h2 {
@@ -147,5 +149,7 @@
             alert("{{ alert }}");
         {% endif %}
     </script>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
 </body>
 </html>

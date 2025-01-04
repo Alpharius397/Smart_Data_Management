@@ -19,4 +19,10 @@ def addOne(obj:int | float):
     return int(obj)+1
 
 @register.filter(name='check')
-def check(obj) -> bool: return obj is not None
+def check(obj) -> bool: 
+    return obj is not None
+
+@register.filter(name='enum')
+def enum(obj) -> tuple[list[int], list]:
+    print(obj)
+    return enumerate(obj)

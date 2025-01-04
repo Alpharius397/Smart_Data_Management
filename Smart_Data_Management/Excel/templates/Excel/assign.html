@@ -229,18 +229,22 @@
                         {% endfor %}
                     </tr>
                 </thead>
-                {% autoescape off %}
+
                 <tbody >
                     {% for idx,i in result %}
                         <tr>
                             <td><p>{{idx|addOne}}</p></td>
-                            {% for j in i.values %}
-                                <td><p>{{j|str}}</p></td>
+                            {% for j,k in i.values|enum %}
+
+                                {% if j in image %}
+                                    <td><img src='{{k|str}}' height='200'></td>
+                                {% else %}
+                                    <td><p>{{k|str}}</p></td>
+                                {% endif %}
                             {% endfor %}
                         </tr>
                     {% endfor %}
                 </tbody>
-                {% endautoescape %}
 
             </table>
 

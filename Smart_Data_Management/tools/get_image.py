@@ -13,8 +13,8 @@ def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[i
         img = Image.open(BytesIO(image._data()))
         
         with BytesIO() as b:
-            img.save(b,format='jpeg',quality=70)
-            images[(image.anchor._from.row,image.anchor._from.col)] = b64encode(b.getvalue()).decode()
+            img.save(b,format='jpeg',quality=95)
+            images[(image.anchor._from.row,image.anchor._from.col)] = f"{img.width}:{img.height}:{b64encode(b.getvalue()).decode()}"
         
     return images
 

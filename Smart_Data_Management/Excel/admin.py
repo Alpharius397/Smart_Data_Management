@@ -2,7 +2,7 @@ from django.contrib import admin
 from Excel.models import *
 from django.db.models import Q
 from django.conf import settings
-
+from django.contrib.auth.models import User
     
 class BelongToFilter(admin.SimpleListFilter):
     title = "Uploader"
@@ -10,8 +10,12 @@ class BelongToFilter(admin.SimpleListFilter):
     parameter_name = "belongsTo"
     
     def lookups(self, request, model_admin:admin.ModelAdmin):
-        print(model_admin.get_queryset(request).all())
-        return [(i.belongs,i.belongs) for i in model_admin.get_queryset(request).all()]
+        upload_user:set[tuple[str,str]] = set()
+
+        for i in model_admin.get_queryset(request).all():
+            upload_user.add((i.belongs.user.username,i.belongs.user.username))
+        
+        return list(upload_user)
     
     def queryset(self, request, queryset):
         if(self.value() is None): return queryset
@@ -58,11 +62,8 @@ class AssignedFilter(admin.SimpleListFilter):
         assign_user:set[tuple[str,str]] = set()
 
         for i in model_admin.get_queryset(request).all():
-            for j in range(1,VERIFY_COUNT+1):
-                user = i.__getattribute__("verify_%s" % j)
-                
-                if(user is None): continue
-                assign_user.add((user,user))
+            if(i.assigned is None): continue
+            assign_user.add((i.assigned.user.username,i.assigned.user.username))
         
         return list(assign_user)
         
@@ -71,15 +72,12 @@ class AssignedFilter(admin.SimpleListFilter):
         if(self.value() is None): return queryset
         
         username = self.value()
-        query = Q()
-        
-        for i in range(VERIFY_COUNT):
-            query = query | Q(**{"verify_%s__username" % (i+1):username})
+        query = Q(assigned__user__username=username)
         
         return queryset.filter(query)
     
 class MongoLookup(admin.SimpleListFilter):
-    title = "Mongo Object ID"
+    title = "Object ID"
     parameter_name = "mongo_id"
     
     
@@ -104,15 +102,19 @@ class UserAssigned(admin.SimpleListFilter):
         status = self.value()
         
         if(status is None): return queryset
+        
         match(status):
-            case True: return queryset.filter(verify_1__isnull=False)
-            case False: return queryset.filter(verify_1__isnull=True)
+            case True: return queryset.filter(assigned__isnull=False)
+            case False: return queryset.filter(assigned__isnull=True)
 
 @admin.register(VerificationTable)
 class VerificationFilter(admin.ModelAdmin):
-    list_display = ('mongo_id','belongs') + tuple(["verify_%s" % i for i in range(1,VERIFY_COUNT+1)])
+    list_display = ('mongo_id','belongs','assigned','assigned_status')
     list_filter = (MongoLookup,BelongToFilter,AssignedFilter,VerifyFilter,UserAssigned)
     
     search_fields = ('mongo_id','belongs__username')
     search_help_text = "Search by MongoID or Uploader's Username"
+    
+    
+
 

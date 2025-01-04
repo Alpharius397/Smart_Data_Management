@@ -3,7 +3,8 @@ from django.http import HttpRequest, HttpResponse
 from Register.forms import RegisterForm
 from django.contrib.auth import models
 from Main.tools import *
-from Main.models import Manager, Uploader
+from User.models import Manager, Uploader
+from University.models import University, Institute, Branch
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -39,3 +40,28 @@ def register_view(req:HttpRequest) -> HttpResponse:
             return render(req,'Register/index.html',{'form':f,'alert':'Register Confirmed'})
         
         return render(req,'Register/index.html',{'form':f,'alert':'Register Failed'})
+
+def insti_change(req: HttpRequest) -> HttpResponse:
+    
+    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+        uni = req.GET.get("university",'')
+        
+        if(uni):
+            insti = list(Institute.objects.filter(university__id=uni))
+        else:
+            insti = list(Institute.objects.none())
+            
+        return render(req,'HTMX/option.html',{'option':insti})
+
+
+def branch_change(req: HttpRequest) -> HttpResponse:
+
+    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+        insti = req.GET.get("institute",'')
+        
+        if(insti):
+            branch = list(Branch.objects.filter(institute__id=insti))
+        else:
+            branch = list(Branch.objects.none())
+            
+        return render(req,'HTMX/option.html',{'option':branch})
