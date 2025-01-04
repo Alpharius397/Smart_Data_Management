@@ -41,14 +41,14 @@ print("Encrypted Data:", encrypted)
 decrypted = decrypt_data(key, encrypted)
 print("Decrypted Data:", decrypted)
 
-im = Image.open("C://Users//RAJ//Desktop//Intern//Smart_Data_Management//sample_data_generator//img//sample-1.jpg")
+im = Image.open("sample_data_generator/img/504708-200.png")
 out = BytesIO()
-asd = im.reduce(3).save(out,'jpeg',quality=70)
+asd = im.save(out,'png',quality=95)
 
-with open("C://Users//RAJ//Desktop//Intern//Smart_Data_Management//sample_data_generator//img//asd.txt",'w') as g:
+with open("sample_data_generator/img/asd.txt",'w') as g:
     g.write(b64encode(out.getvalue()).decode())
     
-a = Image.open(out)
-print(a.width,a.height)
-a=a.resize((780,438),resample=3)
-a.save("C://Users//RAJ//Desktop//Intern//Smart_Data_Management//sample_data_generator//img//generated-1.jpg",quality=95)
+# a = Image.open(out)
+# print(a.width,a.height)
+# a=a.resize((780,438),resample=3)
+# a.save("C://Users//RAJ//Desktop//Intern//Smart_Data_Management//sample_data_generator//img//generated-1.jpg",quality=95)

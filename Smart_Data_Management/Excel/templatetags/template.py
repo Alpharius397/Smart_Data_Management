@@ -1,4 +1,5 @@
 from django import template
+from Excel.templatetags.bad_image import bad_image
 
 register = template.Library()
 
@@ -24,5 +25,26 @@ def check(obj) -> bool:
 
 @register.filter(name='enum')
 def enum(obj) -> tuple[list[int], list]:
-    print(obj)
     return enumerate(obj)
+
+@register.filter(name='img')
+def image(obj) -> str:
+    raw_img = obj.split(':')
+    
+    default_height = 100
+    
+    if(len(raw_img)==3):
+        width, height, img = raw_img
+
+        width = int((int(width)/int(height))*default_height)
+        height = default_height
+    else:
+        width, height = 100,100
+        img = bad_image
+        
+    return f"img src=data:image/jpeg;base64,{img} width={width} height={height}"
+        
+
+@register.filter(name='in')
+def in_check(obj,vector):
+    return bool(obj in vector)

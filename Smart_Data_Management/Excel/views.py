@@ -158,23 +158,23 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
     
     # removing image column cause duh
     available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
-    
     column = req.GET.get('column',None)
     value = req.GET.get('search',None)
     
+    
     if((column) and (column not in available_column)):
-        return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Column Not found','feed':feedback})
+        return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Column Not found','image':image_idx,'feed':feedback})
     
     if(column and (value)):
         sample = pd_data[pd_data[column].astype(str).str.contains(value)]
         
         if(sample.empty):
-            return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Data was not found!','feed':result.get('verify',[])})
+            return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Data was not found!','image':image_idx,'feed':result.get('verify',[])})
         
         pd_data = sample
             
     
-    return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'feed':result.get('verify',[])})
+    return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'image':image_idx,'feed':result.get('verify',[])})
 
 
 def assign_view(req: HttpRequest,id) -> HttpResponse:

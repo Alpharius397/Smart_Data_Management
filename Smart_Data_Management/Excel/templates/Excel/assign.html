@@ -53,6 +53,8 @@
             position: sticky;
             top:0;
             background-color: white;
+            z-index: 10;
+            margin-bottom: -5px;
         }
 
         table th,td{
@@ -66,8 +68,8 @@
             text-align: center;
             border-collapse: separate;
             border-spacing: 0;
-            margin: 10px auto;
-
+            margin: 10px;
+            margin-top: 0px;
         }
 
         header .user-log{
@@ -236,8 +238,9 @@
                             <td><p>{{idx|addOne}}</p></td>
                             {% for j,k in i.values|enum %}
 
-                                {% if j in image %}
-                                    <td><img src='{{k|str}}' height='200'></td>
+                                {% if j|in:image %}
+                                    <td><{{k|img}}></td>
+
                                 {% else %}
                                     <td><p>{{k|str}}</p></td>
                                 {% endif %}
@@ -322,5 +325,6 @@
     {% endif %}
 
 </script>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 
 </html>
