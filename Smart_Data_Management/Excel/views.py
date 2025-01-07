@@ -43,6 +43,7 @@ def upload_screen(req:HttpRequest):
         
             with excel_file.open() as file:
                 image_idx, pd_data = image_load(file.read())
+                pd_data['Verify'] = False
                 
                 pd_data = pd_data.to_json()
             
@@ -128,17 +129,6 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     return render(req,'Excel/dash.html',{'upload':upload,'verify':verify})
 
 
-def get_image_idx(columns):
-    idx = None
-    
-    for i,j in enumerate(columns):
-        if(j.lower()=='image'):
-            idx = i
-            break
-    
-    return idx
-
-
 def owner_view(req: HttpRequest,id) -> HttpResponse:
     if(not ((req.user.is_authenticated) and (is_uploader(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
@@ -152,29 +142,13 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
-    pd_data = pd.read_json(StringIO(result.get('excel','').get('data','')))
+    pd_data = pd.read_json(StringIO(result.get('excel',{}).get('data','')))
     image_idx:list = result.get('excel',{}).get('image',[])
-    feedback = result.get('verify',[])
     
     # removing image column cause duh
-    available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
-    column = req.GET.get('column',None)
-    value = req.GET.get('search',None)
+    available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])    
     
-    
-    if((column) and (column not in available_column)):
-        return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Column Not found','image':image_idx,'feed':feedback})
-    
-    if(column and (value)):
-        sample = pd_data[pd_data[column].astype(str).str.contains(value)]
-        
-        if(sample.empty):
-            return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Data was not found!','image':image_idx,'feed':result.get('verify',[])})
-        
-        pd_data = sample
-            
-    
-    return render(req,'Excel/owner.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'image':image_idx,'feed':result.get('verify',[])})
+    return render(req,'Excel/owner.html',{'column':available_column,'feed':result.get('verify',[])})
 
 
 def assign_view(req: HttpRequest,id) -> HttpResponse:
@@ -185,7 +159,7 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
     
     excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     
-    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"belongs":user}]})
+    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"verify.user":user}]})
 
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
@@ -198,23 +172,10 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
     available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
     
     if(req.method=='GET'):
-        column = req.GET.get('column',None)
-        value = req.GET.get('search',None)
+
         f=VerifyForm()
         
-        if((column) and (column not in available_column)):
-            return render(req,'Excel/assign.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Column Not found','image':image_idx,'form':f})
-        
-        if(column and (value)):
-            sample = pd_data[pd_data[column].astype(str).str.contains(value)]
-            
-            if(sample.empty):
-                return render(req,'Excel/assign.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'alert':'Data was not found!','image':image_idx,'form':f})
-            
-            pd_data = sample
-                
-        
-        return render(req,'Excel/assign.html',{'column':pd_data.columns.to_list(),'result':pd_data.iterrows(),'image':image_idx,'form':f})
+        return render(req,'Excel/assign.html',{'form':f,'column':available_column})
 
     elif(req.method=='POST'):
     
@@ -241,9 +202,34 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
             record.assigned_feedback = feedback
             record.save()
             
-            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'form':f,'alert':'Task Submission done'})
+            return render(req,'Excel/assign.html',{'column':available_column,'form':f,'alert':'Task Submission done'})
             
         else:
             
-            return render(req,'Excel/assign.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'form':f})
+            return render(req,'Excel/assign.html',{'column':available_column,'form':f})
         
+def search_query(pd_data:pd.DataFrame,column:str,value,available_column):
+    
+    if((column and value) and (column in available_column) and (column in pd_data.columns)):
+        sample = pd_data[pd_data[column].astype(str).str.contains(value)]
+        return sample
+    
+    return pd_data
+        
+def table_query(req: HttpRequest, id:str):
+    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+        column = req.GET.get('column',None)
+        value = req.GET.get('search',None)
+        
+        excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
+    
+        result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+        
+        pd_data = pd.read_json(StringIO(result.get('excel',{}).get('data','')))
+        image_idx:list = result.get('excel',{}).get('image',[])
+    
+        available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
+        
+        pd_data = search_query(pd_data,column,value,available_column)
+        
+        return render(req,'HTMX/table.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx})

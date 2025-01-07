@@ -186,6 +186,13 @@
             display:inline;
         }
         
+        button[type="cancel"]{
+            background-color: red;
+        }
+
+        button[type="cancel"]:hover{
+            background-color: rgb(155, 0, 0);
+        }
 
     </style>
 </head>
@@ -200,12 +207,11 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form action="{{request.PATH}}" method="get">
+            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit">
                 <label for="column">Column: </label>
                 <select name="column" id="column">
                     {% for i in column %}
                         <option value="{{ i }}"> {{ i }}</option>
-
                     {% endfor %}
                 </select>
 
@@ -214,6 +220,7 @@
                 <input type="search" name="search" id="search" value="{{request.GET.search}}">
 
                 <button type="submit"> Search </button>
+                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
 
             </form>
 
@@ -221,33 +228,9 @@
 
 
         <div class="tableView">
-            <div class="dont-ask-why-this"></div>
+            <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th><p>Index</p></th>
-                        {% for i in column %}
-                            <th><p>{{i}}</p></th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-
-                <tbody >
-                    {% for idx,i in result %}
-                        <tr>
-                            <td><p>{{idx|addOne}}</p></td>
-                            {% for j,k in i.values|enum %}
-
-                                {% if j|in:image %}
-                                    <td><{{k|img}}></td>
-                                {% else %}
-                                    <td><p>{{k|str}}</p></td>
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
+            <table id="display-table">
 
             </table>
 
@@ -285,7 +268,9 @@
 </body>
 <script>
 
-    document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
+    function dontAskWhy(){
+        document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
+    }
 
     {% if request.GET.column %}
         document.getElementById("column").value = "{{request.GET.column}}";
@@ -299,5 +284,6 @@
     {% endif %}
 
 </script>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 
 </html>

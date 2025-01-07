@@ -1,6 +1,12 @@
 from django import template
 from Excel.templatetags.bad_image import bad_image
+from typing import NamedTuple
 
+class Image(NamedTuple):
+    img:str
+    width:int
+    height:int
+    
 register = template.Library()
 
 @register.filter(name='getID')
@@ -28,21 +34,22 @@ def enum(obj) -> tuple[list[int], list]:
     return enumerate(obj)
 
 @register.filter(name='img')
-def image(obj) -> str:
+def image(obj) -> Image:
     raw_img = obj.split(':')
     
     default_height = 100
     
-    if(len(raw_img)==3):
+        
+    try:
         width, height, img = raw_img
 
         width = int((int(width)/int(height))*default_height)
         height = default_height
-    else:
+    except:
         width, height = 100,100
         img = bad_image
         
-    return f"img src=data:image/jpeg;base64,{img} width={width} height={height}"
+    return Image(f"data:image/jpeg;base64,{img}",width,height)
         
 
 @register.filter(name='in')

@@ -53,7 +53,6 @@
             position: sticky;
             top:0;
             background-color: white;
-            z-index: 10;
             margin-bottom: -5px;
         }
 
@@ -186,6 +185,14 @@
             display:inline;
         }
 
+        button[type="cancel"]{
+            background-color: red;
+        }
+
+        button[type="cancel"]:hover{
+            background-color: rgb(155, 0, 0);
+        }
+
     </style>
 </head>
 
@@ -199,12 +206,11 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form action="{{request.PATH}}" method="get">
+            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit" hx-trigger="load">
                 <label for="column">Column: </label>
                 <select name="column" id="column">
                     {% for i in column %}
                         <option value="{{ i }}"> {{ i }}</option>
-
                     {% endfor %}
                 </select>
 
@@ -213,6 +219,7 @@
                 <input type="search" name="search" id="search" value="{{request.GET.search}}">
 
                 <button type="submit"> Search </button>
+                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
 
             </form>
 
@@ -220,65 +227,13 @@
 
 
         <div class="tableView">
-            <div class="dont-ask-why-this"></div>
+            <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th><p>Index</p></th>
-                        {% for i in column %}
-                            <th><p>{{i}}</p></th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-
-                <tbody >
-                    {% for idx,i in result %}
-                        <tr>
-                            <td><p>{{idx|addOne}}</p></td>
-                            {% for j,k in i.values|enum %}
-
-                                {% if j|in:image %}
-                                    <td><{{k|img}}></td>
-
-                                {% else %}
-                                    <td><p>{{k|str}}</p></td>
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
+            <table id="display-table">
 
             </table>
 
         </div>
-
-        <div class="feedback">
-            <h2>Feedback from Other:</h2>
-            <ul>
-                {% for i in other %}
-                    <li>
-                        <h4 class="user">Username: {{i.user}}</h4>
-    
-                        {% if i.status is None %}
-                            <h4 class="user">Status: <p id="unchecked">Not Checked</p></h4>
-                        {% elif i.status is True %}
-                            <h4 class="user">Status: <p id="verify">Verified</p></h4>
-                        {% else %}
-                            <h4 class="user">Status: <p id="reject">Rejected</p></h4>
-                        {% endif %}
-    
-                        {% if i.feedback %}
-                            <h4 class="user">Feedback: <p id='feed-text'>{{i.feedback}}</p></h4>
-                        {% endif %}    
-                    </li>
-                {% empty %}
-                    <h3 class="user">No user assigned</h3>
-                {% endfor %}
-            </ul>
-            
-        </div>
-
 
         <div class="feedback">
             <h2>Feedback:</h2>
@@ -311,12 +266,9 @@
 </body>
 <script>
 
-    document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
-
-    {% if request.GET.column %}
-        document.getElementById("column").value = "{{request.GET.column}}";
-    {% endif %}
-
+    function dontAskWhy(){
+        document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
+    }
 
     {% if alert %}
         alert("{{ alert }}");

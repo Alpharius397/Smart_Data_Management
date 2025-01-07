@@ -1,0 +1,30 @@
+{% load template %}
+
+<table id="display-table">
+    <thead>
+        <tr>
+            {% for i in column %}
+                <th><p>{{i}}</p></th>
+            {% endfor %}
+        </tr>
+    </thead>
+
+    <tbody >
+        {% for _,i in result %}
+            <tr>
+                {% for j,k in i.values|enum %}
+
+                    {% if j|in:image %}
+                        {% with image=k|img%}
+                        <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
+                        {% endwith %}
+
+                    {% else %}
+                        <td><p>{{k|str}}</p></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
