@@ -39,7 +39,6 @@ def image(obj) -> Image:
     
     default_height = 100
     
-        
     try:
         width, height, img = raw_img
 
@@ -55,3 +54,30 @@ def image(obj) -> Image:
 @register.filter(name='in')
 def in_check(obj,vector):
     return bool(obj in vector)
+
+@register.filter(name='index')
+def index(vector,index):
+    return vector[index]
+
+@register.filter(name='index_str')
+def index(vector,index):
+    print(vector,index)
+    return vector.get(str(index),None)
+
+@register.filter(name='full_img')
+def full_image(obj):
+    raw_img = obj.split(':')
+    
+    try:
+        width, height, img = raw_img
+    except:
+        width, height = 100,100
+        img = bad_image
+        
+    return Image(f"data:image/jpeg;base64,{img}",width,height)
+
+@register.filter(name='get_last')
+def last_path(obj):
+    path = obj.split('/')
+    
+    return '/'.join(path[:-2])

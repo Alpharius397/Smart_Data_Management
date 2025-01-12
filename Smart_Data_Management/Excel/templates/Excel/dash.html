@@ -183,22 +183,7 @@
             </div>
             <div class="task-info" id="up_{{forloop.counter}}">
                 <ol>
-                {% for j in i.verify|all:'user' %}
-                    <li>
-                        {{ j.user  }}
-                        {% if j.status is None  %}
-                            <i class="fa-solid fa-minus" id="uncheck"></i>
-                        {% elif j.status is True %}
-                            <i class="fa-solid fa-check" id="verify"></i>
 
-                        {% elif j.status is False %}
-                            <i class="fa-solid fa-xmark" id="reject"></i>
-                            
-                        {% endif %}
-                    </li>
-                {% empty %}
-                    <h3>No one Assigned</h3>
-                {% endfor %}
 
                 </ol>
                 <a href="{% url 'Excel:owner_view' i|getID:'_id' %}">View Data</a>

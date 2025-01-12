@@ -10,7 +10,9 @@ urlpatterns = [
  	path('upload/',upload_screen,name='upload'),
  	path('view/belongs/<str:id>/',owner_view,name='owner_view'),
  	path('view/assign/<str:id>/',assign_view,name='assign_view'),
-	re_path(r'^view/(assign|belongs)/(?P<id>\w+)/(?P<index>\d+)/$',table_query), # a single view page for final decision
+	re_path(r'^view/(assign|belongs)/(?P<id>\w+)/(?P<index>\d+)/$',verify_page), # a single view page for final decision
+	re_path(r'^view/(assign|belongs)/(?P<id>\w+)/(?P<index>\d+)/search/$',single_query), # a single view page for final decision
+ 
 	re_path(r'^view/(assign|belongs)/(?P<id>\w+)/search/$',table_query),
 ]
 

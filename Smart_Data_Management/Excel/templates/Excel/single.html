@@ -46,6 +46,7 @@
             overflow-x: scroll;
             max-height: 600px;
             background-color: white;
+
         }
 
         .dont-ask-why-this{
@@ -61,13 +62,14 @@
             border: 1px solid rgb(0, 0, 0,0.4);
             padding: 10px;
             background-color: white;
+            width: 50rem;
         }
 
         table {
             text-align: center;
             border-collapse: separate;
             border-spacing: 0;
-            margin: 10px;
+            margin: 10px auto;
             margin-top: 0px;
         }
 
@@ -193,29 +195,12 @@
             background-color: rgb(155, 0, 0);
         }
 
-        .verify-sing{
-            padding: 10px;
-            color: white;
-        }
-
-        #correct{
-            background-color: green;
-        }
-
-        #wrong{
-            background-color: red;
-        }
-
-        #none{
-            background-color: grey;
-        }
-
     </style>
 </head>
 
 <body>
     <header>
-        <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
+        <a href="{% url 'Excel:assign_view' id=id %}"><button class="user-log">Back To Table View</button></a>
         <h1>Task Dashboard</h1>
     </header>
 
@@ -230,11 +215,6 @@
                         <option value="{{ i }}"> {{ i }}</option>
                     {% endfor %}
                 </select>
-
-                <label for="search">Containing: </label>
-
-                <input type="search" name="search" id="search" value="{{request.GET.search}}">
-
                 <button type="submit"> Search </button>
                 <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
 
@@ -242,21 +222,25 @@
 
         </div>
 
-
         <div class="tableView">
             <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>
-
+            
             <table id="display-table">
-
+            
             </table>
 
+        
         </div>
+
+        
+
+    
 
         <div class="feedback">
             <h2>Feedback:</h2>
             <form action="{{request.PATH}}" method="POST">
                 {% csrf_token %}
-    
+                
                 {% for field in form %}
                     <div class="form-group">
                         <label for='{{ field.name }}'>{{ field.label }}: </label>

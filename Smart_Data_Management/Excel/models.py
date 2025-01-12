@@ -44,9 +44,9 @@ class MongoConnection:
 
 class MongoTemplate:
         
-    def __init__(self, file_name:str ,data:dict[str,Any], belongs:str, image_idx:list[int] = []) -> None:
+    def __init__(self, file_name:str ,data:dict[str,Any], belongs:str, verify:list[bool], feedback_idx:list[str], image_idx:list[int] = []) -> None:
         
-        self.excel = {'data':data,'name':file_name,'image':image_idx}
+        self.excel = {'data':data,'name':file_name,'image':image_idx,'verify':verify,'feedback':feedback_idx}
         self.belongs = belongs
         self.verify = []
 

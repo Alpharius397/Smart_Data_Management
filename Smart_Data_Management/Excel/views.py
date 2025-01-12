@@ -43,15 +43,16 @@ def upload_screen(req:HttpRequest):
         
             with excel_file.open() as file:
                 image_idx, pd_data = image_load(file.read())
-                pd_data['Verify'] = False
-                
+                rows, _ = pd_data.shape
                 pd_data = pd_data.to_json()
             
             if(pd_data is None):
                 return mongo_setup_failed(req,form=f)
-                
-            template = MongoTemplate(file_name,pd_data,req.user.username,image_idx).get_json()
             
+            verify_idx = {str(i):None for i in range(rows)}
+            feedback_idx = {str(i):"" for i in range(rows)}
+            
+            template = MongoTemplate(file_name,json.loads(pd_data),req.user.username,verify_idx,feedback_idx,image_idx).get_json()
             res = excel.insert_one(template)
             
             verify = VerificationTable(mongo_id=res.inserted_id,belongs=req.user.uploader)
@@ -68,12 +69,12 @@ def upload_screen(req:HttpRequest):
     return render(req,'Excel/index.html',{'form':f})
 
 
-def image_load(data: bytes) -> tuple[list[int], pd.DataFrame]:
+def image_load(data: bytes) -> tuple[list[str], pd.DataFrame]:
     
     
     pd_data:pd.DataFrame = None
     op_data:op.Workbook = None
-    converted:set[int] = set()
+    converted:set[str] = set()
     
     try:
         pd_data = pd.read_excel(BytesIO(data))
@@ -93,10 +94,10 @@ def image_load(data: bytes) -> tuple[list[int], pd.DataFrame]:
         for j, col in enumerate(row):
             if((i+1,j) in image):
                 
-                if(j not in converted):
+                if(pd_data.columns[j] not in converted):
                     pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)
                     
-                    converted.add(j)
+                    converted.add(pd_data.columns[j])
                     
                 pd_data.iat[i,j] = image[(i+1,j)]
                     
@@ -141,12 +142,12 @@ def owner_view(req: HttpRequest,id) -> HttpResponse:
 
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
-    
-    pd_data = pd.read_json(StringIO(result.get('excel',{}).get('data','')))
+
+    pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
-    
+
     # removing image column cause duh
-    available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])    
+    available_column = set(pd_data.columns.to_list()) - set([ i for i in image_idx])    
     
     return render(req,'Excel/owner.html',{'column':available_column,'feed':result.get('verify',[])})
 
@@ -169,7 +170,7 @@ def assign_view(req: HttpRequest,id) -> HttpResponse:
     feedback = result.get('verify',[])
     
     # removing image column cause duh
-    available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
+    available_column = set(pd_data.columns.to_list()) - set([ i for i in image_idx])
     
     if(req.method=='GET'):
 
@@ -217,7 +218,7 @@ def search_query(pd_data:pd.DataFrame,column:str,value,available_column):
     return pd_data
         
 def table_query(req: HttpRequest, id:str):
-    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
         column = req.GET.get('column',None)
         value = req.GET.get('search',None)
         
@@ -225,11 +226,73 @@ def table_query(req: HttpRequest, id:str):
     
         result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
         
-        pd_data = pd.read_json(StringIO(result.get('excel',{}).get('data','')))
+        pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
         image_idx:list = result.get('excel',{}).get('image',[])
-    
-        available_column = set(pd_data.columns.to_list()) - set([ pd_data.columns[i] for i in image_idx])
+        verify_idx:list = result.get('excel',{}).get('verify',{})
+        
+        available_column = set(pd_data.columns.to_list()) - set([ i for i in image_idx])
+        print(verify_idx)
         
         pd_data = search_query(pd_data,column,value,available_column)
         
-        return render(req,'HTMX/table.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx})
+        return render(req,'HTMX/table.html',{'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx})
+    
+    
+def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
+    if(not (req.user.is_authenticated)):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+    
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
+
+    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+    
+    pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
+    image_idx:list = result.get('excel',{}).get('image',[])
+    verify_idx = result.get('excel',{}).get('verify',{})
+    feed_idx = result.get('excel',{}).get('feedback',{})
+    
+    if(int(index)>pd_data.shape[0]):
+        return redirect(reverse('Excel:assign_view',args={'id':id}) + '?alert=Index not found!')
+    
+    data = pd_data.iloc[int(index)].to_dict()
+    
+    if(req.method=='POST'):
+        f = VerifyForm(req.POST)
+        
+        if(f.is_valid()):
+            status, feed = f.cleaned_data.get("status"), f.cleaned_data.get("feedback") 
+            
+            if(status=='True'):
+                status = True
+            elif(status=='False'):
+                status = False
+            else:
+                status = None
+                
+            verify_idx[index] = status
+            feed_idx[index] = feed
+            
+            excel.update_one({"_id":ObjectId(id)},{"$set":{"excel.verify":verify_idx,'excel.feedback':feed_idx}})
+    
+    return render(req,'Excel/single.html',context={'id':id,'data':data,'image':image_idx,'column':pd_data.columns,'form':VerifyForm(initial={'status':verify_idx[index],'feed':feed_idx[index]})})
+
+def single_query(req: HttpRequest, id:str, index:int):
+    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
+        column = req.GET.get('column',None)
+            
+        excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
+
+        result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+
+        pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
+        image_idx:list = result.get('excel',{}).get('image',[])
+
+        if(int(index)>pd_data.shape[0]):
+            return redirect(reverse('Excel:assign_view',args={'id':id}) + '?alert=Index not found!')
+
+        if(column):
+            data = pd_data.iloc[int(index)][[column]].to_dict()
+        else:
+            data = pd_data.iloc[int(index)].to_dict()
+            
+        return render(req,'HTMX/single_table.html',context={'id':id,'data':data,'image':image_idx,'column':pd_data.columns})
