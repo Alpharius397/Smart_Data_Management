@@ -61,14 +61,16 @@ class VerificationTable(models.Model):
     mongo_id = models.CharField(max_length=24,null=False,verbose_name="Object ID",primary_key=True)
     belongs = models.ForeignKey(to=Uploader,null=False,verbose_name="Belongs to",on_delete=models.CASCADE,related_name="belong")
     assigned = models.ForeignKey(to=Manager,null=True,verbose_name="Assigned to",on_delete=models.SET_NULL,related_name="assign")
-    assigned_status = models.BooleanField(max_length=12,verbose_name="Assigned status",null=True,blank=True,default=None,choices=CHOICE)
-    assigned_feedback = models.CharField(max_length=255,verbose_name="Assigned Feedback",null=True,blank=True,default='')
     
     class Meta:
         verbose_name = "Verification Record"
         verbose_name_plural = "Verification Records"
     
     def clean_assigned(self):
+        
+        if(self.assigned is None):
+            return self.assigned
+        
         belong = self.belongs.user.username
         assigned = self.assigned.user.username
         
@@ -107,15 +109,9 @@ class VerificationTable(models.Model):
         
     def mongo_insert(self, mongo_conn:MongoConnection = None):
             
-        if(self.assigned is None):
-            self.assigned_feedback = ''
-            self.assigned_status = None
-            
         verify:list[Manager] = [self.assigned]
-        verify_status:list[bool|None] = [self.assigned_status]
-        verify_feed:list[str|None] = [self.assigned_feedback]
-        
-        update = [{'user':i.user.username if (i is not None) else None,'status':j,'feedback':k} for i,j,k in zip(verify,verify_status,verify_feed)]
+                
+        update = [{'user':i.user.username} for i in verify if(i is not None)]
         
         mongo_conn = MongoConnection(settings.MONGO_URL)
         excel = mongo_conn.connect(settings.MONGO_CRED)

@@ -200,7 +200,7 @@
 
 <body>
     <header>
-        <a href="{% url 'Excel:assign_view' id=id %}"><button class="user-log">Back To Table View</button></a>
+        <a href="{% url 'Excel:view' id=id %}"><button class="user-log">Back To Table View</button></a>
         <h1>Task Dashboard</h1>
     </header>
 
@@ -232,35 +232,8 @@
         
         </div>
 
-        
-
-    
-
-        <div class="feedback">
-            <h2>Feedback:</h2>
-            <form action="{{request.PATH}}" method="POST">
-                {% csrf_token %}
-                
-                {% for field in form %}
-                    <div class="form-group">
-                        <label for='{{ field.name }}'>{{ field.label }}: </label>
-                        {{ field }}
-    
-                        {% if field.errors %}
-                            {{ field.errors }}
-    
-                        {% else %}
-                            <p class="help_text">{{ field.help_text }} </p>
-                        
-                        {% endif %}
-                        
-                    </div>
-                {% endfor %}
-                <button type="submit" class="upload-button">Mark as Done</button>
-            </form>
-            
-        </div>
-
+        {% block uploader %}{% endblock %}
+        {% block manager %}{% endblock %}
 
     </div>
 

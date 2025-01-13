@@ -151,4 +151,4 @@ MEDIA_URL = '/'  # URL prefix for accessing media files
 LOGIN_URL = 'Login:login'
 MONGO_URL = "mongodb://127.0.0.1:27017/"
 MONGO_CRED = MongoDB("smart","excel")
-
+KEY = b"123456789123456789123456"

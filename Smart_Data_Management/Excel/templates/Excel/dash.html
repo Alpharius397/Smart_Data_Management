@@ -182,11 +182,14 @@
                 <button class="drop-down down" id="up_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="up_{{forloop.counter}}"></i></button>
             </div>
             <div class="task-info" id="up_{{forloop.counter}}">
-                <ol>
-
-
-                </ol>
-                <a href="{% url 'Excel:owner_view' i|getID:'_id' %}">View Data</a>
+                {% for j in i.verify %}
+                    <li>
+                        {{ j.user  }}
+                    </li>
+                {% empty %}
+                    <h4>No one Assigned Yet</h4>
+                {% endfor %}
+                <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
             </div>
 
             {% empty %}
@@ -210,23 +213,15 @@
                 <ol>
                 {% for j in i.verify %}
                     <li>
-                        {{ j.user  }}
-                        {% if j.status is None  %}
-                            <i class="fa-solid fa-minus" id="uncheck"></i>
-                        {% elif j.status is True %}
-                            <i class="fa-solid fa-check" id="verify"></i>
-
-                        {% elif j.status is False %}
-                            <i class="fa-solid fa-xmark" id="reject"></i>
-                            
-                        {% endif %}
+                        {{ j.user }}
                     </li>
                 {% empty %}
                     <h3>No one Assigned</h3>
                 {% endfor %}
 
                 </ol>
-                <a href="{% url 'Excel:assign_view' i|getID:'_id' %}">View Data</a>
+                <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
+
             </div>
 
             {% empty %}

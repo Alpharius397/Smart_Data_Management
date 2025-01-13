@@ -53,14 +53,8 @@
             position: sticky;
             top:0;
             background-color: white;
+            z-index: 10;
             margin-bottom: -5px;
-        }
-
-        table th,td{
-            text-align: center;
-            border: 1px solid rgb(0, 0, 0,0.4);
-            padding: 10px;
-            background-color: white;
         }
 
         table {
@@ -70,6 +64,15 @@
             margin: 10px;
             margin-top: 0px;
         }
+        
+        table th,table td{
+            text-align: center;
+            border: 1px solid rgb(0, 0, 0,0.4);
+            padding: 10px;
+            background-color: white;
+            z-index: 10;
+        }
+
 
         header .user-log{
             position: absolute;
@@ -101,7 +104,8 @@
             border-radius: 20px;
             padding:5px;
             padding-left: 0.5rem;
-            padding-right: 1rem;
+            padding-right: 1.5rem;
+            width: max-content;
         }
 
         #search{
@@ -184,7 +188,7 @@
             font-style: italic;
             display:inline;
         }
-
+        
         button[type="cancel"]{
             background-color: red;
         }
@@ -194,20 +198,45 @@
         }
 
         .verify-sing{
-            padding: 10px;
-            color: white;
+            position:sticky;
+            right: 70px;
+            z-index: 10;
         }
 
         #correct{
+            padding: 10px;
+            color: white;
             background-color: green;
         }
 
         #wrong{
+            padding: 10px;
+            color: white;
             background-color: red;
         }
 
         #none{
+            padding: 10px;
+            color: white;
             background-color: grey;
+        }
+
+        .next-button{
+            position: sticky;
+            right: 0px;
+            z-index: 10;
+        }
+
+        td.next-button{
+            z-index: 0;
+        }
+
+        table th{
+            width: 500px;
+        }
+
+        td.verify-sing{
+            z-index: 0;
         }
 
     </style>
@@ -251,32 +280,6 @@
             </table>
 
         </div>
-
-        <div class="feedback">
-            <h2>Feedback:</h2>
-            <form action="{{request.PATH}}" method="POST">
-                {% csrf_token %}
-    
-                {% for field in form %}
-                    <div class="form-group">
-                        <label for='{{ field.name }}'>{{ field.label }}: </label>
-                        {{ field }}
-    
-                        {% if field.errors %}
-                            {{ field.errors }}
-    
-                        {% else %}
-                            <p class="help_text">{{ field.help_text }} </p>
-                        
-                        {% endif %}
-                        
-                    </div>
-                {% endfor %}
-                <button type="submit" class="upload-button">Mark as Done</button>
-            </form>
-            
-        </div>
-
 
     </div>
 

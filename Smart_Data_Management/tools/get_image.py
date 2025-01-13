@@ -23,7 +23,7 @@ def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[i
 def compress_image(img_data:BytesIO):
     image = Image.open(img_data)
     width, height = image.width, image.height
-    compressed = image.resize((width//REDUCE_FACTOR,height//REDUCE_FACTOR))
+    compressed = image.reduce(REDUCE_FACTOR)
     
     image_data = BytesIO()
     

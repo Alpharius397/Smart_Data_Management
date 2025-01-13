@@ -1,0 +1,35 @@
+{% extends 'Excel/single.html' %}
+
+{% block manager %}
+    <div class="feedback">
+        <h2>Feedback:</h2>
+        <form action="{{request.PATH}}" method="POST">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="form-group">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+
+                    {% if field.errors %}
+                        {{ field.errors }}
+
+                    {% else %}
+                        <p class="help_text">{{ field.help_text }} </p>
+                    
+                    {% endif %}
+                    
+                </div>
+            {% endfor %}
+            <button type="submit" class="upload-button">Mark as Done</button>
+        </form>
+    </div>
+
+    <div class="feedback">
+        <h2>Feedback:</h2>
+        <form action="{{request.PATH}}compress/" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="upload-button">Get Encrypted</button>
+        </form>
+    </div>
+{% endblock %}

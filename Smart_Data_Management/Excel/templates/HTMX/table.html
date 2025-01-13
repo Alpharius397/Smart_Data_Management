@@ -16,7 +16,7 @@
             <tr>
                 {% for j,k in i.values|enum %}
 
-                    {% if j|in:image %}
+                    {% if column|index:j|in:image %}
                         {% with image=k|img %}
                         <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
                         {% endwith %}

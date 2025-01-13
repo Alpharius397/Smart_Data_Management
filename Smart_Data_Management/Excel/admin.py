@@ -22,37 +22,6 @@ class BelongToFilter(admin.SimpleListFilter):
         
         return queryset.filter(belongs__user__username=self.value())
     
-class VerifyFilter(admin.SimpleListFilter):
-    title = "Verification Status"
-    
-    parameter_name = 'is_verified'
-    
-    def lookups(self, request, model_admin):
-        return [("Verified","Verified"),("Rejected","Rejected"),("Ongoing","Ongoing")]
-    
-    def queryset(self, request, queryset):
-        
-        connection = MongoConnection(settings.MONGO_URL)
-        
-        excel = connection.connect(settings.MONGO_CRED)
-        
-        match(self.value()):
-            case "Verified":
-                all_verify = [str(i["_id"]) for i in excel.find({"verify":{"$not":{"$elemMatch":{"status":{"$ne":True}}}}},{"_id":1}).to_list()]
-                return queryset.filter(mongo_id__in=all_verify)   
-            
-            case "Rejected":
-                all_reject = [ str(i["_id"]) for i in excel.find({"verify":{"$not":{"$elemMatch":{"status":None}},"$elemMatch":{"status":False}}},{"_id":1}).to_list()]
-                return queryset.filter(mongo_id__in=all_reject)
-            
-            case "Ongoing":
-                the_fallen = [ str(i["_id"]) for i in excel.find({"verify":{"$elemMatch":{"status":{"$eq":None}}}},{"_id":1}).to_list()]
-                return queryset.filter(mongo_id__in=the_fallen)
-            
-            case None:
-                return queryset
-
-
 class AssignedFilter(admin.SimpleListFilter):
     title = "Assigned"
     
@@ -109,8 +78,8 @@ class UserAssigned(admin.SimpleListFilter):
 
 @admin.register(VerificationTable)
 class VerificationFilter(admin.ModelAdmin):
-    list_display = ('mongo_id','belongs','assigned','assigned_status')
-    list_filter = (MongoLookup,BelongToFilter,AssignedFilter,VerifyFilter,UserAssigned)
+    list_display = ('mongo_id','belongs','assigned')
+    list_filter = (MongoLookup,BelongToFilter,AssignedFilter,UserAssigned)
     
     search_fields = ('mongo_id','belongs__username')
     search_help_text = "Search by MongoID or Uploader's Username"
