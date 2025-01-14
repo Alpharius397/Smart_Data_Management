@@ -199,6 +199,9 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
 
     result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
     
+    if(result is None):
+        return redirect(reverse('Excel:view',kwargs={'id':id}))
+    
     pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
     manager:str = result.get('verify',[])
@@ -206,10 +209,10 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     feed_idx = result.get('excel',{}).get('feedback',{})
     
     if(int(index)>pd_data.shape[0]):
-        return redirect(reverse('Excel:assign_view',args={'id':id}) + '?alert=Index not found!')
+        return redirect(reverse('Excel:view',args={'id':id}) + '?alert=Index not found!')
     
     data = pd_data.iloc[int(index)].to_dict()
-    context = {'id':id,'data':data,'image':image_idx,'column':pd_data.columns}
+    context = {'id':id,'data':data,'image':image_idx,'column':pd_data.columns,**get_post(req.user)}
     
     if(req.method=='POST'):
         f = VerifyForm(req.POST)
@@ -302,7 +305,6 @@ def quick_query(req: HttpRequest, id:str):
         column = req.GET.get('column',None)
         search = req.GET.get('search','')
         
-            
         excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
 
         result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
@@ -315,11 +317,8 @@ def quick_query(req: HttpRequest, id:str):
             return render(req,'HTMX/suggests.html',context=context)
         
         pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
-        
-        
-        print(pd_data)
-        
-        context = {'option':[i for i in list(set(pd_data))[:5]]}
+                
+        context.update({'option':[i for i in sorted(set(pd_data))[:5]]})
         
         return render(req,'HTMX/suggests.html',context=context)
         

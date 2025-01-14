@@ -267,7 +267,8 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit">
+            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit,load" hx-on::after-request="dontAskWhy();">
+                
                 <label for="column">Column: </label>
                 <select name="column" id="column">
                     {% for i in column %}
@@ -284,7 +285,7 @@
                 </datalist>
 
                 <button type="submit"> Search </button>
-                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
+                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click" hx-on::after-request="dontAskWhy();"> Cancel Search </button>
 
             </form>
 
@@ -292,7 +293,7 @@
 
 
         <div class="tableView">
-            <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>
+            <div class="dont-ask-why-this"></div>
                 <table id="display-table">
 
                 </table>
@@ -311,11 +312,6 @@
     function get_select(){
         return document.getElementById('column').value;
     }
-
-    const column = document.getElementById('column')
-    column.addEventListener('change',()=>{
-        column.setAttribute('hx-vals',`{'column': '${get_select()}'}`);
-    })
 
     {% if alert %}
         alert("{{ alert }}");
