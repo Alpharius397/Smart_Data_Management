@@ -18,7 +18,7 @@ from Excel.templatetags.bad_image import bad_image
 from tools.get_image import compress_image
 from tools.encrypt import encrypt_data,decrypt_data
 from base64 import b64encode, b64decode
-
+from User.models import get_post
 
 def mongo_setup_failed(req, **kwargs):
     context = {'alert':'Excel Sheet is empty or MongoDB connection failed'}
@@ -95,12 +95,9 @@ def image_load(data: bytes) -> tuple[list[str], pd.DataFrame]:
     
     for i, row in pd_data.iterrows():
         for j, col in enumerate(row):
+            pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)
             if((i+1,j) in image):
-                
-                if(pd_data.columns[j] not in converted):
-                    pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)
-                    
-                    converted.add(pd_data.columns[j])
+                converted.add(pd_data.columns[j])
                     
                 pd_data.iat[i,j] = image[(i+1,j)]
                     
@@ -281,10 +278,14 @@ def compress_data(req: HttpRequest, id:str, index:int):
         
         data[i] = img
         
-    
+    send_data = {'header':{'user':req.user.username,**get_post(req.user),'data':data}}
+        
+    print(send_data)
     with open('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Excel/asd.txt','w') as f:
-        f.write(encrypt_data(settings.KEY,data))
-    print(decrypt_data(settings.KEY,encrypt_data(settings.KEY,data)))
+        f.write(encrypt_data(settings.KEY,send_data))
+        
+    print(decrypt_data(settings.KEY,encrypt_data(settings.KEY,send_data)))    
+    
     return redirect(reverse('Excel:single',kwargs={'id':id,'index':index}))
     
             

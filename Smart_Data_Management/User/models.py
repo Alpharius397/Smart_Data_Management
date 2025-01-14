@@ -33,6 +33,25 @@ def is_uploader(user:User) -> bool:
         return True
     except:
         return False
+    
+def get_post(user: User) -> dict[str,str]:
+    uni = None
+    insti = None
+    branch = None
+    
+    if(is_manager(user)):
+        user:Manager = user.manager
+    elif(is_uploader(user)):
+        user:Uploader = user.uploader
+    else:
+        return {'university':uni,'institute':insti,'branch':branch}
+    
+    branch = user.belongs
+    insti = branch.institute
+    uni = insti.university
+    
+    return {'university':uni.name,'institute':insti.name,'branch':branch.name}
+    
 
 """
 class _UserManager(BaseUserManager):
