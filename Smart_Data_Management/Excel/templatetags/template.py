@@ -61,7 +61,6 @@ def index(vector,index):
 
 @register.filter(name='index_str')
 def index(vector,index):
-    print(vector,index)
     return vector.get(str(index),None)
 
 @register.filter(name='full_img')

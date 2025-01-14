@@ -7,7 +7,7 @@ from typing import Any
 from base64 import b64encode, b64decode
 from io import BytesIO
 
-REDUCE_FACTOR:int = 3
+REDUCE_FACTOR:int = 4
 
 def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[int,int],Any]:
     images = {}
@@ -27,7 +27,7 @@ def compress_image(img_data:BytesIO):
     
     image_data = BytesIO()
     
-    compressed.save(image_data,format='jpeg',quality=70)
+    compressed.save(image_data,format='jpeg',quality=85)
     
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 

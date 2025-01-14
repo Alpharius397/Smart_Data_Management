@@ -57,12 +57,22 @@
             margin-bottom: -5px;
         }
 
+        .dont-ask-why-this-either{
+            display: block;
+            width: 20px;
+            position: sticky;
+            right:0;
+            background-color: white;
+            z-index: 10;
+        }
+
         table {
             text-align: center;
             border-collapse: separate;
             border-spacing: 0;
             margin: 10px;
             margin-top: 0px;
+            display: inline;
         }
         
         table th,table td{
@@ -199,7 +209,7 @@
 
         .verify-sing{
             position:sticky;
-            right: 70px;
+            right: 73px;
             z-index: 10;
         }
 
@@ -239,20 +249,25 @@
             z-index: 0;
         }
 
+        .tab-sub{
+            display: inline-flex;
+        }
+
+
     </style>
 </head>
 
 <body>
     <header>
         <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
-        <h1>Task Dashboard</h1>
+        <h1>Table View</h1>
     </header>
 
     <div class="container">
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit" hx-trigger="load">
+            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit">
                 <label for="column">Column: </label>
                 <select name="column" id="column">
                     {% for i in column %}
@@ -262,7 +277,11 @@
 
                 <label for="search">Containing: </label>
 
-                <input type="search" name="search" id="search" value="{{request.GET.search}}">
+                <input type="search" list="suggests" autocomplete="off" name="search" id="search" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="quick_search/" hx-vals="js:{column: get_select()}" hx-trigger="load, keyup,click from:#column ">
+
+                <datalist id="suggests" autocomplete="false">
+
+                </datalist>
 
                 <button type="submit"> Search </button>
                 <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
@@ -274,11 +293,10 @@
 
         <div class="tableView">
             <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>
+                <table id="display-table">
 
-            <table id="display-table">
-
-            </table>
-
+                </table>
+            </div>
         </div>
 
     </div>
@@ -289,6 +307,15 @@
     function dontAskWhy(){
         document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
     }
+
+    function get_select(){
+        return document.getElementById('column').value;
+    }
+
+    const column = document.getElementById('column')
+    column.addEventListener('change',()=>{
+        column.setAttribute('hx-vals',`{'column': '${get_select()}'}`);
+    })
 
     {% if alert %}
         alert("{{ alert }}");

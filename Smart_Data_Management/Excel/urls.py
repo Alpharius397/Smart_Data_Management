@@ -11,6 +11,7 @@ urlpatterns = [
  	path('view/<str:id>/',data_view,name='view'),
 	path('view/<str:id>/<int:index>/',verify_page,name='single'), # a single view page for final decision
 	path('view/<str:id>/<int:index>/search/',single_query), # a single view page for final decision
+	path('view/<str:id>/quick_search/',quick_query), # a single view page for final decision
 	path('view/<str:id>/search/',table_query),
 	path('view/<str:id>/<int:index>/compress/',compress_data)
 	

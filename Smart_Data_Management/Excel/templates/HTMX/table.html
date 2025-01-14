@@ -1,5 +1,7 @@
 {% load template %}
 
+
+
 <table id="display-table">
     <thead>
         <tr>
@@ -45,3 +47,10 @@
     </tbody>
 
 </table>
+
+
+<script>
+    {% if alert %}
+        alert("{{ alert }}");
+    {% endif %}
+</script>

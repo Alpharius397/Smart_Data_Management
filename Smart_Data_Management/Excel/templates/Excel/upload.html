@@ -7,12 +7,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
-            background-color: #f4f4f9;
+            padding: 0;
+            background-color: #f5f5f5;
         }
 
         .upload-container {
@@ -21,6 +18,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 300px;
+            margin: 50px auto;
         }
 
         .upload-container h2 {
@@ -30,6 +28,7 @@
         }
 
         .form-group {
+            margin: 10px auto;
             margin-bottom: 15px;
             margin-right: 20px;
         }
@@ -99,9 +98,47 @@
             padding-top: 5px;
         }
 
+        header .user-log{
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover{
+            background-color: #09430e;
+
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            width: 100;
+            position: relative;
+        }
+
+
     </style>
 </head>
 <body>
+    <header>
+        <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
+        <h1>Upload Screen</h1>
+    </header>
+
     <div class="upload-container">
         <h2>Upload Excel</h2>
         <form action="{% url 'Excel:upload' %}" method="POST" enctype="multipart/form-data">
@@ -126,14 +163,13 @@
         </form>
 
     </div>
-
-    <script>
-
-        {% if alert %}
-            alert("{{ alert }}");
-        {% elif request.GET.alert %}
-            alert("{{ request.GET.alert }}");
-        {% endif %}
-    </script>
 </body>
+<script>
+
+    {% if alert %}
+        alert("{{ alert }}");
+    {% elif request.GET.alert %}
+        alert("{{ request.GET.alert }}");
+    {% endif %}
+</script>
 </html>

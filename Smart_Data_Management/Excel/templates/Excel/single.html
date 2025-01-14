@@ -201,7 +201,7 @@
 <body>
     <header>
         <a href="{% url 'Excel:view' id=id %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Task Dashboard</h1>
+        <h1>Row View</h1>
     </header>
 
     <div class="container">
@@ -232,8 +232,8 @@
         
         </div>
 
-        {% block uploader %}{% endblock %}
         {% block manager %}{% endblock %}
+        {% block uploader %}{% endblock %}
 
     </div>
 
