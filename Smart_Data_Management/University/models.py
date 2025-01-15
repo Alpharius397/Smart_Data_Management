@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
-from django.db.models import CharField,CASCADE,OneToOneField,ForeignKey,Model,SET_NULL
+from django.db.models import CharField,CASCADE,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField
+from django.core.validators import MinValueValidator
 
 
 class University(Model):
@@ -34,4 +35,17 @@ class Branch(Model):
 
     def __str__(self):
         return f"{self.institute}:{self.name}"
+
+class Subjects(Model):
+    name = CharField(max_length=200,null=False,blank=False,verbose_name='Subject Name')
+    semester = IntegerField(verbose_name='Semester',validators=[MinValueValidator(1)])
+    branch = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='subject')
+    
+    class Meta:
+        verbose_name = "Subject"
+        verbose_name_plural = "Subjects"
+    
+    
+    def __str__(self):
+        return f"{self.name} - {self.semester} - {self.branch}"
 
