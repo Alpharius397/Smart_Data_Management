@@ -7,7 +7,7 @@ from typing import Any
 from base64 import b64encode, b64decode
 from io import BytesIO
 
-REDUCE_FACTOR:int = 4
+REDUCE_FACTOR:int = 3
 
 def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[int,int],Any]:
     images = {}
