@@ -1,3 +1,4 @@
+import re
 from django import template
 from Excel.templatetags.bad_image import bad_image
 from typing import NamedTuple
@@ -80,3 +81,15 @@ def last_path(obj):
     path = obj.split('/')
     
     return '/'.join(path[:-2])
+
+@register.filter(name='clean')
+def clean_text(obj):
+    sem_data = r'(.+)Sem_\d+$'
+    
+    sem:list[str] = re.findall(sem_data,obj)
+    
+    if(sem):
+        sem = sem[0]
+        return sem.strip().strip('_')
+    
+    return None

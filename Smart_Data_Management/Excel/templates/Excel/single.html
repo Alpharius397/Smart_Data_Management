@@ -49,14 +49,6 @@
 
         }
 
-        .dont-ask-why-this{
-            height: 20px;
-            position: sticky;
-            top:0;
-            background-color: white;
-            margin-bottom: -5px;
-        }
-
         table th,td{
             text-align: center;
             border: 1px solid rgb(0, 0, 0,0.4);
@@ -195,6 +187,70 @@
             background-color: rgb(155, 0, 0);
         }
 
+        .header-box {
+            border: 2px solid #0B132B;
+            padding: 40px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px;
+            background-color: #23CE6B;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .container-box {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .image-box {
+            display: inline-flex;
+            border: 1px solid #0B132B;
+            background-color: white;
+        }
+        .personal-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .personal-info p {
+            margin: 5px 0;
+        }
+        .semester-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .semester-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .semester {
+            border: 1px solid #0B132B;
+            padding: 20px;
+            margin: 10px;
+            width: 45%;
+            box-sizing: border-box;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #E8F5E9; /* Light green background */
+            max-height: 300px; /* Set a maximum height */
+            overflow-y: auto; /* Add scroll if content exceeds max height */
+        }
+        .semester h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #0B132B;
+            padding-bottom: 10px;
+            color: #13a751;
+        }
+        .semester p {
+            margin-top: 20px;
+        }
+
+
     </style>
 </head>
 
@@ -205,22 +261,6 @@
     </header>
 
     <div class="container">
-
-        <div class="searchQuery">
-            <h2>Search Columns: </h2>
-            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit" hx-trigger="load">
-                <label for="column">Column: </label>
-                <select name="column" id="column">
-                    {% for i in column %}
-                        <option value="{{ i }}"> {{ i }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit"> Search </button>
-                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click"> Cancel Search </button>
-
-            </form>
-
-        </div>
 
         <div class="tableView">
             <div class="dont-ask-why-this" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="load" hx-on::after-request="dontAskWhy();"></div>

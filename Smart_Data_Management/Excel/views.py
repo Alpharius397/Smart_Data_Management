@@ -19,6 +19,9 @@ from tools.get_image import compress_image
 from tools.encrypt import encrypt_data,decrypt_data
 from base64 import b64encode, b64decode
 from User.models import get_post
+import typing
+from PIL import Image
+import re
 
 def mongo_setup_failed(req, **kwargs):
     context = {'alert':'Excel Sheet is empty or MongoDB connection failed'}
@@ -135,12 +138,7 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
     if(not ((req.user.is_authenticated) and (is_uploader(req.user) or is_manager(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    user = req.user.username
-    
-    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
-    
-    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
-
+    result = get_data(id,req.user.username)
     if(result is None):
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
 
@@ -171,9 +169,7 @@ def table_query(req: HttpRequest, id:str):
         column = req.GET.get('column',None)
         value = req.GET.get('search',None)
         
-        excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
-    
-        result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+        result = get_data(id,req.user.username)
         
         pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
         image_idx:list = result.get('excel',{}).get('image',[])
@@ -195,9 +191,7 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     if(not (req.user.is_authenticated)):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
-
-    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+    result = get_data(id,req.user.username)
     
     if(result is None):
         return redirect(reverse('Excel:view',kwargs={'id':id}))
@@ -230,6 +224,7 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
             verify_idx[str(index)] = status
             feed_idx[str(index)] = feed
             
+            excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)    
             excel.update_one({"_id":ObjectId(id)},{"$set":{"excel.verify":verify_idx,'excel.feedback':feed_idx}})
     
     if(is_uploader(req.user)):
@@ -244,35 +239,31 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
 
 def single_query(req: HttpRequest, id:str, index:int):
     if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
-        column = req.GET.get('column',None)
             
-        excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
-
-        result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
-
+        result = get_data(id,req.user.username)
+        
         pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
         image_idx:list = result.get('excel',{}).get('image',[])
 
         if(int(index)>pd_data.shape[0]):
-            return redirect(reverse('Excel:assign_view',args={'id':id}) + '?alert=Index not found!')
+            return redirect(reverse('Excel:view',args={'id':id}) + '?alert=Index not found!')
 
-        if(column):
-            data = pd_data.iloc[int(index)][[column]].to_dict()
         else:
             data = pd_data.iloc[int(index)].to_dict()
             
-        return render(req,'HTMX/single_table.html',context={'id':id,'data':data,'image':image_idx,'column':pd_data.columns})
+        
+            
+        view = report_view(req.user.username,id,index)
+            
+        return render(req,'HTMX/report.html',context={'id':id,'data':data,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**get_post(req.user)})
 
 def compress_data(req: HttpRequest, id:str, index:int):
-    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
-
-    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
-
+    result = get_data(id,req.user.username)
     pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
 
     if(int(index)>pd_data.shape[0]):
-        return redirect(reverse('Excel:assign_view',kwargs={'id':id}) + '?alert=Index not found!')
+        return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Index not found!')
 
 
     data = pd_data.iloc[int(index)].to_dict()
@@ -305,9 +296,8 @@ def quick_query(req: HttpRequest, id:str):
         column = req.GET.get('column',None)
         search = req.GET.get('search','')
         
-        excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
 
-        result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(id)},{"$or":[{"belongs":req.user.username},{"verify.user":req.user.username}]}]})
+        result = get_data(id,req.user.username)
 
         pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
         
@@ -322,5 +312,48 @@ def quick_query(req: HttpRequest, id:str):
         
         return render(req,'HTMX/suggests.html',context=context)
         
+
+
+def get_data(mongo_id:str, username:str) -> dict[str,Any | dict | list]:
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
+
+    result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(mongo_id)},{"$or":[{"belongs":username},{"verify.user":username}]}]})
+
+    return result
+
+class ReportStructure(typing.NamedTuple):
+    profile_img:Image
+    personal_info:dict[str,str]
+    sem_data:dict[dict[str,str]]
+
+def report_view(username:str, id:str, index:int) -> ReportStructure:
+    
+    profile_img = r'^Profile_Image$'
+    sem_data = r'.+Sem_(\d+)$'
+    other_data = """ Anything not part above is personal """
+    
+    result:dict[str,Any | dict | list] = get_data(id,username)
+    
+    pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
+    
+    image_idx:list = result.get('excel',{}).get('image',[])
+    single_data = pd_data.iloc[index].to_dict()
+    columns = single_data.keys()
+    
+    profile_col = [i for i in columns if re.match(profile_img,i)]
+    sem_col = [i for i in columns if re.match(sem_data,i)]
+    personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
+    
+    sem_dict:dict[str,list[str]] = {}
+    
+    profile_col = profile_col[0] if profile_col else None
+    
+    for i in sem_col:
+        sem:list[str] = re.findall(sem_data,i)
         
-            
+        if(sem):
+            sem = sem[0]
+            if(sem not in sem_dict): sem_dict[sem] = list()
+            sem_dict[sem].append(i)
+
+    return ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
