@@ -1,6 +1,6 @@
 {% extends 'Excel/dash.html' %}
 {% load template %}
-<h1>Jello</h1>
+
 {% block manager %}
     <div class="container">
         <h2>Assigned Tasks</h2>
@@ -31,4 +31,12 @@
             {% endfor %}
         </div>
     </div>
+
+{% endblock %}
+
+
+{% block manager_button%}
+
+    <a href="{% url 'Excel:read' %}"><button class="add-task">Read Card</button></a>
+
 {% endblock %}

@@ -22,6 +22,7 @@ from User.models import get_post
 import typing
 from PIL import Image
 import re
+from datetime import datetime
 
 def mongo_setup_failed(req, **kwargs):
     context = {'alert':'Excel Sheet is empty or MongoDB connection failed'}
@@ -58,8 +59,9 @@ def upload_screen(req:HttpRequest):
             
             verify_idx = {str(i):None for i in range(rows)}
             feedback_idx = {str(i):"" for i in range(rows)}
+            lock = {str(i):{'status':False,'time':None} for i in range(rows)}
             
-            template = MongoTemplate(file_name,json.loads(pd_data),req.user.username,verify_idx,feedback_idx,image_idx).get_json()
+            template = MongoTemplate(file_name,json.loads(pd_data),req.user.username,verify_idx,feedback_idx,lock,image_idx).get_json()
             res = excel.insert_one(template)
             
             verify = VerificationTable(mongo_id=res.inserted_id,belongs=req.user.uploader)
@@ -74,6 +76,41 @@ def upload_screen(req:HttpRequest):
         f = ExcelForm(initial={'username':req.user.username})
     
     return render(req,'Excel/upload.html',{'form':f})
+
+def read_screen(req: HttpRequest) -> HttpResponse:
+    if(not ((req.user.is_authenticated) and (is_manager(req.user)))):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+
+    # simulate read card shit
+    with open('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Excel/asd.txt','r') as f:
+        data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+        
+    profile_img = r'^Profile_Image$'
+    sem_data = r'.+Sem_(\d+)$'
+    
+    result, header = data.get('data',{}), data.get('header',{})
+    
+    columns = result.keys()
+    
+    profile_col = [i for i in columns if re.match(profile_img,i)]
+    sem_col = [i for i in columns if re.match(sem_data,i)]
+    personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
+    
+    sem_dict:dict[str,list[str]] = {}
+    
+    profile_col = profile_col[0] if profile_col else None
+    
+    for i in sem_col:
+        sem:list[str] = re.findall(sem_data,i)
+        
+        if(sem):
+            sem = sem[0]
+            if(sem not in sem_dict): sem_dict[sem] = list()
+            sem_dict[sem].append(i)
+
+    view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
+
+    return render(req,'Excel/read.html',context={'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
 
 
 def image_load(data: bytes) -> tuple[list[str], pd.DataFrame]:
@@ -251,22 +288,26 @@ def single_query(req: HttpRequest, id:str, index:int):
         else:
             data = pd_data.iloc[int(index)].to_dict()
             
-        
-            
         view = report_view(req.user.username,id,index)
             
         return render(req,'HTMX/report.html',context={'id':id,'data':data,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**get_post(req.user)})
 
 def compress_data(req: HttpRequest, id:str, index:int):
+    
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     result = get_data(id,req.user.username)
     pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
+    lock_status = result.get('excel',{}).get('locked',{})
+    
+    belongs = result.get('belongs',None)
 
     if(int(index)>pd_data.shape[0]):
         return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Index not found!')
 
-
+    lock_status[str(index)] = {'status':True,'time':datetime.now().__str__()}
     data = pd_data.iloc[int(index)].to_dict()
+    excel.update_one({"_id":ObjectId(id)},{"$set":{'excel.locked':lock_status}})
     
     for i in image_idx:
         img_data = data[i]
@@ -283,7 +324,7 @@ def compress_data(req: HttpRequest, id:str, index:int):
         
         data[i] = img
         
-    send_data = {'header':{'user':req.user.username,**get_post(req.user)},'data':data}
+    send_data = {'header':{'user':req.user.username,**get_post(req.user),'belongs':belongs,'time':datetime.now().__str__()},'data':data}
         
     print(send_data)
     with open('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Excel/asd.txt','w') as f:

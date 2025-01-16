@@ -8,6 +8,7 @@ app_name = 'Excel'
 urlpatterns = [
  	path('',dash_board,name='dash'),
  	path('upload/',upload_screen,name='upload'),
+ 	path('read/',read_screen,name='read'),
  	path('view/<str:id>/',data_view,name='view'),
 	path('view/<str:id>/<int:index>/',verify_page,name='single'), # a single view page for final decision
 	path('view/<str:id>/<int:index>/search/',single_query), # a single view page for final decision

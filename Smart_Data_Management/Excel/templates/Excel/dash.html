@@ -169,7 +169,8 @@
     <header>
         <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
         <h1>Task Dashboard</h1>
-        {% if upload|check %}<a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a> {% endif %}
+        {% block manager_button%}{% endblock %}
+        {% block uploader_button%}{% endblock %}
     </header>
 
     

@@ -29,3 +29,7 @@
         </div>
     </div>
 {% endblock %}
+
+{% block uploader_button %}
+    <a href="{% url 'Excel:upload' %}"><button class="add-task">Add New Task</button></a>
+{% endblock %}
