@@ -8,6 +8,7 @@ import pymongo.client_session
 import pymongo.collection
 from User.models import Uploader, Manager
 from typing import Any
+from datetime import datetime
 
 class MongoDB(NamedTuple):
     database:str
@@ -129,3 +130,18 @@ class VerificationTable(models.Model):
         
     def __str__(self):
         return f"{self.belongs.user} - {self.mongo_id}"
+    
+class IssuedData(models.Model):
+    mongo_id = models.ForeignKey(to=VerificationTable,null=False,verbose_name="Object ID",on_delete=models.CASCADE,related_name='mongo')
+    issued = models.ForeignKey(to=Manager,null=True,verbose_name="Issued By",on_delete=models.SET_NULL,related_name="issue")
+    row_index = models.IntegerField(null=False,blank=False,verbose_name="Row Index")
+    timestamp = models.DateTimeField(verbose_name='Issued on',null=False,blank=False)
+    
+    class Meta:
+        verbose_name = "Issued Record"
+        verbose_name_plural = "Issued Record"
+    
+    def __str__(self):
+        return f"{self.mongo_id.mongo_id} - {self.row_index} - {self.timestamp}"
+        
+        

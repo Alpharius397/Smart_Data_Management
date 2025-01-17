@@ -85,5 +85,23 @@ class VerificationFilter(admin.ModelAdmin):
     search_help_text = "Search by MongoID or Uploader's Username"
     
     
+class UniversityFilter(admin.SimpleListFilter):
+    title = "University"
+    
+    parameter_name = "uni"
+    
+    def lookups(self, request, model_admin: admin.ModelAdmin):
+        return [(i.issued.belongs.institute.university.id,i.issued.belongs.institute.university.name) for i in model_admin.get_queryset(request).all()]
+    
 
+    def queryset(self, request, queryset):
+        
+        if(self.value() is None): return queryset
+        return queryset.filter(issued__belongs__institute__university__id=self.value())
 
+@admin.register(IssuedData)
+class IssuedFilter(admin.ModelAdmin):
+    list_display = ('mongo_id','issued','timestamp')
+
+    list_filter = (MongoLookup,UniversityFilter)
+    

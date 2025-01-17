@@ -2,7 +2,7 @@ import re
 from django import template
 from Excel.templatetags.bad_image import bad_image
 from typing import NamedTuple
-
+from datetime import datetime
 class Image(NamedTuple):
     img:str
     width:int
@@ -58,7 +58,7 @@ def in_check(obj,vector):
 
 @register.filter(name='index')
 def index(vector,index):
-    return vector[index]
+    return vector[index] if index else None
 
 @register.filter(name='index_str')
 def index(vector,index):
@@ -93,3 +93,10 @@ def clean_text(obj):
         return sem.strip().strip('_')
     
     return None
+
+@register.filter(name='timestamp')
+def timestamp(obj):
+    try:
+        return datetime.fromisoformat(obj).strftime("%d/%m/%Y, %H:%M:%S")
+    except:
+        return "Incorrect Time Format"

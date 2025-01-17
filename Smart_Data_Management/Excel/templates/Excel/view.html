@@ -253,6 +253,26 @@
             display: inline-flex;
         }
 
+        header .add-task{
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        header .add-task:hover {
+            background-color: #e8f5e9;
+        }
+
     </style>
 </head>
 
@@ -260,6 +280,8 @@
     <header>
         <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
         <h1>Table View</h1>
+
+        {% block upload_button %}{% endblock %}
     </header>
 
     <div class="container">

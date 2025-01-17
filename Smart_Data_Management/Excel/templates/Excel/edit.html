@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .upload-container {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            margin: 50px auto;
+        }
+
+        .upload-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin: 10px auto;
+            margin-bottom: 15px;
+            margin-right: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .upload-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .upload-button:hover {
+            background-color: #218838;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .form-footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        ul.errorlist, ul.errorlist li {
+            list-style-type: none;
+            color: red;
+            font-style: italic;
+            margin: 0;
+            padding: 0;
+            margin-top: 5px;
+        }
+
+        p.help_text {
+            font-style: italic;
+            color: #555;
+            margin: 0;
+            padding-top: 5px;
+        }
+
+        header .user-log{
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover{
+            background-color: #09430e;
+
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            width: 100;
+            position: relative;
+        }
+
+
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{% url 'Excel:view' id=id %}"><button class="user-log">Back To Table View</button></a>
+        <h1>Upload Screen</h1>
+    </header>
+
+    <div class="upload-container">
+        <h2>Upload Excel</h2>
+        <form action="{% url 'Excel:edit' id=id %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+
+                    {% if field.errors %}
+                        {{ field.errors }}
+
+                    {% else %}
+                        <p class="help_text">{{ field.help_text }} </p>
+                    
+                    {% endif %}
+                    
+                </div>
+            {% endfor %}
+            <button type="submit" class="upload-button">Upload</button>
+        </form>
+
+    </div>
+</body>
+<script>
+
+    {% if alert %}
+        alert("{{ alert }}");
+    {% elif request.GET.alert %}
+        alert("{{ request.GET.alert }}");
+    {% endif %}
+</script>
+</html>

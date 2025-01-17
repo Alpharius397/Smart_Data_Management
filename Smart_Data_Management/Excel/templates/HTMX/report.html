@@ -12,9 +12,11 @@
     </div>
     <div class="container-box">
         <div class="image-box">
-            {% with image=data|index:pic|img %}
-                <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-            {% endwith %}
+            {% if pic %}
+                {% with image=data|index:pic|img %}
+                    <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+                {% endwith %}
+            {% endif %}
         </div>
     </div>
     <div class="personal-info">
@@ -36,6 +38,7 @@
                     {% endfor %}
 
                 </div>
+                
             {% endfor %}
 
         </div>

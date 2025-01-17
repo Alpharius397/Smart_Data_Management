@@ -1,5 +1,5 @@
 {% extends 'Excel/single.html' %}
-
+{% load template %}
 {% block uploader %}
 
     <div class="feedback">
@@ -26,4 +26,8 @@
         {% endfor %}
         </ul>
     </div>
+
+    {% if lock|index_str:'status' %}
+    <p><strong> Card Issued on {{lock|index_str:'time'|timestamp}}. </strong></p>
+    {% endif %}
 {% endblock %}

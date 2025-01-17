@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from Excel.forms import ExcelForm,VerifyForm
 from django.db.models import Q
 from Main.tools import *
-from Excel.models import VerificationTable,MongoConnection,VERIFY_COUNT,MongoTemplate
+from Excel.models import *
 from django.urls import reverse
 from django.conf import settings
 from User.models import is_manager, is_uploader
@@ -81,8 +81,8 @@ def read_screen(req: HttpRequest) -> HttpResponse:
     if(not ((req.user.is_authenticated) and (is_manager(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
 
-    # simulate read card shit
-    with open('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Excel/asd.txt','r') as f:
+    # simulate read card
+    with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
         data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
         
     profile_img = r'^Profile_Image$'
@@ -164,10 +164,10 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     available_id = [ ObjectId(i.mongo_id) for i in VerificationTable.objects.only('mongo_id')]
     
     if(is_manager(user)):
-        return render(req,'Excel/view/manager.html',{'verify':verify})
+        return render(req,'Excel/dash/manager.html',{'verify':verify})
         
     elif(is_uploader(user)):
-        return render(req,'Excel/view/uploader.html',{'upload':upload})
+        return render(req,'Excel/dash/uploader.html',{'upload':upload})
 
 
 
@@ -185,9 +185,12 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
     # removing image column cause duh
     available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
   
+    context = {'column':available_column,'id':id}
     
-    return render(req,'Excel/view.html',{'column':available_column,})
-
+    if(is_uploader(req.user)):
+        return render(req,'Excel/view/uploader.html',context=context)
+    elif(is_manager(req.user)):
+        return render(req,'Excel/view/manager.html',context=context)
 
 def search_query(pd_data:pd.DataFrame,column:str,value,available_column) -> tuple[bool,pd.DataFrame]:
         
@@ -238,6 +241,7 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     manager:str = result.get('verify',[])
     verify_idx = result.get('excel',{}).get('verify',{})
     feed_idx = result.get('excel',{}).get('feedback',{})
+    lock_idx = result.get('excel',{}).get('locked',{})
     
     if(int(index)>pd_data.shape[0]):
         return redirect(reverse('Excel:view',args={'id':id}) + '?alert=Index not found!')
@@ -266,13 +270,14 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     
     if(is_uploader(req.user)):
         if(manager is not None):
-            context.update({'manager':[{'user':i.get('user',None),'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]} for i in manager]})
+            context.update({'manager':[{'user':i.get('user',None),'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]} for i in manager],'lock':lock_idx[str(index)]})
             
-        return render(req,'Excel/user/uploader.html',context=context)
+        return render(req,'Excel/single/uploader.html',context=context)
     
     else:
-        context.update({'form':VerifyForm(initial={'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]})})
-        return render(req,'Excel/user/manager.html',context=context)
+        context.update({'form':VerifyForm(initial={'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]}),'status':verify_idx[str(index)],'lock':lock_idx[str(index)]})
+        print(lock_idx[str(index)])
+        return render(req,'Excel/single/manager.html',context=context)
 
 def single_query(req: HttpRequest, id:str, index:int):
     if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
@@ -289,25 +294,39 @@ def single_query(req: HttpRequest, id:str, index:int):
             data = pd_data.iloc[int(index)].to_dict()
             
         view = report_view(req.user.username,id,index)
-            
+        
         return render(req,'HTMX/report.html',context={'id':id,'data':data,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**get_post(req.user)})
 
 def compress_data(req: HttpRequest, id:str, index:int):
+    if(not (req.user.is_authenticated and is_manager(req.user))):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
     result = get_data(id,req.user.username)
     pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
     lock_status = result.get('excel',{}).get('locked',{})
-    
+    timestamp = datetime.now().isoformat()
     belongs = result.get('belongs',None)
 
     if(int(index)>pd_data.shape[0]):
         return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Index not found!')
 
-    lock_status[str(index)] = {'status':True,'time':datetime.now().__str__()}
+    lock_status[str(index)] = {'status':True,'time':timestamp}
     data = pd_data.iloc[int(index)].to_dict()
     excel.update_one({"_id":ObjectId(id)},{"$set":{'excel.locked':lock_status}})
+    
+    idx = VerificationTable.objects.filter(Q(mongo_id=id))
+    
+    if idx:
+        idx = idx[0]
+    else:
+        return redirect(reverse('Excel:dash')+'?alert=Record not found')
+    
+    if(IssuedData.objects.filter(mongo_id__mongo_id=idx.mongo_id,row_index=index).__len__()==0):
+        locked = IssuedData(mongo_id=idx,issued=req.user.manager,row_index=index,timestamp=timestamp)
+        locked.save()
+    
     
     for i in image_idx:
         img_data = data[i]
@@ -324,10 +343,9 @@ def compress_data(req: HttpRequest, id:str, index:int):
         
         data[i] = img
         
-    send_data = {'header':{'user':req.user.username,**get_post(req.user),'belongs':belongs,'time':datetime.now().__str__()},'data':data}
+    send_data = {'header':{'user':req.user.username,**get_post(req.user),'belongs':belongs,'time':timestamp},'data':data}
         
-    print(send_data)
-    with open('/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Excel/asd.txt','w') as f:
+    with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
         f.write(encrypt_data(settings.KEY,send_data))
         
     return redirect(reverse('Excel:single',kwargs={'id':id,'index':index}))
@@ -360,6 +378,7 @@ def get_data(mongo_id:str, username:str) -> dict[str,Any | dict | list]:
 
     result:dict[str,Any | dict | list] = excel.find_one({"$and":[{"_id":ObjectId(mongo_id)},{"$or":[{"belongs":username},{"verify.user":username}]}]})
 
+    
     return result
 
 class ReportStructure(typing.NamedTuple):
@@ -398,3 +417,70 @@ def report_view(username:str, id:str, index:int) -> ReportStructure:
             sem_dict[sem].append(i)
 
     return ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
+
+
+def edit_view(req: HttpRequest, id:str) -> HttpResponse:
+    if(not (req.user.is_authenticated)):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+    
+    if(not is_uploader(req.user)):
+        return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Must be a uploader')
+    
+    context = {'id':id}
+    
+    result = get_data(id,req.user.username)
+    
+    is_locked = any([i.get('status',None) for i in result.get('excel',{}).get('locked',{}).values()])
+    
+    if(is_locked):
+        return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Data is locked')
+    
+    file_name = result.get('excel',{}).get('name','')
+    
+    if(req.method=='GET'):
+        f = ExcelForm(initial={'username':req.user.username,'file_name':file_name})
+        context.update({'form':f})
+        
+    elif(req.method=='POST'):
+        
+        f = ExcelForm(req.POST,req.FILES)
+        
+        context.update({'form':f})
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        pd_data = None
+        
+        if(excel is None):
+            return render(req,'Excel/upload.html',{'form':f,'alert':'MongoDB connection failed'})
+        
+        if(f.is_valid()):
+            excel_file = req.FILES["file"]
+            file_name = f.cleaned_data.get("file_name")
+        
+            with excel_file.open() as file:
+                image_idx, pd_data = image_load(file.read())
+                rows, _ = pd_data.shape
+                pd_data = pd_data.to_json()
+            
+            if(pd_data is None):
+                return mongo_setup_failed(req,form=f)
+            
+            verify_idx:list[dict[str,str]] = result.get('excel',{}).get('verify',[])
+            feedback_idx = {str(i):"" for i in range(rows)}
+            lock = {str(i):{'status':False,'time':None} for i in range(rows)}
+            
+            template = MongoTemplate(file_name,json.loads(pd_data),req.user.username,verify_idx,feedback_idx,lock,image_idx).get_json()
+            excel.update_one({"_id":ObjectId(id)},{"$set":template})
+            
+            verify = VerificationTable(mongo_id=id,belongs=req.user.uploader,assigned=(lambda x: x[0].get('user',None) if x else None)(verify_idx))
+            verify.save()
+            
+            context.update({'alert':'Data Updation successful'})
+        
+        
+            
+        return render(req,'Excel/edit.html',context=context)
+            
+    
+    return render(req,'Excel/edit.html',context=context)
