@@ -61,7 +61,7 @@ class MongoTemplate:
 class VerificationTable(models.Model):
     mongo_id = models.CharField(max_length=24,null=False,verbose_name="Object ID",primary_key=True)
     belongs = models.ForeignKey(to=Uploader,null=False,verbose_name="Belongs to",on_delete=models.CASCADE,related_name="belong")
-    assigned = models.ForeignKey(to=Manager,null=True,verbose_name="Assigned to",on_delete=models.SET_NULL,related_name="assign")
+    assigned = models.ForeignKey(to=Manager,null=True,blank=True,verbose_name="Assigned to",on_delete=models.SET_NULL,related_name="assign")
     
     class Meta:
         verbose_name = "Verification Record"

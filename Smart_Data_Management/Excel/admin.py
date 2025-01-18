@@ -3,7 +3,10 @@ from Excel.models import *
 from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User
-    
+from django.urls import reverse_lazy
+from django import forms
+
+
 class BelongToFilter(admin.SimpleListFilter):
     title = "Uploader"
     
@@ -68,16 +71,30 @@ class UserAssigned(admin.SimpleListFilter):
     
     def queryset(self, request, queryset):
         
-        status = self.value()
+        status = str(self.value())
         
-        if(status is None): return queryset
-        
-        match(status):
-            case True: return queryset.filter(assigned__isnull=False)
-            case False: return queryset.filter(assigned__isnull=True)
+        if(status=='True'): return queryset.filter(assigned__isnull=False)
+        elif(status=='False'): return queryset.filter(assigned__isnull=True)
+        else: return queryset
+
 
 @admin.register(VerificationTable)
 class VerificationFilter(admin.ModelAdmin):
+    class Media:
+        js = (
+            "https://unpkg.com/htmx.org",
+        )
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['belongs'].widget.attrs.update({
+            'hx-get': reverse_lazy('Manage:get'),
+            'hx-trigger': 'change,load',
+            'hx-target': '#id_assigned',
+        })
+        
+        return form
+        
     list_display = ('mongo_id','belongs','assigned')
     list_filter = (MongoLookup,BelongToFilter,AssignedFilter,UserAssigned)
     

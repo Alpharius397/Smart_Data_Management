@@ -25,7 +25,7 @@
         </form>
     </div>
 
-    {% if status %}
+    {% if status and not lock|index_str:'status' %}
         <div class="feedback">
             <h2>Feedback:</h2>
             <form action="{{request.PATH}}compress/" method="POST">

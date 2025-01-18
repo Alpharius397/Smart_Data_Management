@@ -37,9 +37,9 @@ class ManagerAdmin(admin.ModelAdmin):
             kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(uploader__isnull=False)))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
-    
+
 @admin.register(Uploader)
-class ManagerAdmin(admin.ModelAdmin):
+class UserAdmin(admin.ModelAdmin):
     list_filter = (UniversityFilter,)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):

@@ -300,6 +300,10 @@
         
         </div>
 
+        {% if time %}
+        <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
+        {% endif %}
+
     </div>
 
 </body>
