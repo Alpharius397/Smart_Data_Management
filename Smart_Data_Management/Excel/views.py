@@ -271,6 +271,8 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
             
             excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)    
             excel.update_one({"_id":ObjectId(id)},{"$set":{"excel.verify":verify_idx,'excel.feedback':feed_idx}})
+    else:
+        f = VerifyForm(initial={'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]})
     
     if(is_uploader(req.user)):
         if(manager is not None):
@@ -279,8 +281,8 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
         return render(req,'Excel/single/uploader.html',context=context)
     
     else:
-        context.update({'form':VerifyForm(initial={'status':verify_idx[str(index)],'feedback':feed_idx[str(index)]}),'status':verify_idx[str(index)],'lock':lock_idx[str(index)]})
-        print(lock_idx[str(index)])
+        context.update({'form':f,'status':verify_idx[str(index)],'lock':lock_idx[str(index)]})
+        print(context)
         return render(req,'Excel/single/manager.html',context=context)
 
 def single_query(req: HttpRequest, id:str, index:int):
