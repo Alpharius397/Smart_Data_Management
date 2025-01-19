@@ -82,8 +82,12 @@ def read_screen(req: HttpRequest) -> HttpResponse:
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
 
     # simulate read card
-    with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
-        data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+    try:
+        with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
+            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+    except Exception as e:
+        return redirect(reverse('Excel:dash') + f'?alert=Failed to read card ({e})')
+        
         
     profile_img = r'^Profile_Image$'
     sem_data = r'.+Sem_(\d+)$'
@@ -323,10 +327,15 @@ def compress_data(req: HttpRequest, id:str, index:int):
     else:
         return redirect(reverse('Excel:dash')+'?alert=Record not found')
     
-    if(IssuedData.objects.filter(mongo_id__mongo_id=idx.mongo_id,row_index=index).__len__()==0):
+    locked_data = IssuedData.objects.filter(mongo_id=idx,row_index=index)
+    
+    if(not locked_data):
         locked = IssuedData(mongo_id=idx,issued=req.user.manager,row_index=index,timestamp=timestamp)
         locked.save()
-    
+    else:
+        for locked in IssuedData.objects.filter(mongo_id=idx,row_index=index):
+            locked.timestamp=timestamp
+            locked.save()
     
     for i in image_idx:
         img_data = data[i]

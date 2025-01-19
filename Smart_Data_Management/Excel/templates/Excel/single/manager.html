@@ -1,5 +1,6 @@
 {% extends 'Excel/single.html' %}
 {% load template %}
+
 {% block manager %}
     <div class="feedback">
         <h2>Feedback:</h2>
@@ -25,15 +26,17 @@
         </form>
     </div>
 
-    {% if status and not lock|index_str:'status' %}
-        <div class="feedback">
-            <h2>Feedback:</h2>
-            <form action="{{request.PATH}}compress/" method="POST">
-                {% csrf_token %}
+    <div class="feedback">
+        <form action="{{request.PATH}}compress/" method="POST">
+            {% csrf_token %}
+            {% if status and not lock|index_str:'status' %}
                 <button type="submit" class="upload-button">Issue Card</button>
+
+            {% elif lock|index_str:'status' %}
+                <p><strong> Card Already Issued on {{lock|index_str:'time'|timestamp}}. </strong></p>
+                <button type="submit" class="upload-button">Reissue Card</button>
+            {% endif %}
+
             </form>
-        </div>
-    {% elif lock|index_str:'status' %}
-        <p><strong> Card Issued on {{lock|index_str:'time'|timestamp}}. </strong></p>
-    {% endif %}
+    </div>
 {% endblock %}
