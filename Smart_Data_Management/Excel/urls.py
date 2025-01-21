@@ -15,6 +15,7 @@ urlpatterns = [
 	path('view/<str:id>/quick_search/',quick_query), # a single view page for quick searching
 	path('view/<str:id>/search/',table_query),
 	path('view/<str:id>/<int:index>/compress/',compress_data),
+	path('view/<str:id>/<int:index>/cancel/',cancel_issue),
 	path('view/<str:id>/edit',edit_view, name='edit')
 	
 ]

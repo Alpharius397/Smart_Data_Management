@@ -22,6 +22,7 @@ from User.models import get_post
 import typing
 from PIL import Image
 import re
+from django.utils import timezone
 from datetime import datetime
 
 def mongo_setup_failed(req, **kwargs):
@@ -282,7 +283,6 @@ def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     
     else:
         context.update({'form':f,'status':verify_idx[str(index)],'lock':lock_idx[str(index)]})
-        print(context)
         return render(req,'Excel/single/manager.html',context=context)
 
 def single_query(req: HttpRequest, id:str, index:int):
@@ -303,6 +303,22 @@ def single_query(req: HttpRequest, id:str, index:int):
         
         return render(req,'HTMX/report.html',context={'id':id,'data':data,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**get_post(req.user)})
 
+def cancel_issue(req: HttpRequest, id:str, index:int):
+    if(not (req.user.is_authenticated and is_manager(req.user))):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+    
+    excel = MongoConnection(settings.MONGO_URL).connect(settings.MONGO_CRED)
+    result = get_data(id,req.user.username)
+    
+    lock_status = result.get('excel',{}).get('locked',{})
+    lock_status[str(index)] = {'status':False,'time':None}
+    excel.update_one({"_id":ObjectId(id)},{"$set":{'excel.locked':lock_status}})
+    
+    for locked in IssuedData.objects.filter(mongo_id__mongo_id=id,row_index=index):
+        locked.delete()
+        
+    return redirect(reverse('Excel:single',kwargs={'id':id,'index':index}))
+
 def compress_data(req: HttpRequest, id:str, index:int):
     if(not (req.user.is_authenticated and is_manager(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
@@ -312,8 +328,31 @@ def compress_data(req: HttpRequest, id:str, index:int):
     pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
     image_idx:list = result.get('excel',{}).get('image',[])
     lock_status = result.get('excel',{}).get('locked',{})
-    timestamp = datetime.now().isoformat()
+    timestamp = timezone.now().isoformat()
     belongs = result.get('belongs',None)
+    
+    profile_img = r'^Profile_Image$'
+    sem_data = r'.+Sem_(\d+)$'
+    other_data = """ Anything not part above is personal """
+    
+    columns = pd_data.keys()
+    
+    profile_col = [i for i in columns if re.match(profile_img,i)]
+    sem_col = [i for i in columns if re.match(sem_data,i)]
+    personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
+    
+    sem_dict:dict[str,list[str]] = {}
+    
+    profile_col = profile_col[0] if profile_col else None
+    
+    for i in sem_col:
+        sem:list[str] = re.findall(sem_data,i)
+        
+        if(sem):
+            sem = sem[0]
+            if(sem not in sem_dict): sem_dict[sem] = list()
+            sem_dict[sem].append(i)
+
 
     if(int(index)>pd_data.shape[0]):
         return redirect(reverse('Excel:view',kwargs={'id':id}) + '?alert=Index not found!')
@@ -355,7 +394,7 @@ def compress_data(req: HttpRequest, id:str, index:int):
         data[i] = img
         
     send_data = {'header':{'user':req.user.username,**get_post(req.user),'belongs':belongs,'time':timestamp},'data':data}
-        
+    print(send_data)
     with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
         f.write(encrypt_data(settings.KEY,send_data))
         
