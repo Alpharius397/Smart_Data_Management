@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .upload-container {
+            background: #fff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            margin: 50px auto;
+        }
+
+        .upload-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin: 10px auto;
+            margin-bottom: 15px;
+            margin-right: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .upload-button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .upload-button:hover {
+            background-color: #218838;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .form-footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        ul.errorlist, ul.errorlist li {
+            list-style-type: none;
+            color: red;
+            font-style: italic;
+            margin: 0;
+            padding: 0;
+            margin-top: 5px;
+        }
+
+        p.help_text {
+            font-style: italic;
+            color: #555;
+            margin: 0;
+            padding-top: 5px;
+        }
+
+        header .user-log{
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover{
+            background-color: #09430e;
+
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            width: 100;
+            position: relative;
+        }
+
+        #progress{
+            margin-top: 10px;
+            width: 100%;
+            display:none;
+            height: 20px;
+        }
+
+        .messages {
+            list-style: none;
+            margin: 20px auto;
+            padding: 0;
+            width: 80%;
+            max-width: 1000px;
+        }
+
+        .messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .messages li:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .messages li.success {
+            background-color: #4caf50; 
+        }
+
+        .messages li.error {
+            background-color: #f44336;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To Table View</button></a>
+        <h1>Upload Screen</h1>
+    </header>
+
+    <div id="message" class="message"></div>
+
+    <div class="upload-container">
+        <h2>Upload Excel</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:upload' %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-group">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+
+                    {% if field.errors %}
+                        {{ field.errors }}
+
+                    {% else %}
+                        <p class="help_text">{{ field.help_text }} </p>
+                    
+                    {% endif %}
+                    
+                </div>
+            {% endfor %}
+            <button class="upload-button">Upload</button>
+            <progress id='progress' value='0' max='100'></progress>
+        </form>
+
+    </div>
+</body>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+<script>
+
+    htmx.on("#form","htmx:beforeSend", function(event){
+
+        htmx.find('#progress').setAttribute('value', 0);
+        htmx.find('#progress').setAttribute('style', "display:block;");
+    });
+
+    htmx.on('#form', 'htmx:xhr:progress', function(event) {
+        htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
+    });
+
+</script>
+</html>

@@ -1,0 +1,56 @@
+{% load template %}
+
+
+
+<table id="display-table">
+    <thead>
+        <tr>
+            {% for i in column %}
+                <th><p>{{i}}</p></th>
+            {% endfor %}
+            <th class="verify-sing"><p>Verify</p></th>
+            <th class="next-button"><p>View Data</p></th>
+        </tr>
+    </thead>
+
+    <tbody >
+        {% for idx,i in result %}
+            <tr>
+                {% for j,k in i.values|enum %}
+
+                    {% if column|index:j|in:image %}
+                        {% with image=k|img %}
+                        <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
+                        {% endwith %}
+                    {% else %}
+                        <td><p>{{k|str}}</p></td>
+                    {% endif %}
+                {% endfor %}
+
+                {% if verify|index_str:idx is True %}
+                    <td class="verify-sing"><p id="correct">Verified</p></td>
+
+                {% elif verify|index_str:idx is False %}
+                    <td class="verify-sing"><p id="wrong">Rejected</p></td>
+
+                {% else %}
+                    <td class="verify-sing"><p id="none">Unchecked</p></td>
+
+
+                {% endif %}
+
+                <td class="next-button"><a href='{{request.path|get_last}}/{{idx}}/'><button>View</button></a></td>
+
+
+            </tr>
+        {% endfor %}
+    </tbody>
+
+</table>
+
+
+<script>
+    {% if alert %}
+        alert("{{ alert }}");
+    {% endif %}
+</script>

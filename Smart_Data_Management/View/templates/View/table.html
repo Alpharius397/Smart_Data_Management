@@ -1,0 +1,346 @@
+{% load template %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Task Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            align-items: center;
+            justify-content: center;
+            width: 100;
+            position: relative;
+        }
+
+        .container {
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tableView{
+            margin: 20px;
+            padding: 0px 0px 20px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: scroll;
+            overflow-x: scroll;
+            max-height: 600px;
+            background-color: white;
+        }
+
+        .dont-ask-why-this{
+            height: 20px;
+            position: sticky;
+            top:0;
+            background-color: white;
+            z-index: 10;
+            margin-bottom: -5px;
+        }
+
+        .dont-ask-why-this-either{
+            display: block;
+            width: 20px;
+            position: sticky;
+            right:0;
+            background-color: white;
+            z-index: 10;
+        }
+
+        table {
+            text-align: center;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 10px;
+            margin-top: 0px;
+            display: inline;
+        }
+        
+        table th,table td{
+            text-align: center;
+            border: 1px solid rgb(0, 0, 0,0.4);
+            padding: 10px;
+            background-color: white;
+            z-index: 10;
+        }
+
+
+        header .user-log{
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .searchQuery{
+            display: block;
+            margin-bottom: 20px;
+        }
+
+        select{
+            background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+            background-position: 95% center;
+            -moz-appearance:none;
+            -webkit-appearance: none; 
+            appearance: none;
+            border-radius: 20px;
+            padding:5px;
+            padding-left: 0.5rem;
+            padding-right: 1.5rem;
+            width: max-content;
+        }
+
+        #search{
+            border-radius: 20px;
+            padding:5px;
+            padding-left: 0.75rem;
+        }
+
+
+        button{
+            font-weight: bold;
+            padding: 10px;
+            color: #fff;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        button:hover{
+            background-color: #09430e;
+
+        }
+
+        thead th{
+            position:sticky;
+            top:20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            margin-right: 20px;
+        }
+
+        .form-group label {
+            display: inline-block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        p.help_text {
+            font-style: italic;
+            color: #555;
+            margin: 0;
+            padding-top: 5px;
+        }
+
+        #verify{
+            color:#4CAF50;
+            display:inline;
+        }
+
+        #unchecked{
+            color:#555;
+            display:inline;
+        }
+
+        #reject{
+            color: red;
+            display:inline;
+        }
+
+        #feed-text{
+            font-style: italic;
+            display:inline;
+        }
+        
+        button[type="cancel"]{
+            background-color: red;
+        }
+
+        button[type="cancel"]:hover{
+            background-color: rgb(155, 0, 0);
+        }
+
+        .verify-sing{
+            position:sticky;
+            right: 73px;
+            z-index: 10;
+        }
+
+        #correct{
+            padding: 10px;
+            color: white;
+            background-color: green;
+        }
+
+        #wrong{
+            padding: 10px;
+            color: white;
+            background-color: red;
+        }
+
+        #none{
+            padding: 10px;
+            color: white;
+            background-color: grey;
+        }
+
+        .next-button{
+            position: sticky;
+            right: 0px;
+            z-index: 10;
+        }
+
+        td.next-button{
+            z-index: 0;
+        }
+
+        table th{
+            width: 500px;
+        }
+
+        td.verify-sing{
+            z-index: 0;
+        }
+
+        .tab-sub{
+            display: inline-flex;
+        }
+
+        header .add-task{
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            font-weight: bold;
+            padding: 15px;
+            transform: translateY(-50%);
+            background-color: #fff;
+            color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        header .add-task:hover {
+            background-color: #e8f5e9;
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
+        <h1>Table View</h1>
+
+        {% block upload_button %}{% endblock %}
+    </header>
+
+    <div class="container">
+
+        <div class="searchQuery">
+            <h2>Search Columns: </h2>
+            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit,load" hx-on::after-request="dontAskWhy();">
+                
+                <label for="column">Column: </label>
+                <select name="column" id="column">
+                    {% for i in column %}
+                        <option value="{{ i }}"> {{ i }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="search">Containing: </label>
+
+                <input type="search" list="suggests" autocomplete="off" name="search" id="search" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="quick_search/" hx-vals="js:{column: get_select()}" hx-trigger="load, keyup,click from:#column ">
+
+                <datalist id="suggests" autocomplete="false">
+
+                </datalist>
+
+                <button type="submit"> Search </button>
+                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click" hx-on::after-request="dontAskWhy();"> Cancel Search </button>
+
+            </form>
+
+        </div>
+
+
+        <div class="tableView">
+            <div class="dont-ask-why-this"></div>
+                <table id="display-table">
+
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+<script>
+
+    function dontAskWhy(){
+        document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
+    }
+
+    function get_select(){
+        return document.getElementById('column').value;
+    }
+
+    {% if alert %}
+        alert("{{ alert }}");
+    {% elif request.GET.alert %}
+        alert("{{ request.GET.alert }}");
+    {% endif %}
+
+</script>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+</html>

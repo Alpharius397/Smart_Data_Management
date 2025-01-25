@@ -1,0 +1,17 @@
+{% extends 'Dash/dash.html' %}
+
+{% load template %}
+
+
+{% block uploader %}
+    <div class="container">
+        <h2>Uploaded Tasks</h2>
+        <div class="task-list" id="up" hx-get="{% url 'Dash:upload' %}" hx-target="this" hx-swap="innerHTML" hx-trigger="load">
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block uploader_button %}
+    <a href="{% url 'Upload:view' %}"><button class="add-task">Add New Task</button></a>
+{% endblock %}
