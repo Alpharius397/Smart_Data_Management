@@ -20,9 +20,25 @@ class Uploader(Model):
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"
 
+
+class Admin(Model):
+    user = OneToOneField(to=User,on_delete=CASCADE,related_name='admin')
+    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='admin')
+
+    def __str__(self):
+        return f"{self.user.username}:{self.belongs}"
+
+
 def is_manager(user:User) -> bool:
     try:
         manager = user.manager
+        return True
+    except:
+        return False
+
+def is_admin(user:User) -> bool:
+    try:
+        admin = user.admin
         return True
     except:
         return False
@@ -41,8 +57,13 @@ def get_post(user: User) -> dict[str,str]:
     
     if(is_manager(user)):
         user:Manager = user.manager
+        
     elif(is_uploader(user)):
         user:Uploader = user.uploader
+        
+    elif(is_admin(user)):
+        user:Admin = user.admin
+        
     else:
         return {'university':uni,'institute':insti,'branch':branch}
     
@@ -51,7 +72,11 @@ def get_post(user: User) -> dict[str,str]:
     uni = insti.university
     
     return {'university':uni.name,'institute':insti.name,'branch':branch.name}
+
+def is_authenticated(user:User) -> bool:
     
+    return bool((user.is_authenticated) and (is_admin(user) or is_manager(user) or is_uploader(user)))
+
 
 """
 class _UserManager(BaseUserManager):

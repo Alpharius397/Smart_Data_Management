@@ -26,7 +26,7 @@ def login_view(req:HttpRequest) -> HttpResponse:
                 
                 if((is_uploader(user)) or (is_manager(user))):                
                     login(req,user)
-                    return redirect(reverse('Excel:dash') + '?alert=Login Successful')            
+                    return redirect(reverse('Dash:dash') + '?alert=Login Successful')            
 
             return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
         

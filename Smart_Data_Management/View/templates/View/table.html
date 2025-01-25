@@ -48,6 +48,12 @@
             background-color: white;
         }
 
+        img{
+            width: 200px;
+            display: block;
+            margin: 10px auto;
+        }
+
         .dont-ask-why-this{
             height: 20px;
             position: sticky;
@@ -124,6 +130,10 @@
             padding-left: 0.75rem;
         }
 
+        #search::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
 
         button{
             font-weight: bold;
@@ -165,6 +175,11 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 14px;
+        }
+
+        .form-group input::placeholder {
+            color: #aaa;
+            font-style: italic;
         }
 
         .form-group input:focus {
@@ -273,40 +288,66 @@
             background-color: #e8f5e9;
         }
 
+        .messages {
+            list-style: none;
+            margin: 20px auto;
+            padding: 0;
+            width: 80%;
+            max-width: 1000px;
+        }
+
+        .messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .messages li:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .messages li.success {
+            background-color: #4caf50; 
+        }
+
+        .messages li.error {
+            background-color: #f44336;
+        }
+
     </style>
 </head>
 
 <body>
     <header>
-        <a href="{% url 'Excel:dash' %}"><button class="user-log">Back To DashBoard</button></a>
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To DashBoard</button></a>
         <h1>Table View</h1>
 
         {% block upload_button %}{% endblock %}
     </header>
 
-    <div class="container">
+    <div class="container" hx-get="{{request.path}}" hx-target="this" hx-swap="outerHTML" hx-trigger="load">
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="search/" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="submit,load" hx-on::after-request="dontAskWhy();">
+            <form onsubmit="event.preventDefault()">
                 
                 <label for="column">Column: </label>
                 <select name="column" id="column">
-                    {% for i in column %}
-                        <option value="{{ i }}"> {{ i }}</option>
-                    {% endfor %}
+                    <option value>-----------</option>
                 </select>
 
                 <label for="search">Containing: </label>
 
-                <input type="search" list="suggests" autocomplete="off" name="search" id="search" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="quick_search/" hx-vals="js:{column: get_select()}" hx-trigger="load, keyup,click from:#column ">
-
-                <datalist id="suggests" autocomplete="false">
-
-                </datalist>
+                <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword">
 
                 <button type="submit"> Search </button>
-                <button type="cancel" hx-get="search/" hx-params="none" hx-target="#display-table" hx-swap="outerHTML" hx-trigger="click" hx-on::after-request="dontAskWhy();"> Cancel Search </button>
+                <button type="cancel"> Cancel Search </button>
 
             </form>
 
@@ -314,10 +355,7 @@
 
 
         <div class="tableView">
-            <div class="dont-ask-why-this"></div>
-                <table id="display-table">
-
-                </table>
+                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
             </div>
         </div>
 
@@ -334,11 +372,7 @@
         return document.getElementById('column').value;
     }
 
-    {% if alert %}
-        alert("{{ alert }}");
-    {% elif request.GET.alert %}
-        alert("{{ request.GET.alert }}");
-    {% endif %}
+
 
 </script>
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>

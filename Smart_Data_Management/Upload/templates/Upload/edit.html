@@ -173,15 +173,15 @@
 </head>
 <body>
     <header>
-        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Upload Screen</h1>
+        <a href="{% url 'View:table' id=id %}"><button class="user-log">Back To Table View</button></a>
+        <h1>Edit Form</h1>
     </header>
 
     <div id="message" class="message"></div>
 
     <div class="upload-container">
-        <h2>Upload Excel</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:upload' %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
+        <h2>Edit Uploaded Excel</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:edit' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}

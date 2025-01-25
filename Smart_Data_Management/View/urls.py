@@ -6,9 +6,10 @@ from .views import *
 
 app_name = 'View'
 urlpatterns = [
-	path('<str:id>',table_view,name='table'),
-	path('<str:id>/<int:idx>/',single_view,name='row'),
-	path('<str:id>/search/',table_query,name='search')
+	path('<str:id>',default_view,name='table'),
+	path('<str:id>/search/',table_query,name='search'),
+	path('<str:id>/search_row/',row_view,name='search_row'),
+	path('<str:id>/quick_search/',quick_query,name="suggest"),
 ]
 
 

@@ -21,17 +21,17 @@ def upload_screen(req:HttpRequest):
     
         return render(req,'Upload/upload.html',{'form':f})
 
-def edit_screen(req: HttpRequest) -> HttpResponse:
+def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
     if(not (is_authenticated(req.user) and is_uploader(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     if(req.method=="GET"):        
         f = ExcelForm(initial={'username':req.user.username})
     
-        return render(req,'Upload/upload.html',{'form':f})
+        return render(req,'Upload/edit.html',{'form':f,'id':id})
 
     
-def upload(req: HttpRequest) -> HttpResponse:
+def upload(req: HttpRequest, id) -> HttpResponse:
 
     if((is_authenticated(req.user) and is_uploader(req.user)) and req.META.get('HTTP_HX_REQUEST') and (req.method=="POST")):
 
@@ -104,14 +104,16 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             template = MongoTemplate().add_post(**get_post(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.username).add_feed(rows)
             
             try:
-                exists:dict[str,dict[str,dict]] = excel.find_one({"_id":ObjectId(id)})
-                
+                exists:dict[str,dict[str,dict|list[dict]]] = excel.find_one({"_id":ObjectId(id)})
+                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',[])])
                 if(exists is None):
                     messages.error(req, "Record not found!")
                 
+                elif(locked):
+                    messages.success(req,"Data Insertion not possible. Data is locked")
                 else:
                     managers = exists.get('header',{}).get('manager',[])
-                    template = template.add_manager(managers)
+                    template = template.add_manager(managers).get_json()
                     excel.replace_one({"_id":ObjectId(id)},template)
                     
                     messages.success(req,"Data Insertion successful. Data Updated with Mongo ID:%s" % id)

@@ -51,7 +51,10 @@ INSTALLED_APPS = [
     'Excel',
     'Logout',
     'University',
-    'User'
+    'User',
+    'Dash',
+    'Upload',
+    'View'
 ]
 
 MIDDLEWARE = [
@@ -132,7 +135,8 @@ LANGUAGE_CODE = 'en-us'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
+TIME_ZONE = 'Asia/Kolkata'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -151,4 +155,3 @@ LOGIN_URL = 'Login:login'
 MONGO_URL = "mongodb://127.0.0.1:27017/"
 MONGO_CRED = MongoDB("smart","excel")
 KEY = b"123456789123456789123456"
-TIME_ZONE = 'Asia/Kolkata'

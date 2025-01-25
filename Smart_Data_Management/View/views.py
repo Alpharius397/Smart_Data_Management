@@ -14,7 +14,7 @@ import json
 import openpyxl as op
 from bson.objectid import ObjectId
 from tools.get_image import get_image_data
-from Excel.templatetags.bad_image import bad_image
+from Main.templatetags.bad_image import bad_image
 from tools.get_image import compress_image
 from tools.encrypt import encrypt_data,decrypt_data
 from base64 import b64encode, b64decode
@@ -25,73 +25,113 @@ import re
 from django.utils import timezone
 from datetime import datetime
 
-def data_view(req: HttpRequest,id) -> HttpResponse:
+MAX_RECORD:int = 10
+
+def default_view(req: HttpRequest, id:str) -> HttpResponse:
+    
+    if(req.META.get('HTTP_HX_REQUEST')):
+        return data_view(req,id)
+    
     if(not (is_authenticated(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    connection = MongoConnection(settings.MONGO_URL)
-    excel = connection.connect(settings.MONGO_CRED)
-    
-    if(excel is None):
-        return redirect(reverse('Dash:dash') + '?MongoDB connection failed')
-        
-    MongoTemplate()
-    
-    result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"header.uploader":req.user.username,"header.manager":req.user.username}]})
-    
-    if(result is None):
-        return redirect(reverse('Dash:dash')+'?alert=Record not found')
-
-    pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
-    image_idx:list = result.get('header',{}).get('image_column',[])
-
-    # removing image column cause duh
-    available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
-  
-    context = {'column':available_column,'id':id}
-    
-    if(is_uploader(req.user)):
-        return render(req,'Excel/view/uploader.html',context=context)
+    elif(is_uploader(req.user)):
+        return render(req,'View/table/uploader.html',{'id':id})
     
     elif(is_manager(req.user)):
-        
-        return render(req,'Excel/view/manager.html',context=context)
+        return render(req,'View/table/manager.html',{'id':id})    
+    
+    else:
+        return render(req,'View/table/admin.html',{'id':id})
 
 def search_query(pd_data:pd.DataFrame,column:str,value,available_column) -> tuple[bool,pd.DataFrame]:
-        
-    if((column and value) and (column in available_column) and (column in pd_data.columns)):
-        sample = pd_data[pd_data[column].astype(str).str.contains(value)]
-        
-        if(sample.empty):
-            return (True,pd_data)
-        
-        pd_data = sample
     
-    return (False,pd_data)
+    empty_search = False
+    
+    if((column and value) and (column in available_column) and (column in pd_data.columns)):
+        pd_data = pd_data[pd_data[column].astype(str).str.contains(value)]
         
-def table_query(req: HttpRequest, id:str):
-    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
-        column = req.GET.get('column',None)
-        value = req.GET.get('search',None)
+        if(pd_data.empty):
+            empty_search =True            
+            
+    return (empty_search,pd_data)
+
+def data_view(req: HttpRequest,id) -> HttpResponse:
+
+    if((is_authenticated(req.user)) and (req.method=="GET")):
+    
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
         
-        result = get_data(id,req.user.username)
-        
-        pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
-        image_idx:list = result.get('excel',{}).get('image',[])
-        verify_idx:list = result.get('excel',{}).get('verify',{})
-        
+        if(excel is None):
+            return redirect(reverse('Dash:dash') + '?MongoDB connection failed')
+            
+        result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.username},{"header.manager":req.user.username}]}]})
+
+        if(result is None):
+            return redirect(reverse('Dash:dash')+'?alert=Record not found')
+
+        pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[0:MAX_RECORD]
+        image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])[0:MAX_RECORD]
+        verify_idx:list = [i.get('status') for i in result.get('data',{}).get('feed',[])[0:MAX_RECORD]]
         available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
         
-        empty_search, pd_data = search_query(pd_data,column,value,available_column)
+        context = {'id':id,'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':MAX_RECORD}
         
-        context = {'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx}
-        
-        if(empty_search):
-            context.update({'alert':'Data Search returned 0 results'})
-        
-        return render(req,'HTMX/table.html',context=context)
+        return render(req,'View/HTMX/jjk.html',context=context)
+
+def table_query(req: HttpRequest, id:str) -> HttpResponse:
     
+    if((is_authenticated(req.user)) and (req.method=="GET") and req.META.get('HTTP_HX_REQUEST')):
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        column = req.GET.get('column',None)
+        value = req.GET.get('search',None)
+        page = int(req.GET.get('page',0))
+        
+        result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.username},{"header.manager":req.user.username}]}]})
+
+        if(result is None):
+            return redirect(reverse('Dash:dash')+'?alert=Record not found')
+
+        pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))[page:page+MAX_RECORD]
+        image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])[page:page+MAX_RECORD]
+        verify_idx:list = [i.get('status') for i in result.get('data',{}).get('feed',[])][page:page+MAX_RECORD]
+        available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
+        
+        search, pd_data = search_query(pd_data,column,value,available_column)
+
+        context = {'id':id,'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column, 'search':search, 'max_record':page+MAX_RECORD}
+        return render(req,'View/HTMX/table.html',context=context)
+
+
+def row_view(req: HttpRequest, id:str) -> HttpResponse:
     
+    if((is_authenticated(req.user)) and (req.method=="GET") and req.META.get('HTTP_HX_REQUEST')):
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        column = req.GET.get('column',None)
+        value = req.GET.get('search',None)
+        page = int(req.GET.get('page',0))
+        
+        result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.username},{"header.manager":req.user.username}]}]})
+
+        if(result is None):
+            return redirect(reverse('Dash:dash')+'?alert=Record not found')
+
+        pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))[page:page+MAX_RECORD]
+        image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])[page:page+MAX_RECORD]
+        verify_idx:list = [i.get('status') for i in result.get('data',{}).get('feed',[])][page:page+MAX_RECORD]
+        available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
+        
+        search, pd_data = search_query(pd_data,column,value,available_column)
+
+        context = {'id':id,'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column, 'search':search, 'max_record':page+MAX_RECORD}
+        return render(req,'View/HTMX/row.html',context=context)
+
+
 def verify_page(req: HttpRequest, id:str, index:int) -> HttpResponse:
     if(not (req.user.is_authenticated)):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
@@ -254,32 +294,31 @@ def compress_data(req: HttpRequest, id:str, index:int):
         data[i] = img
         
     send_data = {'header':{'user':req.user.username,**get_post(req.user),'belongs':belongs,'time':timestamp},'data':data}
-    print(send_data)
+
     with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
         f.write(encrypt_data(settings.KEY,send_data))
         
     return redirect(reverse('Excel:single',kwargs={'id':id,'index':index}))
     
 def quick_query(req: HttpRequest, id:str):
-    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST') and (req.user.is_authenticated)):
+    if((is_authenticated(req.user)) and (req.method=="GET") and req.META.get('HTTP_HX_REQUEST')):
+    
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
         column = req.GET.get('column',None)
         search = req.GET.get('search','')
-        
-
-        result = get_data(id,req.user.username)
-
-        pd_data = pd.DataFrame(result.get('excel',{}).get('data',{}))
-        
         context = {}
+        
+        if(excel is not None):
+        
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.username},{"header.manager":req.user.username}]}]})
 
-        if((column is None) or (column not in pd_data.columns)):
-            return render(req,'HTMX/suggests.html',context=context)
-        
-        pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
-                
-        context.update({'option':[i for i in sorted(set(pd_data))[:5]]})
-        
-        return render(req,'HTMX/suggests.html',context=context)
+            if(result is not None):
+                pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
+                pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
+                context.update({'option':[i for i in sorted(pd_data)[:5]]})    
+
+        return render(req,'View/HTMX/suggests.html',context={'option':[i for i in sorted(set(pd_data))[:5]]})
         
 
 

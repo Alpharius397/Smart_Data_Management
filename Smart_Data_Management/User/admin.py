@@ -34,7 +34,7 @@ class ManagerAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if (db_field.name=="user"):
-            kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(uploader__isnull=False)))
+            kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(uploader__isnull=False)|~Q(admin__isnull=False)))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
 
@@ -44,7 +44,14 @@ class UserAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if (db_field.name=="user"):
-            kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(manager__isnull=False)))
+            kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(manager__isnull=False)|~Q(admin__isnull=False)))
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
-    
+@admin.register(Admin)
+class AdminAdmin(admin.ModelAdmin):
+    list_filter = (UniversityFilter,)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if (db_field.name=="user"):
+            kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~Q(manager__isnull=False)|~Q(uploader__isnull=False)))
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)

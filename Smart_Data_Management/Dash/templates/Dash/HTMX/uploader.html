@@ -1,4 +1,5 @@
-{% load Dash %}
+{% load template %}
+
 
 {% if error %}
 
@@ -21,7 +22,7 @@
                 <h4>No one Assigned Yet</h4>
             {% endfor %}
             
-            <a href="" class="view-button">View Data</a>
+            <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
         </div>
 
     {% empty %}

@@ -1,8 +1,9 @@
 import re
 from django import template
-from Excel.templatetags.bad_image import bad_image
+from Main.templatetags.bad_image import bad_image
 from typing import NamedTuple
 from datetime import datetime
+
 class Image(NamedTuple):
     img:str
     width:int
@@ -58,7 +59,7 @@ def in_check(obj,vector):
 
 @register.filter(name='index')
 def index(vector,index):
-    return vector[index] if index else None
+    return vector[int(index)] if index else None
 
 @register.filter(name='index_str')
 def index(vector,index):
