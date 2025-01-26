@@ -36,10 +36,10 @@
                         {% endif %}
                     {% endfor %}
                     
-                    {% if verify|index_str:idx is True %}
+                    {% if verify|index:idx is True %}
                         <td class="verify-sing"><p id="correct">Verified</p></td>
                     
-                    {% elif verify|index_str:idx is False %}
+                    {% elif verify|index:idx is False %}
                         <td class="verify-sing"><p id="wrong">Rejected</p></td>
                     
                     {% else %}

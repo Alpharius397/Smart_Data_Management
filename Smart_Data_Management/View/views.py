@@ -104,6 +104,7 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
         search, pd_data = search_query(pd_data,column,value,available_column)
         pd_data = pd_data.iloc[page:page+MAX_RECORD]
         
+        print(verify_idx)
 
     except Exception as e:
         context['search'] = get_error_info(e)
