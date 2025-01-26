@@ -3,9 +3,9 @@ from django.http import HttpRequest, HttpResponse
 from Excel.models import MongoConnection, get_error_info
 from django.urls import reverse
 from django.conf import settings
-from User.models import is_authenticated, is_admin, is_manager, is_uploader
+from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, is_uploader
+from tools.url_auth import *
 from tools.encrypt import decrypt_data
-from User.models import get_post
 import typing
 from PIL import Image
 import re
@@ -28,7 +28,7 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     
 def uploader_fetch(req: HttpRequest) -> HttpResponse:
     
-    if(req.method=='GET' and is_authenticated(req.user) and is_uploader(req.user) and req.META.get('HTTP_HX_REQUEST')):
+    if(is_authenticated(req.user) and is_uploader(req.user) and is_hx_get(req)):
         
         upload:list[dict[str,str|list]] = []
         error:str = None
@@ -37,7 +37,7 @@ def uploader_fetch(req: HttpRequest) -> HttpResponse:
             conn = MongoConnection(settings.MONGO_URL)
             excel = conn.connect(settings.MONGO_CRED)
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.uploader":req.user.username},VIEW_DATA)
+            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.uploader":req.user.id},VIEW_DATA)
             
             for i in result:
             
@@ -53,7 +53,7 @@ def uploader_fetch(req: HttpRequest) -> HttpResponse:
 
 def manager_fetch(req: HttpRequest) -> HttpResponse:
     
-    if(req.method=='GET' and is_authenticated(req.user) and is_manager(req.user) and req.META.get('HTTP_HX_REQUEST')):
+    if(is_authenticated(req.user) and is_manager(req.user) and is_hx_get(req)):
         
         manage:list[dict[str,str|list]] = []
         error:str = None
@@ -62,23 +62,21 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             conn = MongoConnection(settings.MONGO_URL)
             excel = conn.connect(settings.MONGO_CRED)
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.manager":req.user.username},VIEW_DATA)
-            
-            for i in result:
-            
-                manage.append({'id':i.get('_id'), 'uploader':i.get('header',{}).get('uploader'), 'manager':i.get('header',{}).get('manager',[]),'file_name':i.get('data',{}).get('header',{}).get('file_name')})
-            
+            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.manager":req.user.id},VIEW_DATA)
+            for i in result:            
+                manage.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
+            print(manage)
         except Exception as e:
             error = get_error_info(e)
             
         finally:
             conn.connection.close()
             
-        return render(req,'Dash/HTMX/uploader.html',context={'manage':manage,'error':error})
+        return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
 
 def admin_fetch(req: HttpRequest) -> HttpResponse:
     
-    if(req.method=='GET' and is_authenticated(req.user) and is_admin(req.user) and req.META.get('HTTP_HX_REQUEST')):
+    if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
         
         admin:list[dict[str,str|list]] = []
         error:str = None
@@ -87,7 +85,7 @@ def admin_fetch(req: HttpRequest) -> HttpResponse:
             conn = MongoConnection(settings.MONGO_URL)
             excel = conn.connect(settings.MONGO_CRED)
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.post":get_post(req.user)},VIEW_DATA)
+            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.post":get_post_id(req.user)},VIEW_DATA)
             
             for i in result:
             

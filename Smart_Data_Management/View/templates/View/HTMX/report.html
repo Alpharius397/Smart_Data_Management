@@ -1,19 +1,20 @@
 {% load template %}
 
-<html>
-<head>
-    <style>
+{% if search %}
 
-    </style>
-</head>
-<body>
+    <ul class="messages">
+            <li class="error">{{search}}</li>
+    </ul>
+
+{% else %}
+
     <div class="header-box">
         {{university}} - {{institute}} - {{branch}}
     </div>
     <div class="container-box">
         <div class="image-box">
             {% if pic %}
-                {% with image=data|index:pic|img %}
+                {% with image=data|index_str:pic|img %}
                     <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
                 {% endwith %}
             {% endif %}
@@ -22,7 +23,7 @@
     <div class="personal-info">
 
         {% for i in personal %}
-            <p><strong>{{i}}: </strong>{{data|index:i}}</p>
+            <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
         {% endfor %}
 
     </div>
@@ -34,7 +35,7 @@
                     <h3>Semester {{sem}}</h3>
 
                     {% for sub in subs %}
-                        <p><strong>{{sub|clean}}:</strong>{{data|index:sub}}</p>
+                        <p><strong>{{sub|clean}}:</strong>{{data|index_str:sub}}</p>
                     {% endfor %}
 
                 </div>
@@ -43,5 +44,4 @@
 
         </div>
     </div>
-</body>
-</html>
+{% endif %}

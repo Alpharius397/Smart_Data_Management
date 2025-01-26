@@ -1,0 +1,29 @@
+{% load template %}
+
+<div class="issue_card">
+        
+    {% if status %}
+
+        {% if locked %}
+            <p><strong> Card Already Issued on {{time_of_issue|timestamp}}. </strong></p>
+        {% endif %}
+
+        <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+
+            {% if locked %}
+                <button class="upload-button" id="issue_button">Reissue Card </button>
+            {% else %}
+                <button class="upload-button" id="issue_button">Issue Card</button>
+            {% endif %}
+        </form>
+
+        {% if locked %}
+            <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-vals='{"to_do":"cancel"}' hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:#cancel_button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+                <button type="cancel" class="upload-button" id="cancel_button">Cancel Card</button>
+            </form>
+        {% endif %}
+    {% endif %}
+
+</div>

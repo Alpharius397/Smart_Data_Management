@@ -1,9 +1,6 @@
-from django.contrib.auth.models import User,AbstractUser,BaseUserManager
-from django.db.models import CharField,CASCADE,OneToOneField,ForeignKey,Model,SET_NULL,EmailField,BooleanField
+from django.contrib.auth.models import User
+from django.db.models import CASCADE,OneToOneField,ForeignKey,Model,SET_NULL
 from University.models import Branch
-from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.validators import RegexValidator
-
 
 class Manager(Model):
     user = OneToOneField(to=User,on_delete=CASCADE,related_name='manager')
@@ -50,6 +47,11 @@ def is_uploader(user:User) -> bool:
     except:
         return False
     
+def get_user_by_id(id:int) -> str|None:
+    
+    user = User.objects.get(id=id)
+    return user.username        
+
 def get_post(user: User) -> dict[str,str]:
     uni = None
     insti = None
@@ -72,6 +74,29 @@ def get_post(user: User) -> dict[str,str]:
     uni = insti.university
     
     return {'university':uni.name,'institute':insti.name,'branch':branch.name}
+
+def get_post_id(user:User) -> dict[str,int]:
+    uni = None
+    insti = None
+    branch = None
+
+    if(is_manager(user)):
+        user:Manager = user.manager
+        
+    elif(is_uploader(user)):
+        user:Uploader = user.uploader
+        
+    elif(is_admin(user)):
+        user:Admin = user.admin
+        
+    else:
+        return {'university':uni,'institute':insti,'branch':branch}
+    
+    branch = user.belongs
+    insti = branch.institute
+    uni = insti.university
+    
+    return {'university':uni.id,'institute':insti.id,'branch':branch.id}
 
 def is_authenticated(user:User) -> bool:
     

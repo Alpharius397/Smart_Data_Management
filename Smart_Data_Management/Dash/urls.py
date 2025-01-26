@@ -9,7 +9,7 @@ urlpatterns = [
  	path('',dash_board,name='dash'),
  	path('uploader/',uploader_fetch,name='upload'),
  	path('admin/',admin_fetch,name='admin'),
- 	path('manager/',manager_fetch,name='manager'),
+ 	path('manager/',manager_fetch,name='manage'),
  	path('read/',read_screen,name='read'),
 ]
 

@@ -1,33 +1,41 @@
-{% extends 'Excel/single.html' %}
 {% load template %}
-{% block uploader %}
 
+{% if search %}
+
+    <ul class="messages">
+        <li class="error">{{search}}</li>
+    </ul>
+
+{% else %}
     <div class="feedback">
-        <h3>Feedback By:</h3>
+        <h3>Assigned To:</h3>
         <ul>
         {% for i in manager %}
+            
             <li>
-                <h4 class="user">Username: {{i.user}}</h4>
-
-                {% if i.status is None %}
-                    <h4 class="user">Status: <p id="unchecked">Not Checked</p></h4>
-                {% elif i.status is True %}
-                    <h4 class="user">Status: <p id="verify">Verified</p></h4>
-                {% else %}
-                    <h4 class="user">Status: <p id="reject">Rejected</p></h4>
-                {% endif %}
-
-                {% if i.feedback %}
-                    <h4 class="user">Feedback: <p id='feed-text'>{{i.feedback}}</p></h4>
-                {% endif %}    
+                <h4 class="user">User: {{i}}{% if not forloop.last %}, {% endif %}</h4>
             </li>
+        </ul>
         {% empty %}
-            <h3 class="user">No user assigned</h3>
+            None
         {% endfor %}
+
+        {% if status is None %}
+            <h4 class="user">Status: <p id="unchecked">Not Checked</p></h4>
+        {% elif status is True %}
+            <h4 class="user">Status: <p id="verify">Verified</p></h4>
+        {% else %}
+            <h4 class="user">Status: <p id="reject">Rejected</p></h4>
+        {% endif %}
+
+        {% if feed %}
+            <h4 class="user">Feedback: <p id='feed-text'>{{feed}}</p></h4>
+        {% endif %}    
+
         </ul>
     </div>
 
-    {% if lock|index_str:'status' %}
-    <p><strong> Card Issued on {{lock|index_str:'time'|timestamp}}. </strong></p>
+    {% if lock %}
+        <p><strong> Card Issued on {{ time_of_issue|timestamp}}. </strong></p>
     {% endif %}
-{% endblock %}
+{% endif %}

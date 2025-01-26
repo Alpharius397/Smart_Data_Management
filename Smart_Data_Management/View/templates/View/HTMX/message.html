@@ -1,0 +1,13 @@
+{% if msg %}
+    <ul class="messages" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".issue_card" hx-trigger="load">
+        <li class="success">{{msg}}</li>
+    </ul>
+{% elif search %}
+    <ul class="messages" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".issue_card" hx-trigger="load">
+        <li class="error">{{search}}</li>
+    </ul>
+{% else %}
+    <ul class="messages" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".issue_card" hx-trigger="load">
+        <li class="error"> Something went wrong! </li>
+    </ul>
+{% endif %}

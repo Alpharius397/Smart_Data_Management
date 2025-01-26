@@ -7,7 +7,7 @@
 
 {% else %}
 
-    {% for i in upload %}
+    {% for i in manage %}
         <div class="task-item">
             <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
             <button class="drop-down down" id="up_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="up_{{forloop.counter}}"></i></button>
@@ -18,7 +18,7 @@
                     {{ j  }}
                 </li>
             {% endfor %}
-            <a href="" class="view-button">View Data</a>
+            <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
         </div>
 
     {% empty %}

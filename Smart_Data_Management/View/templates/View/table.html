@@ -365,7 +365,11 @@
 <script>
 
     function dontAskWhy(){
-        document.querySelector(".dont-ask-why-this").style.width = document.querySelector('.tableView').scrollWidth + 'px';
+
+        const dont = document.querySelector(".dont-ask-why-this");
+        if(dont!=undefined){
+            dont.style.width = document.querySelector('.tableView').scrollWidth + 'px';
+        }
     }
 
     function get_select(){

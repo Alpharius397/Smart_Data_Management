@@ -1,0 +1,38 @@
+{% load template %}
+{% load static %}
+
+<div class="container">
+
+    <div class="searchQuery">
+        <h2>Search Columns: </h2>
+        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="load,submit" hx-on::after-request="dontAskWhy();">
+            
+            <label for="column">Column: </label>
+            <select name="column" id="column">
+                <option value="">----------</option>
+                {% for i in available %}
+                    <option value="{{ i }}"> {{ i }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="search">Containing: </label>
+
+            <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{{request.path}}/quick_search/" hx-vals="js:{column: get_select()}" hx-trigger="load, keyup,click from:#column ">
+
+            <datalist id="suggests" autocomplete="false">
+
+            </datalist>
+
+            <button type="submit"> Search </button>
+            <button type="cancel" hx-get="{% url 'View:search' id=id %}" hx-params="none" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="click" hx-on::after-request="dontAskWhy();"> Cancel Search </button>
+
+        </form>
+
+    </div>
+
+    <div class="tableView" id="tableView">
+    
+        
+    </div>
+
+</div>

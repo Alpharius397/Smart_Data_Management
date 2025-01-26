@@ -5,34 +5,10 @@
 {% block manager %}
     <div class="container">
         <h2>Assigned Tasks</h2>
-        <div class="task-list" id="up">
+        <div class="task-list" id="up" hx-get="{% url 'Dash:manage' %}" hx-target="this" hx-swap="innerHTML" hx-trigger="load">
 
-            {% for i in verify %}
-            <div class="task-item">
-                <h3>Assign {{ forloop.counter }}: {{i.belongs}} - {{i.excel.name}}</h3>
-                <button class="drop-down ass down" id="ass_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="up_{{forloop.counter}}"></i></button>
-            </div>
-            <div class="task-info" id="ass_{{forloop.counter}}">
-                <ol>
-                {% for j in i.verify %}
-                    <li>
-                        {{ j.user }}
-                    </li>
-                {% empty %}
-                    <h3>No one Assigned</h3>
-                {% endfor %}
-
-                </ol>
-                <a href="{% url 'Excel:view' i|getID:'_id' %}">View Data</a>
-
-            </div>
-
-            {% empty %}
-                <h3 class="title-tag">No Sheets Assigned</h3>
-            {% endfor %}
         </div>
     </div>
-
 {% endblock %}
 
 

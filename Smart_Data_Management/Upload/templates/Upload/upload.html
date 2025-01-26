@@ -217,7 +217,10 @@
 
     htmx.on('#form', 'htmx:xhr:progress', function(event) {
         htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
-    });
 
+        if(event.detail.loaded==event.detail.total){
+            htmx.find('#progress').setAttribute('style', "display:none;");
+        }
+    });
 </script>
 </html>

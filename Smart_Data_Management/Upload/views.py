@@ -8,7 +8,8 @@ from User.models import is_uploader, is_authenticated
 import json
 from bson.objectid import ObjectId
 from tools.get_image import image_load
-from User.models import get_post
+from tools.url_auth import is_auth_get, is_auth_post, is_hx_post
+from User.models import get_post, get_post_id
 from django.contrib import messages
 
 # Create your views here.
@@ -33,7 +34,7 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
     
 def upload(req: HttpRequest, id) -> HttpResponse:
 
-    if((is_authenticated(req.user) and is_uploader(req.user)) and req.META.get('HTTP_HX_REQUEST') and (req.method=="POST")):
+    if((is_authenticated(req.user) and is_uploader(req.user)) and is_hx_post(req)):
 
         f = ExcelForm(req.POST,req.FILES)
     
@@ -59,7 +60,7 @@ def upload(req: HttpRequest, id) -> HttpResponse:
                 rows, _ = pd_data.shape
                 pd_data = pd_data.to_json()
             
-            template = MongoTemplate().add_post(**get_post(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.username).add_feed(rows).get_json()
+            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows).get_json()
             
             try:
                 res = excel.insert_one(template).inserted_id
@@ -75,7 +76,7 @@ def upload(req: HttpRequest, id) -> HttpResponse:
 
 def edit(req: HttpRequest, id:str) -> HttpResponse:
 
-    if((is_authenticated(req.user) and is_uploader(req.user)) and req.META.get('HTTP_HX_REQUEST') and (req.method=="POST")):
+    if((is_authenticated(req.user) and is_uploader(req.user)) and is_hx_post(req)):
 
         f = ExcelForm(req.POST,req.FILES)
     
@@ -101,16 +102,17 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                 rows, _ = pd_data.shape
                 pd_data = pd_data.to_json()
             
-            template = MongoTemplate().add_post(**get_post(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.username).add_feed(rows)
+            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
             try:
                 exists:dict[str,dict[str,dict|list[dict]]] = excel.find_one({"_id":ObjectId(id)})
                 locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',[])])
+                
                 if(exists is None):
                     messages.error(req, "Record not found!")
                 
                 elif(locked):
-                    messages.success(req,"Data Insertion not possible. Data is locked")
+                    messages.error(req,"Data Insertion not possible. Data is locked")
                 else:
                     managers = exists.get('header',{}).get('manager',[])
                     template = template.add_manager(managers).get_json()
