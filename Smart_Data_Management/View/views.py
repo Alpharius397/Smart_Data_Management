@@ -1,14 +1,20 @@
+from base64 import b64decode
+from io import BytesIO
+import json
 import re
 from typing import NamedTuple, Any
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
-from Excel.models import *
+from Main.models import *
 from django.urls import reverse
 from django.conf import settings
+from tools.get_image import compress_image
 from User.models import get_post_id, is_manager, is_uploader, is_authenticated, get_post, get_user_by_id
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
+from tools.encrypt import encrypt_data, decrypt_data
+from Main.templatetags.bad_image import bad_image
 from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
 from View.forms import VerifyForm
 from django.utils import timezone
@@ -96,15 +102,14 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
     
     try:
         page = int(page)
-        
         pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
         verify_idx:list = [i.get('status') for i in result.get('data',{}).get('feed',[])[page:page+MAX_RECORD]]
         available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
+        uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
+        manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
         search, pd_data = search_query(pd_data,column,value,available_column)
         pd_data = pd_data.iloc[page:page+MAX_RECORD]
-        
-        print(verify_idx)
 
     except Exception as e:
         context['search'] = get_error_info(e)
@@ -330,7 +335,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 
             except Exception as e:
                 return render(req,'View/single/manager_form.html',context=context)
-                
+
             return render(req,'View/single/manager_form.html',context=context)
         
         elif(is_hx_post(req)):
@@ -365,6 +370,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 res = excel.update_one({"_id":ObjectId(id)},{"$set":{'data.feed':meta_data}}).matched_count
 
                 if(res==1 and locked): 
+                    compress_data(result,req.user,idx)
                     context['msg'] = "Card Issued"
                 elif(res==1): 
                     context['msg'] = "Card Cancelled"
@@ -377,8 +383,34 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             
             return render(req,'View/HTMX/message.html',context=context)
             
+def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int) -> dict[str,dict[str]]:
+    
+    pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
+    image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
+    belongs = get_user_by_id(result.get('header',{}).get('uploader',None))
+    data = pd_data.iloc[idx].to_dict()
+    timestamp = timezone.now().isoformat()
 
-                
+    for i in image_idx:
+        img_data = data[i]
+        
+        raw_img = img_data.split(':')
+    
+        try:
+            _, _, img = raw_img
+        except:
+            img = bad_image
             
-            
+        img = compress_image(BytesIO(b64decode(img)))
+        
+        data[i] = img
+        
+    send_data = {'header':{'manager':manager.username,**get_post(manager),'uploader':belongs ,'time':timestamp},'data':data}
+
+    with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
+        f.write(encrypt_data(settings.KEY,send_data))
+        
+    with open(settings.MEDIA_ROOT + '/decompress.txt','w') as f:
+        f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,send_data))))
+        
     

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
-from Excel.forms import ExcelForm
-from Excel.models import MongoConnection, MongoTemplate, get_error_info
+from Upload.forms import ExcelForm
+from Main.models import MongoConnection, MongoTemplate, get_error_info
 from django.urls import reverse
 from django.conf import settings
 from User.models import is_uploader, is_authenticated
@@ -32,7 +32,7 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
         return render(req,'Upload/edit.html',{'form':f,'id':id})
 
     
-def upload(req: HttpRequest, id) -> HttpResponse:
+def upload(req: HttpRequest) -> HttpResponse:
 
     if((is_authenticated(req.user) and is_uploader(req.user)) and is_hx_post(req)):
 
@@ -49,7 +49,20 @@ def upload(req: HttpRequest, id) -> HttpResponse:
         if(f.is_valid()):
             excel_file = req.FILES["file"]
             file_name = f.cleaned_data.get("file_name")
-        
+            
+            try:
+                res = excel.find_one({"data.header.file_name":file_name},{"data.header.file_name":1})
+                
+                if(res):
+                    messages.error(req, "File Name already exists. Please choose a different one!")
+                    return render(req,'Upload/HTMX/message.html')
+                    
+                
+            except Exception as e:
+                messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
+                return render(req,'Upload/HTMX/message.html')
+                
+
             with excel_file.open() as file:
                 image_idx, pd_data = image_load(file.read())
                 
@@ -91,6 +104,18 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
         if(f.is_valid()):
             excel_file = req.FILES["file"]
             file_name = f.cleaned_data.get("file_name")
+            
+            try:
+                res = excel.find_one({"data.header.file_name":file_name},{"data.header.file_name":1})
+                
+                if(res):
+                    messages.error(req, "File Name already exists. Please choose a different one!")
+                    return render(req,'Upload/HTMX/message.html')
+                    
+                
+            except Exception as e:
+                messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
+                return render(req,'Upload/HTMX/message.html')
         
             with excel_file.open() as file:
                 image_idx, pd_data = image_load(file.read())

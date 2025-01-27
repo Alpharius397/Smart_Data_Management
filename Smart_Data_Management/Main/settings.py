@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'Main',
     'Login',
     'Register',
-    'Excel',
     'Logout',
     'University',
     'User',

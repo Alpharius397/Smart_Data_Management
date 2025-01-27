@@ -307,7 +307,7 @@
 
         <div class="feedback"></div>
 
-        <div class="issue_card"></div>
+        <div class="issue_card" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-trigger="load" hx-target=".issue_card"></div>
 
         <ul class="messages"></ul>
 

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
-from Excel.models import MongoConnection, get_error_info
+from Main.models import MongoConnection, get_error_info
 from django.urls import reverse
 from django.conf import settings
 from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, is_uploader
@@ -41,7 +41,7 @@ def uploader_fetch(req: HttpRequest) -> HttpResponse:
             
             for i in result:
             
-                upload.append({'id':i.get('_id'), 'uploader':i.get('header',{}).get('uploader'), 'manager':i.get('header',{}).get('manager',[]),'file_name':i.get('data',{}).get('header',{}).get('file_name')})
+                upload.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
             
         except Exception as e:
             error = get_error_info(e)
