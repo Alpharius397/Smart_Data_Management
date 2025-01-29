@@ -73,8 +73,8 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             conn.connection.close()
             
         return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
-
-def admin_fetch(req: HttpRequest) -> HttpResponse:
+    
+def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
     
     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
         
@@ -85,11 +85,11 @@ def admin_fetch(req: HttpRequest) -> HttpResponse:
             conn = MongoConnection(settings.MONGO_URL)
             excel = conn.connect(settings.MONGO_CRED)
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.post":get_post_id(req.user)},VIEW_DATA)
+            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.post":get_post_id(req.user),'header.manager':[]},VIEW_DATA)
             
             for i in result:
             
-                admin.append({'id':i.get('_id'), 'uploader':i.get('header',{}).get('uploader'), 'manager':i.get('header',{}).get('manager',[]),'file_name':i.get('data',{}).get('header',{}).get('file_name')})
+                admin.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
             
         except Exception as e:
             error = get_error_info(e)
@@ -97,7 +97,33 @@ def admin_fetch(req: HttpRequest) -> HttpResponse:
         finally:
             conn.connection.close()
             
-        return render(req,'Dash/HTMX/uploader.html',context={'admin':admin,'error':error})
+        return render(req,'Dash/HTMX/admin.uploader.html',context={'upload':admin,'error':error})
+
+def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
+    
+    if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
+        
+        admin:list[dict[str,str|list]] = []
+        error:str = None
+        
+        try:
+            conn = MongoConnection(settings.MONGO_URL)
+            excel = conn.connect(settings.MONGO_CRED)
+            
+            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
+            print(result)
+            for i in result:
+            
+                admin.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
+            
+        except Exception as e:
+            error = get_error_info(e)
+            
+        finally:
+            conn.connection.close()
+            
+        return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
+
 
 class ReportStructure(typing.NamedTuple):
     profile_img:Image

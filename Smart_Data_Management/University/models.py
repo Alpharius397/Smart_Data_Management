@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import CharField,CASCADE,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField
+from django.db.models import CharField,RESTRICT,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField,RESTRICT
 from django.core.validators import MinValueValidator
 
 
@@ -15,7 +15,7 @@ class University(Model):
 
 class Institute(Model):
     name = CharField(max_length=200,null=False,blank=False,verbose_name='Institute Name')
-    university = ForeignKey(to=University,null=False,blank=False,related_name='insti',on_delete=CASCADE)
+    university = ForeignKey(to=University,null=False,blank=False,related_name='insti',on_delete=RESTRICT)
     location = CharField(max_length=200,null=False,blank=False,verbose_name='Location')
     
     class Meta:
@@ -27,7 +27,7 @@ class Institute(Model):
     
 class Branch(Model):
     name = CharField(max_length=200,null=False,blank=False,verbose_name='Branch Name')
-    institute = ForeignKey(to=Institute,null=False,on_delete=CASCADE,related_name='branch')
+    institute = ForeignKey(to=Institute,null=False,on_delete=RESTRICT,related_name='branch')
 
     class Meta:
         verbose_name = "Branch"
@@ -39,7 +39,7 @@ class Branch(Model):
 class Subjects(Model):
     name = CharField(max_length=200,null=False,blank=False,verbose_name='Subject Name')
     semester = IntegerField(verbose_name='Semester',validators=[MinValueValidator(1)])
-    branch = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='subject')
+    branch = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='subject')
     
     class Meta:
         verbose_name = "Subject"

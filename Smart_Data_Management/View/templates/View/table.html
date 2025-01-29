@@ -320,6 +320,17 @@
             background-color: #f44336;
         }
 
+        form{
+            margin-bottom: 10px;
+        }
+
+        
+
+        h4, form{
+            margin-left: 10px;
+        }
+
+
     </style>
 </head>
 
@@ -375,6 +386,10 @@
     function get_select(){
         return document.getElementById('column').value;
     }
+
+    document.body.addEventListener('htmx:configRequest', function (event) {
+        event.detail.headers['X-CSRFToken'] = document.getElementsByName('csrfmiddlewaretoken').value;
+    });
 
 
 

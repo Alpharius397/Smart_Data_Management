@@ -7,7 +7,6 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
             justify-content: center;
             align-items: center;
             margin: 0;
@@ -85,13 +84,36 @@
             text-decoration: underline;
         }
 
-        ul.errorlist, ul.errorlist li {
-            list-style-type: none;
-            color: red;
-            font-style: italic;
-            margin: 0;
+        .messages {
+            list-style: none;
+            margin: 20px auto;
             padding: 0;
-            margin-top: 5px;
+            width: 80%;
+            max-width: 1000px;
+        }
+
+        .messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .messages li:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .messages li.success {
+            background-color: #4caf50; 
+        }
+
+        .messages li.error {
+            background-color: #f44336;
         }
 
         p.help_text {
@@ -114,12 +136,18 @@
             width: 100%;
         }
 
+        .register-container{
+            margin: 10px auto;
+        }
+
     </style>
 </head>
 <body>
+    <ul class="messages"></ul>
+
     <div class="register-container">
         <h2>Register</h2>
-        <form action="{% url 'Register:register' %}" method="POST">
+        <form hx-post="{% url 'Register:register' %}" hx-target=".messages" hx-trigger="submit" hx-swap="outerHTML">
             {% csrf_token %}
 
             {% for field in form %}
@@ -136,19 +164,13 @@
                     
                 </div>
             {% endfor %}
-            <button type="submit" class="register-button">Register</button>
+            <button class="register-button" id="reg">Register</button>
         </form>
         <div class="form-footer">
             <p>Already have an account? <a href="{% url 'Login:login' %}">Login</a></p>
         </div>
     </div>
 
-    <script>
-
-        {% if alert %}
-            alert("{{ alert }}");
-        {% endif %}
-    </script>
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 
 </body>

@@ -175,7 +175,7 @@
             margin-bottom: 5px;
             margin-left: 5px;
         }
-
+        
     </style>
 </head>
 
@@ -190,13 +190,12 @@
         {% block uploader %} {% endblock %}
         {% block manager %} {% endblock %}
 </body>
-<script src="https://kit.fontawesome.com/9709fae26f.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+<script src="https://kit.fontawesome.com/9709fae26f.js" crossorigin="anonymous"></script>
 <script>
 
     function attach_event(){
         const elements = document.querySelectorAll(".drop-down");
-
 
         elements.forEach((element) => {
             const id = element.id;
@@ -215,7 +214,7 @@
     }
 
 
-    htmx.on(".task-list","htmx:afterSwap", function(event){
+    htmx.on(".task-list","htmx:afterSettle", function(event){
         attach_event();
         
     })

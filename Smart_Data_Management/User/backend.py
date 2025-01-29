@@ -5,6 +5,7 @@ from django.db.models import Q
 
 User = get_user_model()
 
+"""
 class _Backend(BaseBackend):
     
     @staticmethod
@@ -28,3 +29,4 @@ class _Backend(BaseBackend):
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
+"""

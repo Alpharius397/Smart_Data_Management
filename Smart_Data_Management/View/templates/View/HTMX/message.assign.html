@@ -1,0 +1,13 @@
+{% if msg %}
+    <ul class="messages" hx-get="{% url 'View:assign' id=id %}" hx-swap="outerHTML" hx-target=".assign" hx-trigger="load">
+        <li class="success">{{msg}}</li>
+    </ul>
+{% elif error %}
+    <ul class="messages" hx-get="{% url 'View:assign' id=id %}" hx-swap="outerHTML" hx-target=".assign" hx-trigger="load">
+        <li class="error">{{error}}</li>
+    </ul>
+{% else %}
+    <ul class="messages" hx-get="{% url 'View:assign' id=id %}" hx-swap="outerHTML" hx-target=".assign" hx-trigger="load">
+        <li class="error"> Something went wrong! </li>
+    </ul>
+{% endif %}

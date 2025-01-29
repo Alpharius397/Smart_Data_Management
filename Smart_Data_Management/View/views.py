@@ -9,17 +9,19 @@ from Main.models import *
 from django.urls import reverse
 from django.conf import settings
 from tools.get_image import compress_image
-from User.models import get_post_id, is_manager, is_uploader, is_authenticated, get_post, get_user_by_id
+from User.models import Admin, Manager, get_post_id, is_admin, is_manager, is_uploader, is_authenticated, get_post, get_user_by_id
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, is_hx_put, is_hx_delete
 from View.forms import VerifyForm
 from django.utils import timezone
+from django.http import QueryDict
 
 MAX_RECORD:int = 5
+def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
 class ReportStructure(NamedTuple):
     profile_img:str
@@ -118,7 +120,7 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
     if(search):
         context['search'] = "No matching records found"
     else:
-        context.update({'column':pd_data.columns,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD})
+        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD})
 
     return context
 
@@ -135,6 +137,101 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
     
     else:
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+
+
+def assign_form(req:HttpRequest, id:str) -> HttpResponse:
+    
+    if(is_authenticated(req.user) and is_hx_get(req) and is_admin(req.user)):
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED) 
+        result:dict[str,dict[str,dict]] = None
+        context = {'id':id}
+
+        
+        try:
+            result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.uploader":1,"header.manager":1})
+            
+        except Exception as e:
+            print(e)
+            
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/form.html',context=context)
+        
+        try:
+            user:Admin = req.user
+            uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
+            manager = {i:get_user_by_id(i) for i in result.get('header',{}).get('manager',[])}
+            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=user.admin.belongs.id).exclude(user__id__in=list(manager.keys())).values()}
+            
+            context.update({'upload':uploader,'manage':manager,'option':all_manager})
+            
+        except Exception as e:
+            context['error'] = get_error_info(e)
+
+        return render(req,'View/HTMX/form.html',context=context)
+    
+    
+    elif(is_authenticated(req.user) and is_hx_post(req) and is_admin(req.user)):
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED) 
+        result:dict[str,dict[str,dict]] = None
+        context = {'id':id}
+
+        user:str = req.POST.get('user',None)
+        to_do = req.POST.get('to_do',None)
+
+        match to_do:
+            case "assign": to_do = True
+            case "delete": to_do = False
+            case _: to_do = None
+        
+            
+        if(user is None):
+            context['error'] = "User not found or Method not found"
+            return render(req,'View/HTMX/message.assign.html',context=context)
+            
+            
+        try:
+            result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1})
+            
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/message.assign.html',context=context)
+            
+        
+        try:
+            manager = [i for i in result.get('header',{}).get('manager',[])]
+            all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
+            _manage = Manager.objects.get(user__id=user)
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/message.assign.html',context=context)
+        try:
+            if(to_do):
+                manager.append(_manage.user.id)
+                manager = list(set(manager))
+                
+                excel.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
+                context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+            else:
+                manager.remove(_manage.user.id)
+                manager = list(set(manager))
+                
+                excel.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
+                context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/message.assign.html',context=context)
+            
+        return render(req,'View/HTMX/message.assign.html',context=context)
+            
+
+    
+    return HttpResponse(status=404)
+
 
 def table_query(req: HttpRequest, id:str) -> HttpResponse:
     
@@ -175,13 +272,11 @@ def quick_query(req: HttpRequest, id:str):
         context = {'option':[]}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
-
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
             if(column in pd_data.columns):
                 pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
                 context['option'] = [i for i in sorted(set(pd_data))[:5]]    
-
         except Exception as e:
             print(get_error_info(e))
             
@@ -212,7 +307,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
             meta_data:dict = result.get('data',{}).get('feed',[])[idx:idx+1][0]
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
             
@@ -242,13 +337,13 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
             meta_data:list[dict] = result.get('data',{}).get('feed',[])
             _ = meta_data[idx]
             
         except Exception as e:
             context['search'] = get_error_info(e)
-            return render(req,'View/HTMX/message.html',context=context)
+            return render(req,'View/HTMX/message.issue.html',context=context)
             
         f = VerifyForm(req.POST)
         
@@ -279,7 +374,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         else:
             context['search'] = f.errors.as_text()
     
-        return render(req,'View/HTMX/message.html',context=context)
+        return render(req,'View/HTMX/message.issue.html',context=context)
     
     elif(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
         connection = MongoConnection(settings.MONGO_URL)
@@ -305,7 +400,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
             meta_data:list[dict] = result.get('data',{}).get('feed',[])
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
             feed = meta_data[idx]
@@ -328,7 +423,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             context = {'id':id,'idx':idx}
             
             try:
-                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
+                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
                 meta_data:list[dict] = result.get('data',{}).get('feed',[])
                 feed = meta_data[idx]
                 context.update({**feed})
@@ -350,19 +445,19 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             match(to_do):
                 case "issue": locked = True
                 case "cancel": locked = False
-                case _: locked = None
+                case _: locked = False
                 
             if(locked):
                 timestamp = timezone.now().isoformat()
             
             try:
-                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":[{"header.uploader":req.user.id},{"header.manager":req.user.id}]}]})
+                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
                 meta_data:list[dict] = result.get('data',{}).get('feed',[])
                 feed = meta_data[idx]
                 
             except Exception as e:
                 context['search'] = get_error_info(e)
-                return render(req,'View/HTMX/message.html',context=context)
+                return render(req,'View/HTMX/message.issue.html',context=context)
             
             meta_data[idx].update({'time_of_issue':timestamp,'locked':locked})
             
@@ -379,9 +474,11 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             
             except Exception as e:
                 context['search'] = get_error_info(e)
-                return render(req,'View/HTMX/message.html',context=context)
+                return render(req,'View/HTMX/message.issue.html',context=context)
             
-            return render(req,'View/HTMX/message.html',context=context)
+            return render(req,'View/HTMX/message.issue.html',context=context)
+        
+    return HttpResponse(status=404)
             
 def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int) -> dict[str,dict[str]]:
     

@@ -1,26 +1,24 @@
-from django.contrib.auth.models import User
-from django.db.models import CASCADE,OneToOneField,ForeignKey,Model,SET_NULL
+from django.contrib.auth.models import User,Group
+from django.db.models import CASCADE,OneToOneField,ForeignKey,Model,SET_NULL,RESTRICT
 from University.models import Branch
 
 class Manager(Model):
-    user = OneToOneField(to=User,on_delete=CASCADE,related_name='manager')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='manager')
+    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='manager')
+    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='manager')
     
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"
 
-
 class Uploader(Model):
-    user = OneToOneField(to=User,on_delete=CASCADE,related_name='uploader')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='uploader')
+    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='uploader')
+    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='uploader')
 
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"
 
-
 class Admin(Model):
-    user = OneToOneField(to=User,on_delete=CASCADE,related_name='admin')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=SET_NULL,related_name='admin')
+    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='admin')
+    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='admin')
 
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"

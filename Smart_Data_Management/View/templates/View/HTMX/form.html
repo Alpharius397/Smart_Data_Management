@@ -1,0 +1,52 @@
+{% load template %}
+
+
+<div class="assign">
+
+    {% if error %}
+
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+    {% else %}
+    <h3> Assign Task </h3>
+
+    <h4>Uploader: {{upload}}</h4>
+    <h4>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h4>
+
+    <form hx-post="{% url 'View:assign' id=id %}" hx-trigger="click from:#assign" hx-target=".messages" hx-swap="outerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="to_do" value="assign" readonly> 
+        Add a user
+
+        <select name="user" required>
+            <option value>--------</option>
+
+            {% for i,j in option.items %}
+                <option value="{{i}}">{{j}}</option>
+            {% endfor %}
+        </select>
+ 
+            <button id="assign">Assign User</button>
+
+
+    </form>
+
+    <form hx-post="{% url 'View:assign' id=id %}" hx-trigger="click from:#delete" hx-target=".messages" hx-swap="outerHTML">
+        {% csrf_token %}
+        <input type="hidden" name="to_do" value="delete" readonly> 
+
+        Delete a user
+        <select name="user" required>
+            <option value>--------</option>
+
+            {% for i,j in manage.items %}
+                <option value="{{i}}">{{j}}</option>
+            {% endfor %}
+        </select>
+
+            <button type='cancel' id="delete">Unassign User</button>
+    </form>
+
+{% endif %}
+</div>

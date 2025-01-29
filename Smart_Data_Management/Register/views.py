@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from Register.forms import RegisterForm
 from django.contrib.auth import models
-from Main.tools import *
-from User.models import Manager, Uploader
+from Main.models import get_error_info
+from tools.url_auth import is_hx_post, is_hx_get
+from User.models import Manager, Uploader, Admin
 from University.models import University, Institute, Branch
 
 # Create your views here.
@@ -12,38 +13,74 @@ def register_view(req:HttpRequest) -> HttpResponse:
     if(req.method=="GET"):
         return render(req,'Register/index.html',{'form':RegisterForm})
     
-    elif(req.method=="POST"):
+    elif(is_hx_post(req)):
         f = RegisterForm(req.POST)
+        context = {}
                 
         if(f.is_valid()):
             user, email, passwrd, level = f.cleaned_data.get("username"), f.cleaned_data.get("email"), f.cleaned_data.get("password"), f.cleaned_data.get("level")
+            branch = f.cleaned_data.get("branch")
             
-            exists = models.User.objects.filter(username=user).exists()
-            
-            if(exists):
-                return render(req,'Register/index.html',{'form':f,'alert':'User Exists'})
-            
-            user = models.User.objects.create_user(user,email,passwrd)
-            user.save()
-            
-            if(level=='Manager'):
-                manager = Manager(user=user)
-                manager.save()
+            try:
+                exists = models.User.objects.filter(username=user).exists()
                 
-            elif(level=='Uploader'):
-                uploader = Uploader(user=user)
-                uploader.save()
-            else:
-                return render(req,'Register/index.html',{'form':f,'alert':'Level not found'})
-                                
+                if(exists):
+                    context['error'] = "Username already exists"
+                    return render(req,'HTMX/message.html',context=context)
+                    
+            except Exception as e:
+                context['error'] = get_error_info(e)
+                return render(req,'HTMX/message.html',context=context)
             
-            return render(req,'Register/index.html',{'form':f,'alert':'Register Confirmed'})
+            _branch = None
+            
+            try:
+                _branch = Branch.objects.get(id=branch)
+            except Exception as e:
+                context['error'] = "Branch not found"
+                return render(req,'HTMX/message.html',context=context)
+                
+            try:
+                
+                user = models.User.objects.create_user(user,email,passwrd)
+                user.is_active = False
+                user.save()
+                
+                if(level=='Manager'):
+                    manager = Manager(user=user)
+                    manager.belongs = _branch
+                    manager.save()
+                    
+                elif(level=='Uploader'):
+                    uploader = Uploader(user=user)
+                    uploader.belongs = _branch
+                    
+                    uploader.save()
+                elif(level=='Admin'):
+                    admin = Admin(user=user)
+                    admin.belongs = _branch
+                    admin.save()
+                else:
+                    context['error'] = "Level not found"
+                context['msg'] = "Registered Successfully"
+                
+            except Exception as e:
+                context['error'] = get_error_info(e)
+            
+            return render(req,'HTMX/message.html',context=context)
+            
+        else:
+            
+            context['error'] = f.errors.as_text()
+            
+            return render(req,'HTMX/message.html',context=context)
+                
+            
         
-        return render(req,'Register/index.html',{'form':f,'alert':'Register Failed'})
 
 def insti_change(req: HttpRequest) -> HttpResponse:
     
-    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+    if(is_hx_get(req)):
         uni = req.GET.get("university",'')
         
         if(uni):
@@ -56,7 +93,7 @@ def insti_change(req: HttpRequest) -> HttpResponse:
 
 def branch_change(req: HttpRequest) -> HttpResponse:
 
-    if(req.method=='GET' and req.META.get('HTTP_HX_REQUEST')):
+    if(is_hx_get(req)):
         insti = req.GET.get("institute",'')
         
         if(insti):

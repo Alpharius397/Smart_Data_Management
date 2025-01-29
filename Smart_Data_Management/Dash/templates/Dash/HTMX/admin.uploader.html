@@ -1,0 +1,30 @@
+{% load template %}
+
+
+{% if error %}
+
+    Error Fetching Data: {{error}}
+
+{% else %}
+
+    {% for i in upload %}
+        <div class="task-item">
+            <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
+            <button class="drop-down down" id="down_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="down_{{forloop.counter}}"></i></button>
+        </div>
+        <div class="task-info" id="down_{{forloop.counter}}">
+            {% for j in i.manager %}
+                <li>
+                    {{ j  }}
+                </li>
+            {% empty %}
+                <h4>No one Assigned Yet</h4>
+            {% endfor %}
+            <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
+        </div>
+
+    {% empty %}
+        <h3 class="title-tag">No Sheets Unassigned</h3>
+    {% endfor %}
+
+{% endif %}
