@@ -1,3 +1,4 @@
-SuperAdmin: {'username':asd,'password': asd}
-Uploader: {'username':upload,'password':asd}
-Manager: {'username':manage,'password':45cRCAtF9XfHykT}
+SuperAdmin: {'username':omnissiah,'password': asd}
+Uploader: {'username':uploader,'password':asd}
+Manager: {'username':manager,'password':asd}
+Admin: {'username':admin,'password':asd}
