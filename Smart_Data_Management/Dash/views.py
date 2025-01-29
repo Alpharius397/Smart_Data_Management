@@ -50,6 +50,8 @@ def uploader_fetch(req: HttpRequest) -> HttpResponse:
             conn.connection.close()
             
         return render(req,'Dash/HTMX/uploader.html',context={'upload':upload,'error':error})
+    
+    return HttpResponse(status=403)
 
 def manager_fetch(req: HttpRequest) -> HttpResponse:
     
@@ -73,6 +75,9 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             conn.connection.close()
             
         return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
+    
+    return HttpResponse(status=403)
+    
     
 def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
     
@@ -98,6 +103,9 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
             conn.connection.close()
             
         return render(req,'Dash/HTMX/admin.uploader.html',context={'upload':admin,'error':error})
+    
+    return HttpResponse(status=403)
+    
 
 def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
     
@@ -123,6 +131,8 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
             conn.connection.close()
             
         return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
+
+    return HttpResponse(status=403)
 
 
 class ReportStructure(typing.NamedTuple):

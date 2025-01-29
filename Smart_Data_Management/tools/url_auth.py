@@ -7,12 +7,6 @@ def is_hx_get(req:HttpRequest) -> bool:
 def is_hx_post(req:HttpRequest) -> bool:
     return bool((req.method=="POST") and req.META.get('HTTP_HX_REQUEST'))
 
-def is_hx_put(req:HttpRequest) -> bool:
-    return bool((req.method=="PUT") and req.META.get('HTTP_HX_REQUEST'))
-
-def is_hx_delete(req:HttpRequest) -> bool:
-    return bool((req.method=="DELETE") and req.META.get('HTTP_HX_REQUEST'))
-
 def is_auth_get(req: HttpRequest) -> bool:
     return bool(is_authenticated(req.user) and req.method=='GET')
 

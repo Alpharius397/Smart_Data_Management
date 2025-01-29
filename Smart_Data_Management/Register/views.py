@@ -89,6 +89,9 @@ def insti_change(req: HttpRequest) -> HttpResponse:
             insti = list(Institute.objects.none())
             
         return render(req,'HTMX/option.html',{'option':insti})
+    
+    return HttpResponse(status=403)
+    
 
 
 def branch_change(req: HttpRequest) -> HttpResponse:
@@ -102,3 +105,5 @@ def branch_change(req: HttpRequest) -> HttpResponse:
             branch = list(Branch.objects.none())
             
         return render(req,'HTMX/option.html',{'option':branch})
+
+    return HttpResponse(status=403)

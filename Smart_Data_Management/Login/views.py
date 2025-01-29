@@ -34,4 +34,7 @@ def login_view(req:HttpRequest) -> HttpResponse:
             return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
         
         return render(req,'Login/index.html',{'form':f,'alert':'Login Failed'})
+    
+    return HttpResponse(status=403)
+    
 

@@ -7,6 +7,7 @@ urlpatterns = [
  	path('<str:id>',edit_screen,name='view_edit'),
  	path('upload/',upload,name='upload'),
  	path('<str:id>/edit/',edit,name='edit'),
+ 	path('<str:id>/delete/',delete,name='delete'),
 
 ]
 

@@ -10,6 +10,7 @@ class MangerOption(ListView):
         
         user_id = self.request.GET.get("belongs")
         user:Uploader = None
+        branch_id:Branch = None
         
         if(self.request.user.is_authenticated and self.request.user.is_superuser):
         
@@ -21,8 +22,8 @@ class MangerOption(ListView):
                 if user:
                     branch_id:Branch = user.belongs
                     
-                    if(branch_id):
-                        return Manager.objects.filter(belongs__id=branch_id.id)
+                if(branch_id):
+                    return Manager.objects.filter(belongs__id=branch_id.id)
 
         return Manager.objects.none()
     
@@ -43,10 +44,11 @@ class UploaderOption(ListView):
                     user = Uploader.objects.get(pk=user_id)
                 except Uploader.DoesNotExist:
                     pass
+                
                 if user:
                     branch_id:Branch = user.belongs
                     
-                    if(branch_id):
-                        return Manager.objects.filter(belongs__id=branch_id.id)
+                if(branch_id):
+                    return Manager.objects.filter(belongs__id=branch_id.id)
 
         return Manager.objects.none()

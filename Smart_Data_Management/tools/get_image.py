@@ -9,7 +9,7 @@ import pandas
 
 REDUCE_FACTOR:int = 3
 
-def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[int,int],Any]:
+def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[int,int],str]:
     images = {}
     for image in sheet._images:        
         img = Image.open(BytesIO(image._data()))
@@ -20,7 +20,7 @@ def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[i
         
     return images
 
-def compress_image(img_data:BytesIO):
+def compress_image(img_data:BytesIO) -> str:
     image = Image.open(img_data)
     width, height = image.width, image.height
     compressed = image.reduce(REDUCE_FACTOR)

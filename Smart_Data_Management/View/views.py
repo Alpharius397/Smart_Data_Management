@@ -15,7 +15,7 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, is_hx_put, is_hx_delete
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
 from View.forms import VerifyForm
 from django.utils import timezone
 from django.http import QueryDict
@@ -132,6 +132,7 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         connection = MongoConnection(settings.MONGO_URL)
         excel = connection.connect(settings.MONGO_CRED)            
         context = get_context(req.user,id,excel)
+        connection.connection.close()
         
         return render(req,'View/HTMX/page.html',context=context)
     
@@ -152,12 +153,11 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         try:
             result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.uploader":1,"header.manager":1})
             
-        except Exception as e:
-            print(e)
-            
+        except Exception as e:            
             context['error'] = get_error_info(e)
             return render(req,'View/HTMX/form.html',context=context)
-        
+        finally:
+            connection.connection.close()
         try:
             user:Admin = req.user
             uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
@@ -187,9 +187,8 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             case "delete": to_do = False
             case _: to_do = None
         
-            
-        if(user is None):
-            context['error'] = "User not found or Method not found"
+        if(to_do is None or user is None):
+            context['error'] = "User not found"
             return render(req,'View/HTMX/message.assign.html',context=context)
             
             
@@ -208,6 +207,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         except Exception as e:
             context['error'] = get_error_info(e)
             return render(req,'View/HTMX/message.assign.html',context=context)
+        
         try:
             if(to_do):
                 manager.append(_manage.user.id)
@@ -225,12 +225,14 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         except Exception as e:
             context['error'] = get_error_info(e)
             return render(req,'View/HTMX/message.assign.html',context=context)
+        
+        finally:
+            connection.connection.close()
             
         return render(req,'View/HTMX/message.assign.html',context=context)
             
 
-    
-    return HttpResponse(status=404)
+    return HttpResponse(status=403)
 
 
 def table_query(req: HttpRequest, id:str) -> HttpResponse:
@@ -244,8 +246,10 @@ def table_query(req: HttpRequest, id:str) -> HttpResponse:
         page = req.GET.get('page','0')
         
         context = get_context(req.user,id,excel,column,value,page)
-        
+        connection.connection.close()
         return render(req,'View/HTMX/table.html',context=context)
+    
+    return HttpResponse(status=403)
 
 def row_view(req: HttpRequest, id:str) -> HttpResponse:
     
@@ -259,8 +263,12 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
         page = req.GET.get('page','0')
 
         context = get_context(req.user,id,excel,column,value,page)
+        connection.connection.close()
         
         return render(req,'View/HTMX/row.html',context=context)
+    
+    return HttpResponse(status=403)
+    
 
 def quick_query(req: HttpRequest, id:str):
     if((is_authenticated(req.user)) and is_hx_get(req)):
@@ -314,6 +322,9 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         except Exception as e:
             context['search'] = get_error_info(e)
             return render(req,'View/HTMX/report.html',context=context)
+        
+        finally:
+            connection.connection.close()
             
         if(pd_data.empty or (not meta_data)):
             context['search'] = "Mongo ID %s and index %s not found!" % id,idx
@@ -327,6 +338,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         return render(req,'View/HTMX/report.html',context=context)
     
+    return HttpResponse(status=403)
     
 def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
 
@@ -371,9 +383,11 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             except Exception as e:
                 context['search'] = get_error_info(e)
                 
+            finally:
+                connection.connection.close()    
         else:
             context['search'] = f.errors.as_text()
-    
+            
         return render(req,'View/HTMX/message.issue.html',context=context)
     
     elif(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
@@ -390,6 +404,8 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         except Exception as e:
             context['search'] = get_error_info(e)
+        finally:
+            connection.connection.close()
         
         context.update({'form':VerifyForm(data={'status':(lambda x: 'True' if x else ('False') if x is not None else ('None'))(context.get('status','None')),'feed':context.get('feed','')})})
         return render(req,'View/single/manager.html',context=context)
@@ -409,8 +425,12 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         except Exception as e:
             context['search'] = get_error_info(e)
             
+        finally:
+            connection.connection.close()
+            
             return render(req,'View/single/uploader.html',context=context)
-        return render(req,'View/single/uploader.html',context=context)
+        
+    return HttpResponse(status=403)
             
 def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
     
@@ -476,9 +496,12 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 context['search'] = get_error_info(e)
                 return render(req,'View/HTMX/message.issue.html',context=context)
             
+            finally:
+                connection.connection.close()
+            
             return render(req,'View/HTMX/message.issue.html',context=context)
         
-    return HttpResponse(status=404)
+    return HttpResponse(status=403)
             
 def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int) -> dict[str,dict[str]]:
     

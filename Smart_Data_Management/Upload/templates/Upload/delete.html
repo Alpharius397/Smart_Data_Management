@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Form</title>
+    <title>Delete Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -184,7 +184,6 @@
         }
 
 
-
     </style>
 </head>
 <body>
@@ -196,8 +195,8 @@
     <div id="message" class="message"></div>
 
     <div class="upload-container">
-        <h2>Edit Uploaded Excel</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:edit' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
+        <h2>Delete Uploaded Excel</h2>
+        <form id="form" hx-post="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}
@@ -215,12 +214,12 @@
                     
                 </div>
             {% endfor %}
-            <button class="upload-button">Upload</button>
-            <progress id='progress' value='0' max='100'></progress>
+            <button class="upload-button">Delete Record</button>
 
             <div class="form-footer">
-                <p>Incorrect Excel Uploaded? <a href="{% url 'Upload:delete' id=id %}">Delete Upload</a></p>
+                <p>Wrong Excel Uploaded? <a href="{% url 'Upload:view_edit' id=id %}">Edit Upload</a></p>
             </div>
+
 
         </form>
 

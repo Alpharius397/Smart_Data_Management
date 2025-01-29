@@ -31,6 +31,45 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
     
         return render(req,'Upload/edit.html',{'form':f,'id':id})
 
+def delete(req: HttpRequest, id:str) -> HttpResponse:
+    
+    if(not (is_authenticated(req.user) and is_uploader(req.user))):
+        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+    
+    if(is_auth_get(req)):
+    
+        return render(req,'Upload/delete.html',{'id':id})
+
+    elif(is_authenticated(req.user) and is_hx_post(req)):
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        result = None
+        locked = False
+        try:
+            result = excel.find_one({"_id":ObjectId(id),"header.uploader":req.user.id})
+            locked = any([i.get('locked') for i in result.get('data',{}).get('feed',[])])
+            
+        except Exception as e:
+            print(e)
+            messages.error(req,"MongoDB connection failed")
+            return render(req,'Upload/HTMX/message.html')
+        
+        if(result is None):
+            messages.error(req,"MongoDB ID %s not found!" % id)
+        elif(locked):
+            messages.error(req,"Data is Locked. Deletion not possible!")
+        else:
+            
+            try:
+                excel.delete_one({"_id":ObjectId(id),"header.uploader":req.user.id})
+                messages.success(req,"MongoDB ID %s was deleted successfully!" % id)
+            except Exception as e:
+                messages.error(req,"MongoDB ID %s was not deleted!" % id)
+
+        return render(req,'Upload/HTMX/message.html')
+        
+    return HttpResponse(status=403)
+
     
 def upload(req: HttpRequest) -> HttpResponse:
 
@@ -44,7 +83,8 @@ def upload(req: HttpRequest) -> HttpResponse:
         
         if(excel is None):
             messages.error(req,"MongoDB connection failed")
-            return render(req,'Excel/upload.html',{'form':f,'alert':'MongoDB connection failed'})
+            return render(req,'Upload/HTMX/message.html')
+
     
         if(f.is_valid()):
             excel_file = req.FILES["file"]
@@ -62,16 +102,19 @@ def upload(req: HttpRequest) -> HttpResponse:
                 messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
                 return render(req,'Upload/HTMX/message.html')
                 
-
-            with excel_file.open() as file:
-                image_idx, pd_data = image_load(file.read())
-                
-                if(pd_data is None):
-                    messages.error(req,"Data Extraction failed")
-                    return render(req,'Upload/HTMX/message.html')
-                
-                rows, _ = pd_data.shape
-                pd_data = pd_data.to_json()
+            try:
+                with excel_file.open() as file:
+                    image_idx, pd_data = image_load(file.read())
+                    
+                    if(pd_data is None):
+                        messages.error(req,"Data Extraction failed")
+                        return render(req,'Upload/HTMX/message.html')
+                    
+                    rows, _ = pd_data.shape
+                    pd_data = pd_data.to_json()
+            except Exception as e:
+                messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
+                return render(req,'Upload/HTMX/message.html')
             
             template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows).get_json()
             
@@ -83,9 +126,12 @@ def upload(req: HttpRequest) -> HttpResponse:
             finally:
                 connection.connection.close()
         else:
-            messages.error(req, "Invalid form. %s" **f.errors )
+            messages.error(req, "Invalid form. %s" % f.errors.as_text())
         
         return render(req,'Upload/HTMX/message.html')
+    
+    return HttpResponse(status=403)
+    
 
 def edit(req: HttpRequest, id:str) -> HttpResponse:
 
@@ -117,15 +163,19 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                 messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
                 return render(req,'Upload/HTMX/message.html')
         
-            with excel_file.open() as file:
-                image_idx, pd_data = image_load(file.read())
-                
-                if(pd_data is None):
-                    messages.error(req,"Data Extraction failed")
-                    return render(req,'Upload/HTMX/message.html')
-                
-                rows, _ = pd_data.shape
-                pd_data = pd_data.to_json()
+            try:
+                with excel_file.open() as file:
+                    image_idx, pd_data = image_load(file.read())
+                    
+                    if(pd_data is None):
+                        messages.error(req,"Data Extraction failed")
+                        return render(req,'Upload/HTMX/message.html')
+                    
+                    rows, _ = pd_data.shape
+                    pd_data = pd_data.to_json()
+            except Exception as e:
+                messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
+                return render(req,'Upload/HTMX/message.html')
             
             template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
@@ -155,3 +205,5 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             messages.error(req, "Invalid form. %s" **f.errors )
         
         return render(req,'Upload/HTMX/message.html')
+    
+    return HttpResponse(status=403)
