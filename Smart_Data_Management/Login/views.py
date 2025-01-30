@@ -27,13 +27,10 @@ def login_view(req:HttpRequest) -> HttpResponse:
                 if(is_manager(user) or is_uploader(user) or is_admin(user)):                
                     login(req,user)
                     return redirect(reverse('Dash:dash') + '?alert=Login Successful')
-                elif(not user.is_active):
-                    return render(req,'Login/index.html',{'form':f,'alert':'Account is Inactive'})
-                
 
             return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
-        
-        return render(req,'Login/index.html',{'form':f,'alert':'Login Failed'})
+        else:
+            return render(req,'Login/index.html',{'form':f,'alert':'Login Failed'})
     
     return HttpResponse(status=403)
     

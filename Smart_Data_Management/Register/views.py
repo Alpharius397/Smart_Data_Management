@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from Register.forms import RegisterForm
-from django.contrib.auth import models
+from django.contrib.auth.models import User, Group
 from Main.models import get_error_info
 from tools.url_auth import is_hx_post, is_hx_get
 from User.models import Manager, Uploader, Admin
@@ -22,7 +22,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
             branch = f.cleaned_data.get("branch")
             
             try:
-                exists = models.User.objects.filter(username=user).exists()
+                exists = User.objects.filter(username=user).exists()
                 
                 if(exists):
                     context['error'] = "Username already exists"
@@ -41,8 +41,8 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 return render(req,'HTMX/message.html',context=context)
                 
             try:
-                
-                user = models.User.objects.create_user(user,email,passwrd)
+                group = Group.objects.get(name='Admin')
+                user = User.objects.create_user(user,email,passwrd)
                 user.is_active = False
                 user.save()
                 
@@ -59,6 +59,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 elif(level=='Admin'):
                     admin = Admin(user=user)
                     admin.belongs = _branch
+                    admin.user.groups.add(group)
                     admin.save()
                 else:
                     context['error'] = "Level not found"

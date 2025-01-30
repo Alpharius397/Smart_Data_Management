@@ -2,6 +2,7 @@ from django.forms import Form
 from django import forms
 from University.models import University, Institute, Branch
 
+LEVEL = ['Admin','Manager','Uploader']
 
 class RegisterForm(Form):
     username = forms.CharField(max_length=100, required=True,help_text='Enter the username')
@@ -31,7 +32,7 @@ class RegisterForm(Form):
         if(level is None):
             raise forms.ValidationError(("Level cannot be empty"))
         
-        if(level not in ['Manager','Uploader']):
+        if(level not in LEVEL):
             raise forms.ValidationError(("Unknown level detected"))
         
         return level
