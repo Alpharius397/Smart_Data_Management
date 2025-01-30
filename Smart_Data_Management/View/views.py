@@ -134,6 +134,9 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         context = get_context(req.user,id,excel)
         connection.connection.close()
         
+        if(is_admin(req.user)):
+            context['admin'] = True
+        
         return render(req,'View/HTMX/page.html',context=context)
     
     else:
@@ -303,7 +306,7 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     else:
-        return render(req,'View/single.html',{'id':id,'idx':idx})
+        return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
 
     
 def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:

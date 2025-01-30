@@ -10,7 +10,7 @@
     {% for i in upload %}
         <div class="task-item">
             <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
-            <button class="drop-down down" id="down_{{forloop.counter}}"><i class="fa-solid fa-caret-down down" id="down_{{forloop.counter}}"></i></button>
+            <button class="drop-down down" id="down_{{forloop.counter}}">&#11206;</button>
         </div>
         <div class="task-info" id="down_{{forloop.counter}}">
             {% for j in i.manager %}

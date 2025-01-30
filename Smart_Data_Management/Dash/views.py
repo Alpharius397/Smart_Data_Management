@@ -134,50 +134,59 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
 
     return HttpResponse(status=403)
 
-
 class ReportStructure(typing.NamedTuple):
     profile_img:Image
     personal_info:dict[str,str]
     sem_data:dict[dict[str,str]]
+    
+def read_view(req: HttpRequest)-> HttpResponse:
+    
+    if(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
+        context = {}
+            
+        try:
+            with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
+                data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            
+            return render(req,'HTMX/read.card.html',context=context)
+        
+        profile_img = r'^Profile_Image$'
+        sem_data = r'.+Sem_(\d+)$'
+        
+        result, header = data.get('data',{}), data.get('header',{})
+        
+        columns = result.keys()
+        
+        profile_col = [i for i in columns if re.match(profile_img,i)]
+        sem_col = [i for i in columns if re.match(sem_data,i)]
+        personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
+        
+        sem_dict:dict[str,list[str]] = {}
+        
+        profile_col = profile_col[0] if profile_col else None
+        
+        for i in sem_col:
+            sem:list[str] = re.findall(sem_data,i)
+            
+            if(sem):
+                sem = sem[0]
+                if(sem not in sem_dict): sem_dict[sem] = list()
+                sem_dict[sem].append(i)
+
+        view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
+        context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
+
+        return render(req,'Dash/HTMX/read.card.html',context=context)
+
+    return HttpResponse(status=403)
 
 def read_screen(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user) and (is_manager(req.user)))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
 
-    # simulate read card
-    try:
-        with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
-            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
-    except Exception as e:
-        return redirect(reverse('Excel:dash') + f'?alert=Failed to read card ({e})')
-        
-        
-    profile_img = r'^Profile_Image$'
-    sem_data = r'.+Sem_(\d+)$'
-    
-    result, header = data.get('data',{}), data.get('header',{})
-    
-    columns = result.keys()
-    
-    profile_col = [i for i in columns if re.match(profile_img,i)]
-    sem_col = [i for i in columns if re.match(sem_data,i)]
-    personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
-    
-    sem_dict:dict[str,list[str]] = {}
-    
-    profile_col = profile_col[0] if profile_col else None
-    
-    for i in sem_col:
-        sem:list[str] = re.findall(sem_data,i)
-        
-        if(sem):
-            sem = sem[0]
-            if(sem not in sem_dict): sem_dict[sem] = list()
-            sem_dict[sem].append(i)
-
-    view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
-
-    return render(req,'Dash/read.html',context={'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
+    return render(req,'Dash/read.html')
 
 
 

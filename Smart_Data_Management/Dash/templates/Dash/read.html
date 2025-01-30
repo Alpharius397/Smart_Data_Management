@@ -250,6 +250,34 @@
             margin-top: 20px;
         }
 
+        .messages {
+            list-style: none;
+            margin: 20px auto;
+            padding: 0;
+            width: 80%;
+            max-width: 1000px;
+        }
+
+        .messages li {
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .messages li:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .messages li.error {
+            background-color: #f44336;
+        }
+
 
     </style>
 </head>
@@ -260,60 +288,13 @@
         <h1>Card View</h1>
     </header>
 
-    <div class="container">
+    <div class="container" hx-get="{% url 'Dash:card_read' %}" hx-trigger="load" hx-target=".tableView" hx-swap="outerHTML">
 
-        <div class="tableView">
-
-            <div class="header-box">
-                {{university}} - {{institute}} - {{branch}}
-            </div>
-            <div class="container-box">
-                <div class="image-box">
-                    {% with image=data|index:pic|img %}
-                        <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-                    {% endwith %}
-                </div>
-            </div>
-            <div class="personal-info">
-        
-                {% for i in personal %}
-                    <p><strong>{{i}}: </strong>{{data|index:i}}</p>
-                {% endfor %}
-        
-            </div>
-            <div class="semester-info">
-                <div class="semester-row">
-        
-                    {% for sem,subs in sem_dict.items %}
-                        <div class="semester">
-                            <h3>Semester {{sem}}</h3>
-        
-                            {% for sub in subs %}
-                                <p><strong>{{sub|clean}}:</strong>{{data|index:sub}}</p>
-                            {% endfor %}
-        
-                        </div>
-                    {% endfor %}
-        
-                </div>
-            </div>
-        
-        </div>
-
-        {% if time %}
-        <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
-        {% endif %}
+        <div class="tableView"></div>
 
     </div>
 
 </body>
-<script>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 
-    {% if alert %}
-        alert("{{ alert }}");
-    {% elif request.GET.alert %}
-        alert("{{ request.GET.alert }}");
-    {% endif %}
-
-</script>
 </html>

@@ -307,8 +307,9 @@
 
         <div class="feedback"></div>
 
+        {% if manage %}
         <div class="issue_card" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-trigger="load" hx-target=".issue_card"></div>
-
+        {% endif %}
         <ul class="messages"></ul>
 
     </div>
