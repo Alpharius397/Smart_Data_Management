@@ -47,8 +47,20 @@ def is_uploader(user:User) -> bool:
     
 def get_user_by_id(id:int) -> str|None:
     
-    user = User.objects.get(id=id)
-    return user.username        
+    try:
+        user = User.objects.get(id=id)
+        return user.username        
+    except:
+        return None
+
+
+def get_user_id(name:int) -> str|None:
+    
+    try:
+        user = User.objects.get(username=name)
+        return user.id        
+    except:
+        return None
 
 def get_post(user: User) -> dict[str,str]:
     uni = None

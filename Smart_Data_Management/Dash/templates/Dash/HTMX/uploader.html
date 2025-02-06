@@ -3,11 +3,13 @@
 
 {% if error %}
 
-    Error Fetching Data: {{error}}
+<ul class="messages">
+    <li class="error">{{error}}</li>
+</ul>
 
 {% else %}
 
-    {% for i in upload %}
+    {% for i in record %}
         <div class="task-item">
             <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
             <button class="drop-down down" id="up_{{forloop.counter}}">&#11206;</button>

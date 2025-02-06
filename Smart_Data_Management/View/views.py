@@ -18,7 +18,6 @@ from Main.templatetags.bad_image import bad_image
 from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
 from View.forms import VerifyForm
 from django.utils import timezone
-from django.http import QueryDict
 
 MAX_RECORD:int = 5
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
