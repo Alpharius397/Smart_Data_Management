@@ -10,7 +10,7 @@
 
 
         {% if locked %}
-            <a href="{% url 'View:data' id=id idx=idx %}" download="{{id}}_{{idx}}.txt"><button class="upload-button">Reissue Card </button></a>
+            <a href="{% url 'View:data' id=id idx=idx %}" download="{{id}}_{{idx}}.txt"><button class="upload-button">Download Card Data</button></a>
         {% else %}
             <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
                 {% csrf_token %}
