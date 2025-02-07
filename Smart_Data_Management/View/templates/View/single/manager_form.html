@@ -8,15 +8,16 @@
             <p><strong> Card Already Issued on {{time_of_issue|timestamp}}. </strong></p>
         {% endif %}
 
-        <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
-            {% csrf_token %}
 
-            {% if locked %}
-                <button class="upload-button" id="issue_button">Reissue Card </button>
-            {% else %}
+        {% if locked %}
+            <a href="{% url 'View:data' id=id idx=idx %}" download="{{id}}_{{idx}}.txt"><button class="upload-button">Reissue Card </button></a>
+        {% else %}
+            <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
+                {% csrf_token %}
                 <button class="upload-button" id="issue_button">Issue Card</button>
-            {% endif %}
-        </form>
+            </form>
+        {% endif %}
+
 
         {% if locked %}
             <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-vals='{"to_do":"cancel"}' hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:#cancel_button" onsubmit="event.preventDefault()">

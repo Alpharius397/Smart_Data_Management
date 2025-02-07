@@ -1,0 +1,91 @@
+
+.header-box {
+    border: 2px solid #0B132B;
+    padding: 40px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 20px;
+    background-color: #5256ba;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.container-box {
+    text-align: center;
+    margin-top: 20px;
+}
+.image-box {
+    display: inline-flex;
+    border: 1px solid #0B132B;
+    background-color: white;
+}
+.personal-info {
+    margin-top: 20px;
+    text-align: center;
+}
+.personal-info p {
+    margin: 5px 0;
+}
+.semester-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+.semester-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 100%;
+    margin-bottom: 20px;
+}
+.semester {
+    border: 1px solid #0B132B;
+    padding: 20px;
+    margin: 10px;
+    width: 45%;
+    box-sizing: border-box;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #5255ba77; 
+    max-height: 300px; 
+    overflow-y: auto; 
+}
+.semester h3 {
+    margin-top: 0;
+    border-bottom: 2px solid #0B132B;
+    padding-bottom: 10px;
+    color: #5256ba;
+}
+.semester p {
+    margin-top: 20px;
+}
+
+        
+p.help_text {
+    font-style: italic;
+    color: #555;
+    margin: 0;
+    padding-top: 5px;
+}
+
+#verify{
+    color:#4CAF50;
+    display:inline;
+}
+
+#unchecked{
+    color:#555;
+    display:inline;
+}
+
+#reject{
+    color: red;
+    display:inline;
+}
+
+#feed-text{
+    font-style: italic;
+    display:inline;
+}

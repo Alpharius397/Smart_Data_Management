@@ -13,6 +13,7 @@ urlpatterns = [
 	path('<str:id>/<int:idx>/',index_view,name="index"),
 	path('<str:id>/<int:idx>/feed/',feed_view,name="feed"),
 	path('<str:id>/<int:idx>/compress/',compress_view,name="compress"),
+	path('<str:id>/<int:idx>/data/',card_view,name="data"),
 	path('<str:id>/assign/',assign_form,name="assign")
 ]
 

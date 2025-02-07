@@ -4,7 +4,7 @@ import json
 import re
 from typing import NamedTuple, Any
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, FileResponse
 from Main.models import *
 from django.urls import reverse
 from django.conf import settings
@@ -15,7 +15,7 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, is_auth_post
 from View.forms import VerifyForm
 from django.utils import timezone
 
@@ -505,7 +505,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         
     return HttpResponse(status=403)
             
-def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int) -> dict[str,dict[str]]:
+def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int, local_write:bool = True) -> BytesIO:
     
     pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
     image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
@@ -529,10 +529,31 @@ def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int) -> dic
         
     send_data = {'header':{'manager':manager.username,**get_post(manager),'uploader':belongs ,'time':timestamp},'data':data}
 
-    with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
-        f.write(encrypt_data(settings.KEY,send_data))
-        
-    with open(settings.MEDIA_ROOT + '/decompress.txt','w') as f:
-        f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,send_data))))
-        
+
+    if(local_write):
+        with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
+            f.write(encrypt_data(settings.KEY,send_data))
+            
+        with open(settings.MEDIA_ROOT + '/decompress.txt','w') as f:
+            f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,send_data))))
     
+    buffer = BytesIO()
+    buffer.write(encrypt_data(settings.KEY,send_data).encode())
+    buffer.seek(0)
+    
+    return buffer        
+
+def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
+    print("Hey")
+    if(is_auth_get(req)):
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+
+        try:
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
+            
+        except Exception as e:
+            pass
+        
+
+        return FileResponse(compress_data(result,req.user,idx,False),as_attachment=True,filename=f"{id}_{idx}.txt")
