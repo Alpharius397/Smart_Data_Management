@@ -6,10 +6,10 @@
     <div class="container">
         <h2>Assigned Tasks</h2>
         <h3>Search Records: </h3>
-        <form hx-get="{% url 'Dash:manage' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="load,submit" hx-vals="js:{query: get_select()}">
+        <form hx-get="{% url 'Dash:manage' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="input from:#search,load" hx-vals="js:{query: get_select()}">
             
             <label for="query">Query: </label>
-            <select name="query" id="query">
+            <select name="query" id="column">
                 <option value="">----------</option>
                 <option value="uploader">Uploader</option>
                 <option value="manager">Manager</option>
@@ -18,9 +18,6 @@
 
             <label for="search">Containing: </label>
             <input type="search" placeholder="Search Here" name="value" id="search">
-
-            <button type="submit"> Search </button>
-            <button type="cancel" hx-get="{% url 'Dash:manage' %}" hx-params="none" hx-target="#up" hx-swap="innerHTML" hx-trigger="click"> Cancel Search </button>
 
         </form>
         <div class="task-list" id="up">

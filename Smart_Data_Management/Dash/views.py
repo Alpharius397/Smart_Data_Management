@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from Main.models import MongoConnection, get_error_info
 from django.urls import reverse
 from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, is_uploader, get_user_id
+from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_uploader_by_name
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 import typing
@@ -30,41 +30,41 @@ def dash_board(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    if(is_uploader(req.user)):
-        return render(req,'Dash/dash/uploader.html')
+    if(is_admin(req.user)):
+        return render(req,'Dash/dash/admin.html')
 
     elif(is_manager(req.user)):
         return render(req,'Dash/dash/manager.html')
 
     else:
-        return render(req,'Dash/dash/admin.html')
+        return HttpResponse(status=403)
     
-def uploader_fetch(req: HttpRequest) -> HttpResponse:
+# def uploader_fetch(req: HttpRequest) -> HttpResponse:
     
-    if(is_authenticated(req.user) and is_uploader(req.user) and is_hx_get(req)):
+#     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
         
-        upload:list[dict[str,str|list]] = []
-        error:str = None
-        queryset=get_query(req)
+#         upload:list[dict[str,str|list]] = []
+#         error:str = None
+#         queryset=get_query(req)
         
-        try:
-            conn = MongoConnection(settings.MONGO_URL)
-            excel = conn.connect(settings.MONGO_CRED)
+#         try:
+#             conn = MongoConnection(settings.MONGO_URL)
+#             excel = conn.connect(settings.MONGO_CRED)
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.uploader":req.user.id},VIEW_DATA)
+#             result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.uploader":req.user.id},VIEW_DATA)
             
-            flag,upload = get_data(result)
-            if(flag and queryset): error='No matching records found!'
+#             flag,upload = get_data(result)
+#             if(flag and queryset): error='No matching records found!'
             
-        except Exception as e:
-            error = get_error_info(e)
+#         except Exception as e:
+#             error = get_error_info(e)
             
-        finally:
-            conn.connection.close()
+#         finally:
+#             conn.connection.close()
             
-        return render(req,'Dash/HTMX/uploader.html',context={'upload':upload,'error':error})
+#         return render(req,'Dash/HTMX/uploader.html',context={'upload':upload,'error':error})
     
-    return HttpResponse(status=403)
+#     return HttpResponse(status=403)
 
 def manager_fetch(req: HttpRequest) -> HttpResponse:
     
@@ -203,16 +203,16 @@ def get_query(req: HttpRequest) -> dict[str,str]:
     query = req.GET.get('query',None)
     value = req.GET.get('value',None)
     query_dict = {}
-    print(query,value)
     if(query and value):
         
         if(query=='uploader'):
-            query_dict.update({"header.uploader":get_user_id(value)})
+            query_dict.update({"header.uploader":{"$in":get_uploader_by_name(value)}})
         elif(query=='manager'):
-            query_dict.update({"header.manager":get_user_id(value)})
+            query_dict.update({"$or":[{"header.manager":i} for i in get_manager_by_name(value)]+[{"header.manager":None}]})
         elif(query=='file_name'):
-            query_dict.update({"data.header.file_name":value})
-        
+            query_dict.update({"data.header.file_name":{"$regex":f"{value}","$options":"i"}})
+            
+        print([{"header.manager":i} for i in get_manager_by_name(value)])
     return query_dict
 
         

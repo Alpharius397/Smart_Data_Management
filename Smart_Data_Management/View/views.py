@@ -9,7 +9,7 @@ from Main.models import *
 from django.urls import reverse
 from django.conf import settings
 from tools.get_image import compress_image
-from User.models import Admin, Manager, get_post_id, is_admin, is_manager, is_uploader, is_authenticated, get_post, get_user_by_id
+from User.models import Admin, Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
@@ -61,14 +61,13 @@ def default_view(req: HttpRequest, id:str) -> HttpResponse:
     elif(not (is_authenticated(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
-    elif(is_uploader(req.user)):
-        return render(req,'View/table/uploader.html',{'id':id})
+    elif(is_admin(req.user)):
+        return render(req,'View/table/admin.html',{'id':id})
     
     elif(is_manager(req.user)):
         return render(req,'View/table/manager.html',{'id':id})    
     
-    else:
-        return render(req,'View/table/admin.html',{'id':id})
+    return HttpResponse(status=403)
 
 def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list) -> tuple[bool,pd.DataFrame]:
     
@@ -87,11 +86,9 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
         if(is_manager(user)):
             result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.manager":user.id}]})
             
-        elif(is_uploader(user)):
-            result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.uploader":user.id}]})
-            
-        else:
+        elif(is_admin(user)):
             result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(user)}]})
+            
             
     except Exception as e:
         context['search'] = get_error_info(e)
@@ -132,10 +129,7 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         excel = connection.connect(settings.MONGO_CRED)            
         context = get_context(req.user,id,excel)
         connection.connection.close()
-        
-        if(is_admin(req.user)):
-            context['admin'] = True
-        
+        context.update({"admin":is_admin(req.user)})
         return render(req,'View/HTMX/page.html',context=context)
     
     else:
@@ -248,6 +242,7 @@ def table_query(req: HttpRequest, id:str) -> HttpResponse:
         page = req.GET.get('page','0')
         
         context = get_context(req.user,id,excel,column,value,page)
+        context.update({"admin":is_admin(req.user)})
         connection.connection.close()
         return render(req,'View/HTMX/table.html',context=context)
     
@@ -265,6 +260,7 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
         page = req.GET.get('page','0')
 
         context = get_context(req.user,id,excel,column,value,page)
+        context.update({"admin":is_admin(req.user)})
         connection.connection.close()
         
         return render(req,'View/HTMX/row.html',context=context)
@@ -430,7 +426,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         finally:
             connection.connection.close()
             
-            return render(req,'View/single/uploader.html',context=context)
+            return render(req,'View/single/admin.html',context=context)
         
     return HttpResponse(status=403)
             
@@ -544,7 +540,7 @@ def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int, local_
     return buffer        
 
 def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
-    print("Hey")
+
     if(is_auth_get(req)):
         connection = MongoConnection(settings.MONGO_URL)
         excel = connection.connect(settings.MONGO_CRED)
@@ -557,3 +553,43 @@ def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
         
 
         return FileResponse(compress_data(result,req.user,idx,False),as_attachment=True,filename=f"{id}_{idx}.txt")
+    
+    
+    
+def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
+    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.GET.get('column',None)
+        value = req.GET.get("value","")
+        j = req.GET.get("j","")
+        return render(req,'View/HTMX/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,"j":j})
+    
+    elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.POST.get('column',None)
+        value = req.POST.get("value",)
+        j = req.POST.get("j","")
+        old = req.POST.get("old","")
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        context = {"id":id,"idx":idx,j:"j","value":value}
+        try:
+            column_name = f"data.excel.{column}.{idx}"
+            excel.update_one({"_id":ObjectId(id),column_name:{"$exists":True}},{"$set":{column_name:value}})
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            context['value'] = old
+            return render(req,'View/HTMX/normal_view.html',context=context)
+                    
+        return render(req,'View/HTMX/normal_view.html',context=context)
+        
+    return HttpResponse(status=403)
+
+def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
+    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.GET.get('column',None)
+        value = req.GET.get("value","")
+        j = req.GET.get("j","")
+        
+        return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"j":j})
+        
+    return HttpResponse(status=403)

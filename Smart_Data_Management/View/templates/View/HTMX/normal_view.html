@@ -1,0 +1,22 @@
+{% load static %}
+{% load template %}
+
+
+{% if admin %}
+    <div hx-get="{% url 'View:edit' id=id idx=idx %}" hx-vals='{"column":"{{column}}","value":"{{value}}","j":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:#edit_{{idx}}_{{j}}">
+        
+        {{value|str}}
+        <button id="edit_{{idx}}_{{j}}" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+
+        {% if error %}
+        <ul class="messages">
+            <li class="error">{{error}}</li>
+        </ul>
+        {% endif %}
+
+    </div>
+{% else %}
+    <div>
+        {{value|str}}
+    </div>
+{% endif %}

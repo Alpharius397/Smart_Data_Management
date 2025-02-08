@@ -9,6 +9,7 @@
         
 {% else %}
 
+{{admin}}
     <div class="dont-ask-why-this"></div>
         <table id="display-table">
             <thead>
@@ -32,7 +33,26 @@
                                 <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
                             {% endwith %}
                         {% else %}
-                            <td><p>{{k|str}}</p></td>
+                            <td>
+                                {% if admin is True %}
+                                <div hx-get="{% url 'View:edit' id=id idx=idx %}" hx-vals='{"column":"{{column}}","value":"{{k}}","j":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find .edit">
+                                    
+                                    {{k|str}}
+                                    <button id="edit_{{idx}}_{{j}}" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                            
+                                    {% if error %}
+                                    <ul class="messages">
+                                        <li class="error">{{error}}</li>
+                                    </ul>
+                                    {% endif %}
+                            
+                                </div>
+                            {% else %}
+                                <div>
+                                    {{k|str}}
+                                </div>
+                            {% endif %}
+                            </td>
                         {% endif %}
                     {% endfor %}
                     

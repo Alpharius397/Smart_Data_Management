@@ -4,7 +4,7 @@ from Upload.forms import ExcelForm
 from Main.models import MongoConnection, MongoTemplate, get_error_info
 from django.urls import reverse
 from django.conf import settings
-from User.models import is_uploader, is_authenticated
+from User.models import is_admin, is_authenticated
 import json
 from bson.objectid import ObjectId
 from tools.get_image import image_load
@@ -14,7 +14,7 @@ from django.contrib import messages
 
 # Create your views here.
 def upload_screen(req:HttpRequest):
-    if(not (is_authenticated(req.user) and is_uploader(req.user))):
+    if(not (is_authenticated(req.user) and is_admin(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     if(req.method=="GET"):        
@@ -23,7 +23,7 @@ def upload_screen(req:HttpRequest):
         return render(req,'Upload/upload.html',{'form':f})
 
 def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
-    if(not (is_authenticated(req.user) and is_uploader(req.user))):
+    if(not (is_authenticated(req.user) and is_admin(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     if(req.method=="GET"):        
@@ -33,7 +33,7 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
 
 def delete(req: HttpRequest, id:str) -> HttpResponse:
     
-    if(not (is_authenticated(req.user) and is_uploader(req.user))):
+    if(not (is_authenticated(req.user) and is_admin(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
     if(is_auth_get(req)):
@@ -73,7 +73,7 @@ def delete(req: HttpRequest, id:str) -> HttpResponse:
     
 def upload(req: HttpRequest) -> HttpResponse:
 
-    if((is_authenticated(req.user) and is_uploader(req.user)) and is_hx_post(req)):
+    if((is_authenticated(req.user) and is_admin(req.user)) and is_hx_post(req)):
 
         f = ExcelForm(req.POST,req.FILES)
     
@@ -135,7 +135,7 @@ def upload(req: HttpRequest) -> HttpResponse:
 
 def edit(req: HttpRequest, id:str) -> HttpResponse:
 
-    if((is_authenticated(req.user) and is_uploader(req.user)) and is_hx_post(req)):
+    if((is_authenticated(req.user) and is_admin(req.user)) and is_hx_post(req)):
 
         f = ExcelForm(req.POST,req.FILES)
     
@@ -152,7 +152,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             file_name = f.cleaned_data.get("file_name")
             
             try:
-                res = excel.find_one({"data.header.file_name":file_name},{"data.header.file_name":1})
+                res = excel.find_one({"data.header.file_name":file_name,"_id":{"$ne":ObjectId(id)}},{"data.header.file_name":1})
                 
                 if(res):
                     messages.error(req, "File Name already exists. Please choose a different one!")
@@ -173,6 +173,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                     
                     rows, _ = pd_data.shape
                     pd_data = pd_data.to_json()
+                    
             except Exception as e:
                 messages.error(req, "Something went wrong. Error: %s" % get_error_info(e))
                 return render(req,'Upload/HTMX/message.html')

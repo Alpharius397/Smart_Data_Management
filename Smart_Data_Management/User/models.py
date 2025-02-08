@@ -9,13 +9,6 @@ class Manager(Model):
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"
 
-class Uploader(Model):
-    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='uploader')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='uploader')
-
-    def __str__(self):
-        return f"{self.user.username}:{self.belongs}"
-
 class Admin(Model):
     user = OneToOneField(to=User,on_delete=RESTRICT,related_name='admin')
     belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='admin')
@@ -38,13 +31,6 @@ def is_admin(user:User) -> bool:
     except:
         return False
 
-def is_uploader(user:User) -> bool:
-    try:
-        uploader = user.uploader
-        return True
-    except:
-        return False
-    
 def get_user_by_id(id:int) -> str|None:
     
     try:
@@ -69,10 +55,7 @@ def get_post(user: User) -> dict[str,str]:
     
     if(is_manager(user)):
         user:Manager = user.manager
-        
-    elif(is_uploader(user)):
-        user:Uploader = user.uploader
-        
+
     elif(is_admin(user)):
         user:Admin = user.admin
         
@@ -92,10 +75,7 @@ def get_post_id(user:User) -> dict[str,int]:
 
     if(is_manager(user)):
         user:Manager = user.manager
-        
-    elif(is_uploader(user)):
-        user:Uploader = user.uploader
-        
+    
     elif(is_admin(user)):
         user:Admin = user.admin
         
@@ -110,7 +90,20 @@ def get_post_id(user:User) -> dict[str,int]:
 
 def is_authenticated(user:User) -> bool:
     
-    return bool((user.is_authenticated) and (is_admin(user) or is_manager(user) or is_uploader(user)))
+    return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
+
+def get_uploader_by_name(username:str) -> list[int]:
+    try:
+        return list(map(lambda x: x.user.id,Admin.objects.filter(user__username__icontains=username)))
+    except Exception as e:
+        return []
+
+def get_manager_by_name(username:str) -> list[int]:
+    try:
+        return list(map(lambda x: x.user.id, Manager.objects.filter(user__username__icontains=username)))
+    except Exception as e:
+        return []
+
 
 
 """

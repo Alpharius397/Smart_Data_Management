@@ -4,15 +4,8 @@
     
     <h2>Feedback:</h2>
     <h3>Assigned To:</h3>
-        <ul>
-        {% for i in manager %}
-            <li>
-                <h4 class="user">User: {{i}}{% if not forloop.last %}, {% endif %}</h4>
-            </li>
-            {% empty %}
-            None
-            {% endfor %}
-        </ul>
+    <h4 class="user">User: {% for i in manager %} {{i}} {% if not forloop.last %}, {% endif %} {% endfor %} </h4>
+
 
     <form hx-post="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:#feed_button" onsubmit="event.preventDefault()">
         {% csrf_token %}

@@ -1,17 +1,14 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
     <title>Upload Form</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-
+        
         .upload-container {
             background: #fff;
             padding: 20px 30px;
@@ -25,32 +22,6 @@
             text-align: center;
             margin-bottom: 20px;
             color: #333;
-        }
-
-        .form-group {
-            margin: 10px auto;
-            margin-bottom: 15px;
-            margin-right: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .form-group input:focus {
-            border-color: #007bff;
-            outline: none;
         }
 
         .upload-button {
@@ -68,122 +39,12 @@
             background-color: #218838;
         }
 
-        .form-footer {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .form-footer a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-
-        ul.errorlist, ul.errorlist li {
-            list-style-type: none;
-            color: red;
-            font-style: italic;
-            margin: 0;
-            padding: 0;
-            margin-top: 5px;
-        }
-
-        p.help_text {
-            font-style: italic;
-            color: #555;
-            margin: 0;
-            padding-top: 5px;
-        }
-
-        header .user-log{
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            font-weight: bold;
-            padding: 15px;
-            transform: translateY(-50%);
-            background-color: #fff;
-            color: #4CAF50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        button:hover{
-            background-color: #09430e;
-
-        }
-
-        header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            align-items: center;
-            justify-content: center;
-            width: 100;
-            position: relative;
-        }
-
         #progress{
             margin-top: 10px;
             width: 100%;
             display:none;
             height: 20px;
         }
-
-        .messages {
-            list-style: none;
-            margin: 20px auto;
-            padding: 0;
-            width: 80%;
-            max-width: 1000px;
-        }
-
-        .messages li {
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            color: #fff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .messages li:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .messages li.success {
-            background-color: #4caf50; 
-        }
-
-        .messages li.error {
-            background-color: #f44336;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .form-footer a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-
-
 
     </style>
 </head>

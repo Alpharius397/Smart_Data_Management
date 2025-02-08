@@ -1,5 +1,5 @@
-function get_select(){
-    let column = document.getElementById('column');
+function get_select(value="column"){
+    let column = document.getElementById(value);
     return column?column.value:column;
 }
 

@@ -5,7 +5,7 @@
 
     <div class="searchQuery">
         <h2>Search Columns: </h2>
-        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="load,submit" hx-on::after-request="dontAskWhy();">
+        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="input from:#search,load" hx-on::after-request="dontAskWhy();">
             
             <label for="column">Column: </label>
             <select name="column" id="column">
@@ -22,9 +22,6 @@
             <datalist id="suggests" autocomplete="false">
 
             </datalist>
-
-            <button type="submit"> Search </button>
-            <button type="cancel" hx-get="{% url 'View:search' id=id %}" hx-params="none" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="click" hx-on::after-request="dontAskWhy();"> Cancel Search </button>
 
         </form>
 

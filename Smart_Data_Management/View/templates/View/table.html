@@ -40,13 +40,6 @@
             top:20px;
         }
 
-        p.help_text {
-            font-style: italic;
-            color: #555;
-            margin: 0;
-            padding-top: 5px;
-        }
-
         #verify{
             color:#4CAF50;
             display:inline;
@@ -69,23 +62,29 @@
 
         .verify-sing{
             position:sticky;
-            right: 73px;
+            right: 83px;
             z-index: 10;
+            min-width: 100px;
+            max-width: 100px;
         }
 
         #correct{
+            display: inline-block;
             padding: 10px;
             color: white;
             background-color: green;
         }
 
         #wrong{
+            display: inline-block;
             padding: 10px;
             color: white;
             background-color: red;
         }
 
         #none{
+            display: inline-block;
+
             padding: 10px;
             color: white;
             background-color: grey;
@@ -126,6 +125,19 @@
             max-width: 200px;
         }
 
+        .edit{
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            display: inline-flex;
+            padding: 0px;
+            margin: auto;
+        }
+
+        img.edit:hover{
+            border-bottom: 3px grey solid;
+        } 
+
     </style>
 </head>
 
@@ -151,9 +163,6 @@
                 <label for="search">Containing: </label>
 
                 <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword">
-
-                <button type="submit"> Search </button>
-                <button type="cancel"> Cancel Search </button>
 
             </form>
 

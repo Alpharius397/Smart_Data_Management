@@ -4,7 +4,7 @@ from django.http import HttpRequest, HttpResponse
 from Login.forms import LoginForm
 from django.urls import reverse
 from django.contrib.auth import models, login, logout, authenticate
-from User.models import is_manager, is_uploader, is_admin
+from User.models import is_manager, is_admin
 
 # Create your views here.
 def login_view(req:HttpRequest) -> HttpResponse:
@@ -24,7 +24,7 @@ def login_view(req:HttpRequest) -> HttpResponse:
             
             if(user is not None):
                 
-                if(is_manager(user) or is_uploader(user) or is_admin(user)):                
+                if(is_manager(user) or is_admin(user)):                
                     login(req,user)
                     return redirect(reverse('Dash:dash') + '?alert=Login Successful')
 

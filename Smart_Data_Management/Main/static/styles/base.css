@@ -16,6 +16,13 @@ header {
     position: relative;
 }
 
+p.help_text {
+    font-style: italic;
+    color: #555;
+    margin: 0;
+    padding-top: 5px;
+}
+
 .container {
     margin: 20px auto;
     max-width: 1200px;
@@ -182,6 +189,7 @@ button{
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
+    margin: 5px;
 }
 
 button:hover{
@@ -206,7 +214,7 @@ select{
     padding-right: 1rem;
 }
 
-#search{
+#search, input[type="text"]{
     border-radius: 20px;
     padding:5px;
     padding-left: 0.75rem;

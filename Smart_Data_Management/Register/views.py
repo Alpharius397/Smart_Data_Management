@@ -4,7 +4,7 @@ from Register.forms import RegisterForm
 from django.contrib.auth.models import User, Group
 from Main.models import get_error_info
 from tools.url_auth import is_hx_post, is_hx_get
-from User.models import Manager, Uploader, Admin
+from User.models import Manager, Admin
 from University.models import University, Institute, Branch
 
 # Create your views here.

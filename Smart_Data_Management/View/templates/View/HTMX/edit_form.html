@@ -1,0 +1,7 @@
+<form hx-post="{% url 'View:edit' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}","old":"{{value}}"}' hx-target="this" hx-trigger="click from:#submit_{{idx}}_{{j}}" onsubmit="event.preventDefault()" id="form_{{idx}}_{{j}}">
+    {% csrf_token %}
+    <input type="text" name="value" value="{{value}}">
+    <button type="submit" value="Change" id="submit_{{idx}}_{{j}}">Change</button>
+    <button type="cancel" value="Discard" id="cancel_{{idx}}_{{j}}" hx-trigger="click from:#cancel_{{idx}}_{{j}}" hx-get="{% url 'View:normal' id=id idx=idx %}" hx-swap="outerHTML" hx-target="#form_{{idx}}_{{j}}" hx-vals='{"column":"{{column}}","value":"{{value}}","j":"{{j}}"}'>Cancel</button>
+
+</form>

@@ -9,16 +9,8 @@
 {% else %}
     <div class="feedback">
         <h3>Assigned To:</h3>
-        <ul>
-        {% for i in manager %}
-            
-            <li>
-                <h4 class="user">User: {{i}}{% if not forloop.last %}, {% endif %}</h4>
-            </li>
-        </ul>
-        {% empty %}
-            User: None
-        {% endfor %}
+        
+        <h4 class="user">User: {% for i in manager %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %} </h4>
 
         {% if status is None %}
             <h4 class="user">Status: <p id="unchecked">Not Checked</p></h4>
@@ -32,7 +24,6 @@
             <h4 class="user">Feedback: <p id='feed-text'>{{feed}}</p></h4>
         {% endif %}    
 
-        </ul>
     </div>
 
     {% if locked %}
