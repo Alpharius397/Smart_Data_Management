@@ -6,7 +6,7 @@
     <div class="container">
         <h2>Assigned Tasks</h2>
         <h3>Search Records: </h3>
-        <form hx-get="{% url 'Dash:manage' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="input from:#search,load" hx-vals="js:{query: get_select()}">
+        <form hx-get="{% url 'Dash:manage' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="input from:find #search,load" hx-vals="js:{query: get_select()}">
             
             <label for="query">Query: </label>
             <select name="query" id="column">

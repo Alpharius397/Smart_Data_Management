@@ -560,8 +560,8 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
-        j = req.GET.get("j","")
-        return render(req,'View/HTMX/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,"j":j})
+        
+        return render(req,'View/HTMX/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,})
     
     elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.POST.get('column',None)
@@ -571,7 +571,7 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         
         connection = MongoConnection(settings.MONGO_URL)
         excel = connection.connect(settings.MONGO_CRED)
-        context = {"id":id,"idx":idx,j:"j","value":value}
+        context = {"id":id,"idx":idx,"value":value,"admin":True,"column":column}
         try:
             column_name = f"data.excel.{column}.{idx}"
             excel.update_one({"_id":ObjectId(id),column_name:{"$exists":True}},{"$set":{column_name:value}})
@@ -588,8 +588,7 @@ def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
-        j = req.GET.get("j","")
         
-        return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"j":j})
         
+        return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
     return HttpResponse(status=403)
