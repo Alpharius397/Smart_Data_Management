@@ -1,0 +1,142 @@
+{% load template %}
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <title>User Task Dashboard</title>
+    <style>
+
+        .task-list {
+            margin: 20px 0;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+            background: #f9f9f9;
+        }
+
+        .task-item h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .title-tag{
+            text-align: center;
+        }
+
+        .task-info{
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #666;
+            border-top: 0px;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .view-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        .view-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+    
+        .view-button:active {
+            background-color: #3e8e41; 
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        li{
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        form{
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
+        <h1>Task Dashboard</h1>
+        {% block manager_button%}{% endblock %}
+        {% block uploader_button%}{% endblock %}
+    </header>
+
+        {% block uploader %} {% endblock %}
+        {% block manager %} {% endblock %}
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+
+<script src="{% static 'js/script.js' %}"></script>
+<script>
+
+    function attach_event(){
+        const elements = document.querySelectorAll(".drop-down");
+
+        elements.forEach((element) => {
+            const id = element.id;
+
+            element.addEventListener('click', ()=>{
+                
+                if (element.classList.contains('up')) {
+                    element.classList.replace('up','down');
+                    document.querySelector(`.task-info#${id}`).style.display = 'none';
+                } else {
+                    element.classList.replace('down','up');
+                    document.querySelector(`.task-info#${id}`).style.display = 'block';
+                }
+            })
+        })
+    }
+
+
+    htmx.on(".task-list","htmx:afterSettle", function(event){
+        attach_event();
+        
+    })
+
+</script>
+
+</html>

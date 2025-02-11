@@ -1,0 +1,34 @@
+{% extends 'Dash/dash.html' %}
+
+{% load template %}
+
+{% block manager %}
+    <div class="container">
+        <h2>Assigned Tasks</h2>
+        <h3>Search Records: </h3>
+        <form hx-get="{% url 'Dash:manage' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="input from:find #search,load" hx-vals="js:{query: get_select()}">
+            
+            <label for="query">Query: </label>
+            <select name="query" id="column">
+                <option value="">----------</option>
+                <option value="uploader">Uploader</option>
+                <option value="manager">Manager</option>
+                <option value="file_name">File Name</option>
+            </select>
+
+            <label for="search">Containing: </label>
+            <input type="search" placeholder="Search Here" name="value" id="search">
+
+        </form>
+        <div class="task-list" id="up">
+
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block manager_button%}
+
+    <a href="{% url 'Dash:read' %}"><button class="add-task">Read Card</button></a>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load template %}
+{% load static %}
+
+{% with image=value|img %}
+    <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+
+        <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{column}}"}' hx-swap="outerHTML" hx-trigger="click from:find #edit">
+        
+            <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+
+            {% if error %}
+            <ul class="messages">
+                <li class="error">{{error}}</li>
+            </ul>
+            {% endif %}
+
+        </div>
+    </td>
+{% endwith %}

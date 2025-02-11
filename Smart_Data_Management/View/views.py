@@ -1,7 +1,8 @@
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from io import BytesIO
 import json
 import re
+from PIL import Image
 from typing import NamedTuple, Any
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, FileResponse
@@ -15,7 +16,7 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, is_auth_post
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
 from View.forms import VerifyForm
 from django.utils import timezone
 
@@ -102,7 +103,7 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
         page = int(page)
         pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
-        verify_idx:list = [i.get('status') for i in result.get('data',{}).get('feed',[])[page:page+MAX_RECORD]]
+        verify_idx:list = [i.get('status') for i in list(result.get('data',{}).get('feed',{}).values())[page:page+MAX_RECORD]]
         available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
         uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
         manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
@@ -278,7 +279,7 @@ def quick_query(req: HttpRequest, id:str):
         context = {'option':[]}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.excel":1})
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
             if(column in pd_data.columns):
                 pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
@@ -313,11 +314,12 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-            meta_data:dict = result.get('data',{}).get('feed',[])[idx:idx+1][0]
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"data.excel":1})
+            meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
             
         except Exception as e:
+            print(e)
             context['search'] = get_error_info(e)
             return render(req,'View/HTMX/report.html',context=context)
         
@@ -346,15 +348,6 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         excel = connection.connect(settings.MONGO_CRED)
         context = {'id':id,'idx':idx}
         
-        try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-            meta_data:list[dict] = result.get('data',{}).get('feed',[])
-            _ = meta_data[idx]
-            
-        except Exception as e:
-            context['search'] = get_error_info(e)
-            return render(req,'View/HTMX/message.issue.html',context=context)
-            
         f = VerifyForm(req.POST)
         
         if(f.is_valid()):
@@ -366,12 +359,12 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 status = False
             else:
                 status = None
-                MongoTemplate()
                 
-            meta_data[idx].update({'status':status,'feed':feed})
-            
             try:
-                success = excel.update_one({"_id":ObjectId(id)},{"$set":{'data.feed':meta_data}}).matched_count
+                column = f"data.feed.{idx}"
+                status_col = f"{column}.status"
+                feed_col = f"{column}.feed"
+                success = excel.update_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),column:{"$exists":True}}]},{"$set":{status_col:status,feed_col:feed}}).matched_count
                 
                 if(success==1):
                     context['msg'] = "Status Updated!"
@@ -394,12 +387,11 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id}]})
-            meta_data:list[dict] = result.get('data',{}).get('feed',[])
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id}]},{"data.feed":1,"header.manager":1})
+            meta_data:list[dict] = result.get('data',{}).get('feed',{}).get(str(idx),{})
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
-            feed = meta_data[idx]
-            context.update({**feed,'manager':manager})
-            
+            context.update({**meta_data,'manager':manager})
+            print(result)
         except Exception as e:
             context['search'] = get_error_info(e)
         finally:
@@ -414,11 +406,11 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-            meta_data:list[dict] = result.get('data',{}).get('feed',[])
+            result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"header.manager":1})
+            meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
-            feed = meta_data[idx]
-            context.update({**feed,'manager':manager})
+            print(manager)
+            context.update({**meta_data,'manager':manager})
             
         except Exception as e:
             context['search'] = get_error_info(e)
@@ -439,14 +431,14 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             connection = MongoConnection(settings.MONGO_URL)
             excel = connection.connect(settings.MONGO_CRED)
             context = {'id':id,'idx':idx}
-            
             try:
-                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-                meta_data:list[dict] = result.get('data',{}).get('feed',[])
-                feed = meta_data[idx]
-                context.update({**feed})
-                
+                feed_col = f"data.feed.{idx}"
+                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{feed_col:1})
+                meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
+                context.update({**meta_data})
+                print(context,result)
             except Exception as e:
+                print(get_error_info(e))
                 return render(req,'View/single/manager_form.html',context=context)
 
             return render(req,'View/single/manager_form.html',context=context)
@@ -469,21 +461,11 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 timestamp = timezone.now().isoformat()
             
             try:
-                result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-                meta_data:list[dict] = result.get('data',{}).get('feed',[])
-                feed = meta_data[idx]
-                
-            except Exception as e:
-                context['search'] = get_error_info(e)
-                return render(req,'View/HTMX/message.issue.html',context=context)
-            
-            meta_data[idx].update({'time_of_issue':timestamp,'locked':locked})
-            
-            try:
-                res = excel.update_one({"_id":ObjectId(id)},{"$set":{'data.feed':meta_data}}).matched_count
+                time_issue = f"data.feed.{idx}.time_of_issue"
+                locked_col = f"data.feed.{idx}.locked"
+                res = excel.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:locked}}).modified_count
 
                 if(res==1 and locked): 
-                    compress_data(result,req.user,idx)
                     context['msg'] = "Card Issued"
                 elif(res==1): 
                     context['msg'] = "Card Cancelled"
@@ -544,7 +526,7 @@ def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
     if(is_auth_get(req)):
         connection = MongoConnection(settings.MONGO_URL)
         excel = connection.connect(settings.MONGO_CRED)
-
+        result = None
         try:
             result:dict[str,dict[str,dict]] = excel.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
             
@@ -584,11 +566,58 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         
     return HttpResponse(status=403)
 
+def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
+    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.GET.get('column',None)
+        
+        return render(req,'View/HTMX/edit_image_form.html',context={"id":id,"column":column,"idx":idx})
+    
+    elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.POST.get('column',None)
+        value = req.POST.get('value',None)
+        file = req.FILES.get('file')
+        context = {"id":id,"idx":idx,"admin":True,"column":column,"value":value}
+        
+        try:
+            buffer = BytesIO()
+            with file.open('rb') as f:
+                buffer.write(f.read())
+            
+            img = Image.open(buffer)
+            width, height = img.width, img.height
+            buffer.seek(0)
+            with BytesIO() as b:
+                img.save(b,format='jpeg',quality=95)
+                img_data = f"{width}:{height}:{b64encode(buffer.getvalue()).decode()}"
+        
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/normal_image.html',context=context)
+        
+        connection = MongoConnection(settings.MONGO_URL)
+        excel = connection.connect(settings.MONGO_CRED)
+        context = {"id":id,"idx":idx,"admin":True,"column":column}
+        try:
+            column_name = f"data.excel.{column}.{idx}"
+            excel.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
+            context.update({'value':img_data})
+        except Exception as e:
+            context['error'] = get_error_info(e)
+            return render(req,'View/HTMX/normal_image.html',context=context)
+                    
+        return render(req,'View/HTMX/normal_image.html',context=context)
+        
+    return HttpResponse(status=403)
+
+def normal_image(req: HttpRequest, id: str, idx:int) -> HttpResponse:
+    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+        column = req.GET.get('column',None)
+        return render(req,'View/HTMX/image.html',context={"id":id,"column":column,"idx":idx})
+    return HttpResponse(status=403)
+
 def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
-        
-        
         return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
     return HttpResponse(status=403)

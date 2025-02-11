@@ -1,0 +1,36 @@
+{% load template %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/read.css' %}">
+    <title>User Task Dashboard</title>
+    <style>
+
+
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To DashBoard</button></a>
+        <h1>Card View</h1>
+    </header>
+
+    <div class="container" hx-get="{% url 'Dash:card_read' %}" hx-trigger="load" hx-target=".tableView" hx-swap="outerHTML">
+
+        <div class="tableView"></div>
+
+    </div>
+
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+
+
+</html>

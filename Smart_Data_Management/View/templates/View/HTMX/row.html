@@ -5,9 +5,29 @@
 <tr {% if forloop.last %} hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="intersect once" hx-swap="afterend" {% endif %}>
     {% for j,k in i.values|enum %}
 
-            {% if column|index:j|in:image %}
+                {% if column|index:j|in:image %}
                 {% with image=k|img %}
-                <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
+
+                    {% if admin is True%}
+                    <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+                    
+                        <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{column|index:j}}"}' hx-swap="outerHTML" hx-trigger="click from:find #edit">
+                        
+                            <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                    
+                            {% if error %}
+                            <ul class="messages">
+                                <li class="error">{{error}}</li>
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    {% else %}
+
+                    <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
+
+                    {% endif %}
                 {% endwith %}
             {% else %}
             <td>

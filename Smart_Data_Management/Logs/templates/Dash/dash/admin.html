@@ -1,0 +1,54 @@
+{% extends 'Dash/dash.html' %}
+
+{% load template %}
+
+{% block uploader_button %}
+    <a href="{% url 'Upload:view' %}"><button class="add-task">Add New Task</button></a>
+{% endblock %}
+
+{% block uploader %}
+    <div class="container">
+        <h2>To Assign Tasks</h2>
+        <h3>Search Records: </h3>
+        <form hx-get="{% url 'Dash:admin_upload' %}" hx-target="#up" hx-swap="innerHTML" hx-trigger="input from:find #search,load,input from:#column1" hx-vals="js:{query: get_select('column1')}">
+            
+            <label for="query">Query: </label>
+            <select name="query" id="column1">
+                <option value="">----------</option>
+                <option value="uploader">Uploader</option>
+                <option value="file_name">File Name</option>
+            </select>
+
+            <label for="search">Containing: </label>
+            <input type="search" placeholder="Search Here" name="value" id="search">
+
+        </form>
+        <div class="task-list" id="up">
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block manager %}
+    <div class="container">
+        <h2>Assigned Tasks</h2>
+        <h3>Search Records: </h3>
+        <form hx-get="{% url 'Dash:admin_manage' %}" hx-target="#down" hx-swap="innerHTML" hx-trigger="load,input from:find #search,input from:#column2" hx-vals="js:{query: get_select('column2')}">
+            
+            <label for="query">Query: </label>
+            <select name="query" id="column2">
+                <option value="">----------</option>
+                <option value="uploader">Uploader</option>
+                <option value="manager">Manager</option>
+                <option value="file_name">File Name</option>
+            </select>
+
+            <label for="search">Containing: </label>
+            <input type="search" placeholder="Search Here" name="value" id="search">
+
+        </form>
+        <div class="task-list" id="down">
+
+        </div>
+    </div>
+{% endblock %}

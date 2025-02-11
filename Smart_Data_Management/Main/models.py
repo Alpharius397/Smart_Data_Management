@@ -63,16 +63,14 @@ class MongoTemplate:
                 ]
             }
         }
-    
     """
-    
     def __init__(self) -> None:
         
         self.header = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
         self.data_header = {'file_name':None,'image_column':[]}
         self.data_feed = {'locked':None,'time_of_issue':None,'status':None,'feed':None}
         self.data = None
-        self.feed:list[dict] = []
+        self.feed:dict[str,dict[str,str]] = {}
         
         self.template = {'header':self.header,'data':{'excel':self.data,'header':self.data_header,'feed':self.feed}}
 
@@ -97,8 +95,8 @@ class MongoTemplate:
         return self
     
     def add_feed(self, rows:int) -> 'MongoTemplate':
-        for _ in range(rows):
-            self.feed.append(self.data_feed)
+        for i in range(rows):
+            self.feed[str(i)] = self.data_feed
         return self
     
     def add_manager(self, managers:list[str]) -> 'MongoTemplate':
