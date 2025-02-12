@@ -2,34 +2,8 @@ import pymongo
 from typing import NamedTuple
 import pymongo.client_session
 import pymongo.collection
-
-class MongoDB(NamedTuple):
-    database:str
-    collection:str
-
-def get_error_info(exception:Exception) -> str:
-    if(isinstance(exception,Exception)):
-        return f"{exception.__class__.__module__}.{exception.__class__.__name__} : {exception}"
-    
-    return "Not an Exception"
-    
-class MongoConnection:
-    connection:pymongo.MongoClient = None
-    
-    def __init__(self, connect_url:str) -> None:
-        self.connection = pymongo.MongoClient(connect_url)
-    
-    def connect(self, info:MongoDB) -> pymongo.collection.Collection | None:
-
-        result:pymongo.collection.Collection = None
-
-        try:
-            self.connection.server_info()
-            result = self.connection.get_database(info.database).get_collection(info.collection)
-        except Exception as e:            
-            print(get_error_info(e))
-            
-        return result
+from django.conf import settings
+from Main.loggers import MongoLogger
 
 class MongoTemplate:
     """
@@ -66,9 +40,9 @@ class MongoTemplate:
     """
     def __init__(self) -> None:
         
-        self.header = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
-        self.data_header = {'file_name':None,'image_column':[]}
-        self.data_feed = {'locked':None,'time_of_issue':None,'status':None,'feed':None}
+        self.header:dict[str,dict[str,str]|list] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
+        self.data_header:dict[str,str|list] = {'file_name':None,'image_column':[]}
+        self.data_feed:dict[str,str] = {'locked':None,'time_of_issue':None,'status':None,'feed':None}
         self.data = None
         self.feed:dict[str,dict[str,str]] = {}
         
@@ -106,3 +80,103 @@ class MongoTemplate:
     
     def get_json(self) -> dict:
         return {'header':self.header,'data':{'excel':self.data,'header':self.data_header,'feed':self.feed}}
+class MongoDB(NamedTuple):
+    database:str
+    collection:str
+class MongoConnection:
+    
+    def __init__(self) -> None:
+        self.connection = pymongo.MongoClient(settings.MONGO_URL)
+        self.collection:pymongo.collection.Collection = None
+        self.log = MongoLogger(settings.DATA_FILE)
+
+    def connect(self) -> 'MongoConnection':
+
+        try:
+            self.connection.server_info()
+            self.collection = self.connection.get_database(settings.MONGO_CRED.database).get_collection(settings.MONGO_CRED.collection)            
+            data_url=', '.join([f"mongodb://{host}:{port}/" for host,port in self.connection.nodes])
+            self.log.write_info(f"Established Connection to {data_url}")
+            
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+            
+        return self
+    
+    def find_one(self, condition:dict, filters:dict) -> dict:
+        res:dict = None
+        
+        try:
+            res = self.collection.find_one(condition,filters)
+            self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+        
+        return res
+    
+    def find_all(self, condition:dict, filters:dict) -> dict:
+        res:dict = None
+        
+        try:
+            res = self.collection.find(condition,filters)
+            self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+        
+        return res
+    
+    def update_one(self, condition:dict, update:dict) -> bool:
+        success:bool = False
+        
+        try:
+            _ = self.collection.update_one(condition,update)
+            
+            success = bool(_.matched_count==1)
+            self.log.write_info(f"Applying updation '{update}' to document '{condition}'")
+            
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+            
+        return success
+    
+    
+    def delete_one(self, condition:dict) -> bool:
+        success:bool = False
+        
+        try:
+            _ = self.collection.delete_one(condition)
+            
+            success = bool(_.deleted_count==1)
+            self.log.write_info(f"Applying deletion to document '{condition}'")
+            
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+            
+        return success
+    
+    def insert_one(self, doc:MongoTemplate) -> bool:
+        
+        id:str = None
+        try:
+            _ = self.collection.insert_one(doc.get_json())
+            id = _.inserted_id
+            self.log.write_info(f"Inserting document with id '{id}'")
+            
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+            
+        return id
+    
+    def close(self):
+        try:
+            self.connection.close()
+            self.log.write_info("Closing MongoDB connection")
+        except Exception as e:            
+            self.log.write_error(MongoLogger.get_error_info(e))
+
+def get_error_info(exception:Exception) -> str:
+    if(isinstance(exception,Exception)):
+        return f"{exception.__class__.__module__}.{exception.__class__.__name__} : {exception} \n{''.join(traceback.format_tb(exception.__traceback__))}"
+    else:
+        return "Not an exception"
+    

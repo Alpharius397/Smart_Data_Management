@@ -7,7 +7,6 @@ from typing import NamedTuple, Any
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse, FileResponse
 from Main.models import *
-from django.urls import reverse
 from django.conf import settings
 from tools.get_image import compress_image
 from User.models import Admin, Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id
@@ -16,11 +15,13 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, auth_needed
 from View.forms import VerifyForm
 from django.utils import timezone
+from Main.loggers import AppLogger, LogStructure
 
 MAX_RECORD:int = 5
+log = AppLogger(settings.DATA_FILE)
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
 class ReportStructure(NamedTuple):
@@ -60,9 +61,10 @@ def default_view(req: HttpRequest, id:str) -> HttpResponse:
         return data_view(req,id)
     
     elif(not (is_authenticated(req.user))):
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+        return auth_needed(req)
     
     elif(is_admin(req.user)):
+        print(LogStructure().set_request(req).get_log())
         return render(req,'View/table/admin.html',{'id':id})
     
     elif(is_manager(req.user)):
@@ -77,23 +79,26 @@ def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list
 
     return (pd_data.empty,pd_data)
 
-def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str = None, value:str = None, page:str = '0') -> dict[str,str]:
+def get_context(user:User,id:str,conn:MongoConnection, column:str = None, value:str = None, page:str = '0') -> dict[str,str]:
     
     result:dict[str,dict[str,dict]] = None
     context = {'id':id}
     search = False
+    conn.connect()
     
     try:
         if(is_manager(user)):
-            result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.manager":user.id}]})
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":user.id}]})
             
         elif(is_admin(user)):
-            result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(user)}]})
-            
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(user)}]})
             
     except Exception as e:
-        context['search'] = get_error_info(e)
+        context['search'] = log.write_info()
         return context
+    finally:
+        conn.close()
+    
     
     if(result is None):
         context['search'] = "Mongo ID %s was not found" % id
@@ -111,7 +116,7 @@ def get_context(user:User,id:str,excel:pymongo.collection.Collection, column:str
         pd_data = pd_data.iloc[page:page+MAX_RECORD]
 
     except Exception as e:
-        context['search'] = get_error_info(e)
+        context['search'] = AppLogger.get_error_info(e)
         return context
     
     if(search):
@@ -134,7 +139,7 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         return render(req,'View/HTMX/page.html',context=context)
     
     else:
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+        return auth_needed(req)
 
 
 def assign_form(req:HttpRequest, id:str) -> HttpResponse:
@@ -151,7 +156,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.uploader":1,"header.manager":1})
             
         except Exception as e:            
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/form.html',context=context)
         finally:
             connection.connection.close()
@@ -164,7 +169,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             context.update({'upload':uploader,'manage':manager,'option':all_manager})
             
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
 
         return render(req,'View/HTMX/form.html',context=context)
     
@@ -193,7 +198,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             result = excel.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1})
             
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/message.assign.html',context=context)
             
         
@@ -202,7 +207,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
             _manage = Manager.objects.get(user__id=user)
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/message.assign.html',context=context)
         
         try:
@@ -220,7 +225,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
                 context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
 
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/message.assign.html',context=context)
         
         finally:
@@ -285,7 +290,7 @@ def quick_query(req: HttpRequest, id:str):
                 pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
                 context['option'] = [i for i in sorted(set(pd_data))[:5]]    
         except Exception as e:
-            print(get_error_info(e))
+            print(AppLogger.get_error_info(e))
             
         return render(req,'View/HTMX/suggests.html',context=context)
     
@@ -299,7 +304,7 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return report_view(req,id,idx)
     
     elif(not (is_authenticated(req.user))):
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+        return auth_needed(req)
     
     else:
         return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
@@ -320,7 +325,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         except Exception as e:
             print(e)
-            context['search'] = get_error_info(e)
+            context['search'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/report.html',context=context)
         
         finally:
@@ -372,7 +377,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                     context['search'] = "Mongo ID %s not found" % id
                     
             except Exception as e:
-                context['search'] = get_error_info(e)
+                context['search'] = AppLogger.get_error_info(e)
                 
             finally:
                 connection.connection.close()    
@@ -393,7 +398,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             context.update({**meta_data,'manager':manager})
             print(result)
         except Exception as e:
-            context['search'] = get_error_info(e)
+            context['search'] = AppLogger.get_error_info(e)
         finally:
             connection.connection.close()
         
@@ -413,7 +418,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             context.update({**meta_data,'manager':manager})
             
         except Exception as e:
-            context['search'] = get_error_info(e)
+            context['search'] = AppLogger.get_error_info(e)
             
         finally:
             connection.connection.close()
@@ -438,7 +443,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 context.update({**meta_data})
                 print(context,result)
             except Exception as e:
-                print(get_error_info(e))
+                print(AppLogger.get_error_info(e))
                 return render(req,'View/single/manager_form.html',context=context)
 
             return render(req,'View/single/manager_form.html',context=context)
@@ -473,7 +478,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 else: context['search'] = "Data update failed"
             
             except Exception as e:
-                context['search'] = get_error_info(e)
+                context['search'] = AppLogger.get_error_info(e)
                 return render(req,'View/HTMX/message.issue.html',context=context)
             
             finally:
@@ -558,7 +563,7 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             column_name = f"data.excel.{column}.{idx}"
             excel.update_one({"_id":ObjectId(id),column_name:{"$exists":True}},{"$set":{column_name:value}})
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             context['value'] = old
             return render(req,'View/HTMX/normal_view.html',context=context)
                     
@@ -591,7 +596,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
                 img_data = f"{width}:{height}:{b64encode(buffer.getvalue()).decode()}"
         
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/normal_image.html',context=context)
         
         connection = MongoConnection(settings.MONGO_URL)
@@ -602,7 +607,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             excel.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
             context.update({'value':img_data})
         except Exception as e:
-            context['error'] = get_error_info(e)
+            context['error'] = AppLogger.get_error_info(e)
             return render(req,'View/HTMX/normal_image.html',context=context)
                     
         return render(req,'View/HTMX/normal_image.html',context=context)

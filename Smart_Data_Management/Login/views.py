@@ -13,7 +13,9 @@ def login_view(req:HttpRequest) -> HttpResponse:
         return render(req,'Login/index.html',{'form':LoginForm})
     
     elif(req.method=="POST"):
+        next_url = req.GET.get('next') if req.GET.get('next') else reverse('Dash:dash')
         f = LoginForm(req.POST)
+        
         
         if(f.is_valid()):
             
@@ -26,7 +28,7 @@ def login_view(req:HttpRequest) -> HttpResponse:
                 
                 if(is_manager(user) or is_admin(user)):                
                     login(req,user)
-                    return redirect(reverse('Dash:dash') + '?alert=Login Successful')
+                    return redirect(next_url + '?alert=Login Successful')
 
             return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
         else:

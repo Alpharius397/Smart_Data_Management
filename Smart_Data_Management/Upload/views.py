@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from Upload.forms import ExcelForm
-from Main.models import MongoConnection, MongoTemplate, get_error_info
+from Main.models import MongoConnection, MongoTemplate
+from Main.loggers import AppLogger
 from django.urls import reverse
 from django.conf import settings
 from User.models import is_admin, is_authenticated
@@ -12,8 +13,11 @@ from tools.url_auth import is_auth_get, is_auth_post, is_hx_post
 from User.models import get_post, get_post_id
 from django.contrib import messages
 
+log = AppLogger(settings.DATA_FILE)
+
 # Create your views here.
 def upload_screen(req:HttpRequest):
+    
     if(not (is_authenticated(req.user) and is_admin(req.user))):
         return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
     
@@ -41,12 +45,11 @@ def delete(req: HttpRequest, id:str) -> HttpResponse:
         return render(req,'Upload/delete.html',{'id':id})
 
     elif(is_authenticated(req.user) and is_hx_post(req)):
-        connection = MongoConnection(settings.MONGO_URL)
-        excel = connection.connect(settings.MONGO_CRED)
+        conn = MongoConnection().connect()
         result = None
         locked = False
         try:
-            result = excel.find_one({"_id":ObjectId(id),"header.uploader":req.user.id})
+            result = conn.find_one({"_id":ObjectId(id),"header.uploader":req.user.id})
             locked = any([i.get('locked') for i in result.get('data',{}).get('feed',[])])
             
         except Exception as e:

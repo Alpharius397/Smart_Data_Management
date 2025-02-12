@@ -117,7 +117,7 @@
 <body>
     <div class="login-container">
         <h2>Login</h2>
-        <form action="{% url 'Login:login' %}" method="POST">
+        <form action="{% url 'Login:login' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" method="POST">
             {% csrf_token %}
 
             {% for field in form %}
