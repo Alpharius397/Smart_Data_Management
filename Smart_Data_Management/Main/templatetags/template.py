@@ -59,7 +59,7 @@ def in_check(obj,vector):
 
 @register.filter(name='index')
 def index(vector,index):
-    return vector[int(index)] if index else None
+    return vector[int(index)] if (index is not None) else None
 
 @register.filter(name='index_str')
 def index(vector,index):

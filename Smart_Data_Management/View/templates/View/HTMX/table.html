@@ -23,71 +23,8 @@
             </thead>
             
             <tbody >
-                {% for idx,i in result %}
-                <tr {% if forloop.last %} hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="intersect once" hx-swap="afterend" {% endif %}>
+                <tr hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="load" hx-swap="outerHTML">
                     
-                    {% for j,k in i.values|enum %}
-                    
-                        {% if column|index:j|in:image %}
-                            {% with image=k|img %}
-
-                                {% if admin is True%}
-                                <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-                                
-                                    <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{column|index:j}}"}' hx-swap="outerHTML" hx-trigger="click from:find #edit">
-                                    
-                                        <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                                
-                                        {% if error %}
-                                        <ul class="messages">
-                                            <li class="error">{{error}}</li>
-                                        </ul>
-                                        {% endif %}
-                                    </div>
-                                </td>
-
-                                {% else %}
-
-                                <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
-
-                                {% endif %}
-                            {% endwith %}
-                        {% else %}
-                            <td>
-                                {% if admin is True %}
-                                <div hx-get="{% url 'View:edit' id=id idx=idx %}" hx-vals='{"column":"{{column|index:j}}","value":"{{k}}"}' hx-swap="outerHTML" hx-trigger="click from:find #edit">
-                                    
-                                    {{k|str}}
-                                    <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                            
-                                    {% if error %}
-                                    <ul class="messages">
-                                        <li class="error">{{error}}</li>
-                                    </ul>
-                                    {% endif %}
-                            
-                                </div>
-                            {% else %}
-                                <div>
-                                    {{k|str}}
-                                </div>
-                            {% endif %}
-                            </td>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if verify|index:idx is True %}
-                        <td class="verify-sing"><p id="correct">Verified</p></td>
-                    
-                    {% elif verify|index:idx is False %}
-                        <td class="verify-sing"><p id="wrong">Rejected</p></td>
-                    
-                    {% else %}
-                        <td class="verify-sing"><p id="none">Unchecked</p></td>
-                    {% endif %}
-                        <td class="next-button"><a href='{{request.path|get_last}}/{{idx}}/'><button>View</button></a></td>
-                    </tr>
-                {% endfor %}
             </tbody>
             
         </table>

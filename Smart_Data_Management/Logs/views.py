@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from Main.models import MongoConnection, get_error_info
 from django.urls import reverse
 from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_uploader_by_name
+from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 import typing
@@ -13,6 +13,7 @@ import pymongo
 from bson import ObjectId
 from Main.models import *
 from django.contrib.auth.models import User
+from Main.loggers import APP_LOG, MONGO_LOG, DEFAULT_ERROR
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 
@@ -28,7 +29,7 @@ def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[
 
 def dash_board(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user))):
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+        return auth_needed(req)
     
     if(is_admin(req.user)):
         return render(req,'Dash/dash/admin.html')
@@ -38,33 +39,6 @@ def dash_board(req: HttpRequest) -> HttpResponse:
 
     else:
         return HttpResponse(status=403)
-    
-# def uploader_fetch(req: HttpRequest) -> HttpResponse:
-    
-#     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
-        
-#         upload:list[dict[str,str|list]] = []
-#         error:str = None
-#         queryset=get_query(req)
-        
-#         try:
-#             conn = MongoConnection(settings.MONGO_URL)
-#             excel = conn.connect(settings.MONGO_CRED)
-            
-#             result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.uploader":req.user.id},VIEW_DATA)
-            
-#             flag,upload = get_data(result)
-#             if(flag and queryset): error='No matching records found!'
-            
-#         except Exception as e:
-#             error = get_error_info(e)
-            
-#         finally:
-#             conn.connection.close()
-            
-#         return render(req,'Dash/HTMX/uploader.html',context={'upload':upload,'error':error})
-    
-#     return HttpResponse(status=403)
 
 def manager_fetch(req: HttpRequest) -> HttpResponse:
     
@@ -74,17 +48,17 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
         error:str = None
         queryset=get_query(req)
         try:
-            conn = MongoConnection(settings.MONGO_URL)
-            excel = conn.connect(settings.MONGO_CRED)
+            conn = MongoConnection().connect()
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.manager":req.user.id},VIEW_DATA)
-            flag,manage = get_data(result)
+            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
+            flag, manage = get_data(result)
             if(flag and queryset): error='No matching records found!'
         except Exception as e:
-            error = get_error_info(e)
+            error = DEFAULT_ERROR
+            log
             
         finally:
-            conn.connection.close()
+            conn.close()
             
         return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
     
@@ -127,15 +101,14 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
         queryset=get_query(req)
         
         try:
-            conn = MongoConnection(settings.MONGO_URL)
-            excel = conn.connect(settings.MONGO_CRED)
+            conn = MongoConnection().connect()
             
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
-            flag,admin = get_data(result)
+            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
+            flag, admin = get_data(result)
             if(flag and queryset): error='No matching records found!'
 
         except Exception as e:
-            error = get_error_info(e)
+            error = "Something went wrong"
             
         finally:
             conn.connection.close()
@@ -206,7 +179,7 @@ def get_query(req: HttpRequest) -> dict[str,str]:
     if(query and value):
         
         if(query=='uploader'):
-            query_dict.update({"header.uploader":{"$in":get_uploader_by_name(value)}})
+            query_dict.update({"header.uploader":{"$in":get_admin_by_name(value)}})
         elif(query=='manager'):
             query_dict.update({"$or":[{"header.manager":i} for i in get_manager_by_name(value)]+[{"header.manager":None}]})
         elif(query=='file_name'):

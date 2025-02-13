@@ -5,7 +5,7 @@ from django.contrib.auth.models import User, Group
 from Main.models import get_error_info
 from tools.url_auth import is_hx_post, is_hx_get
 from User.models import Manager, Admin
-from University.models import University, Institute, Branch
+from University.models import Institute, Branch
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -51,11 +51,6 @@ def register_view(req:HttpRequest) -> HttpResponse:
                     manager.belongs = _branch
                     manager.save()
                     
-                elif(level=='Uploader'):
-                    uploader = Uploader(user=user)
-                    uploader.belongs = _branch
-                    
-                    uploader.save()
                 elif(level=='Admin'):
                     admin = Admin(user=user)
                     admin.belongs = _branch
@@ -76,8 +71,6 @@ def register_view(req:HttpRequest) -> HttpResponse:
             
             return render(req,'HTMX/message.html',context=context)
                 
-            
-        
 
 def insti_change(req: HttpRequest) -> HttpResponse:
     

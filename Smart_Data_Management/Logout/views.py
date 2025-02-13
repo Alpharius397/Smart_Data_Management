@@ -1,16 +1,15 @@
-from django.shortcuts import render, redirect
-from Login.forms import LoginForm
-from django.http import HttpRequest, HttpResponse 
-from Login.forms import LoginForm
 from django.urls import reverse
-from django.contrib.auth import models, login, logout, authenticate
 from django.conf import settings
+from django.shortcuts import redirect
+from django.contrib.auth import logout
+from tools.url_auth import auth_needed
+from django.http import HttpRequest, HttpResponse 
 
 # Create your views here.
 def logout_view(req:HttpRequest) -> HttpResponse:
     
     if(not req.user.is_authenticated):
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
+        return auth_needed(req)
     
     logout(req)
     return redirect(reverse(settings.LOGIN_URL) + '?alert=Logout Successfully')

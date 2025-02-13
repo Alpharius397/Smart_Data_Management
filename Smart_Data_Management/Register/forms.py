@@ -1,6 +1,6 @@
 from django.forms import Form
 from django import forms
-from University.models import University, Institute, Branch
+from University.models import University
 
 LEVEL = ['Admin','Manager']
 

@@ -1,5 +1,5 @@
-from django.contrib.auth.models import User,Group
-from django.db.models import CASCADE,OneToOneField,ForeignKey,Model,SET_NULL,RESTRICT
+from django.contrib.auth.models import User
+from django.db.models import OneToOneField,ForeignKey,Model,RESTRICT
 from University.models import Branch
 
 class Manager(Model):
@@ -92,7 +92,7 @@ def is_authenticated(user:User) -> bool:
     
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
-def get_uploader_by_name(username:str) -> list[int]:
+def get_admin_by_name(username:str) -> list[int]:
     try:
         return list(map(lambda x: x.user.id,Admin.objects.filter(user__username__icontains=username)))
     except Exception as e:

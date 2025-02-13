@@ -1,9 +1,10 @@
 import pymongo
-from typing import NamedTuple
-import pymongo.client_session
 import pymongo.collection
+import pymongo.client_session
+from typing import NamedTuple
 from django.conf import settings
 from Main.loggers import MongoLogger
+
 
 class MongoTemplate:
     """
@@ -80,16 +81,23 @@ class MongoTemplate:
     
     def get_json(self) -> dict:
         return {'header':self.header,'data':{'excel':self.data,'header':self.data_header,'feed':self.feed}}
+    
 class MongoDB(NamedTuple):
     database:str
     collection:str
+    
 class MongoConnection:
+    
+    log = MongoLogger(settings.DATA_LOG)
     
     def __init__(self) -> None:
         self.connection = pymongo.MongoClient(settings.MONGO_URL)
         self.collection:pymongo.collection.Collection = None
-        self.log = MongoLogger(settings.DATA_FILE)
-
+    
+    def is_connected(self) -> bool:
+        return (not (self.collection is None))
+    
+    
     def connect(self) -> 'MongoConnection':
 
         try:
@@ -99,29 +107,29 @@ class MongoConnection:
             self.log.write_info(f"Established Connection to {data_url}")
             
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(msg = self.log.get_error_info(e))
             
         return self
     
-    def find_one(self, condition:dict, filters:dict) -> dict:
+    def find_one(self, condition:dict, filters:dict = {}) -> dict:
         res:dict = None
         
         try:
             res = self.collection.find_one(condition,filters)
             self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
         
         return res
     
-    def find_all(self, condition:dict, filters:dict) -> dict:
+    def find_all(self, condition:dict, filters:dict = {}) -> dict:
         res:dict = None
         
         try:
             res = self.collection.find(condition,filters)
             self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
         
         return res
     
@@ -135,7 +143,7 @@ class MongoConnection:
             self.log.write_info(f"Applying updation '{update}' to document '{condition}'")
             
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
             
         return success
     
@@ -150,11 +158,11 @@ class MongoConnection:
             self.log.write_info(f"Applying deletion to document '{condition}'")
             
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
             
         return success
     
-    def insert_one(self, doc:MongoTemplate) -> bool:
+    def insert_one(self, doc:MongoTemplate) -> str:
         
         id:str = None
         try:
@@ -163,20 +171,30 @@ class MongoConnection:
             self.log.write_info(f"Inserting document with id '{id}'")
             
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
             
         return id
+    
+    def replace_one(self, condition:dict, doc: MongoTemplate) -> bool:
+        success:bool = False
+        
+        try:
+            _ = self.collection.replace_one(condition,doc.get_json())
+            success = bool(_.matched_count==1)
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+        
+        return success
     
     def close(self):
         try:
             self.connection.close()
             self.log.write_info("Closing MongoDB connection")
         except Exception as e:            
-            self.log.write_error(MongoLogger.get_error_info(e))
+            self.log.write_error(self.log.get_error_info(e))
+            
+        
 
 def get_error_info(exception:Exception) -> str:
-    if(isinstance(exception,Exception)):
-        return f"{exception.__class__.__module__}.{exception.__class__.__name__} : {exception} \n{''.join(traceback.format_tb(exception.__traceback__))}"
-    else:
-        return "Not an exception"
+    return "Not an exception"
     

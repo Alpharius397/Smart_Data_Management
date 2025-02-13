@@ -3,7 +3,7 @@ from Login.forms import LoginForm
 from django.http import HttpRequest, HttpResponse 
 from Login.forms import LoginForm
 from django.urls import reverse
-from django.contrib.auth import models, login, logout, authenticate
+from django.contrib.auth import login, authenticate
 from User.models import is_manager, is_admin
 
 # Create your views here.

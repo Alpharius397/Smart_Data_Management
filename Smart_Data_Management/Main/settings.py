@@ -151,8 +151,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
     
 MEDIA_ROOT = os.path.join(BASE_DIR, 'sample')  # Directory for storing media files
 MEDIA_URL = 'sample/'  # URL prefix for accessing media files
-LOG_FILE = os.path.join(BASE_DIR,'Logs','app_log')
-DATA_FILE = os.path.join(BASE_DIR,'Logs','data_log')
+APP_LOG = os.path.join(BASE_DIR,'Logs','app_log','')
+DATA_LOG = os.path.join(BASE_DIR,'Logs','data_log','')
 LOGIN_URL = 'Login:login'
 MONGO_URL = "mongodb://127.0.0.1:27017/"
 MONGO_CRED = MongoDB("smart","excel")

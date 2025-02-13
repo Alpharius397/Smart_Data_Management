@@ -1,0 +1,821 @@
+[13-02-2025 14:01]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:01]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:01]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:01]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:01]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:01]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:01]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:01]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:01]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:04]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:04]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:04]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:04]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 14:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 14:09]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 14:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:09]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:09]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:15]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:15]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:15]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:16]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:16]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:16]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:18]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:18]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:18]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:19]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:19]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:19]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:39]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:39]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:39]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:41]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:41]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:41]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:41]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:41]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:41]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 19:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 19:58]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:12]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 20:12]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 20:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:19]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:19]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:19]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 20:19]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 20:19]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:19]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:58]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 20:58]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:58]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 20:58]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 20:58]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed': 1, 'header.manager': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed': 1, 'data.excel': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:12]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.None.0': '332715'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.None.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:13]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.None.0': '332715'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.None.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:14]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:14]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:14]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:14]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:44]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:44]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:44]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:48]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:48]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:48]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:48]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:48]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:48]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:48]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:48]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:52]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:52]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:52]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:52]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:52]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 21:52]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:52]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 21:52]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:55]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:55]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:55]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:55]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:55]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:55]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:55]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 21:55]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 21:55]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 21:55]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332715'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:08]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:08]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:11]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:11]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332718'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:12]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:12]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332719'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332719'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 22:13]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:13]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332711'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:17]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:17]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:17]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 22:27]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 22:27]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332718'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}' and displaying '{'data.header.file_name': 1}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:03]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.excel.Exam_SEAT_NO.0': '332712'}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'data.excel.Exam_SEAT_NO.0': {'$exists': True}, 'data.feed.0.locked': {'$ne': True}}'
+[13-02-2025 23:03]:[INFO]:[MONGODB] Applying search with filters '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}' and displaying '{'data.header.file_name': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed': 1, 'header.manager': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed': 1, 'data.excel': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.manager': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying updation '{'$set': {'header.manager': [8, 3]}}' to document '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.manager': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying updation '{'$set': {'header.manager': [8]}}' to document '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:04]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:04]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:04]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.manager': 3}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.manager': 9}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 4}, {'header.manager': 4}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:05]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{}'
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:05]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.manager': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying updation '{'$set': {'header.manager': [8, 9]}}' to document '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}' and displaying '{'header.uploader': 1, 'header.manager': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': []}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'header.post': {'university': 1, 'institute': 1, 'branch': 1}, 'header.manager': {'$ne': []}}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'header.manager': 3}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'header.manager': 9}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed': 1, 'data.excel': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{'data.feed': 1, 'header.manager': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed.0': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.feed.0.status': True, 'data.feed.0.feed': ''}}' to document '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}], 'data.feed.0': {'$exists': True}}]}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}' and displaying '{'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed.0': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.feed.0.time_of_issue': '2025-02-13T23:06:39.254945', 'data.feed.0.locked': True}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}' and displaying '{'data.header.file_name': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed.0': 1}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{}'
+[13-02-2025 23:06]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:06]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying updation '{'$set': {'data.feed.0.time_of_issue': None, 'data.feed.0.locked': False}}' to document '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'_id': ObjectId('67aa0408968fdc4c38b4c4f4')}' and displaying '{'data.header.file_name': 1}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.feed.0': 1}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), '$or': [{'header.uploader': 9}, {'header.manager': 9}, {'header.post': {'university': 1, 'institute': 1, 'branch': 1}}]}]}' and displaying '{'data.excel': 1}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'$and': [{'_id': ObjectId('67aa0408968fdc4c38b4c4f4'), 'header.manager': 9}]}' and displaying '{}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection
+[13-02-2025 23:07]:[INFO]:[MONGODB] Established Connection to mongodb://127.0.0.1:27017/
+[13-02-2025 23:07]:[INFO]:[MONGODB] Applying search with filters '{'header.manager': 9}' and displaying '{'_id': 1, 'header.manager': 1, 'header.uploader': 1, 'data.header.file_name': 1}'
+[13-02-2025 23:07]:[INFO]:[MONGODB] Closing MongoDB connection

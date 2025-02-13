@@ -1,0 +1,327 @@
+[13-02-2025 14:01]:[ERROR]:{"header": {"urlPath": "/dash/admin/manager/?value=&query=", "timestamp": "2025-02-13T14:01:22.733069", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"value": "", "query": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "fileName": null, "index": null, "type": -1, "action": null}}
+pymongo.errors.InvalidOperation : Cannot use MongoClient after close 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 111, in admin_manage_fetch
+    flag,admin = get_data(result)
+                 ^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 24, in get_data
+    for i in result:
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1281, in __next__
+    return self.next()
+           ^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1257, in next
+    if len(self._data) or self._refresh():
+                          ^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1205, in _refresh
+    self._send_message(q)
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1100, in _send_message
+    response = client._run_operation(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1754, in _run_operation
+    return self._retryable_read(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1863, in _retryable_read
+    return self._retry_internal(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1830, in _retry_internal
+    ).run()
+      ^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2554, in run
+    return self._read() if self._is_read else self._write()
+           ^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2689, in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2645, in _get_server
+    return self._client._select_server(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1649, in _select_server
+    server = topology.select_server(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 398, in select_server
+    server = self._select_server(
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 376, in _select_server
+    servers = self.select_servers(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 283, in select_servers
+    server_descriptions = self._select_servers_loop(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 350, in _select_servers_loop
+    self._ensure_opened()
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 774, in _ensure_opened
+    raise InvalidOperation("Cannot use MongoClient after close")
+
+[13-02-2025 14:03]:[ERROR]:{"header": {"urlPath": "/dash/admin/manager/?value=&query=", "timestamp": "2025-02-13T14:03:26.326718", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"value": "", "query": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "fileName": null, "index": null, "type": -1, "action": null}}
+pymongo.errors.InvalidOperation : Cannot use MongoClient after close 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 111, in admin_manage_fetch
+    flag,admin = get_data(result)
+                 ^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 24, in get_data
+    for i in result:
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1281, in __next__
+    return self.next()
+           ^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1257, in next
+    if len(self._data) or self._refresh():
+                          ^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1205, in _refresh
+    self._send_message(q)
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1100, in _send_message
+    response = client._run_operation(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1754, in _run_operation
+    return self._retryable_read(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1863, in _retryable_read
+    return self._retry_internal(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1830, in _retry_internal
+    ).run()
+      ^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2554, in run
+    return self._read() if self._is_read else self._write()
+           ^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2689, in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2645, in _get_server
+    return self._client._select_server(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1649, in _select_server
+    server = topology.select_server(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 398, in select_server
+    server = self._select_server(
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 376, in _select_server
+    servers = self.select_servers(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 283, in select_servers
+    server_descriptions = self._select_servers_loop(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 350, in _select_servers_loop
+    self._ensure_opened()
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 774, in _ensure_opened
+    raise InvalidOperation("Cannot use MongoClient after close")
+
+[13-02-2025 14:09]:[ERROR]:{"header": {"urlPath": "/dash/admin/uploader/?value=&query=", "timestamp": "2025-02-13T14:09:33.714201", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"value": "", "query": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "fileName": null, "index": null, "type": -1, "action": null}}
+pymongo.errors.InvalidOperation : Cannot use MongoClient after close 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 83, in admin_upload_fetch
+    flag,admin = get_data(result)
+                 ^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/Dash/views.py", line 24, in get_data
+    for i in result:
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1281, in __next__
+    return self.next()
+           ^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1257, in next
+    if len(self._data) or self._refresh():
+                          ^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1205, in _refresh
+    self._send_message(q)
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/cursor.py", line 1100, in _send_message
+    response = client._run_operation(
+               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1754, in _run_operation
+    return self._retryable_read(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1863, in _retryable_read
+    return self._retry_internal(
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/_csot.py", line 119, in csot_wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1830, in _retry_internal
+    ).run()
+      ^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2554, in run
+    return self._read() if self._is_read else self._write()
+           ^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2689, in _read
+    self._server = self._get_server()
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 2645, in _get_server
+    return self._client._select_server(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/mongo_client.py", line 1649, in _select_server
+    server = topology.select_server(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 398, in select_server
+    server = self._select_server(
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 376, in _select_server
+    servers = self.select_servers(
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 283, in select_servers
+    server_descriptions = self._select_servers_loop(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 350, in _select_servers_loop
+    self._ensure_opened()
+  File "/home/omnissiah/Project/Python/Django/django/lib/python3.12/site-packages/pymongo/synchronous/topology.py", line 774, in _ensure_opened
+    raise InvalidOperation("Cannot use MongoClient after close")
+
+[13-02-2025 20:58]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T20:58:01.681652", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 20:58]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T20:58:01.681652", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 20:58]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T20:58:01.681652", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T21:11:33.728784", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T21:11:33.728784", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4", "timestamp": "2025-02-13T21:11:33.728784", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/search/?column=&search=", "timestamp": "2025-02-13T21:11:33.828773", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"column": "", "search": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/search/?column=&search=", "timestamp": "2025-02-13T21:11:33.828773", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"column": "", "search": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 21:11]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/search/?column=&search=", "timestamp": "2025-02-13T21:11:33.828773", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {"column": "", "search": ""}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": null, "index": null, "type": -1, "action": null}}
+builtins.TypeError : MongoConnection.find_one() missing 1 required positional argument: 'filters' 
+  File "/home/omnissiah/Project/nodejs/react/Smart_Data_Management/Smart_Data_Management/View/views.py", line 93, in get_context
+    result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[13-02-2025 22:08]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:08:50.324483", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "2aNXYWGMFU9eUJ3GjK9275JHNHjBYI3nZhwgKeRzVYjGakiWQuz1bGIqpliCpjIc", "value": "332715", "column": "Exam_SEAT_NO", "old": "332716"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task \b (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:08]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:08:50.324483", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "2aNXYWGMFU9eUJ3GjK9275JHNHjBYI3nZhwgKeRzVYjGakiWQuz1bGIqpliCpjIc", "value": "332715", "column": "Exam_SEAT_NO", "old": "332716"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task \b (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:08]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:08:50.324483", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "2aNXYWGMFU9eUJ3GjK9275JHNHjBYI3nZhwgKeRzVYjGakiWQuz1bGIqpliCpjIc", "value": "332715", "column": "Exam_SEAT_NO", "old": "332716"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task \b (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:11]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:11:26.076412", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "dQOwySSg54Xb7F8LncgP2viWPPXu5xlTaXxPka33l87Dngn1UWGO66hFrtWvw80I", "value": "332718", "column": "Exam_SEAT_NO", "old": "332715"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task(ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:11]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:11:26.076412", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "dQOwySSg54Xb7F8LncgP2viWPPXu5xlTaXxPka33l87Dngn1UWGO66hFrtWvw80I", "value": "332718", "column": "Exam_SEAT_NO", "old": "332715"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task(ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:11]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:11:26.076412", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "dQOwySSg54Xb7F8LncgP2viWPPXu5xlTaXxPka33l87Dngn1UWGO66hFrtWvw80I", "value": "332718", "column": "Exam_SEAT_NO", "old": "332715"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task(ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 22:12]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:12:34.943740", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "IRQ91QCmcWJaPd1XH9EP9po0h5YdDpYcFYzsN8N9s0TC5OgdeT4Od0nJTJXe40D1", "value": "332719", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4)ID: 4 edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:12]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:12:34.943740", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "IRQ91QCmcWJaPd1XH9EP9po0h5YdDpYcFYzsN8N9s0TC5OgdeT4Od0nJTJXe40D1", "value": "332719", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4)ID: 4 edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:12]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:12:34.943740", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "IRQ91QCmcWJaPd1XH9EP9po0h5YdDpYcFYzsN8N9s0TC5OgdeT4Od0nJTJXe40D1", "value": "332719", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4)ID: 4 edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:05.619143", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "MMjKF4EY6rE4nwgL5LTeFZqd0GKqOEYrJT23rmPLmvOwD7v1CvjdJApWCkJrffDg", "value": "332719", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:05.619143", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "MMjKF4EY6rE4nwgL5LTeFZqd0GKqOEYrJT23rmPLmvOwD7v1CvjdJApWCkJrffDg", "value": "332719", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:05.619143", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "MMjKF4EY6rE4nwgL5LTeFZqd0GKqOEYrJT23rmPLmvOwD7v1CvjdJApWCkJrffDg", "value": "332719", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:09.048927", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "ohb1IDMHyZCy0tDXTRoOnipGd2md2zowloUkuVXuO3M0g4SdqBONrTopPGleta3l", "value": "332711", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:09.048927", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "ohb1IDMHyZCy0tDXTRoOnipGd2md2zowloUkuVXuO3M0g4SdqBONrTopPGleta3l", "value": "332711", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 22:13]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T22:13:09.048927", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "ohb1IDMHyZCy0tDXTRoOnipGd2md2zowloUkuVXuO3M0g4SdqBONrTopPGleta3l", "value": "332711", "column": "Exam_SEAT_NO", "old": "332719"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task ID: 67aa0408968fdc4c38b4c4f4"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:06.497387", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "nNezr5cMdU0ZY2OJOs1zBeIgcUm8NH57kUXSdnnztYareD3ZlcryFPHZOyl9eiKW", "value": "332718", "column": "Exam_SEAT_NO", "old": "332711"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:06.497387", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "nNezr5cMdU0ZY2OJOs1zBeIgcUm8NH57kUXSdnnztYareD3ZlcryFPHZOyl9eiKW", "value": "332718", "column": "Exam_SEAT_NO", "old": "332711"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:06.497387", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "nNezr5cMdU0ZY2OJOs1zBeIgcUm8NH57kUXSdnnztYareD3ZlcryFPHZOyl9eiKW", "value": "332718", "column": "Exam_SEAT_NO", "old": "332711"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:51.850966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "naL0a4OUHpXN3zVwABtHPSuXnvY3zzeYkhujWmZHXt7fjaaM7lTGTttGZ9X40aTN", "value": "332712", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:51.850966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "naL0a4OUHpXN3zVwABtHPSuXnvY3zzeYkhujWmZHXt7fjaaM7lTGTttGZ9X40aTN", "value": "332712", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:03]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/edit", "timestamp": "2025-02-13T23:03:51.850966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "naL0a4OUHpXN3zVwABtHPSuXnvY3zzeYkhujWmZHXt7fjaaM7lTGTttGZ9X40aTN", "value": "332712", "column": "Exam_SEAT_NO", "old": "332718"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 6, "action": "Admin admin (ID: 4) edited the Row 0, Column Exam_SEAT_NO of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:09.444499", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "G3GLtZp1SQrrKRXnDUEFNGvSgsD2c005Dap4fhAO8UBT0scDaE4ERhuBS6C3DBFU", "to_do": "assign", "user": "8"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager Manager manage1 (ID: 8) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:09.444499", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "G3GLtZp1SQrrKRXnDUEFNGvSgsD2c005Dap4fhAO8UBT0scDaE4ERhuBS6C3DBFU", "to_do": "assign", "user": "8"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager Manager manage1 (ID: 8) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:09.444499", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "G3GLtZp1SQrrKRXnDUEFNGvSgsD2c005Dap4fhAO8UBT0scDaE4ERhuBS6C3DBFU", "to_do": "assign", "user": "8"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager Manager manage1 (ID: 8) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:40.545966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "GFESTvpeXOlAf9MTp0euMqb3TMWYNhf1DMnbFNA1dSv2vK19WKEtQ1aMvqVZeSUQ", "to_do": "delete", "user": "3"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 2, "action": "Admin admin (ID: 4) unassigned Manager managera (ID: 3) from Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:40.545966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "GFESTvpeXOlAf9MTp0euMqb3TMWYNhf1DMnbFNA1dSv2vK19WKEtQ1aMvqVZeSUQ", "to_do": "delete", "user": "3"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 2, "action": "Admin admin (ID: 4) unassigned Manager managera (ID: 3) from Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:04]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:04:40.545966", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "GFESTvpeXOlAf9MTp0euMqb3TMWYNhf1DMnbFNA1dSv2vK19WKEtQ1aMvqVZeSUQ", "to_do": "delete", "user": "3"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 2, "action": "Admin admin (ID: 4) unassigned Manager managera (ID: 3) from Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:06:03.048444", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DZMizAsVd4seOfvNK4Z1x393LXpJJvQytsMaG0XdRDylpoWutpSqxlpzoD23XYW6", "to_do": "assign", "user": "9"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager manager1 (ID: 9) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:06:03.048444", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DZMizAsVd4seOfvNK4Z1x393LXpJJvQytsMaG0XdRDylpoWutpSqxlpzoD23XYW6", "to_do": "assign", "user": "9"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager manager1 (ID: 9) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/assign/", "timestamp": "2025-02-13T23:06:03.048444", "request": {"userID": 4, "userName": "admin", "authLevel": "Admin", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DZMizAsVd4seOfvNK4Z1x393LXpJJvQytsMaG0XdRDylpoWutpSqxlpzoD23XYW6", "to_do": "assign", "user": "9"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": null, "type": 1, "action": "Admin admin (ID: 4) assigned Manager manager1 (ID: 9) to Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/feed/", "timestamp": "2025-02-13T23:06:30.894399", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "zfYCy64h3lXott3fPOTpPngngrIiOWedAVeHL3nKaekKL232jCgdje8hIhiohaSa", "status": "True", "feedback": "", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 9, "action": "Manager manager1 (ID: 9) provided Feedback on Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/feed/", "timestamp": "2025-02-13T23:06:30.894399", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "zfYCy64h3lXott3fPOTpPngngrIiOWedAVeHL3nKaekKL232jCgdje8hIhiohaSa", "status": "True", "feedback": "", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 9, "action": "Manager manager1 (ID: 9) provided Feedback on Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/feed/", "timestamp": "2025-02-13T23:06:30.894399", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "zfYCy64h3lXott3fPOTpPngngrIiOWedAVeHL3nKaekKL232jCgdje8hIhiohaSa", "status": "True", "feedback": "", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 9, "action": "Manager manager1 (ID: 9) provided Feedback on Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:06:39.261599", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "FmrQLirCIDoNDAOoUjwtOuLKXXKwynSnG2HVYfK5PwL9V9Obo7ThilDEpNkC1Bwk", "to_do": "issue", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 5, "action": "Manager manager1 (ID: 9) locked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:06:39.261599", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "FmrQLirCIDoNDAOoUjwtOuLKXXKwynSnG2HVYfK5PwL9V9Obo7ThilDEpNkC1Bwk", "to_do": "issue", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 5, "action": "Manager manager1 (ID: 9) locked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:06:39.261599", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "FmrQLirCIDoNDAOoUjwtOuLKXXKwynSnG2HVYfK5PwL9V9Obo7ThilDEpNkC1Bwk", "to_do": "issue", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 5, "action": "Manager manager1 (ID: 9) locked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:46.019507", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:46.019507", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:46.019507", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:47.041680", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:47.041680", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:06]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:06:47.041680", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+Not an exception
+[13-02-2025 23:07]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:07:23.186167", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+
+[13-02-2025 23:07]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:07:23.186167", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+
+[13-02-2025 23:07]:[ERROR]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/data/", "timestamp": "2025-02-13T23:07:23.186167", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "GET", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 8, "action": "Manager manager1 (ID: 9) downloaded Data regarding Row 0 of Task None (ID: 67aa0408968fdc4c38b4c4f4)"}}
+
+[13-02-2025 23:07]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:07:28.898463", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DCOf9M9OT0COk3qEI4n5IAjj6cEgAJD4Ei4kmJsh0TZaCCqrcSKTcrbdy2em3Xh1", "to_do": "cancel", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 7, "action": "Manager manager1 (ID: 9) unlocked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+
+[13-02-2025 23:07]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:07:28.898463", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DCOf9M9OT0COk3qEI4n5IAjj6cEgAJD4Ei4kmJsh0TZaCCqrcSKTcrbdy2em3Xh1", "to_do": "cancel", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 7, "action": "Manager manager1 (ID: 9) unlocked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+
+[13-02-2025 23:07]:[INFO]:{"header": {"urlPath": "/view/67aa0408968fdc4c38b4c4f4/0/compress/", "timestamp": "2025-02-13T23:07:28.898463", "request": {"userID": 9, "userName": "manager1", "authLevel": "Manager", "META": {"GET": {}, "POST": {"csrfmiddlewaretoken": "DCOf9M9OT0COk3qEI4n5IAjj6cEgAJD4Ei4kmJsh0TZaCCqrcSKTcrbdy2em3Xh1", "to_do": "cancel", "id": "67aa0408968fdc4c38b4c4f4", "idx": "0"}, "FILES": {}, "META": {"REMOTE_ADDR": "127.0.0.1", "HTTP_HOST": "127.0.0.1:8000", "REQUEST_METHOD": "POST", "REMOTE_HOST": "", "HTTP_USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 OPR/116.0.0.0"}}}}, "description": {"mongoID": "67aa0408968fdc4c38b4c4f4", "index": 0, "type": 7, "action": "Manager manager1 (ID: 9) unlocked the Row 0 of Task test1 (ID: 67aa0408968fdc4c38b4c4f4)"}}
+

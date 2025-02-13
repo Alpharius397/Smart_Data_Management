@@ -33,7 +33,6 @@
             <td>
                 {% if admin %}
                 <div hx-get="{% url 'View:edit' id=id idx=idx %}" hx-vals='{"column":"{{column|index:j}}","value":"{{k}}"}' hx-swap="outerHTML" hx-trigger="click from:find #edit">
-                    
                     {{k|str}}
                     <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
             
