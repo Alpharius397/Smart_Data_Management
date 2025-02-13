@@ -5,3 +5,5 @@ tempCodeRunnerFile.*
 bash_script
 *~$*
 *.log
+*app_log*
+*data_log*

@@ -65,9 +65,9 @@ class BaseLogger:
         
     def change_time(self):
         curr_time = timezone.now().strftime("%d.%m.%Y")
+        MongoLogger.generate_dir(self.__dir_path)
         if(self.date_time!=curr_time):
             file_path = os.path.join(self.__dir_path,f'{curr_time}.log')
-            MongoLogger.generate_dir(self.__dir_path)
             
             self.file.setFormatter(logging.FileHandler(file_path,encoding="utf-8"))
         
@@ -77,11 +77,11 @@ class MongoLogger(BaseLogger):
     
     @BaseLogger.change_decorator
     def write_error(self, msg:str, where:str = 'MONGODB') -> None:
-        self.log.warning(msg=f"[{where}] {msg}",exc_info=True)
+        self.log.warning(msg=f"[{where}] {msg}\n",exc_info=True)
 
     @BaseLogger.change_decorator
     def write_info(self, msg:str, where:str = 'MONGODB') -> None:
-        self.log.info(msg=f"[{where}] {msg}")
+        self.log.info(msg=f"[{where}] {msg}\n")
 
 class LogStructure:
     """
