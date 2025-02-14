@@ -92,6 +92,27 @@
             margin-top: 10px;
         }
 
+        a{
+            text-decoration: none;
+        }
+
+        
+        .arrow {
+            position: relative;
+            margin-left: auto;
+            right: 5px;
+            font-size: 18px;
+            color: #6c757d;
+            display: inline;
+        }
+        
+        .task-item h2 {
+            font-size: 18px;
+            color: #333;
+            margin-right: auto;
+            width: 90%;
+            display: inline-block;
+        }
         
     </style>
 </head>
@@ -106,6 +127,14 @@
 
         {% block uploader %} {% endblock %}
         {% block manager %} {% endblock %}
+
+        <div class="container">
+            <h2><span>View Logs</span></h2>
+            <span>
+            <a href="{% url 'Logs:logs' %}" class="log-item">
+                <span class="arrow">&#9654;</span>
+            </a></span>
+        </div>
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
 

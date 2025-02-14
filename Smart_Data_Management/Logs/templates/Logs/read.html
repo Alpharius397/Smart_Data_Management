@@ -1,0 +1,104 @@
+{% load template %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/read.css' %}">
+    <title>User Task Dashboard</title>
+    <style>
+        .dont-ask-why-this{
+            height: 20px;
+            position: sticky;
+            top:0;
+            background-color: white;
+            z-index: 10;
+            margin-bottom: -5px;
+        }
+
+        .dont-ask-why-this-either{
+            display: block;
+            width: 20px;
+            position: sticky;
+            right:0;
+            background-color: white;
+            z-index: 10;
+        }
+
+        thead th{
+            position:sticky;
+            top:20px;
+            text-wrap:nowrap;
+            max-width: 150px;
+            overflow-x: scroll;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Logs:logs' %}"><button class="user-log">Back To Log Board</button></a>
+        <h1>Log View</h1>
+    </header>
+
+    <div class="container">
+
+        <h3>Search Query:</h3>
+
+        <form hx-get="{% url 'Logs:search' date=date %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,load,input from:#query" hx-vals="js:{query: get_select('query')}">
+            <label for="query">Query: </label>
+
+            <select name="query" id="query">
+                <option value="">----------</option>
+                <option value="fileName">File Name</option>
+                <option value="index">Index</option>
+                <option value="type">Type</option>
+                <option value="username">Username</option>
+                <option value="authLevel">Auth Level</option>
+                <option value="timestamp">Timestamp</option>
+            </select>
+
+            <label for="search">Containing: </label>
+            <input type="text" id="search" name="search">
+
+        </form>
+
+        <div class="tableView">
+            <div class="dont-ask-why-this"></div>
+
+            {% if empty is True %}
+                <ul class="messages">
+                    <li class="error">No matching records</li>
+                </ul>
+            {% else %}
+                <table id="display-table">
+                    <thead>
+                        <tr>
+                            {% for i in column %}
+                                <th><p>{{i}}</p></th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    
+                    <tbody id="task-list">
+                        <tr hx-get="{% url 'Logs:search' date=date %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="load" hx-swap="outerHTML">
+                            
+                    </tbody>
+                    
+                </table>
+
+            {% endif %}
+        </div>
+
+    </div>
+
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+<script src="{% static 'js/script.js' %}"></script>
+
+
+</html>

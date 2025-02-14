@@ -7,11 +7,12 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
             justify-content: center;
             align-items: center;
+            justify-items: center;
             height: 100vh;
             margin: 0;
+            padding: auto auto;
             background-color: #f4f4f9;
         }
 
@@ -21,6 +22,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 300px;
+            margin: auto auto;
         }
 
         .login-container h2 {
@@ -110,45 +112,104 @@
             padding-left: 0.5rem;
             padding-right: 1rem;
         }
+        
+    .messages {
+        list-style: none;
+        margin: 20px auto;
+        padding: 0;
+        width: 80%;
+        max-width: 1000px;
+        display: block;
+    }
+
+    .messages li {
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .messages li:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .messages li.success {
+        background-color: #4caf50; 
+    }
+
+    .messages li.error {
+        background-color: #f44336;
+    }
+
+    .login{
+        padding: 20px 30px;
+        width:100vw;
+        margin: auto auto;
+        margin-top:50px;
+        display: flex;
+    }
+
+    .msg-box{
+        width: 100vw;
+        display: flex;
+        margin: 10px auto;
+    }
 
 
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2>Login</h2>
-        <form action="{% url 'Login:login' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" method="POST">
-            {% csrf_token %}
 
-            {% for field in form %}
-                <div class="form-group">
-                    <label for='{{ field.name }}'>{{ field.label }}: </label>
-                    {{ field }}
+    <div class="msg-box">
+        {% if request.GET.success %}
+        <ul class="messages">
+            <li class="success">{{request.GET.success}}</li>
+        </ul>
+        {% elif alert %}
+        <ul class="messages">
+            <li class="success">{{alert}}</li>
+        </ul>
+        {% elif request.GET.alert %}
+            <ul class="messages">
+                <li class="error">{{request.GET.alert}}</li>
+            </ul>
 
-                    {% if field.errors %}
-                        {{ field.errors }}
-                    {% else %}
-                        <p class="help_text">{{ field.help_text }} </p>
-                    
-                    {% endif %}
-                    
-                </div>
-            {% endfor %}
-            <button type="submit" class="login-button">Login</button>
-        </form>
-        <div class="form-footer">
-            <p>Don't have an account? <a href="{% url 'Register:register' %}">Sign up</a></p>
-            <p>Are a Admin? <a href="admin/">Sign In as Admin</a></p>
+        {% endif %}
+    </div>
+
+    <div class="login">
+        <div class="login-container">
+            <h2>Login</h2>
+            <form action="{% url 'Login:login' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" method="POST">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for='{{ field.name }}'>{{ field.label }}: </label>
+                        {{ field }}
+
+                        {% if field.errors %}
+                            {{ field.errors }}
+                        {% else %}
+                            <p class="help_text">{{ field.help_text }} </p>
+                        
+                        {% endif %}
+                        
+                    </div>
+                {% endfor %}
+                <button type="submit" class="login-button">Login</button>
+            </form>
+            <div class="form-footer">
+                <p>Don't have an account? <a href="{% url 'Register:register' %}">Sign up</a></p>
+                <p>Are a Admin? <a href="admin/">Sign In as Admin</a></p>
+            </div>
         </div>
     </div>
 
-    <script>
-
-        {% if alert %}
-            alert("{{ alert }}");
-        {% elif request.GET.alert %}
-            alert("{{ request.GET.alert }}");
-        {% endif %}
-    </script>
 </body>
 </html>

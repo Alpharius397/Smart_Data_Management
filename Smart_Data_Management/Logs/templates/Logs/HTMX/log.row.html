@@ -1,0 +1,10 @@
+{% load template %}
+
+{% for i in logs %}
+    <tr {% if forloop.last %} hx-get="{% url 'Logs:search' date=date %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.query }}", "search": "{{ request.GET.search }}"}'  hx-trigger="intersect once" hx-swap="afterend" {% endif %}>
+
+        {% for j in i.values %}
+            <td>{{j|str}}</td>
+        {% endfor %}
+    </tr>
+{% endfor %}

@@ -9,7 +9,7 @@ import typing
 from PIL import Image
 import re
 from Main.models import *
-from Main.loggers import AppLogger, LogStructure, DEFAULT_ERROR
+from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 APP_LOG = AppLogger(settings.APP_LOG)
@@ -52,7 +52,7 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             if(flag and queryset): error='No matching records found!'
             
         except Exception as e:            
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))
             error = DEFAULT_ERROR
             
         finally:
@@ -78,7 +78,7 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
             if(flag and queryset): error='No matching records found!'
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))            
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))            
             error = DEFAULT_ERROR
             
         finally:
@@ -105,7 +105,7 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
             if(flag and queryset): error='No matching records found!'
 
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))
             error = DEFAULT_ERROR
             
         finally:

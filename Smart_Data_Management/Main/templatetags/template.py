@@ -101,3 +101,10 @@ def timestamp(obj):
         return datetime.fromisoformat(obj).strftime("%d/%m/%Y, %H:%M:%S")
     except:
         return "Incorrect Time Format"
+    
+@register.filter(name='date')
+def url_date(obj:datetime):
+    try:
+        return obj.strftime("%Y-%m-%d")
+    except:
+        return "Incorrect Time Format"

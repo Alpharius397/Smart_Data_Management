@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'Dash',
     'Upload',
     'View',
-    
+    'Logs',
 ]
 
 MIDDLEWARE = [

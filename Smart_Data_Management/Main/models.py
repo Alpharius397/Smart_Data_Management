@@ -3,38 +3,35 @@ import pymongo.collection
 import pymongo.client_session
 from typing import NamedTuple
 from django.conf import settings
-from Main.loggers import MongoLogger
+from Logs.loggers import MongoLogger
 
 
 class MongoTemplate:
     """
         Data Structure:
-        
         {
             header:{
                 post:{
-                    university, institute, branch
+                    university, 
+                    institute, 
+                    branch
                 }
-                
                 uploader,
                 manager
             }
-            
             data:{
-                excel
-                
+                excel,   
                 header:{
                     image_column,
-                    file_name
-                }
-                
+                    file_name,
+                },
                 feed:[
                     {
                         locked,
                         time_of_issue,
                         status,
-                        feed
-                    }
+                        feed,
+                    },
                 ]
             }
         }
@@ -192,9 +189,4 @@ class MongoConnection:
             self.log.write_info("Closing MongoDB connection")
         except Exception as e:            
             self.log.write_error(self.log.get_error_info(e))
-            
-        
 
-def get_error_info(exception:Exception) -> str:
-    return "Not an exception"
-    

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
 from Upload.forms import ExcelForm
 from Main.models import MongoConnection, MongoTemplate
-from Main.loggers import AppLogger, LogStructure, DEFAULT_ERROR
+from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR
 from django.urls import reverse
 from django.conf import settings
 from User.models import is_admin, is_authenticated

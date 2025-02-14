@@ -18,7 +18,7 @@ from Main.templatetags.bad_image import bad_image
 from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, auth_needed
 from View.forms import VerifyForm
 from django.utils import timezone
-from Main.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
 
 APP_LOG = AppLogger(settings.APP_LOG)
 MAX_RECORD:int = 5
@@ -93,7 +93,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
             
     except Exception as e:
-        APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+        APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
         context['search'] = DEFAULT_ERROR
         return context
     finally:
@@ -116,7 +116,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         pd_data = pd_data.iloc[page:page+MAX_RECORD]
 
     except Exception as e:
-        APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+        APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
         context['search'] = DEFAULT_ERROR
         return context
     
@@ -153,7 +153,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.uploader":1,"header.manager":1})
             
         except Exception as e:            
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             conn.close()
             
@@ -167,7 +167,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             context.update({'upload':uploader,'manage':manager,'option':all_manager})
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
 
         finally:
@@ -199,7 +199,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/message.assign.html',context=context)
             
@@ -210,7 +210,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
             _manage = Manager.objects.get(user__id=user)
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/message.assign.html',context=context)
         
@@ -239,7 +239,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
                     context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
 
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/message.assign.html',context=context)
         
@@ -305,7 +305,7 @@ def quick_query(req: HttpRequest, id:str):
                 context['option'] = [i for i in sorted(set(pd_data))[:5]]    
                 
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             
         return render(req,'View/HTMX/suggests.html',context=context)
@@ -339,7 +339,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/report.html',context=context)
         
@@ -393,7 +393,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                     context['search'] = "Mongo ID %s not found" % id
                     
             except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
                 context['search'] = DEFAULT_ERROR
                 
             finally:
@@ -433,7 +433,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             context.update({**meta_data,'manager':manager})
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             
         finally:
@@ -458,7 +458,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
                 context.update({**meta_data})
             except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
                 context['search'] = DEFAULT_ERROR
                 return render(req,'View/single/manager_form.html',context=context)
 
@@ -498,7 +498,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 else: context['search'] = "Data updation failed"
             
             except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
                 context['search'] = DEFAULT_ERROR
                 return render(req,'View/HTMX/message.issue.html',context=context)
             
@@ -558,7 +558,7 @@ def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.CARD_READ,user=req.user,taskID=id,index=idx))
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             
         
 
@@ -594,7 +594,7 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
                 context['search'] = "Cannot Edit this index as it's locked"
                 
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             context['value'] = old
             return render(req,'View/HTMX/normal_view.html',context=context)
@@ -629,7 +629,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
                 img_data = f"{width}:{height}:{b64encode(buffer.getvalue()).decode()}"
         
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/normal_image.html',context=context)
         
@@ -649,7 +649,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             context.update({'value':img_data})
             
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
             return render(req,'View/HTMX/normal_image.html',context=context)
                     

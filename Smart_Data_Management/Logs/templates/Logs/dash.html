@@ -1,0 +1,85 @@
+{% load template %}
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <title>User Task Dashboard</title>
+    <style>
+
+        .task-list {
+            margin: 20px 0;
+        }
+
+        .task-item h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+        }
+
+        form{
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        a{
+            text-decoration: none;
+        }
+
+        .arrow {
+            position: relative;
+            margin-left: auto;
+            right: 5px;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        .task-list:hover .arrow {
+            transform: translateX(5px);
+            color: #333;
+        }
+
+        .log-item:hover .arrow {
+            transform: translateX(5px);
+            color: #333;
+        }
+    
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back to Dashboard</button></a>
+        <h1>Log Dashboard</h1>
+    </header>
+
+    <div class="container">
+        <h2>Search Log</h2>
+        
+        <form hx-post="{% url 'Logs:logs' %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,load,input from:#query" hx-vals="js:{query: get_select('query')}">
+            {% csrf_token %}
+            <label for="query">Query: </label>
+            <select name="query" id="query">
+                <option value="">----------</option>
+                <option value="after">After</option>
+                <option value="before">Before</option>
+                <option value="on">On</option>
+            </select>
+
+            <label for="search">Date: </label>
+            <input type="date" id="search" name="search">
+
+        </form>
+
+        <div class=".task-list" id="task-list">
+
+        </div>
+    </div>
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+<script src="{% static 'js/script.js' %}"></script>
+</html>

@@ -2,10 +2,10 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from Register.forms import RegisterForm
 from django.contrib.auth.models import User, Group
-from Main.models import get_error_info
 from tools.url_auth import is_hx_post, is_hx_get
 from User.models import Manager, Admin
 from University.models import Institute, Branch
+from Logs.loggers import AppLogger
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -29,7 +29,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                     return render(req,'HTMX/message.html',context=context)
                     
             except Exception as e:
-                context['error'] = get_error_info(e)
+                context['error'] = AppLogger.get_error_info(e)
                 return render(req,'HTMX/message.html',context=context)
             
             _branch = None
@@ -61,7 +61,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 context['msg'] = "Registered Successfully"
                 
             except Exception as e:
-                context['error'] = get_error_info(e)
+                context['error'] = AppLogger.get_error_info(e)
             
             return render(req,'HTMX/message.html',context=context)
             

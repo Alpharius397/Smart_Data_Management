@@ -10,7 +10,8 @@ urlpatterns = [
 	path('upload/',include('Upload.urls','Upload')),
 	path('logout/',include('Logout.urls','Logout')),
 	path('dash/',include('Dash.urls','Dash')),
-	path('view/',include('View.urls','View'))
+	path('view/',include('View.urls','View')),
+	path('logs/',include('Logs.urls','Logs')),
 ]
 admin.site.site_header = "System Admin"
 admin.site.site_title = "Admin Portal"

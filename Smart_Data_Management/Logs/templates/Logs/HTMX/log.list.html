@@ -1,0 +1,20 @@
+{% load template %}
+
+{% if error %}
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+{% endif %}
+
+{% for i in logs %}
+    <div class="task-item">
+        <span>Log of {{ i|date }}</span>
+        <a href="{% url 'Logs:one_day' date=i|date %}" class="log-item">
+            <span class="arrow">&#9654;</span>
+        </a>
+    </div>
+{% empty %}
+    <ul class="messages">
+        <li class="error">No matching records found! </li>
+    </ul>
+{% endfor %}

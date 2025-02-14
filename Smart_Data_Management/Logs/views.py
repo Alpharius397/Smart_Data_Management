@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
-from Main.models import MongoConnection, get_error_info
+from Main.models import MongoConnection
+from django.db.models import Q
 from django.urls import reverse
 from django.conf import settings
 from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
@@ -9,183 +10,122 @@ from tools.encrypt import decrypt_data
 import typing
 from PIL import Image
 import re
-import pymongo
-from bson import ObjectId
 from Main.models import *
 from django.contrib.auth.models import User
-from Main.loggers import APP_LOG, MONGO_LOG, DEFAULT_ERROR
-
-VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
-
-def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[str,str|list]]:
-    data = []
-    empty = True
-    for i in result:
-        if(empty): empty=False
-        data.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
-
-    return empty,data
+from Logs.loggers import AppLogger, DEFAULT_ERROR
+from Logs.models import LogMessage
+from datetime import datetime
+from User.models import Manager, Admin
 
 
-def dash_board(req: HttpRequest) -> HttpResponse:
+MAX_RECORD:int = 5
+
+def log_board(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user))):
         return auth_needed(req)
     
-    if(is_admin(req.user)):
-        return render(req,'Dash/dash/admin.html')
+    if(is_auth_get(req)):
+        return render(req,'Logs/dash.html')
 
-    elif(is_manager(req.user)):
-        return render(req,'Dash/dash/manager.html')
-
-    else:
-        return HttpResponse(status=403)
-
-def manager_fetch(req: HttpRequest) -> HttpResponse:
-    
-    if(is_authenticated(req.user) and is_manager(req.user) and is_hx_get(req)):
+    elif(is_auth_post(req) and is_hx_post(req)):
+        order = req.POST.get("query",None)
+        date_log = req.POST.get("search",None)
+        post = get_post_id(req.user)
         
-        manage:list[dict[str,str|list]] = []
-        error:str = None
-        queryset=get_query(req)
-        try:
-            conn = MongoConnection().connect()
-            
-            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
-            flag, manage = get_data(result)
-            if(flag and queryset): error='No matching records found!'
-        except Exception as e:
-            error = DEFAULT_ERROR
-            log
-            
-        finally:
-            conn.close()
-            
-        return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
-    
-    return HttpResponse(status=403)
-    
-    
-def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
-    
-    if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
-        
-        admin:list[dict[str,str|list]] = []
-        error:str = None
-        queryset=get_query(req)
-        
-        try:
-            conn = MongoConnection(settings.MONGO_URL)
-            excel = conn.connect(settings.MONGO_CRED)
-            
-            result:list[dict[str,dict[str,dict|str|list]]] = excel.find({**queryset,"header.post":get_post_id(req.user),'header.manager':[]},VIEW_DATA)
-            flag,admin = get_data(result)
-            if(flag and queryset): error='No matching records found!'
-            
-        except Exception as e:
-            error = get_error_info(e)
-            
-        finally:
-            conn.connection.close()
-            
-        return render(req,'Dash/HTMX/admin.uploader.html',context={'upload':admin,'error':error})
-    
-    return HttpResponse(status=403)
-    
-
-def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
-    
-    if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
-        
-        admin:list[dict[str,str|list]] = []
-        error:str = None
-        queryset=get_query(req)
-        
-        try:
-            conn = MongoConnection().connect()
-            
-            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
-            flag, admin = get_data(result)
-            if(flag and queryset): error='No matching records found!'
-
-        except Exception as e:
-            error = "Something went wrong"
-            
-        finally:
-            conn.connection.close()
-            
-        return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
-
-    return HttpResponse(status=403)
-
-class ReportStructure(typing.NamedTuple):
-    profile_img:Image
-    personal_info:dict[str,str]
-    sem_data:dict[dict[str,str]]
-    
-def read_view(req: HttpRequest)-> HttpResponse:
-    
-    if(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
         context = {}
-            
+        
+        match(order):
+            case "after": query = Q(timestamp__gte=date_log)
+            case "on": query = Q(timestamp__exact=date_log)
+            case "before": query = Q(timestamp__lte=date_log)
+            case _: query = Q()
+        
         try:
-            with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
-                data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+            managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            all_records = list(map(lambda x: x[0], LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers)) ).dates("timestamp","day","DESC").values_list("timestamp")))
+            
+            context['logs'] = all_records
+            
         except Exception as e:
-            context['error'] = get_error_info(e)
-            
-            return render(req,'HTMX/read.card.html',context=context)
-        
-        profile_img = r'^Profile_Image$'
-        sem_data = r'.+Sem_(\d+)$'
-        
-        result, header = data.get('data',{}), data.get('header',{})
-        
-        columns = result.keys()
-        
-        profile_col = [i for i in columns if re.match(profile_img,i)]
-        sem_col = [i for i in columns if re.match(sem_data,i)]
-        personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
-        
-        sem_dict:dict[str,list[str]] = {}
-        
-        profile_col = profile_col[0] if profile_col else None
-        
-        for i in sem_col:
-            sem:list[str] = re.findall(sem_data,i)
-            
-            if(sem):
-                sem = sem[0]
-                if(sem not in sem_dict): sem_dict[sem] = list()
-                sem_dict[sem].append(i)
+            context['error'] = DEFAULT_ERROR
 
-        view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
-        context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
-
-        return render(req,'Dash/HTMX/read.card.html',context=context)
+        return render(req,'Logs/HTMX/log.list.html',context=context)
 
     return HttpResponse(status=403)
 
-def read_screen(req: HttpRequest) -> HttpResponse:
-    if(not (is_authenticated(req.user) and (is_manager(req.user)))):
-        return redirect(reverse(settings.LOGIN_URL) + '?alert=Unauthenticated Request')
-
-    return render(req,'Dash/read.html')
-
-def get_query(req: HttpRequest) -> dict[str,str]:
+def single_log(req: HttpRequest, date:str) -> HttpResponse:
     
-    query = req.GET.get('query',None)
-    value = req.GET.get('value',None)
-    query_dict = {}
-    if(query and value):
+    if(not is_authenticated(req.user)):
+        return auth_needed(req)
+    
+    if(is_auth_get(req)):
+        context = {'date':date}  
+        query = req.GET.get("query",None)
+        value = req.GET.get("search",None)
+        post = get_post_id(req.user)
         
-        if(query=='uploader'):
-            query_dict.update({"header.uploader":{"$in":get_admin_by_name(value)}})
-        elif(query=='manager'):
-            query_dict.update({"$or":[{"header.manager":i} for i in get_manager_by_name(value)]+[{"header.manager":None}]})
-        elif(query=='file_name'):
-            query_dict.update({"data.header.file_name":{"$regex":f"{value}","$options":"i"}})
-            
-        print([{"header.manager":i} for i in get_manager_by_name(value)])
-    return query_dict
+        if(value and query):
+            match(query):
+                case "fileName": query = Q(fileName__icontains=value)
+                case "index": query = Q(index__icontains=value)
+                case "type": query = Q(type__icontains=value)
+                case "username": query = Q(username__icontains=value)
+                case "authLevel": query = Q(authLevel__icontains=value)
+                case "timestamp": query = Q(timestamp__icontains=f"{date} {value}")
+                case _: query = Q()
+        else:
+            query = Q()
+        
+        try:            
+            managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            all_records = LogMessage.objects.filter((Q(userID__in=admins)|Q(userID__in=managers))).values()
 
+            if(all_records): context['empty'] = False
+            else: context['empty'] = True
+
+            context['column'] = list(map(lambda x: x.name ,LogMessage._meta.fields))
+            
+        except Exception as e:
+            context['error'] = DEFAULT_ERROR
+    
+        return render(req,'Logs/read.html',context=context)
+    
+    return HttpResponse(status=403)
+
+def row_search(req: HttpRequest, date:str) -> HttpRequest:
+    
+    if(is_auth_get(req) and is_hx_get(req)):
+        query = req.GET.get("query",None)
+        value = req.GET.get("search",None)
+        page = req.GET.get("page","0")
+        post = get_post_id(req.user)
         
+        context = {'date':date, "columns":list(map(lambda x: x.name ,LogMessage._meta.fields))}
+
+        if(value and query):
+            match(query):
+                case "fileName": query = Q(fileName__icontains=value)
+                case "index": query = Q(index__icontains=value)
+                case "type": query = Q(type__icontains=value)
+                case "username": query = Q(username__icontains=value)
+                case "authLevel": query = Q(authLevel__icontains=value)
+                case "timestamp": query = Q(timestamp__icontains=f"{date} {value}")
+                case _: query = Q()
+        else:
+            query = Q()
+        
+        try:
+            page = int(page)
+            managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            all_records = LogMessage.objects.filter(((query))&(Q(userID__in=admins)|Q(userID__in=managers))).values()[page:page+MAX_RECORD]
+
+            context['logs'] = all_records
+            context['max_record'] = page+MAX_RECORD
+            
+        except Exception as e:
+            context['error'] = DEFAULT_ERROR
+        print(context)
+        return render(req,'Logs/HTMX/log.row.html',context=context)
