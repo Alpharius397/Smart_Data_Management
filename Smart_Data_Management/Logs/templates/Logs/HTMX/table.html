@@ -1,0 +1,26 @@
+{% load template %}
+
+<div class="dont-ask-why-this"></div>
+
+{% if empty is True %}
+    <ul class="messages">
+        <li class="error">No matching records</li>
+    </ul>
+{% else %}
+    <table id="display-table">
+        <thead>
+            <tr>
+                {% for i in columns %}
+                    <th><p>{{i}}</p></th>
+                {% endfor %}
+            </tr>
+        </thead>
+        
+        <tbody id="task-list">
+            <tr hx-get="{% url 'Logs:search_row' date=date %}" hx-vals= '{"page": "0", "query": "{{ request.GET.query }}", "search": "{{ request.GET.search }}"}'  hx-trigger="load" hx-swap="outerHTML" hx-on::after-request="dontAskWhy();">
+                
+        </tbody>
+        
+    </table>
+
+{% endif %}

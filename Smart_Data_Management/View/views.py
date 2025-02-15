@@ -555,7 +555,7 @@ def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
         result = None
         try:
             result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.CARD_READ,user=req.user,taskID=id,index=idx))
+            APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,user=req.user,taskID=id,index=idx))
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
@@ -625,7 +625,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             buffer.seek(0)
             
             with BytesIO() as b:
-                img.save(b,format='jpeg',quality=95)
+                img.save(b,format=img.format,quality=95)
                 img_data = f"{width}:{height}:{b64encode(buffer.getvalue()).decode()}"
         
         except Exception as e:

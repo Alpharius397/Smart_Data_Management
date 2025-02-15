@@ -15,7 +15,7 @@ def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[i
         img = Image.open(BytesIO(image._data()))
         
         with BytesIO() as b:
-            img.save(b,format='jpeg',quality=95)
+            img.save(b,format=img.format,quality=95)
             images[(image.anchor._from.row,image.anchor._from.col)] = f"{img.width}:{img.height}:{b64encode(b.getvalue()).decode()}"
         
     return images
@@ -27,7 +27,7 @@ def compress_image(img_data:BytesIO) -> str:
     
     image_data = BytesIO()
     
-    compressed.save(image_data,format='jpeg',quality=70)
+    compressed.save(image_data,format=image.format,quality=70)
     
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 

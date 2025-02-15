@@ -34,8 +34,25 @@
             top:20px;
             text-wrap:nowrap;
             max-width: 150px;
-            overflow-x: scroll;
+            overflow-x: auto;
         }
+
+        .form-group{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        label{
+            margin-right: 5px;
+        }
+
+        table{
+            width: 100vw;
+            display: block;
+            align-items: center;
+        }
+    
     </style>
 </head>
 
@@ -47,51 +64,20 @@
 
     <div class="container">
 
-        <h3>Search Query:</h3>
+        <h2>Search Log:</h2>
 
-        <form hx-get="{% url 'Logs:search' date=date %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,load,input from:#query" hx-vals="js:{query: get_select('query')}">
-            <label for="query">Query: </label>
+        <form hx-get="{% url 'Logs:search' date=date %}" hx-target=".tableView" hx-swap="innerHTML" hx-trigger="input from:find #id_search,load" hx-vals="js:{query: get_select('id_query')}" hx-on::after-request="dontAskWhy();">
+            {% for field in form %}
 
-            <select name="query" id="query">
-                <option value="">----------</option>
-                <option value="fileName">File Name</option>
-                <option value="index">Index</option>
-                <option value="type">Type</option>
-                <option value="username">Username</option>
-                <option value="authLevel">Auth Level</option>
-                <option value="timestamp">Timestamp</option>
-            </select>
-
-            <label for="search">Containing: </label>
-            <input type="text" id="search" name="search">
-
+                <div class="form-group">
+                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                {{ field }}
+                
+            </div>
+        {% endfor %}
         </form>
 
         <div class="tableView">
-            <div class="dont-ask-why-this"></div>
-
-            {% if empty is True %}
-                <ul class="messages">
-                    <li class="error">No matching records</li>
-                </ul>
-            {% else %}
-                <table id="display-table">
-                    <thead>
-                        <tr>
-                            {% for i in column %}
-                                <th><p>{{i}}</p></th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    
-                    <tbody id="task-list">
-                        <tr hx-get="{% url 'Logs:search' date=date %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="load" hx-swap="outerHTML">
-                            
-                    </tbody>
-                    
-                </table>
-
-            {% endif %}
         </div>
 
     </div>

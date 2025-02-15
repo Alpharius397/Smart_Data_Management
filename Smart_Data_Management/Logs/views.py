@@ -16,6 +16,7 @@ from Logs.loggers import AppLogger, DEFAULT_ERROR
 from Logs.models import LogMessage
 from datetime import datetime
 from User.models import Manager, Admin
+from Logs.forms import DateForm, LogQuery
 
 
 MAX_RECORD:int = 5
@@ -25,29 +26,43 @@ def log_board(req: HttpRequest) -> HttpResponse:
         return auth_needed(req)
     
     if(is_auth_get(req)):
-        return render(req,'Logs/dash.html')
+        return render(req,'Logs/dash.html',context={'form':DateForm()})
 
     elif(is_auth_post(req) and is_hx_post(req)):
-        order = req.POST.get("query",None)
-        date_log = req.POST.get("search",None)
+
+        f = DateForm(req.POST)
+        
+        print(dir(f))
         post = get_post_id(req.user)
         
         context = {}
-        
-        match(order):
-            case "after": query = Q(timestamp__gte=date_log)
-            case "on": query = Q(timestamp__exact=date_log)
-            case "before": query = Q(timestamp__lte=date_log)
-            case _: query = Q()
+        query = Q()
+
+        if(f.is_valid()):
+            order = f.cleaned_data.get("query",None)
+            date_log = f.cleaned_data.get("date",None)
+            
+            if(order and date_log):
+                match(order):
+                    case "after": query = Q(timestamp__gte=date_log)
+                    case "on": query = Q(timestamp__icontains=date_log)
+                    case "before": query = Q(timestamp__lte=date_log)
         
         try:
             managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
             admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
-            all_records = list(map(lambda x: x[0], LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers)) ).dates("timestamp","day","DESC").values_list("timestamp")))
+            all_records:list[datetime] = list(map(lambda x: x[0], LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers)) ).dates("timestamp","day","DESC").values_list("timestamp")))
             
-            context['logs'] = all_records
+            context['logs'] = list(set(map(lambda x: x.replace(hour=0,second=0,minute=0,microsecond=0), all_records)))
+            # seen = set()
+            # for i in all_records:
+            #     temp = i.strftime("%d.%m.%Y")
+                
+            #     if(temp not in seen):context['logs'].append(i)
+            #     seen.add(temp)
             
         except Exception as e:
+            print(e)
             context['error'] = DEFAULT_ERROR
 
         return render(req,'Logs/HTMX/log.list.html',context=context)
@@ -60,27 +75,21 @@ def single_log(req: HttpRequest, date:str) -> HttpResponse:
         return auth_needed(req)
     
     if(is_auth_get(req)):
-        context = {'date':date}  
-        query = req.GET.get("query",None)
-        value = req.GET.get("search",None)
+
+        f = LogQuery(req.POST)
+        
         post = get_post_id(req.user)
         
-        if(value and query):
-            match(query):
-                case "fileName": query = Q(fileName__icontains=value)
-                case "index": query = Q(index__icontains=value)
-                case "type": query = Q(type__icontains=value)
-                case "username": query = Q(username__icontains=value)
-                case "authLevel": query = Q(authLevel__icontains=value)
-                case "timestamp": query = Q(timestamp__icontains=f"{date} {value}")
-                case _: query = Q()
-        else:
-            query = Q()
+        context = {"date":date,"form":f}
+        post = get_post_id(req.user)
         
+        query = Q(timestamp__icontains=date)
+
         try:            
+            
             managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
             admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
-            all_records = LogMessage.objects.filter((Q(userID__in=admins)|Q(userID__in=managers))).values()
+            all_records = LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers))).values()
 
             if(all_records): context['empty'] = False
             else: context['empty'] = True
@@ -94,38 +103,95 @@ def single_log(req: HttpRequest, date:str) -> HttpResponse:
     
     return HttpResponse(status=403)
 
-def row_search(req: HttpRequest, date:str) -> HttpRequest:
+
+def row_query(req: HttpRequest, date:str) -> HttpResponse:
     
     if(is_auth_get(req) and is_hx_get(req)):
-        query = req.GET.get("query",None)
-        value = req.GET.get("search",None)
-        page = req.GET.get("page","0")
+
+        f = LogQuery(req.GET)
+        
+        page = req.GET.get("page",'0')
         post = get_post_id(req.user)
         
-        context = {'date':date, "columns":list(map(lambda x: x.name ,LogMessage._meta.fields))}
-
-        if(value and query):
-            match(query):
-                case "fileName": query = Q(fileName__icontains=value)
-                case "index": query = Q(index__icontains=value)
-                case "type": query = Q(type__icontains=value)
-                case "username": query = Q(username__icontains=value)
-                case "authLevel": query = Q(authLevel__icontains=value)
-                case "timestamp": query = Q(timestamp__icontains=f"{date} {value}")
-                case _: query = Q()
-        else:
-            query = Q()
+        context = {"date":date,"form":f}
+        post = get_post_id(req.user)
+        query = Q(timestamp__icontains=date)
         
+        value, order = None, None
+        if(f.is_valid()):
+            order = f.cleaned_data.get("query",None)
+            value = f.cleaned_data.get("search",None)
+            
+            if(order and value):
+                match(order):
+                    case "fileName": query &= Q(fileName__contains=value)
+                    case "index": query &= Q(index__contains=value)
+                    case "type": query &= Q(type__contains=value)
+                    case "username": query &= Q(username__contains=value)
+                    case "authLevel": query &= Q(authLevel__contains=value)
+                    case "timestamp": query &= Q(timestamp__contains=f"{date} {value}")
+        
+        print(query)
+        column = list(map(lambda x: x.name ,LogMessage._meta.fields))
+        column.remove("id")
+        context = {'date':date, "columns":column}
+
         try:
             page = int(page)
             managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
             admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
-            all_records = LogMessage.objects.filter(((query))&(Q(userID__in=admins)|Q(userID__in=managers))).values()[page:page+MAX_RECORD]
+            all_records = LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers))).dates("timestamp","day","DESC").values(*column)
 
-            context['logs'] = all_records
+            context['empty'] = not bool(all_records)
+        
+            
+        except Exception as e:
+            context['error'] = DEFAULT_ERROR
+        return render(req,'Logs/HTMX/table.html',context=context)
+    
+    return HttpResponse(status=403)
+
+
+def row_search(req: HttpRequest, date:str) -> HttpRequest:
+    
+    if(is_auth_get(req) and is_hx_get(req)):
+        f = LogQuery(req.GET)
+        
+        page = req.GET.get("page",'0')
+        post = get_post_id(req.user)
+        
+        context = {"date":date,"form":f}
+        post = get_post_id(req.user)
+        query = Q(timestamp__icontains=date)
+        
+        value, order = None, None
+        if(f.is_valid()):
+            order = f.cleaned_data.get("query",None)
+            value = f.cleaned_data.get("search",None)
+            
+            if(order and value):
+                match(order):
+                    case "fileName": query &= Q(fileName__icontains=value)
+                    case "index": query &= Q(index__icontains=value)
+                    case "type": query &= Q(type__icontains=value)
+                    case "username": query &= Q(username__icontains=value)
+                    case "authLevel": query &= Q(authLevel__icontains=value)
+                    case "timestamp": query &= Q(timestamp__icontains=f"{date} {value}")
+        
+        column = list(map(lambda x: x.name ,LogMessage._meta.fields))
+        column.remove("id")
+        
+        context = {'date':date, "columns":column}
+        print(query)
+        try:
+            page = int(page)
+            managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
+            all_records = LogMessage.objects.filter(((query))&(Q(userID__in=admins)|Q(userID__in=managers))).values(*column)
+
+            context['logs'] = sorted(all_records,key=lambda x: x.get("timestamp"),reverse=True)[page:page+MAX_RECORD]
             context['max_record'] = page+MAX_RECORD
             
         except Exception as e:
             context['error'] = DEFAULT_ERROR
-        print(context)
         return render(req,'Logs/HTMX/log.row.html',context=context)

@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.http import HttpRequest
 from django.contrib.auth.models import User
 from User.models import is_admin, is_manager
+from Logs.models import LogMessage
 
 DEFAULT_ERROR = "Something Went Wrong! Please try Again"
 
@@ -87,17 +88,25 @@ class MongoLogger(BaseLogger):
         self.log.warning(msg=f"[{where}] {msg}\n",exc_info=True)
 
     @BaseLogger.change_decorator
-    def write_info(self, msg:str, where:str = 'MONGODB') -> None:
+    def write_info(self, msg:str, where:str = 'MONGODB') -> None:    
         self.log.info(msg=f"[{where}] {msg}\n")
 
 class AppLogger(BaseLogger):
 
     @BaseLogger.change_decorator
     def write_info(self, msg:'LogStructure') -> None:
+        try:
+            LogMessage(**msg.get_row()).save()
+        except Exception as e:
+            temp = msg
+            temp.desc.update(type=Task.EXCEPTION,exception=e)
+            self.log.error(msg=temp.get_log())
+            
         self.log.info(msg=msg.get_log())
     
     @BaseLogger.change_decorator
     def write_error(self, msg:'LogStructure') -> None:
+        
         self.log.error(msg=msg.get_log())
 
 class LogStructure:

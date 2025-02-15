@@ -17,7 +17,7 @@
 
             <label for="search">Containing: </label>
 
-            <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'View:suggest' id=id %}" hx-vals="js:{column: get_select()}" hx-trigger="cancel,load, keyup,click from:#column ">
+            <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'View:suggest' id=id %}" hx-vals="js:{column: get_select()}" hx-trigger="cancel,load, keyup,click from:#column " hx-on::after-request="dontAskWhy();">
 
             <datalist id="suggests" autocomplete="false">
 

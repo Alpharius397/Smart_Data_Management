@@ -19,8 +19,7 @@
 
         .dont-ask-why-this{
             height: 20px;
-            position: sticky;
-            top:0;
+            position: relative;
             background-color: white;
             z-index: 10;
             margin-bottom: -5px;
@@ -37,9 +36,9 @@
 
         thead th{
             position:sticky;
-            top:20px;
+            top:0px;
             text-wrap:nowrap;
-            max-width: 150px;
+            max-width: 300px;
             overflow-x: scroll;
         }
 
@@ -65,11 +64,9 @@
 
         .verify-sing{
             position:sticky;
-            right: 83px;
+            right: 88px;
             z-index: 10;
-            min-width: 100px;
-            max-width: 100px;
-            overflow-x:hidden;
+            overflow-x:auto;
         }
 
         #correct{
@@ -98,7 +95,7 @@
             position: sticky;
             right: 0px;
             z-index: 10;
-            overflow-x:hidden;
+            overflow-x:auto;
         }
 
         td.next-button{
@@ -183,11 +180,11 @@
 
 </body>
 <script src="{% static 'js/script.js' %}"></script>
+<script src="{% static 'js/htmx.js' %}"></script>
 <script>
 
     add_csrf();
 
 </script>
-<script src="{% static 'js/htmx.js' %}"></script>
 
 </html>

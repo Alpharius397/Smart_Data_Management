@@ -11,109 +11,23 @@
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
     <title>User Task Dashboard</title>
     <style>
-
-        .task-list {
-            margin: 20px 0;
-        }
-
-        .task-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-top: 10px;
-            background: #f9f9f9;
-        }
-
-        .task-item h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-
-        footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .title-tag{
-            text-align: center;
-        }
-
-        .task-info{
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border: 1px solid #666;
-            border-top: 0px;
-            margin-bottom: 10px;
-            background: #fff;
-        }
-
-        .view-button {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            font-family: Arial, sans-serif;
-            color: #ffffff;
-            background-color: #4caf50;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-    
-        .view-button:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
-    
-        .view-button:active {
-            background-color: #3e8e41; 
-            transform: translateY(1px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        li{
-            margin-bottom: 5px;
-            margin-left: 5px;
-        }
-
-        form{
-            display: inline-block;
-            margin-top: 10px;
-        }
-
         a{
             text-decoration: none;
         }
 
         
         .arrow {
-            position: relative;
             margin-left: auto;
-            right: 5px;
             font-size: 18px;
             color: #6c757d;
             display: inline;
         }
         
-        .task-item h2 {
-            font-size: 18px;
-            color: #333;
-            margin-right: auto;
-            width: 90%;
-            display: inline-block;
+        .log-view{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
     </style>
 </head>
 
@@ -129,11 +43,12 @@
         {% block manager %} {% endblock %}
 
         <div class="container">
+            <div class="log-view">
             <h2><span>View Logs</span></h2>
-            <span>
             <a href="{% url 'Logs:logs' %}" class="log-item">
                 <span class="arrow">&#9654;</span>
-            </a></span>
+            </a>
+            </div>
         </div>
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>

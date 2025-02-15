@@ -47,6 +47,16 @@
             transform: translateX(5px);
             color: #333;
         }
+
+        .form-group{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        label{
+            margin-right: 5px;
+        }
     
     </style>
 </head>
@@ -60,22 +70,18 @@
     <div class="container">
         <h2>Search Log</h2>
         
-        <form hx-post="{% url 'Logs:logs' %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,load,input from:#query" hx-vals="js:{query: get_select('query')}">
+        <form hx-post="{% url 'Logs:logs' %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #id_date,load,input from:#id_query" hx-vals="js:{query: get_select('id_query')}">
             {% csrf_token %}
-            <label for="query">Query: </label>
-            <select name="query" id="query">
-                <option value="">----------</option>
-                <option value="after">After</option>
-                <option value="before">Before</option>
-                <option value="on">On</option>
-            </select>
-
-            <label for="search">Date: </label>
-            <input type="date" id="search" name="search">
-
+            {% for field in form %}
+            <div class="form-group">
+                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                {{ field }}
+                
+            </div>
+        {% endfor %}
         </form>
 
-        <div class=".task-list" id="task-list">
+        <div class="task-list" id="task-list">
 
         </div>
     </div>

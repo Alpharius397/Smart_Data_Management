@@ -74,6 +74,7 @@ header .add-task{
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
+    margin: 0;
 }
 
 header .add-task:hover {
@@ -94,6 +95,7 @@ header .user-log{
     cursor: pointer;
     font-size: 14px;
     font-weight: bold;
+    margin: 0px;
 }
 
 header .user-log:hover {
