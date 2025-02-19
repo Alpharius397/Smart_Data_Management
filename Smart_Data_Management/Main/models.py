@@ -40,7 +40,7 @@ class MongoTemplate:
         
         self.header:dict[str,dict[str,str]|list] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
         self.data_header:dict[str,str|list] = {'file_name':None,'image_column':[]}
-        self.data_feed:dict[str,str] = {'locked':None,'time_of_issue':None,'status':None,'feed':None}
+        self.data_feed:dict[str,str] = {'locked':None,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':None}
         self.data = None
         self.feed:dict[str,dict[str,str]] = {}
         
@@ -92,7 +92,7 @@ class MongoConnection:
         self.collection:pymongo.collection.Collection = None
     
     def is_connected(self) -> bool:
-        return (not (self.collection is None))
+        return (self.collection is not None)
     
     
     def connect(self) -> 'MongoConnection':

@@ -9,10 +9,10 @@ class LogMessage(Model):
     fileName = CharField(max_length=255,verbose_name="Filename of Record",null=True,blank=True)
     index = IntegerField(verbose_name="Index of Record",null=True,blank=True)
     type = IntegerField(verbose_name="Type of Log",null=True,blank=True)
-    username = CharField(max_length=255,verbose_name="User of Request Sender",null=False,blank=False)
-    userID = IntegerField(verbose_name="User ID of request sender",null=False,blank=False)
+    username = CharField(max_length=255,verbose_name="User of Request Sender",null=True,blank=True)
+    userID = IntegerField(verbose_name="User ID of request sender",null=True,blank=True)
     authLevel = CharField(max_length=255,verbose_name="Authentication Level of User",null=False,blank=False)
-    action = CharField(max_length=255,verbose_name="Action Performed",null=False,blank=False)
+    action = CharField(max_length=255,verbose_name="Action Performed",null=True,blank=True)
     
     def __str__(self):
         return f"{self.timestamp}-{self.username}-{self.userID}-{self.authLevel}"

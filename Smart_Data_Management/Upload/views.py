@@ -161,9 +161,10 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
         conn = MongoConnection().connect()
         pd_data = None
         
-        if(conn.is_connected()):
+        if(not conn.is_connected()):
             messages.error(req,"MongoDB connection failed")
-            return render(req,'Excel/upload.html',{'form':f,'alert':'MongoDB connection failed'})
+            return render(req,'Upload/HTMX/message.html')
+
     
         if(f.is_valid()):
             excel_file = req.FILES["file"]
@@ -202,7 +203,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             
             try:
                 exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id)})
-                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',[])])
+                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',{}).values()])
                 
                 if(exists is None):
                     messages.error(req, "Record not found!")

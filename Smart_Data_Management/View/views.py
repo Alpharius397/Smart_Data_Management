@@ -5,7 +5,7 @@ import re
 from PIL import Image
 from typing import NamedTuple, Any
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, FileResponse
+from django.http import HttpRequest, HttpResponse, FileResponse, JsonResponse
 from Main.models import *
 from django.conf import settings
 from tools.get_image import compress_image
@@ -15,14 +15,24 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, auth_needed
+from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, auth_needed, is_auth_post
 from View.forms import VerifyForm
 from django.utils import timezone
 from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
+from django.views.decorators.csrf import csrf_exempt
+
 
 APP_LOG = AppLogger(settings.APP_LOG)
 MAX_RECORD:int = 5
+CHAR_MEMO = {':':'%3A'}
+
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
+
+def url_encoding(req_url:str) -> str:
+    req_url = req_url.replace(" ","")
+    print(req_url)
+    for char, utf in CHAR_MEMO.items(): req_url = req_url.replace(char, utf)
+    return req_url
 
 class ReportStructure(NamedTuple):
     profile_img:str
@@ -109,6 +119,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
         verify_idx:list = [i.get('status') for i in list(result.get('data',{}).get('feed',{}).values())[page:page+MAX_RECORD]]
+        locked_idx:list = [i.get('locked') for i in list(result.get('data',{}).get('feed',{}).values())[page:page+MAX_RECORD]]
         available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
         uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
         manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
@@ -123,7 +134,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     if(search):
         context['search'] = "No matching records found"
     else:
-        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD})
+        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD,'locked':locked_idx})
     return context
 
 
@@ -273,8 +284,6 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
     if((is_authenticated(req.user)) and is_hx_get(req)):
         
         conn = MongoConnection().connect()
-        
-        
         column = req.GET.get('column',None)
         value = req.GET.get('search',None)
         page = req.GET.get('page','0')
@@ -482,7 +491,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 timestamp = timezone.now().isoformat()
             
             try:
-                time_issue = f"data.feed.{idx}.time_of_issue"
+                time_issue = f"data.feed.{idx}.time_of_lock"
                 locked_col = f"data.feed.{idx}.locked"
                 res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:locked}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
@@ -547,7 +556,7 @@ def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int, local_
     
     return buffer        
 
-def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
+def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
 
     if(is_auth_get(req)):
         conn = MongoConnection().connect()
@@ -560,12 +569,17 @@ def card_view(req: HttpRequest, id:str, idx:int) -> FileResponse:
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             
-        
+        data:str = None
+        error =False
+        try:
+            data = compress_data(result,req.user,idx,False).getvalue().decode()
+        except Exception as e:
+            error = True
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            
+        return render(req,"View/HTMX/download_button.html",context={"data":url_encoding(json.dumps({"DKey1":"GetID","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":data,"SAM":0,"SMKeyVer":1})),"url":req.build_absolute_uri(),"error":error,"path":settings.REGISTRY})
+    
 
-        return FileResponse(compress_data(result,req.user,idx,False),as_attachment=True,filename=f"{id}_{idx}.txt")
-    
-    
-    
 def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
@@ -591,6 +605,7 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             if(res):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
             else:
+                context['lock'] = True
                 context['search'] = "Cannot Edit this index as it's locked"
                 
         except Exception as e:
@@ -611,9 +626,8 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     
     elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.POST.get('column',None)
-        value = req.POST.get('value',None)
         file = req.FILES.get('file')
-        context = {"id":id,"idx":idx,"admin":True,"column":column,"value":value}
+        context = {"id":id,"idx":idx,"admin":True,"column":column,}
         
         try:
             buffer = BytesIO()
@@ -631,20 +645,25 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['search'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/normal_image.html',context=context)
         
         conn = MongoConnection().connect()
-        
-        context = {"id":id,"idx":idx,"admin":True,"column":column}
+        res = None
         try:
             column_name = f"data.excel.{column}.{idx}"
-            res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
-            file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+            locked_name = f"data.feed.{idx}.locked"
             
-            if(res):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
+            if("search" in context):
+                img_data = conn.find_one({"_id":ObjectId(id)},{column_name:1}).get("data",{}).get("excel",{}).get(column,{}).get(str(idx),"")
             else:
-                context['search'] = "Cannot Edit this index as it's locked"
+                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.header.image_column":column,locked_name:{"$ne":True}},{"$set":{column_name:img_data}})
+                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+            
+                if(res):
+                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
+                else:
+                    context['search'] = "Cannot Edit this index is locked"
+                    context['lock'] = True
+                    return render(req,'View/HTMX/normal_image.html',context=context)
                 
             context.update({'value':img_data})
             
@@ -660,7 +679,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
 def normal_image(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
-        return render(req,'View/HTMX/image.html',context={"id":id,"column":column,"idx":idx})
+        return render(req,'View/HTMX/normal_image.html',context={"id":id,"column":column,"idx":idx})
     return HttpResponse(status=403)
 
 def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
@@ -669,3 +688,45 @@ def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         value = req.GET.get("value","")
         return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
     return HttpResponse(status=403)
+
+@csrf_exempt
+def issued_view(req:HttpRequest, id:str, idx: int) -> JsonResponse|HttpResponse:
+    if(req.method=="POST"):
+        api_key = req.POST.get("api_key",None)
+        secure_key = req.POST.get("secure_key",None)
+        status = req.POST.get("status",None)
+        error = False
+        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+            conn = MongoConnection().connect()
+            match(status):
+                case "true": status = True
+                case "false": status = False
+                case _: status = None
+                
+            res = False
+            
+            try:
+                time_of_issue = f"data.feed.{idx}.time_of_issue"
+                issued = f"data.feed.{idx}.issued"
+                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+                
+                if(res and status):
+                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
+                
+                elif(res):
+                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
+                
+                
+            except Exception as e:
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
+                error = True
+            finally:
+                conn.close()
+                
+            return JsonResponse(data={"error_occured":error, "update_occured":res,})
+            
+    return HttpResponse(status=403)
+    
+
+

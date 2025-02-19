@@ -17,13 +17,13 @@
                     {% for i in column %}
                     <th><p>{{i}}</p></th>
                     {% endfor %}
-                    <th class="verify-sing"><p>Verify</p></th>
+                    <th class="verify-sing"><p>Status</p></th>
                     <th class="next-button"><p>View Data</p></th>
                 </tr>
             </thead>
             
             <tbody >
-                <tr hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="load" hx-swap="outerHTML">
+                    <tr hx-get="{% url 'View:search_row' id=id %}" hx-vals='{"page": "0"}'  hx-trigger="load" hx-swap="afterend"></tr>
                     
             </tbody>
             

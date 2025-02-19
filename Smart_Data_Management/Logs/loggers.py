@@ -24,6 +24,7 @@ class Task:
     DATA_UNLOCK:int = 7
     CARD_READ:int = 8
     FEED_EDIT:int = 9
+    CARD_CANCEL:int = 10
     
 
 class Auth:
@@ -195,8 +196,9 @@ class LogStructure:
             case Task.DATA_EDIT: return f"{dump_detail('Admin',**get_details(user))} edited the Row {index}, Column {column} of {dump_detail('Task',fileName,taskID)}"
             case Task.DATA_UNLOCK: return f"{dump_detail('Manager',**get_details(user))} unlocked the Row {index} of {dump_detail('Task',fileName,taskID)}"
             case Task.DATA_LOCK: return f"{dump_detail('Manager',**get_details(user))} locked the Row {index} of {dump_detail('Task',fileName,taskID)}"
-            case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} downloaded Data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
+            case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
             case Task.FEED_EDIT: return f"{dump_detail('Manager',**get_details(user))} provided Feedback on Row {index} of {dump_detail('Task',fileName,taskID)}"
+            case Task.CARD_CANCEL: return f"{dump_detail('Manager',**get_details(user))} has cancelled card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
             case _: self.exception = exception
         
         return None
