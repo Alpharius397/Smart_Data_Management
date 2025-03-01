@@ -8,10 +8,7 @@ from django.contrib.messages import error, info
 
 # Create your views here.
 def logout_view(req:HttpRequest) -> HttpResponse:
-    
-    if(not req.user.is_authenticated):
-        return auth_needed(req)
-    
+
     logout(req)
     return redirect(reverse(settings.LOGIN_URL) + '?success=Logout Successfully')
 

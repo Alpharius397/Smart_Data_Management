@@ -3,8 +3,6 @@ from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 import zlib
 import json
-from PIL import Image
-from io import BytesIO
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:

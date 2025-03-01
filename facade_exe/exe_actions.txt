@@ -1,0 +1,12 @@
+Read Card: 
+	"{\"DKey1\":\"ReadData\",\"DKey2\":\"\",\"DKey3\":\"\",\"Data\":\"\",\"SAM\":,\"SMKeyVer\":}"
+
+Create Structure and Write into Card (default write option): 
+	"{\"DKey1\":\"CreateCard\",\"DKey2\":\"\",\"DKey3\":\"\",\"Data\":\"\",\"SAM\":,\"SMKeyVer\":}"
+
+Write Card (ForceFul Write): 
+	"{\"DKey1\":\"WriteData\",\"DKey2\":\"\",\"DKey3\":\"\",\"Data\":\"\",\"SAM\":,\"SMKeyVer\":}"
+
+Get ID: 
+	"{\"DKey1\":\"GetID\",\"DKey2\":\"\",\"DKey3\":\"\",\"Data\":\"\",\"SAM\":,\"SMKeyVer\":}"
+

@@ -1,19 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from Upload.forms import ExcelForm
 from Main.models import MongoConnection, MongoTemplate
-from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR
-from django.urls import reverse
-from django.conf import settings
+from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from User.models import is_admin, is_authenticated
 import json
 from bson.objectid import ObjectId
 from tools.get_image import image_load
-from tools.url_auth import is_auth_get, is_auth_post, is_hx_post, auth_needed
-from User.models import get_post, get_post_id
+from tools.url_auth import is_auth_get, is_hx_post, auth_needed
+from User.models import get_post_id
 from django.contrib import messages
-
-APP_LOG = AppLogger(settings.APP_LOG)
 
 # Create your views here.
 def upload_screen(req:HttpRequest):
@@ -21,7 +17,7 @@ def upload_screen(req:HttpRequest):
     if(not (is_authenticated(req.user) and is_admin(req.user))):
         return auth_needed(req)
     
-    if(req.method=="GET"):        
+    if(is_auth_get(req)):        
         f = ExcelForm(initial={'username':req.user.username})
     
         return render(req,'Upload/upload.html',{'form':f})
@@ -30,7 +26,7 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
     if(not (is_authenticated(req.user) and is_admin(req.user))):
         return auth_needed(req)
     
-    if(req.method=="GET"):        
+    if(is_auth_get(req)):        
         f = ExcelForm(initial={'username':req.user.username})
     
         return render(req,'Upload/edit.html',{'form':f,'id':id})
@@ -54,7 +50,7 @@ def delete(req: HttpRequest, id:str) -> HttpResponse:
             locked = any([i.get('locked') for i in result.get('data',{}).get('feed',[])])
             
         except Exception as e:
-            msg = LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e)
+            msg = LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e)
             APP_LOG.write_error(msg)
             conn.close()
             messages.error(req,"MongoDB connection failed")
@@ -75,7 +71,7 @@ def delete(req: HttpRequest, id:str) -> HttpResponse:
                     messages.error(req,"MongoDB ID %s was not deleted!" % id)
                     
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))       
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))       
                 messages.error(req,DEFAULT_ERROR)
                 conn.close()
                 
@@ -111,7 +107,7 @@ def upload(req: HttpRequest) -> HttpResponse:
                     
                 
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
                 conn.close()
                 
@@ -129,7 +125,7 @@ def upload(req: HttpRequest) -> HttpResponse:
                     pd_data = pd_data.to_json()
                     
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 conn.close()
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
@@ -140,7 +136,7 @@ def upload(req: HttpRequest) -> HttpResponse:
                 res = conn.insert_one(template)
                 messages.success(req,"Data Insertion successful. Data inserted with Mongo ID:%s" % res)
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
             finally:
                 conn.close()
@@ -179,7 +175,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                     
                 
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
         
@@ -195,7 +191,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                     pd_data = pd_data.to_json()
                     
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
             
@@ -222,7 +218,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                     
                     
             except Exception as e:
-                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=-1,user=req.user,exception=e))    
+                APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
                 
             finally:

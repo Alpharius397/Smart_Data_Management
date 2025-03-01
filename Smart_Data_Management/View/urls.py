@@ -7,8 +7,6 @@ from .views import *
 app_name = 'View'
 urlpatterns = [
 	path('<str:id>',default_view,name='table'),
-	path('<str:id>/column/',default_view,name='set-columns'),
-	path('<str:id>',default_view,name='table'),
 	path('<str:id>/search/',table_query,name='search'),
 	path('<str:id>/search_row/',row_view,name='search_row'),
 	path('<str:id>/quick_search/',quick_query,name="suggest"),
@@ -21,7 +19,10 @@ urlpatterns = [
 	path('<str:id>/<int:idx>/edit_image',edit_image_form,name="edit_image"),
 	path('<str:id>/<int:idx>/normal/',normal_view,name="normal"),
 	path('<str:id>/<int:idx>/image/',normal_image,name="image"),
-	path('<str:id>/<int:idx>/secure/',issued_view,name="confirm"),
+	path('<str:id>/<int:idx>/<str:token>/fetch/',fetch_view,name="fetch"),
+	path('<str:id>/<int:idx>/<str:token>/confirm/',issued_view,name="confirm"),
+	path('<str:id>/<int:idx>/<str:token>/',issued_view,name="__base__"),
+	path('token/write/',check_write,name='ping_write')
 ]
 
 

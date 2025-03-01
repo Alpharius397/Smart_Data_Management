@@ -7,3 +7,5 @@ bash_script
 *.log
 *app_log*
 *data_log*
+.venv
+.vscode

@@ -3,7 +3,8 @@ import pymongo.collection
 import pymongo.client_session
 from typing import NamedTuple
 from django.conf import settings
-from Logs.loggers import MongoLogger
+from Logs.loggers import MONGO_LOG, REDIS_LOG
+import redis
 
 
 class MongoTemplate:
@@ -85,7 +86,7 @@ class MongoDB(NamedTuple):
     
 class MongoConnection:
     
-    log = MongoLogger(settings.DATA_LOG)
+    log = MONGO_LOG
     
     def __init__(self) -> None:
         self.connection = pymongo.MongoClient(settings.MONGO_URL)
@@ -187,6 +188,65 @@ class MongoConnection:
         try:
             self.connection.close()
             self.log.write_info("Closing MongoDB connection")
-        except Exception as e:            
+        except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-
+        
+class RedisConnection:
+    
+    MAX_DURATION:int = 3
+    log = REDIS_LOG
+    
+    def __init__(self):
+        self.r = None
+        
+    def connect(self) -> 'RedisConnection':
+        try:
+            self.r = redis.Redis(**settings.REDIS,decode_responses=True)
+            self.log.write_info("Connecting to Redis Database")
+            
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+            
+        return self
+    
+    def get(self, key:str) -> str | None:
+        
+        try:
+            value = self.r.get(key)
+            self.log.write_info(f"Fetching Key: {key}")
+            return value
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+            
+        return None
+    
+    def set(self, key:str, value:str, duration:int = None) -> None:
+        
+        duration = RedisConnection.MAX_DURATION if(duration is None) else duration
+        try:
+            self.r.set(key, value, ex=RedisConnection.get_secs_from_minutes(duration))
+            self.log.write_info(f"Setting Key: {key}, with Value: {value} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds")
+            
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+        
+    def unset(self, key: str):
+        
+        try:
+            self.r.unlink(key)
+            self.log.write_info(f"Unsetting Key: {key}")      
+            
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+            
+    def close(self):
+        try:
+            self.r.close()
+            self.log.write_info("Closing Redis connection")
+            
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+            
+    @staticmethod        
+    def get_secs_from_minutes(minutes:int) -> int: 
+        return minutes*60

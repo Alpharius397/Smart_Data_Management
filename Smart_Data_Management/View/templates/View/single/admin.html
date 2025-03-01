@@ -1,9 +1,9 @@
 {% load template %}
 
-{% if search %}
+{% if error %}
 
     <ul class="messages">
-        <li class="error">{{search}}</li>
+        <li class="error">{{error}}</li>
     </ul>
 
 {% else %}
@@ -30,7 +30,7 @@
         <p><strong> Card issued on {{time_of_issue|timestamp}}. </strong></p>
     {% endif %}
     {% if locked %}
-        <p><strong> Card locked on {{time_of_lock}}. </strong></p>
+        <p><strong> Card locked on {{time_of_lock|timestamp}}. </strong></p>
     {% endif %}
 
 {% endif %}

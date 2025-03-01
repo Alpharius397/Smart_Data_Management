@@ -5,34 +5,32 @@ import re
 from PIL import Image
 from typing import NamedTuple, Any
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, FileResponse, JsonResponse
+from django.urls import reverse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import *
 from django.conf import settings
 from tools.get_image import compress_image
-from User.models import Admin, Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id
+from User.models import Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_hx_get, is_auth_get, is_hx_post, auth_needed, is_auth_post
+from tools.url_auth import is_auth_post, is_hx_get, is_auth_get, is_hx_post, auth_needed
 from View.forms import VerifyForm
 from django.utils import timezone
-from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from django.views.decorators.csrf import csrf_exempt
+from tools.token import get_token, hash_token
+from django.contrib import messages
 
-
-APP_LOG = AppLogger(settings.APP_LOG)
 MAX_RECORD:int = 5
-CHAR_MEMO = {':':'%3A'}
+LOADING:str = "Loading"
+DONE:str = "Done"
+NONE:str = "None"
+WRITE_TOKEN:str = "write-token"
 
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
-
-def url_encoding(req_url:str) -> str:
-    req_url = req_url.replace(" ","")
-    print(req_url)
-    for char, utf in CHAR_MEMO.items(): req_url = req_url.replace(char, utf)
-    return req_url
 
 class ReportStructure(NamedTuple):
     profile_img:str
@@ -104,14 +102,14 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
             
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-        context['search'] = DEFAULT_ERROR
+        context['error'] = DEFAULT_ERROR
         return context
     finally:
         conn.close()
     
     
     if(result is None):
-        context['search'] = "Mongo ID %s was not found" % id
+        context['error'] = "Mongo ID %s was not found" % id
         return context
     
     try:
@@ -128,11 +126,11 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
 
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-        context['search'] = DEFAULT_ERROR
+        context['error'] = DEFAULT_ERROR
         return context
     
     if(search):
-        context['search'] = "No matching records found"
+        context['error'] = "No matching records found"
     else:
         context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD,'locked':locked_idx})
     return context
@@ -165,7 +163,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             
         except Exception as e:            
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
             conn.close()
             
             return render(req,'View/HTMX/form.html',context=context)
@@ -179,7 +177,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
 
         finally:
             conn.close()
@@ -204,15 +202,15 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         
         if(to_do is None or user is None):
             context['error'] = "User not found"
-            return render(req,'View/HTMX/message.assign.html',context=context)
+            return render(req,'View/HTMX/message.html',context=context)
             
         try:
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.assign.html',context=context)
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
             
         
         try:
@@ -222,8 +220,8 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             _manage = Manager.objects.get(user__id=user)
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.assign.html',context=context)
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
         
         try:
             if(to_do):
@@ -251,13 +249,13 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.assign.html',context=context)
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
         
         finally:
             conn.close()
             
-        return render(req,'View/HTMX/message.assign.html',context=context)
+        return render(req,'View/HTMX/message.html',context=context)
             
 
     return HttpResponse(status=403)
@@ -315,7 +313,7 @@ def quick_query(req: HttpRequest, id:str):
                 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
             
         return render(req,'View/HTMX/suggests.html',context=context)
     
@@ -349,14 +347,14 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/report.html',context=context)
         
         finally:
             conn.close()
             
         if(pd_data.empty or (not meta_data)):
-            context['search'] = "Mongo ID %s and index %s not found!" % id,idx
+            context['error'] = "Mongo ID %s and index %s not found!" % id,idx
             return render(req,'View/HTMX/report.html',context=context)
         
         else:
@@ -399,18 +397,18 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                     context['msg'] = "Status Updated!"
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.FEED_EDIT,taskID=id,index=idx,user=req.user,fileName=file_name))
                 else:
-                    context['search'] = "Mongo ID %s not found" % id
+                    context['error'] = "Mongo ID %s not found" % id
                     
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['search'] = DEFAULT_ERROR
+                context['error'] = DEFAULT_ERROR
                 
             finally:
                 conn.close()    
         else:
-            context['search'] = f.errors.as_text()
+            context['error'] = f.errors.as_text()
             
-        return render(req,'View/HTMX/message.issue.html',context=context)
+        return render(req,'View/HTMX/message.html',context=context)
     
     elif(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
         conn = MongoConnection().connect()
@@ -423,7 +421,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             context.update({**meta_data,'manager':manager})
 
         except Exception as e:
-            context['search'] = AppLogger.get_error_info(e)
+            context['error'] = DEFAULT_ERROR
         finally:
             conn.close()
         
@@ -443,7 +441,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
             
         finally:
             conn.close()
@@ -468,7 +466,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 context.update({**meta_data})
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['search'] = DEFAULT_ERROR
+                context['error'] = DEFAULT_ERROR
                 return render(req,'View/single/manager_form.html',context=context)
 
             return render(req,'View/single/manager_form.html',context=context)
@@ -504,27 +502,25 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_UNLOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
                     context['msg'] = "Card Cancelled"
                     
-                else: context['search'] = "Data updation failed"
+                else: context['error'] = "Data updation failed"
             
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['search'] = DEFAULT_ERROR
-                return render(req,'View/HTMX/message.issue.html',context=context)
+                context['error'] = DEFAULT_ERROR
+                return render(req,'View/HTMX/message.html',context=context)
             
             finally:
                 conn.close()
             
-            return render(req,'View/HTMX/message.issue.html',context=context)
+            return render(req,'View/HTMX/message.html',context=context)
         
     return HttpResponse(status=403)
             
-def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int, local_write:bool = True) -> BytesIO:
+def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = True, buffer_out:bool = True) -> BytesIO | dict:
     
     pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
     image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
-    belongs = get_user_by_id(result.get('header',{}).get('uploader',None))
     data = pd_data.iloc[idx].to_dict()
-    timestamp = timezone.now().isoformat()
 
     for i in image_idx:
         img_data = data[i]
@@ -540,52 +536,62 @@ def compress_data(result:dict[str,dict[str,dict]], manager:User, idx:int, local_
         
         data[i] = img
         
-    send_data = {'header':{'manager':manager.username,**get_post(manager),'uploader':belongs ,'time':timestamp},'data':data}
-
 
     if(local_write):
         with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
-            f.write(encrypt_data(settings.KEY,send_data))
+            f.write(encrypt_data(settings.KEY,data))
             
         with open(settings.MEDIA_ROOT + '/decompress.txt','w') as f:
-            f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,send_data))))
+            f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,data))))
     
     buffer = BytesIO()
-    buffer.write(encrypt_data(settings.KEY,send_data).encode())
+    buffer.write(encrypt_data(settings.KEY,data).encode())
     buffer.seek(0)
     
-    return buffer        
+    return buffer if(buffer_out) else data       
 
 def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
-
-    if(is_auth_get(req)):
-        conn = MongoConnection().connect()
-        
-        result = None
-        try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
-            APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,user=req.user,taskID=id,index=idx))
-            
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            
-        data:str = None
-        error =False
-        try:
-            data = compress_data(result,req.user,idx,False).getvalue().decode()
-        except Exception as e:
-            error = True
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            
-        return render(req,"View/HTMX/download_button.html",context={"data":url_encoding(json.dumps({"DKey1":"GetID","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":data,"SAM":0,"SMKeyVer":1})),"url":req.build_absolute_uri(),"error":error,"path":settings.REGISTRY})
+    APP_LOG.write_info(LogStructure().set_request(req))
     
+    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
+        
+        req.session[WRITE_TOKEN] = get_token()     
+        hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
+        api_endpoint = f"{req.build_absolute_uri(reverse("View:__base__", args=(id,idx,hashToken)))}"
+        
+        return render(req,"View/HTMX/exe/end.html",context={"id":id,"idx":idx,"data":api_endpoint,"path":settings.WRITE_REGISTRY}) # end write op
+
+    if(is_auth_post(req) and is_hx_post(req) and is_manager(req.user)):
+        Redis = RedisConnection().connect()
+        hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
+        Redis.set(hashToken, LOADING)
+        
+        return render(req,"View/HTMX/exe/begin.html",context={"id":id,"idx":idx}) # begin write op
+
+    return HttpResponse(status=403)
+
+def check_write(req: HttpRequest) -> HttpResponse:
+    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
+        
+        token = req.session.get(WRITE_TOKEN)
+        Redis = RedisConnection().connect().get(hash_token(token,req.user.id))
+
+        if(Redis==LOADING): # continue to ping as confirmation has not been received
+            return HttpResponse(status=404)
+        elif(Redis==DONE):
+            return render(req,'View/HTMX/exe/status.html',context={"status":"Data written to card successfully"})
+        else:   
+            return render(req,'View/HTMX/exe/status.html',context={"status":"Write Token Expired! Please Try Again"})
+        
+    return HttpResponse(status=403)
+
 
 def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
         
-        return render(req,'View/HTMX/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,})
+        return render(req,'View/HTMX/edit_form/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,})
     
     elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.POST.get('column',None)
@@ -606,15 +612,15 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
             else:
                 context['lock'] = True
-                context['search'] = "Cannot Edit this index as it's locked"
+                context['error'] = "Cannot Edit this index as it's locked"
                 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
             context['value'] = old
-            return render(req,'View/HTMX/normal_view.html',context=context)
+            return render(req,'View/HTMX/normal_view/normal_view.html',context=context)
                     
-        return render(req,'View/HTMX/normal_view.html',context=context)
+        return render(req,'View/HTMX/normal_view/normal_view.html',context=context)
         
     return HttpResponse(status=403)
 
@@ -622,7 +628,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         
-        return render(req,'View/HTMX/edit_image_form.html',context={"id":id,"column":column,"idx":idx})
+        return render(req,'View/HTMX/edit_form/edit_image_form.html',context={"id":id,"column":column,"idx":idx})
     
     elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.POST.get('column',None)
@@ -644,7 +650,7 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
+            context['error'] = DEFAULT_ERROR
         
         conn = MongoConnection().connect()
         res = None
@@ -661,72 +667,123 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
                 if(res):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
                 else:
-                    context['search'] = "Cannot Edit this index is locked"
+                    context['error'] = "Cannot Edit this index is locked"
                     context['lock'] = True
-                    return render(req,'View/HTMX/normal_image.html',context=context)
+                    return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
                 
             context.update({'value':img_data})
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            context['search'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/normal_image.html',context=context)
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
                     
-        return render(req,'View/HTMX/normal_image.html',context=context)
+        return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
         
     return HttpResponse(status=403)
 
 def normal_image(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
-        return render(req,'View/HTMX/normal_image.html',context={"id":id,"column":column,"idx":idx})
+        return render(req,'View/HTMX/normal_view/normal_image.html',context={"id":id,"column":column,"idx":idx})
     return HttpResponse(status=403)
 
 def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
-        return render(req,'View/HTMX/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
+        return render(req,'View/HTMX/normal_view/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
     return HttpResponse(status=403)
 
 @csrf_exempt
-def issued_view(req:HttpRequest, id:str, idx: int) -> JsonResponse|HttpResponse:
+def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
         api_key = req.POST.get("api_key",None)
         secure_key = req.POST.get("secure_key",None)
         status = req.POST.get("status",None)
-        error = False
+        
         if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+            
             conn = MongoConnection().connect()
+            Redis = RedisConnection().connect()
+            
             match(status):
                 case "true": status = True
                 case "false": status = False
                 case _: status = None
                 
+            error:str = None
             res = False
             
             try:
                 time_of_issue = f"data.feed.{idx}.time_of_issue"
                 issued = f"data.feed.{idx}.issued"
-                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+                
+                if(Redis.get(token)!=LOADING):
+                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+                    return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=403)
+                
+                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                
+                Redis.set(token,DONE)
                 
                 if(res and status):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
                 
-                elif(res):
+                elif(res and (status is not None)):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
                 
                 
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
-                error = True
+                error = DEFAULT_ERROR
+                
             finally:
                 conn.close()
+                Redis.close()
                 
-            return JsonResponse(data={"error_occured":error, "update_occured":res,})
-            
-    return HttpResponse(status=403)
+            return JsonResponse(data={"error_occurred":error, "update_occurred":res,})
     
-
-
+        else:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
+    
+    return JsonResponse(status=403)
+    
+@csrf_exempt
+def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
+    if(req.method=="POST"):
+        api_key = req.POST.get("api_key",None)
+        secure_key = req.POST.get("secure_key",None)
+        
+        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+            conn = MongoConnection().connect()
+            Redis = RedisConnection().connect()
+            
+            result:dict[str,Any] = {}
+            
+            try:
+                res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
+                file_name = res.get("data",{}).get("header",{}).get("file_name",None)
+                verified:bool = res.get("data",{}).get("feed",{}).get(str(idx),{}).get("locked", False)
+                
+                if(Redis.get(token)!=LOADING):
+                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+                    return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
+                if(verified):
+                    result.update({"data":{"data":compress_data(res,idx,False,True).getvalue().decode()}, "status":200})
+                else:
+                    result.update({"data":{"error":f"Mongo ID: {id}, Index: {idx} is not locked"}, "status":403})
+                    
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_DATA_FETCH,user=req.user,taskID=id,fileName=file_name,index=idx))
+            
+            except Exception as e:
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            
+            finally:
+                conn.close()
+                Redis.close()
+                
+            return JsonResponse(**result,safe=False)
+    
+    return JsonResponse(status=403)

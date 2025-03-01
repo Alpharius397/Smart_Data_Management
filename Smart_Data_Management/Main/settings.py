@@ -157,6 +157,9 @@ LOGIN_URL = 'Login:login'
 MONGO_URL = "mongodb://127.0.0.1:27017/"
 MONGO_CRED = MongoDB("smart","excel")
 KEY = b"123456789123456789123456"
-REGISTRY = "card://"
+WRITE_REGISTRY = "writeExe://"
+READ_REGISTRY = "readExe://"
+
 API_KEY = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
 SECURE_KEY = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
+REDIS = {'host':'localhost','port':6379}

@@ -1,0 +1,14 @@
+{% if error is True %}
+    <button class="loading-button">Some error Occured!</button>
+
+{% else %}
+
+    {% if status %}
+        <script>alert("{{status}}");</script>
+    {% endif %}
+    
+    <form hx-post="{% url 'View:data' id=id idx=idx %}" hx-params="csrfmiddlewaretoken" hx-trigger="click from:next .upload-button" hx-swap="innerHTML" hx-target="closest .write-card" onsubmit="event.preventDefault();">
+        {% csrf_token %}
+    </form>
+    <button class="upload-button" onclick="window.location.href='{{path}}{{data}}'">Write into Card</button>
+{% endif %}

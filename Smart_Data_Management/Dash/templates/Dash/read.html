@@ -10,11 +10,20 @@
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
     <link rel="stylesheet" href="{% static 'styles/read.css' %}">
     <title>User Task Dashboard</title>
+
     <style>
+        img{
+            width: 200px;
+            display: block;
+            margin: 10px auto;
+        }
 
-
-
+        h2{
+            width: max-content;
+            margin: 10px auto;
+        }
     </style>
+
 </head>
 
 <body>
@@ -23,9 +32,11 @@
         <h1>Card View</h1>
     </header>
 
-    <div class="container" hx-get="{% url 'Dash:card_read' %}" hx-trigger="load" hx-target=".tableView" hx-swap="outerHTML">
-
-        <div class="tableView"></div>
+    <div class="container">
+        <div class="tableView" hx-get="{% url 'Dash:ping_read' %}" hx-trigger="every 2s" hx-target="this" hx-swap="outerHTML">
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+            <h2> Attempting to Read....</h2>
+        </div>
 
     </div>
 

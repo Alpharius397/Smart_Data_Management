@@ -1,0 +1,7 @@
+{% if msg %}
+    <li class="success">{{msg}}</li>
+{% elif error %}
+    <li class="error">{{error}}</li>
+{% else %}
+    <li class="error"> Something went wrong! </li>
+{% endif %}

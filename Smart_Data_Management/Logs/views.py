@@ -31,8 +31,6 @@ def log_board(req: HttpRequest) -> HttpResponse:
     elif(is_auth_post(req) and is_hx_post(req)):
 
         f = DateForm(req.POST)
-        
-        print(dir(f))
         post = get_post_id(req.user)
         
         context = {}
@@ -51,18 +49,12 @@ def log_board(req: HttpRequest) -> HttpResponse:
         try:
             managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
             admins = list(map(lambda x: x[0], Admin.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
-            all_records:list[datetime] = list(map(lambda x: x[0], LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers)) ).dates("timestamp","day","DESC").values_list("timestamp")))
+            all_records:list[datetime] = list(map(lambda x: x[0], LogMessage.objects.filter((query)&(Q(userID__in=admins)|Q(userID__in=managers)) ).values_list("timestamp")))
             
-            context['logs'] = list(set(map(lambda x: x.replace(hour=0,second=0,minute=0,microsecond=0), all_records)))
-            # seen = set()
-            # for i in all_records:
-            #     temp = i.strftime("%d.%m.%Y")
-                
-            #     if(temp not in seen):context['logs'].append(i)
-            #     seen.add(temp)
+            context['logs'] = sorted(list(set(map(lambda x: x.replace(hour=0,second=0,minute=0,microsecond=0), all_records))), reverse=True)
+
             
         except Exception as e:
-            print(e)
             context['error'] = DEFAULT_ERROR
 
         return render(req,'Logs/HTMX/log.list.html',context=context)
@@ -131,7 +123,6 @@ def row_query(req: HttpRequest, date:str) -> HttpResponse:
                     case "authLevel": query &= Q(authLevel__contains=value)
                     case "timestamp": query &= Q(timestamp__contains=f"{date} {value}")
         
-        print(query)
         column = list(map(lambda x: x.name ,LogMessage._meta.fields))
         column.remove("id")
         context = {'date':date, "columns":column}
@@ -152,7 +143,7 @@ def row_query(req: HttpRequest, date:str) -> HttpResponse:
     return HttpResponse(status=403)
 
 
-def row_search(req: HttpRequest, date:str) -> HttpRequest:
+def row_search(req: HttpRequest, date:str) -> HttpResponse:
     
     if(is_auth_get(req) and is_hx_get(req)):
         f = LogQuery(req.GET)
@@ -182,7 +173,7 @@ def row_search(req: HttpRequest, date:str) -> HttpRequest:
         column.remove("id")
         
         context = {'date':date, "columns":column}
-        print(query)
+
         try:
             page = int(page)
             managers = list(map(lambda x: x[0], Manager.objects.filter(belongs__id=post.get("branch")).values_list("user_id")))
@@ -195,3 +186,5 @@ def row_search(req: HttpRequest, date:str) -> HttpRequest:
         except Exception as e:
             context['error'] = DEFAULT_ERROR
         return render(req,'Logs/HTMX/log.row.html',context=context)
+    
+    return HttpResponse(status=403)

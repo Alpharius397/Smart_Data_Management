@@ -15,7 +15,7 @@
 
         form{
             display: inline-block;
-            margin-top: 10px;
+            margin-top: 0px;
         }
 
         .loading-button{
@@ -26,6 +26,9 @@
             background-color: red;
         }
         
+        .write-card{
+            display: inline-block;
+        }
 
     </style>
 </head>
@@ -46,9 +49,10 @@
         <div class="feedback"></div>
 
         {% if manage %}
-            <div class="issue_card" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-trigger="load" hx-target=".issue_card"></div>
+            <div id="hidden" hidden hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target="next" hx-trigger="htmx:afterSwap from:next .messages"></div>
+            <div class="issue_card" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="innerHTML" hx-trigger="load" hx-target=".issue_card"></div>
+            <ul class="messages"></ul>
         {% endif %}
-        <ul class="messages"></ul>
 
     </div>
 

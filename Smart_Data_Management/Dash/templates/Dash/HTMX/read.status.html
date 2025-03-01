@@ -1,0 +1,16 @@
+{% load static %}
+
+{% if error %}
+
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+
+{% else %}
+
+    <div class="tableView" hx-get="{% url 'Dash:read' %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+        <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+        <h2> Attempting to Read....</h2>
+    </div>
+
+{% endif %}

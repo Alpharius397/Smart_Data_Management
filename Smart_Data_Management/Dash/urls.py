@@ -11,7 +11,8 @@ urlpatterns = [
  	path('admin/manager/',admin_manage_fetch,name='admin_manage'),
  	path('manager/',manager_fetch,name='manage'),
  	path('read/',read_screen,name='read'),
-	path('card_read/',read_view,name='card_read')
+	path('token/read/',check_write,name='ping_read')
+ 
 ]
 
 

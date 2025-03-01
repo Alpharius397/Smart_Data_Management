@@ -1,0 +1,5 @@
+<input type="hidden" style="display: none;" hx-get="{% url 'View:ping_write' %}" hx-params="none" hx-trigger="every 2s" hx-swap="outerHTML" hx-target="this"></div>
+
+<button class="loading-button" disabled>Attempting Write</button>
+
+<button class="upload-button" hx-get="{% url 'View:data' id=id idx=idx %}" id="cancel_write" hx-trigger="click from:closest #cancel_write" hx-swap="innerHTML" hx-target="closest .write-card">Cancel Write</button>

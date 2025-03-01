@@ -1,32 +1,33 @@
 {% load template %}
 
 <div class="issue_card">
-        
     {% if status %}
 
+        {% if locked %}
+            <div class="write-card"  hx-get="{% url 'View:data' id=id idx=idx %}" hx-params="none" hx-swap="innerHTML" hx-trigger="load" hx-target="this">
+                <a><button class="loading-button">Loading</button></a>
+            </div>
+            {% else %}
+            <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="innerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
+                {% csrf_token %}
+                <button class="upload-button" id="issue_button">Issue Card</button>
+            </form>
+        {% endif %}
     
     
-    
-    {% if locked %}
-    <a hx-get="{% url 'View:data' id=id idx=idx %}" hx-params="none" hx-swap="outerHTML" hx-trigger="load" hx-target="this"><button class="loading-button">Loading</button></a>
-    {% else %}
-    <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
-        {% csrf_token %}
-        <button class="upload-button" id="issue_button">Issue Card</button>
-    </form>
+        {% if locked %}
+            <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-vals='{"to_do":"cancel"}' hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:#cancel_button" onsubmit="event.preventDefault()">
+                {% csrf_token %}
+                <button type="cancel" class="upload-button" id="cancel_button">Cancel Card</button>
+            </form>
+        {% endif %}
+
     {% endif %}
-    
-    
-    {% if locked %}
-    <form hx-post="{% url 'View:compress' id=id idx=idx %}" hx-vals='{"to_do":"cancel"}' hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:#cancel_button" onsubmit="event.preventDefault()">
-        {% csrf_token %}
-        <button type="cancel" class="upload-button" id="cancel_button">Cancel Card</button>
-    </form>
-    {% endif %}
-    {% endif %}
+
     {% if issued %}
         <p><strong> Card issued on {{time_of_issue|timestamp}}. </strong></p>
     {% endif %}
+    
     {% if locked %}
         <p><strong> Card locked on {{time_of_lock|timestamp}}. </strong></p>
     {% endif %}

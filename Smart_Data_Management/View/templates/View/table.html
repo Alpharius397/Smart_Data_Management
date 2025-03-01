@@ -151,7 +151,7 @@
         {% block upload_button %}{% endblock %}
     </header>
 
-    <div class="container" hx-get="{{request.path}}" hx-target="this" hx-swap="outerHTML" hx-trigger="load">
+    <div class="container" hx-get="{% url 'View:table' id=id %}" hx-target="this" hx-swap="outerHTML" hx-trigger="load">
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
@@ -181,10 +181,6 @@
 </body>
 <script src="{% static 'js/script.js' %}"></script>
 <script src="{% static 'js/htmx.js' %}"></script>
-<script>
 
-    add_csrf();
-
-</script>
 
 </html>

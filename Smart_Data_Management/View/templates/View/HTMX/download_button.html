@@ -1,6 +1,6 @@
-{% if error is True%}
+{% if error is True %}
     <button class="loading-button">Some error Occured!</button>
 
 {% else %}
-    <form method="post" action="{{path}}{{data}} {{url}}"><button class="upload-button" >Write into Card</button></a>
+    <a href="{{path}}{{data}}"><button class="upload-button" hx-get="{% url 'View:data' id=id idx=idx %}" hx-trigger="click from:this" hx-target="innerHTML">Write into Card</button></a>
 {% endif %}

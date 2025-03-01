@@ -1,5 +1,12 @@
 {% load template %}
 
+{% if error %}
+
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+
+{% else %}
 <div class="feedback">
     
     <h2>Feedback:</h2>
@@ -7,7 +14,7 @@
     <h4 class="user">User: {% for i in manager %} {{i}} {% if not forloop.last %}, {% endif %} {% endfor %} </h4>
 
 
-    <form hx-post="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:#feed_button" onsubmit="event.preventDefault()">
+    <form hx-post="{% url 'View:feed' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:#feed_button" onsubmit="event.preventDefault()">
         {% csrf_token %}
         
         {% for field in form %}
@@ -28,3 +35,4 @@
         <button class="upload-button" id="feed_button">Mark as Done</button>
     </form>
 </div>
+{% endif %}

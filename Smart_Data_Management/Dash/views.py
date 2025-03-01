@@ -6,13 +6,16 @@ from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin,
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 import typing
-from PIL import Image
 import re
 from Main.models import *
-from Logs.loggers import AppLogger, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
+from tools.token import get_token, hash_token
+from django.views.decorators.csrf import csrf_exempt
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
-APP_LOG = AppLogger(settings.APP_LOG)
+READ_TOKEN:str = "read-token"
+LOADING:str = "Loading"
+NONE:str = "None"
 
 def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[str,str|list]]:
     data = []
@@ -96,9 +99,9 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
         admin:list[dict[str,str|list]] = []
         error:str = None
         queryset=get_query(req)
+        conn = MongoConnection().connect()
         
         try:
-            conn = MongoConnection().connect()
             result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
             flag,admin = get_data(result)
 
@@ -116,22 +119,21 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
     return HttpResponse(status=403)
 
 class ReportStructure(typing.NamedTuple):
-    profile_img:Image
+    profile_img:str
     personal_info:dict[str,str]
-    sem_data:dict[dict[str,str]]
+    sem_data:dict[str,dict[str,str]]
     
 def read_view(req: HttpRequest)-> HttpResponse:
     
-    if(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
+    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         context = {}
             
         try:
-            with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
-                data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(READ_TOKEN))
         except Exception as e:
             context['error'] = DEFAULT_ERROR
             
-            return render(req,'HTMX/read.card.html',context=context)
+            return render(req,'Dash/HTMX/read.card.html',context=context)
         
         profile_img = r'^Profile_Image$'
         sem_data = r'.+Sem_(\d+)$'
@@ -186,4 +188,18 @@ def get_query(req: HttpRequest) -> dict[str,str]:
             
     return query_dict
 
+    
+def check_write(req: HttpRequest) -> HttpResponse:
+    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         
+        token = req.session.get(READ_TOKEN)
+        Redis = RedisConnection().connect().get(hash_token(token,req.user.id))
+        print(Redis==NONE)
+        if(Redis==LOADING): # continue to ping as confirmation has not been received
+            return HttpResponse(status=404)
+        elif(Redis): # Data found. Redirect to Read Screen
+            return redirect(reverse("Dash:read"))
+        else:            
+            return render(req,'Dash/HTMX/read.status.html',context={"error":"Write Token Expired! Please Try Again"})
+        
+    return HttpResponse(status=403)

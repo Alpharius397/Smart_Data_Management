@@ -9,6 +9,7 @@ from django.http import HttpRequest
 from django.contrib.auth.models import User
 from User.models import is_admin, is_manager
 from Logs.models import LogMessage
+from django.conf import settings
 
 DEFAULT_ERROR = "Something Went Wrong! Please try Again"
 
@@ -25,31 +26,29 @@ class Task:
     CARD_READ:int = 8
     FEED_EDIT:int = 9
     CARD_CANCEL:int = 10
-    
+    UNAUTH_REQ:int = 11
+    CARD_DATA_FETCH:int = 12
+    INVALID_TOKEN:int = 13
 
 class Auth:
     ADMIN:int = "Admin"
     MANAGER:int = "Manager"
     ANONYMOUS:int = "Anonymous User"
 
-
-TYPE:dict[int,str] = {0:"Task Uploaded", 1:"Task Assigned", 2:"Task Unassigned", 3:"Task Deleted", 4:"Task Edited", 5:"Data Edited", 6:"Data Locked", 7:"Card Data Downloaded"}
-
 class BaseLogger:
     
-    date_time = timezone.now().strftime("%d.%m.%Y")
-    
     def __init__(self, dir_path:str) -> None:
+        self.date_time = timezone.now().strftime("%d.%m.%Y")
         self.__dir_path = dir_path
         self.log = logging.getLogger(self.__class__.__name__)
         MongoLogger.generate_dir(dir_path)
         file_path = os.path.join(dir_path,f'{timezone.now().strftime("%d.%m.%Y")}.log')
-        console, self.file = logging.StreamHandler(), logging.FileHandler(file_path,encoding="utf-8")
+        console, file = logging.StreamHandler(), logging.FileHandler(file_path,encoding="utf-8")
         formatter = logging.Formatter("[{asctime}]:[{levelname}]:{message}",style="{",datefmt="%d-%m-%Y %H:%M")
         console.setFormatter(formatter)
-        self.file.setFormatter(formatter)
+        file.setFormatter(formatter)
         self.log.addHandler(console)        
-        self.log.addHandler(self.file)        
+        self.log.addHandler(file)        
         self.log.setLevel(logging.DEBUG)
     
     @staticmethod
@@ -75,12 +74,21 @@ class BaseLogger:
     def change_time(self):
         curr_time = timezone.now().strftime("%d.%m.%Y")
         BaseLogger.generate_dir(self.__dir_path)
+
         if(self.date_time!=curr_time):
-            file_path = os.path.join(self.__dir_path,f'{curr_time}.log')
-            
-            self.file.setFormatter(logging.FileHandler(file_path,encoding="utf-8"))
-        
+            file_path = os.path.join(self.__dir_path, f'{curr_time}.log')
+
+            for handler in self.log.handlers[:]:
+                if isinstance(handler, logging.FileHandler):
+                    self.log.removeHandler(handler)
+
+            file_handler = logging.FileHandler(file_path, encoding="utf-8")
+            formatter = logging.Formatter("[{asctime}]:[{levelname}]:{message}", style="{", datefmt="%d-%m-%Y %H:%M")
+            file_handler.setFormatter(formatter)
+            self.log.addHandler(file_handler)
+
             self.date_time = curr_time
+
 
 class MongoLogger(BaseLogger):
     
@@ -89,7 +97,17 @@ class MongoLogger(BaseLogger):
         self.log.warning(msg=f"[{where}] {msg}\n",exc_info=True)
 
     @BaseLogger.change_decorator
-    def write_info(self, msg:str, where:str = 'MONGODB') -> None:    
+    def write_info(self, msg:str, where:str = 'MONGODB') -> None:
+        self.log.info(msg=f"[{where}] {msg}\n")
+
+class RedisLogger(BaseLogger):
+    
+    @BaseLogger.change_decorator
+    def write_error(self, msg:str, where:str = 'REDIS') -> None:
+        self.log.warning(msg=f"[{where}] {msg}\n",exc_info=True)
+
+    @BaseLogger.change_decorator
+    def write_info(self, msg:str, where:str = 'REDIS') -> None:
         self.log.info(msg=f"[{where}] {msg}\n")
 
 class AppLogger(BaseLogger):
@@ -102,13 +120,17 @@ class AppLogger(BaseLogger):
             temp = msg
             temp.desc.update(type=Task.EXCEPTION,exception=e)
             self.log.error(msg=temp.get_log())
-            
+
         self.log.info(msg=msg.get_log())
     
     @BaseLogger.change_decorator
     def write_error(self, msg:'LogStructure') -> None:
         
         self.log.error(msg=msg.get_log())
+
+APP_LOG, MONGO_LOG, REDIS_LOG = AppLogger(settings.APP_LOG), MongoLogger(settings.DATA_LOG), RedisLogger(settings.DATA_LOG)
+""" Shared Log Instance """
+
 
 class LogStructure:
     """
@@ -199,6 +221,9 @@ class LogStructure:
             case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
             case Task.FEED_EDIT: return f"{dump_detail('Manager',**get_details(user))} provided Feedback on Row {index} of {dump_detail('Task',fileName,taskID)}"
             case Task.CARD_CANCEL: return f"{dump_detail('Manager',**get_details(user))} has cancelled card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
+            case Task.UNAUTH_REQ: return f"Received unauthorized request for Card Issue"
+            case Task.CARD_DATA_FETCH: return f"Authenticated Card Data Fetch"
+            case Task.INVALID_TOKEN: return f"Token is either expired or completed!"
             case _: self.exception = exception
         
         return None
