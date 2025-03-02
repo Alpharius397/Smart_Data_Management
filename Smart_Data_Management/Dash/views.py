@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import MongoConnection
 from django.conf import settings
 from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
@@ -15,7 +15,9 @@ from django.views.decorators.csrf import csrf_exempt
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
 LOADING:str = "Loading"
-NONE:str = "None"
+DONE:str = "Done"
+CARD_DATA:str = "Data"
+ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
 def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[str,str|list]]:
     data = []
@@ -24,17 +26,17 @@ def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[
         if(empty): empty=False
         data.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
 
-    return empty,data
+    return empty, data
 
 
 def dash_board(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user))):
         return auth_needed(req)
     
-    if(is_admin(req.user)):
+    if(is_admin(req.user) and is_auth_get(req)):
         return render(req,'Dash/dash/admin.html')
 
-    elif(is_manager(req.user)):
+    elif(is_manager(req.user) and is_auth_get(req)):
         return render(req,'Dash/dash/manager.html')
 
     else:
@@ -45,10 +47,11 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
     if(is_authenticated(req.user) and is_manager(req.user) and is_hx_get(req)):
         
         manage:list[dict[str,str|list]] = []
+        conn = MongoConnection().connect()
         error:str = None
         queryset=get_query(req)
+        
         try:
-            conn = MongoConnection().connect()
             
             result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
             flag,manage = get_data(result)
@@ -71,11 +74,11 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
         
         admin:list[dict[str,str|list]] = []
+        conn = MongoConnection().connect()
         error:str = None
         queryset=get_query(req)
         
         try:
-            conn = MongoConnection().connect()
             result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':[]},VIEW_DATA)
             flag,admin = get_data(result)
             if(flag and queryset): error='No matching records found!'
@@ -103,7 +106,7 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
         
         try:
             result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
-            flag,admin = get_data(result)
+            flag, admin = get_data(result)
 
             if(flag and queryset): error='No matching records found!'
 
@@ -129,7 +132,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
         context = {}
             
         try:
-            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(READ_TOKEN))
+            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(CARD_DATA))
         except Exception as e:
             context['error'] = DEFAULT_ERROR
             
@@ -168,8 +171,13 @@ def read_view(req: HttpRequest)-> HttpResponse:
 def read_screen(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user) and (is_manager(req.user)))):
         return auth_needed(req)
-
-    return render(req,'Dash/read.html')
+    
+    Redis = RedisConnection().connect()
+    token = get_token()
+    req.session[READ_TOKEN] = token
+    Redis.set(hash_token(token,req.user.id),LOADING)
+    
+    return render(req,'Dash/read.html',context={"path":settings.READ_REGISTRY,"url":req.build_absolute_uri(reverse("Dash:__base__",args=(hash_token(token,req.user.id),)))})
 
 def get_query(req: HttpRequest) -> dict[str,str]:
     
@@ -193,13 +201,41 @@ def check_write(req: HttpRequest) -> HttpResponse:
     if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         
         token = req.session.get(READ_TOKEN)
-        Redis = RedisConnection().connect().get(hash_token(token,req.user.id))
-        print(Redis==NONE)
-        if(Redis==LOADING): # continue to ping as confirmation has not been received
+        Redis = RedisConnection().connect()
+        value = Redis.get(hash_token(token,req.user.id))
+
+        if(value==LOADING): # continue to ping as confirmation has not been received
             return HttpResponse(status=404)
-        elif(Redis): # Data found. Redirect to Read Screen
-            return redirect(reverse("Dash:read"))
+        
+        elif(value): # Data found. Redirect to Read Screen
+            req.session[CARD_DATA] = value
+            Redis.unset(hash_token(token,req.user.id))
+            return redirect(reverse("Dash:card_read"))
+        
         else:            
-            return render(req,'Dash/HTMX/read.status.html',context={"error":"Write Token Expired! Please Try Again"})
+            return render(req,'Dash/HTMX/read.status.html',context={"error":"Read Token Expired! Please Try Again"})
         
     return HttpResponse(status=403)
+
+@csrf_exempt
+def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
+    if(req.method=="POST"):
+        api_key = req.POST.get("api_key",None)
+        secure_key = req.POST.get("secure_key",None)
+        data = req.POST.get("data",None)
+
+        if(data and api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+            Redis = RedisConnection().connect()
+            
+            if(Redis.get(token)!=LOADING):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
+                return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
+            
+            Redis.set(token,data)
+            Redis.close()
+            return JsonResponse(data={"info":"Data received", "status":True},status=200)
+        else:
+            return JsonResponse(data={"info":"Incorrect Credentials / Data not Found", "status":False},status=404)
+
+    return JsonResponse(data=ERROR_JSON,status=403)
+

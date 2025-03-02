@@ -29,6 +29,7 @@ LOADING:str = "Loading"
 DONE:str = "Done"
 NONE:str = "None"
 WRITE_TOKEN:str = "write-token"
+ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
@@ -748,7 +749,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         else:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
     
-    return JsonResponse(status=403)
+    return JsonResponse(data=ERROR_JSON, status=403)
     
 @csrf_exempt
 def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
@@ -786,4 +787,4 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 
             return JsonResponse(**result,safe=False)
     
-    return JsonResponse(status=403)
+    return JsonResponse(data=ERROR_JSON,status=403)

@@ -42,6 +42,11 @@
 
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
+<script>
 
+    document.addEventListener("DOMContentLoaded", function(event) {
+        console.log("Firing exe"); window.location.href="{{path}}{{url}}";
+    });
+</script>
 
 </html>

@@ -3,8 +3,7 @@
 {% load template %}
 
 {% block manager_button %}
-    <a href="{% url 'Dash:read' %}" onclick="load_exe();"><button class="add-task">Read Card</button></a>
-    <a href="{{path}}{{url}}" id="#hidden" hidden></a>
+    <a href="{% url 'Dash:read' %}"><button class="add-task">Read Card</button></a>
 {% endblock %}
 
 {% block manager %}

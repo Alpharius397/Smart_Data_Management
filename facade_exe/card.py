@@ -70,9 +70,9 @@ def fetch_data(url: str, creds: dict[str, str], logger: Logger) -> dict | None:
 def write_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[str, str], logger: Logger) -> None:
     try:
         response = subprocess.run([args.exe, r'{"DKey1":"WriteData","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":"'+data+r'","SAM":0,"SMKeyVer":1}'], capture_output=True)
-        stdout, stderr, return_code = response.stdout, response.stderr, response.returncode
+        stdout, stderr, return_code = response.stdout.decode(), response.stderr.decode(), response.returncode
         
-        if(return_code==0): # Everything okay!
+        if(return_code==0): # Everything okay
             requests.post(response_url,data={**creds,"info":"Data Write was successful","status":"true"})
             logger.write_info(f"Stdout: {stdout}, Stderr: {stderr}, Exitcode: {return_code}","EXE")
             
@@ -86,7 +86,7 @@ def write_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[
 def force_write_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[str, str], logger: Logger) -> None:
     try:
         response = subprocess.run([args.exe, r'{"DKey1":"WriteData","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":"'+data+r'","SAM":0,"SMKeyVer":1}'], capture_output=True)
-        stdout, stderr, return_code = response.stdout, response.stderr, response.returncode
+        stdout, stderr, return_code = response.stdout.decode(), response.stderr.decode(), response.returncode
         
         if(return_code==0): # Everything okay!
             requests.post(response_url,data={**creds,"info":"Forecful Data Write was successful","status":"true"})
@@ -102,16 +102,25 @@ def force_write_card(args:argparse.Namespace, data:str, response_url: str, creds
 def read_card(args:argparse.Namespace, response_url: str, creds:dict[str, str], logger: Logger) -> None:
     try:
         response = subprocess.run([args.exe, r'{"DKey1":"ReadData","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":"","SAM":0,"SMKeyVer":1}'], capture_output=True)
-        stdout, stderr, return_code = response.stdout, response.stderr, response.returncode
+        stdout, stderr, return_code = response.stdout.decode(), response.stderr.decode(), response.returncode
+        
+        data = {**creds}
         
         if(return_code==0): # Everything okay!
-            requests.post(response_url,data={**creds,"info":"Data Read was successful","status":"true"})
+            data.update({"info":"Data Read was successful","status":"true","data":stdout})
             logger.write_info(f"Stdout: {stdout}, Stderr: {stderr}, Exitcode: {return_code}","EXE")
             
         else: # Something went wrong
-            requests.post(response_url,data={**creds,"info":"Data Read was unsuccessful","status":"false"})
+            data.update({"info":"Data Read was unsuccessful","status":"false","data":stdout})
             logger.write_warning(f"Stdout: {stdout}, Stderr: {stderr}, Exitcode: {return_code}","EXE")
-
+            
+        post = requests.post(response_url,data=data)
+        
+        if(post.status_code==200):
+            logger.write_info(f"Successful Response from URL: {response_url}, with status code: {post.status_code} and data: {post.json()}", "HTTP")
+        else:
+            logger.write_warning(f"Successful Response from URL: {response_url}, with status code: {post.status_code} and data: {post.json()}", "HTTP")
+            
     except Exception as e:
         logger.write_error(Logger.get_error_info(e))
 
