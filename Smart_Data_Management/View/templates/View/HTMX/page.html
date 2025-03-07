@@ -5,10 +5,10 @@
 
     <div class="searchQuery">
         <h2>Search Columns: </h2>
-        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="input from:#search,load" hx-on::after-request="dontAskWhy();">
+        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search,load" hx-on::after-request="dontAskWhy();">
             
             <label for="column">Column: </label>
-            <select name="column" id="column">
+            <select name="column" id="column" class="searchSelect">
                 <option value="">----------</option>
                 {% for i in available %}
                     <option value="{{ i }}"> {{ i }}</option>
@@ -17,19 +17,43 @@
 
             <label for="search">Containing: </label>
 
-            <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'View:suggest' id=id %}" hx-vals="js:{column: get_select()}" hx-trigger="cancel,load, keyup,click from:#column " hx-on::after-request="dontAskWhy();">
+            <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'View:suggest' id=id %}" hx-vals="js:{column: get_select(), issue: get_select('issue'), status: get_select('status'), lock: get_select('lock')}" hx-trigger="cancel,load, keyup,click from:.searchSelect " hx-on::after-request="dontAskWhy();">
 
             <datalist id="suggests" autocomplete="false">
 
             </datalist>
+
+
+        <h3> Additional Search: </h3>
+            
+            <label for="status">Status: </label>
+            <select name="status" id="status" class="searchSelect">
+                <option value="">----------</option>
+                <option value="none">Unchecked</option>
+                <option value="true">Verified</option>
+                <option value="false">Rejected</option>
+            </select>
+
+            <label for="lock">Locked: </label>
+            <select name="lock" id="lock" class="searchSelect">
+                <option value="">----------</option>
+                <option value="true">Locked</option>
+                <option value="false">Not Locked</option>
+            </select>
+
+            <label for="issue">Issued: </label>
+            <select name="issue" id="issue" class="searchSelect">
+                <option value="">----------</option>
+                <option value="true">Issued</option>
+                <option value="false">Not Issued</option>
+            </select>
 
         </form>
 
     </div>
 
     <div class="tableView" id="tableView">
-    
-        
+        <img src="{% static 'img/spinner.gif' %}" alt="Loading">
     </div>
 
     {% if admin %}

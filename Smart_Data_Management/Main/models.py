@@ -68,8 +68,7 @@ class MongoTemplate:
         return self
     
     def add_feed(self, rows:int) -> 'MongoTemplate':
-        for i in range(rows):
-            self.feed[str(i)] = self.data_feed
+        self.feed = [{"index":i,**self.data_feed} for i in range(rows)]
         return self
     
     def add_manager(self, managers:list[str]) -> 'MongoTemplate':

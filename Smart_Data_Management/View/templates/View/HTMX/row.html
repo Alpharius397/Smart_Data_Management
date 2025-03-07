@@ -2,7 +2,7 @@
 {% load static %}
 
 {% for idx,i in result %}
-    <tr {% if forloop.last %} hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "search": "{{ request.GET.search }}"}'  hx-trigger="intersect once" hx-swap="afterend" {% endif %}>
+    <tr>
         {% for j,k in i.values|enum %}
 
             {% if column|index:j|in:image %}
@@ -55,15 +55,27 @@
         {% endfor %}
 
         {% if verify|index:idx is True %}
-            <td class="verify-sing"><p id="correct">Verified</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}</td>
+            <td class="verify-sing"><p id="correct">Verified</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}</td>
 
         {% elif verify|index:idx is False %}
-            <td class="verify-sing"><p id="wrong">Rejected</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}</td>
+            <td class="verify-sing"><p id="wrong">Rejected</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}</td>
 
         {% else %}
-            <td class="verify-sing"><p id="none">Unchecked</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}</td>
+            <td class="verify-sing"><p id="none">Unchecked</p>{% if locked|index:idx is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}</td>
         {% endif %}
 
         <td class="next-button"><a href="{% url 'View:index' id=id idx=idx %}"><button>View</button></a></td>
     </tr>
+
+    {% if forloop.last %}
+        <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-target='this' hx-swap="outerHTML">
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+        </div>
+    {% endif %}
+{% empty %}
+<div class="loading">
+    <ul class="messages">
+        <li class="error"><span>End of Search Reached</span></li>
+    </ul>
+</div>
 {% endfor %}

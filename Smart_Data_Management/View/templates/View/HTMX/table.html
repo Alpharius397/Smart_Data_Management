@@ -22,9 +22,8 @@
                 </tr>
             </thead>
             
-            <tbody >
-                <tr hx-get="{% url 'View:search_row' id=id %}" hx-vals='{"page": "0"}'  hx-trigger="load" hx-swap="afterend"></tr>
-                    
+            <tbody>
+                <tr id="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="load" hx-target='closest #loading' hx-swap="outerHTML">
             </tbody>
             
         </table>

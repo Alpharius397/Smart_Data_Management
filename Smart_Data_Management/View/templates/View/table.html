@@ -64,9 +64,13 @@
 
         .verify-sing{
             position:sticky;
-            right: 88px;
+            right: 96px;
             z-index: 10;
             overflow-x:auto;
+        }
+
+        .verify-sing p{
+            border-radius: 5px;
         }
 
         #correct{
@@ -138,7 +142,12 @@
 
         img.edit:hover{
             border-bottom: 3px grey solid;
-        } 
+        }
+        
+        .loading{
+            position: sticky;
+            left:35vw;
+        }
 
     </style>
 </head>
@@ -165,18 +174,39 @@
                 <label for="search">Containing: </label>
 
                 <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword">
-
+                <h3> Additional Search: </h3>
+            
+                <label for="status">Status: </label>
+                <select name="status" id="status" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="none">Unchecked</option>
+                    <option value="true">Verified</option>
+                    <option value="false">Rejected</option>
+                </select>
+    
+                <label for="lock">Locked: </label>
+                <select name="lock" id="lock" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="true">Locked</option>
+                    <option value="false">Not Locked</option>
+                </select>
+    
+                <label for="issue">Issued: </label>
+                <select name="issue" id="issue" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="true">Issued</option>
+                    <option value="false">Not Issued</option>
+                </select>
             </form>
 
         </div>
 
 
         <div class="tableView">
-                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
-            </div>
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
         </div>
-
     </div>
+</div>
 
 </body>
 <script src="{% static 'js/script.js' %}"></script>

@@ -28,6 +28,7 @@ MAX_RECORD:int = 5
 LOADING:str = "Loading"
 DONE:str = "Done"
 NONE:str = "None"
+FAILED:str = "Failed"
 WRITE_TOKEN:str = "write-token"
 ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
@@ -87,7 +88,34 @@ def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list
 
     return (pd_data.empty,pd_data)
 
-def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None, value:str = None, page:str = '0') -> dict[str,str]:
+def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None, value:str = None, issue:str = None, status:str = None, lock:str = None, page:str = '0') -> dict[str,str]:
+    
+    
+    def state_2_convert(val :str) -> bool | None:
+        match(val):
+            case "true": return True
+            case "false": return False
+            case _: return None
+
+    def state_2_check(val: bool, cond: bool) -> bool:
+        if(cond is not None):
+            return bool(val==cond) or ((not cond) and val is None)
+        else:
+            return True
+    
+    def state_3_convert(val :str) -> int:
+        match(val):
+            case "true": return 0
+            case "false": return 1
+            case "none": return 2
+            case _: return 3
+
+    def state_3_check(val: bool, cond: int) -> bool:
+        match(cond):
+            case 0: return bool(val==True)
+            case 1: return bool(val==False)
+            case 2: return bool(val==None)
+            case _: return True
     
     result:dict[str,dict[str,dict]] = None
     context = {'id':id}
@@ -117,13 +145,38 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         page = int(page)
         pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
-        verify_idx:list = [i.get('status') for i in list(result.get('data',{}).get('feed',{}).values())[page:page+MAX_RECORD]]
-        locked_idx:list = [i.get('locked') for i in list(result.get('data',{}).get('feed',{}).values())[page:page+MAX_RECORD]]
+        feed_list:list = list(list(result.get('data',{}).get('feed',[])))
+        
+        verify_idx:list[bool | None] = []
+        locked_idx:list[bool | None] = []
+        issued_idx:list[bool | None] = []
+        v_p, i_p, l_p = set(),set(),set()
+        status, issue, lock = state_3_convert(status), state_2_convert(issue), state_2_convert(lock)
+        
+        for i in feed_list:
+            if(state_3_check(i.get('status'),status)):
+                v_p.add(i.get('index'))
+        
+            if(state_2_check(i.get('issued'),issue)):
+                i_p.add(i.get('index'))
+        
+            if(state_2_check(i.get('locked'),lock)):
+                l_p.add(i.get('index'))
+        
+            issued_idx.append(i.get('issued'))
+            locked_idx.append(i.get('locked'))
+            verify_idx.append(i.get('status'))
+        
         available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
         uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
         manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
+        
         search, pd_data = search_query(pd_data,column,value,available_column)
-        pd_data = pd_data.iloc[page:page+MAX_RECORD]
+        panda_idx = v_p&i_p&l_p
+        panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)][page:page+MAX_RECORD]
+        
+        print(pd_data.index, panda_idx)
+        pd_data = pd_data.iloc[list(panda_idx)]
 
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -133,7 +186,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     if(search):
         context['error'] = "No matching records found"
     else:
-        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'available':available_column,'max_record':page+MAX_RECORD,'locked':locked_idx})
+        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'issued':issued_idx,'available':available_column,'start':page,'max_record':page+MAX_RECORD,'locked':locked_idx})
     return context
 
 
@@ -269,9 +322,12 @@ def table_query(req: HttpRequest, id:str) -> HttpResponse:
         conn = MongoConnection().connect()
         column = req.GET.get('column',None)
         value = req.GET.get('search',None)
+        issue = req.GET.get('issue',None)
+        status = req.GET.get('status',None)
+        lock = req.GET.get('lock',None)
         page = req.GET.get('page','0')
         
-        context = get_context(req,id,conn,column,value,page)
+        context = get_context(req,id,conn,column,value,issue,status,lock,page)
         context.update({"admin":is_admin(req.user)})
         conn.close()
         return render(req,'View/HTMX/table.html',context=context)
@@ -285,9 +341,12 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
         conn = MongoConnection().connect()
         column = req.GET.get('column',None)
         value = req.GET.get('search',None)
+        issue = req.GET.get('issue',None)
+        status = req.GET.get('status',None)
+        lock = req.GET.get('lock',None)
         page = req.GET.get('page','0')
-
-        context = get_context(req,id,conn,column,value,page)
+        
+        context = get_context(req,id,conn,column,value,issue,status,lock,page)
         context.update({"admin":is_admin(req.user)})
         conn.close()
         
@@ -343,7 +402,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         try:
             result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"data.excel":1})
-            meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
+            meta_data:dict = result.get('data',{}).get('feed',[])[idx]
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
             
         except Exception as e:
@@ -388,10 +447,11 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 status = None
                 
             try:
-                column = f"data.feed.{idx}"
-                status_col = f"{column}.status"
-                feed_col = f"{column}.feed"
-                success = conn.update_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),column:{"$exists":True}}]},{"$set":{status_col:status,feed_col:feed}})
+                column = f"data.feed"
+                index_col = f"{column}.index"
+                status_col = f"{column}.$.status"
+                feed_col = f"{column}.$.feed"
+                success = conn.update_one({"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),column:{"$exists":True},index_col:idx},{"$set":{status_col:status,feed_col:feed}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
 
                 if(success):
@@ -417,7 +477,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         try:
             result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id}]},{"data.feed":1,"header.manager":1})
-            meta_data:list[dict] = result.get('data',{}).get('feed',{}).get(str(idx),{})
+            meta_data:list[dict] = result.get('data',{}).get('feed',[])[idx]
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
             context.update({**meta_data,'manager':manager})
 
@@ -436,7 +496,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         try:
             result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"header.manager":1})
-            meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
+            meta_data:dict = result.get('data',{}).get('feed',[])[idx]
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
             context.update({**meta_data,'manager':manager})
             
@@ -461,9 +521,8 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             
             context = {'id':id,'idx':idx}
             try:
-                feed_col = f"data.feed.{idx}"
-                result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{feed_col:1})
-                meta_data:dict = result.get('data',{}).get('feed',{}).get(str(idx),{})
+                result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
+                meta_data:dict = result.get('data',{}).get('feed',[])[idx]
                 context.update({**meta_data})
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
@@ -581,6 +640,8 @@ def check_write(req: HttpRequest) -> HttpResponse:
             return HttpResponse(status=404)
         elif(Redis==DONE):
             return render(req,'View/HTMX/exe/status.html',context={"status":"Data written to card successfully"})
+        elif(Redis==FAILED):
+            return render(req,'View/HTMX/exe/status.html',context={"status":"Data write was unsuccessfully"})
         else:   
             return render(req,'View/HTMX/exe/status.html',context={"status":"Write Token Expired! Please Try Again"})
         
@@ -717,17 +778,21 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
             res = False
             
             try:
-                time_of_issue = f"data.feed.{idx}.time_of_issue"
-                issued = f"data.feed.{idx}.issued"
+                time_of_issue = f"data.feed.$.time_of_issue"
+                issued = f"data.feed.$.issued"
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
                 
                 if(Redis.get(token)!=LOADING):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
                     return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=403)
                 
-                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
                 
-                Redis.set(token,DONE)
+                if(status):
+                    res = conn.update_one({"_id":ObjectId(id),"data.feed.index":idx},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                    Redis.set(token,DONE)
+                else:
+                    Redis.set(token,FAILED)
+                    
                 
                 if(res and status):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
@@ -744,7 +809,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 conn.close()
                 Redis.close()
                 
-            return JsonResponse(data={"error_occurred":error, "update_occurred":res,})
+            return JsonResponse(data={"error_occurred":error, "update_occurred":res})
     
         else:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
@@ -766,7 +831,7 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
             try:
                 res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
                 file_name = res.get("data",{}).get("header",{}).get("file_name",None)
-                verified:bool = res.get("data",{}).get("feed",{}).get(str(idx),{}).get("locked", False)
+                verified:bool = res.get("data",{}).get("feed",{})[idx].get("locked", False)
                 
                 if(Redis.get(token)!=LOADING):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))

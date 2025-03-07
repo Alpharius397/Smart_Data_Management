@@ -1,9 +1,43 @@
-import os, sys, subprocess, traceback, requests, argparse, logging, re
+import os, sys, subprocess, traceback, requests, argparse, logging, re, functools
+
+IS_EXE = True
+APP_PATH = __file__ if (not IS_EXE) else sys.executable
+CRED = {"api_key":"LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN", "secure_key":"FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"}
 
 def get_url(request_string: str) -> str:
     matches = re.findall(r'(https|http)//([\w.:/]+)$', request_string)
     """ Matches only the https://{--this part--}$ """
     return '://'.join(next(iter(matches))) if matches else ''
+
+def url_join(*args):    
+    return ''.join([f"{i}{(lambda x: f'/' if (x and x[-1]!='/') else '')(i)}" for i in args])
+
+parse = argparse.ArgumentParser()
+parse.add_argument("--url", type=str, help="The URL to fetch/respond data", required=True)
+parse.add_argument("--exe", type=str, help="Local Path of the EXE", required=True) # Should be part of the registry and not called by Chrome URI directly
+parse.add_argument( "-r", "--read", help="Specify if this is a read operation", action="store_const", const=True) # Should be part of the registry and not called by Chrome URI directly
+parse.add_argument( "-w", "--write", help="Specify if this is a write operation", action="store_const", const=True) # Should be part of the registry and not called by Chrome URI directly
+parse.add_argument( "-c", "--createCard", help="Specify if this is a create card operation", action="store_const", const=True) # Should be part of the registry and not called by Chrome URI directly
+args = parse.parse_args()
+
+class AttrChecker:
+    ARGS = ["read", "write", "createCard"]
+
+    @staticmethod
+    def check_if_none(args: argparse.Namespace) -> bool:
+        return not bool(functools.reduce(AttrChecker.or_operator,[(lambda x: x if (x is not None) else False)(getattr(args,i)) for i in AttrChecker.ARGS if (hasattr(args,i))],False))
+    
+    @staticmethod
+    def check_if_more_than_one(args: argparse.Namespace) -> bool:
+        return bool(functools.reduce(AttrChecker.add_operator,[(lambda x: x if (x is not None) else 0)(getattr(args,i)) for i in AttrChecker.ARGS if (hasattr(args,i))], 0)>1)
+    
+    @staticmethod
+    def or_operator(a: bool, b: bool) -> bool:
+        return bool(a) or bool(b)        
+
+    @staticmethod
+    def add_operator(a: int, b: int) -> int:
+        return int(a) + int(b)
 
 class Logger:
     def __init__(self, dir_path:str) -> None:
@@ -32,20 +66,7 @@ class Logger:
         else:
             return "Not an exception"
 
-def url_join(*args):    
-    return ''.join([f"{i}{(lambda x: f'/' if (x and x[-1]!='/') else '')(i)}" for i in args])
-
-IS_EXE = True
-APP_PATH = __file__ if (not IS_EXE) else sys.executable
-CRED = {"api_key":"LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN", "secure_key":"FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"}
 LOGGER = Logger(os.path.dirname(APP_PATH))
-
-parse = argparse.ArgumentParser()
-parse.add_argument("--url", type=str, help="The URL to fetch/respond data", required=True)
-parse.add_argument("--exe", type=str, help="Local Path of the EXE", required=True) # Should be part of the reigstry and not called by Chrome URI directly
-parse.add_argument( "-r", "--read", help="Specify if this is a read operation (Note: If both read/write option are set, nothing happens)", action="store_const", const=True) # Should be part of the reigstry and not called by Chrome URI directly
-parse.add_argument( "-w", "--write", help="Specify if this is a write operation (Note: If both read/write option are set, nothing happens)", action="store_const", const=True) # Should be part of the reigstry and not called by Chrome URI directly
-args = parse.parse_args()
 
 FETCH_URL = url_join(get_url(args.url),"fetch") # URL to fetch data during write operation
 RESPONSE_URL = url_join(get_url(args.url),"confirm") # URL to send confirmation during write operation
@@ -83,17 +104,17 @@ def write_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[
     except Exception as e:
         logger.write_error(Logger.get_error_info(e))
 
-def force_write_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[str, str], logger: Logger) -> None:
+def create_card(args:argparse.Namespace, data:str, response_url: str, creds:dict[str, str], logger: Logger) -> None:
     try:
-        response = subprocess.run([args.exe, r'{"DKey1":"WriteData","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":"'+data+r'","SAM":0,"SMKeyVer":1}'], capture_output=True)
+        response = subprocess.run([args.exe, r'{"DKey1":"CreateCard","DKey2":"$*E+dSuHZGnEbgA9","DKey3":"KYbuD9NpHp!KF@%t","Data":"'+data+r'","SAM":0,"SMKeyVer":1}'], capture_output=True)
         stdout, stderr, return_code = response.stdout.decode(), response.stderr.decode(), response.returncode
         
         if(return_code==0): # Everything okay!
-            requests.post(response_url,data={**creds,"info":"Forecful Data Write was successful","status":"true"})
+            requests.post(response_url,data={**creds,"info":"Card Creation was successful","status":"true"})
             logger.write_info(f"Stdout: {stdout}, Stderr: {stderr}, Exitcode: {return_code}","EXE")
             
         else: # Something went wrong
-            requests.post(response_url,data={**creds,"info":"Forecful Data Write was unsuccessful","status":"false"})
+            requests.post(response_url,data={**creds,"info":"Card Creation was unsuccessful","status":"false"})
             logger.write_warning(f"Stdout: {stdout}, Stderr: {stderr}, Exitcode: {return_code}","EXE")
 
     except Exception as e:
@@ -124,15 +145,15 @@ def read_card(args:argparse.Namespace, response_url: str, creds:dict[str, str], 
     except Exception as e:
         logger.write_error(Logger.get_error_info(e))
 
-LOGGER.write_info(f"Got arguments as:\n URL: {args.url}\n EXE: {args.exe}\n READ FLAG: {args.read}\n WRITE FLAG: {args.write}")
+LOGGER.write_info(f"Got arguments as:\n {"\n ".join([f'{i}: {getattr(args,i)}' for i in dir(args) if (i[0]!='_')])}")
 
-if(args.read and args.write):
-    LOGGER.write_warning("Both read and write flag cannot be true")
-    raise ValueError("Both read and write flag cannot be true")
+if(AttrChecker.check_if_more_than_one(args)):
+    LOGGER.write_warning("Please choose at most 1 flag (-r {read}, -w {write}, -c {createCard})")
+    raise ValueError("Please choose at most 1 flag (-r {read}, -w {write}, -c {createCard})")
 
-if(not (args.read or args.write)):
-    LOGGER.write_warning("Both read and write flag cannot be false")
-    raise ValueError("Both read and write flag cannot be false")
+if(AttrChecker.check_if_none(args)):
+    LOGGER.write_warning("Please choose 1 flag (-r {read}, -w {write}, -c {createCard})")
+    raise ValueError("Please choose 1 flag (-r {read}, -w {write}, -c {createCard})")
 
 # Fetch Data from server
 if(args.read):
@@ -146,3 +167,10 @@ elif(args.write):
     else:
         LOGGER.write_warning("No JSON data was found")
 
+elif(args.createCard):
+    json_data:dict[str, str] = fetch_data(FETCH_URL, CRED,LOGGER)
+    
+    if(json_data is not None):
+        create_card(args, json_data, RESPONSE_URL, CRED, LOGGER)
+    else:
+        LOGGER.write_warning("No JSON data was found")
