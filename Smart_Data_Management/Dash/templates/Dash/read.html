@@ -13,9 +13,12 @@
 
     <style>
         img{
-            width: 200px;
             display: block;
-            margin: 10px auto;
+            margin: auto;
+        }
+
+        .spinner{
+            width: 200px;
         }
 
         h2{
@@ -34,7 +37,7 @@
 
     <div class="container">
         <div class="tableView" hx-get="{% url 'Dash:ping_read' %}" hx-trigger="every 2s" hx-target="this" hx-swap="outerHTML">
-            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
             <h2> Attempting to Read....</h2>
         </div>
 

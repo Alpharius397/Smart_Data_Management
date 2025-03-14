@@ -5,3 +5,6 @@ psycopg2==2.9.10
 django[argon2]
 django-cors-headers==4.6.0
 pycryptodome==3.21.0
+openpyxl==3.1.5
+pandas==2.2.3
+Faker==33.3.1

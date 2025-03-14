@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db.models import OneToOneField,ForeignKey,Model,RESTRICT
-from University.models import Branch
+from University.models import Branch, University, Institute
 
 class Manager(Model):
     user = OneToOneField(to=User,on_delete=RESTRICT,related_name='manager')
@@ -38,7 +38,6 @@ def get_user_by_id(id:int) -> str|None:
         return user.username        
     except:
         return None
-
 
 def get_user_id(name:int) -> str|None:
     
@@ -104,6 +103,20 @@ def get_manager_by_name(username:str) -> list[int]:
     except Exception as e:
         return []
 
+def get_post_by_ID(university: int, institute: int, branch: int) -> dict[str,str]:
+    
+    uni:str = None
+    insti:str = None 
+    bra:str = None
+
+    try:
+        uni = University.objects.filter(id=university)[0].name
+        insti = Institute.objects.filter(id=institute)[0].name
+        bra = Branch.objects.filter(id=branch)[0].name
+    except:
+        pass
+    
+    return {"university": uni, "institute": insti, "branch": bra}
 
 
 """

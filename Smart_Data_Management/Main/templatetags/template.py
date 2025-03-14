@@ -39,7 +39,7 @@ def enum(obj) -> tuple[list[int], list]:
 def image(obj) -> Image:
     raw_img = obj.split(':')
     
-    default_height = 150
+    default_height = 200
     
     try:
         width, height, img = raw_img
@@ -47,11 +47,10 @@ def image(obj) -> Image:
         width = int((int(width)/int(height))*default_height)
         height = default_height
     except:
-        width, height = 150,150
+        width, height = 200,200
         img = bad_image
         
     return Image(f"data:image/jpeg;base64,{img}",width,height)
-        
 
 @register.filter(name='in')
 def in_check(obj,vector):

@@ -37,17 +37,18 @@ subject_names = [
 ]
 
 df = pd.DataFrame(data)
-SEM_COUNT:int = 8
+SEM_COUNT:int = 6
 SUB_COUNT:int = 20
+MAX_LENGTH:int = 30
 
 # Adding Subject columns
-subjects = [f"{i}_Sem_{sem}" for sem in range(1, SEM_COUNT) for i in subject_names]
+subjects = [f"{i[:MAX_LENGTH]}_Sem_{sem}" for sem in range(1, SEM_COUNT) for i in subject_names]
 for subject in subjects:
     df[subject] = [random.randint(0, 100) for _ in range(rows)]
 
 # Adding Total marks for each semester
 for sem in range(1, SEM_COUNT):
-    sem_subjects = [f"{i}_Sem_{sem}" for i in subject_names]
+    sem_subjects = [f"{i[:MAX_LENGTH]}_Sem_{sem}" for i in subject_names]
     df[f"Total_Sem_{sem}"] = df[sem_subjects].sum(axis=1)
 
 # Save updated DataFrame to Excel

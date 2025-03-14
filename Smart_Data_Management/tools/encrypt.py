@@ -15,6 +15,7 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
     iv = b64encode(cipher.iv).decode()
     
     encrypted_b64 = b64encode(encrypted).decode()
+    
     return f"{iv}:{encrypted_b64}"
 
 # Decryption Function

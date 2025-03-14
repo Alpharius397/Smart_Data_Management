@@ -90,7 +90,7 @@ def upload(req: HttpRequest) -> HttpResponse:
         conn = MongoConnection().connect()
         pd_data = None
         
-        if(conn.is_connected()):
+        if(not conn.is_connected()):
             messages.error(req,"MongoDB connection failed")
             return render(req,'Upload/HTMX/message.html')
     
@@ -130,7 +130,7 @@ def upload(req: HttpRequest) -> HttpResponse:
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
             
-            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows).get_json()
+            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
             try:
                 res = conn.insert_one(template)
@@ -199,7 +199,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             
             try:
                 exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id)})
-                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',{}).values()])
+                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',[])])
                 
                 if(exists is None):
                     messages.error(req, "Record not found!")

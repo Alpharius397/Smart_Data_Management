@@ -10,7 +10,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import *
 from django.conf import settings
 from tools.get_image import compress_image
-from User.models import Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id
+from User.models import Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id, get_post_by_ID
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
@@ -22,7 +22,6 @@ from django.utils import timezone
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from django.views.decorators.csrf import csrf_exempt
 from tools.token import get_token, hash_token
-from django.contrib import messages
 
 MAX_RECORD:int = 5
 LOADING:str = "Loading"
@@ -401,10 +400,9 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"data.excel":1})
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"header":1,"data.header":1,"data.feed":1,"data.excel":1})
             meta_data:dict = result.get('data',{}).get('feed',[])[idx]
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
-            
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
@@ -419,6 +417,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         else:
             pd_data = pd_data.to_dict()
+            
             report = report_structure(pd_data)
             
             context.update({'data':pd_data,'personal':report.personal_info,'pic':report.profile_img,'sem_dict':report.sem_data,**get_post(req.user),**meta_data})
@@ -581,28 +580,26 @@ def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = T
     pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
     image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
     data = pd_data.iloc[idx].to_dict()
-
+    header = get_post_by_ID(**result.get('header',{}).get("post",{}))
+    
     for i in image_idx:
         img_data = data[i]
-        
         raw_img = img_data.split(':')
     
         try:
             _, _, img = raw_img
         except:
             img = bad_image
-            
+
         img = compress_image(BytesIO(b64decode(img)))
-        
         data[i] = img
         
-
     if(local_write):
         with open(settings.MEDIA_ROOT + '/compress.txt','w') as f:
-            f.write(encrypt_data(settings.KEY,data))
+            f.write(encrypt_data(settings.KEY,{"data":data,"header":header}))
             
         with open(settings.MEDIA_ROOT + '/decompress.txt','w') as f:
-            f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,data))))
+            f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,{"data":data,"header":header}))))
     
     buffer = BytesIO()
     buffer.write(encrypt_data(settings.KEY,data).encode())
@@ -611,7 +608,6 @@ def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = T
     return buffer if(buffer_out) else data       
 
 def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
-    APP_LOG.write_info(LogStructure().set_request(req))
     
     if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         
@@ -662,19 +658,18 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         old = req.POST.get("old","")
         
         conn = MongoConnection().connect()
-        MongoTemplate()
+
         context = {"id":id,"idx":idx,"value":value,"admin":True,"column":column}
         try:
             column_name = f"data.excel.{column}.{idx}"
-            locked = f"data.feed.{idx}.locked"
-            res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},locked:{"$ne":True}},{"$set":{column_name:value}})
+            res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.feed.index":idx,"data.feed.locked":{"$ne":True}},{"$set":{column_name:value}})
             file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
             
             if(res):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
             else:
                 context['lock'] = True
-                context['error'] = "Cannot Edit this index as it's locked"
+                context['error'] = "Cannot Edit this index as its locked"
                 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
@@ -718,12 +713,11 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         res = None
         try:
             column_name = f"data.excel.{column}.{idx}"
-            locked_name = f"data.feed.{idx}.locked"
             
             if("search" in context):
                 img_data = conn.find_one({"_id":ObjectId(id)},{column_name:1}).get("data",{}).get("excel",{}).get(column,{}).get(str(idx),"")
             else:
-                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.header.image_column":column,locked_name:{"$ne":True}},{"$set":{column_name:img_data}})
+                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.feed.index":idx,"data.feed.locked":{"$ne":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
             
                 if(res):
@@ -784,8 +778,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 
                 if(Redis.get(token)!=LOADING):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
-                    return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=403)
-                
+                    return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
                 
                 if(status):
                     res = conn.update_one({"_id":ObjectId(id),"data.feed.index":idx},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
@@ -809,7 +802,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 conn.close()
                 Redis.close()
                 
-            return JsonResponse(data={"error_occurred":error, "update_occurred":res})
+            return JsonResponse(data={"error_occurred":error, "update_occurred":res},status=200)
     
         else:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
@@ -821,12 +814,12 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
         api_key = req.POST.get("api_key",None)
         secure_key = req.POST.get("secure_key",None)
-        
+
         if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
             conn = MongoConnection().connect()
             Redis = RedisConnection().connect()
             
-            result:dict[str,Any] = {}
+            result:dict[str,Any] = {"data":"Default Data"}
             
             try:
                 res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
@@ -845,11 +838,11 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
             
             except Exception as e:
                 APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-            
+                result.update({"data":{"error":"Some error occurred!"},"status":500})
             finally:
                 conn.close()
                 Redis.close()
-                
+
             return JsonResponse(**result,safe=False)
     
     return JsonResponse(data=ERROR_JSON,status=403)

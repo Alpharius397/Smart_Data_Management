@@ -5,12 +5,16 @@ from django.conf import settings
 from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
+from tools.get_image import expand_image
 import typing
 import re
 from Main.models import *
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt
+from io import BytesIO
+from base64 import b64encode
+
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
@@ -132,38 +136,43 @@ def read_view(req: HttpRequest)-> HttpResponse:
         context = {}
             
         try:
+            # with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
+            #     data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
             data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(CARD_DATA))
+            
+            profile_img = r'^Profile_Image$'
+            sem_data = r'.+Sem_(\d+)$'
+            
+            result, header = data.get('data',{}), data.get('header',{})
+            
+            columns = result.keys()
+            
+            profile_col = [i for i in columns if re.match(profile_img,i)]
+            sem_col = [i for i in columns if re.match(sem_data,i)]
+            personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
+            
+            sem_dict:dict[str,list[str]] = {}
+            
+            profile_col = profile_col[0] if profile_col else None
+            
+            
+            wid, hei, data = result[profile_col].split(":")
+
+            result[profile_col] = expand_image(width=int(wid),height=int(hei),img_data=data)
+            for i in sem_col:
+                sem:list[str] = re.findall(sem_data,i)
+                
+                if(sem):
+                    sem = sem[0]
+                    if(sem not in sem_dict): sem_dict[sem] = list()
+                    sem_dict[sem].append(i)
+
+            view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
+            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
+
         except Exception as e:
             context['error'] = DEFAULT_ERROR
             
-            return render(req,'Dash/HTMX/read.card.html',context=context)
-        
-        profile_img = r'^Profile_Image$'
-        sem_data = r'.+Sem_(\d+)$'
-        
-        result, header = data.get('data',{}), data.get('header',{})
-        
-        columns = result.keys()
-        
-        profile_col = [i for i in columns if re.match(profile_img,i)]
-        sem_col = [i for i in columns if re.match(sem_data,i)]
-        personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
-        
-        sem_dict:dict[str,list[str]] = {}
-        
-        profile_col = profile_col[0] if profile_col else None
-        
-        for i in sem_col:
-            sem:list[str] = re.findall(sem_data,i)
-            
-            if(sem):
-                sem = sem[0]
-                if(sem not in sem_dict): sem_dict[sem] = list()
-                sem_dict[sem].append(i)
-
-        view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
-        context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
-
         return render(req,'Dash/HTMX/read.card.html',context=context)
 
     return HttpResponse(status=403)
