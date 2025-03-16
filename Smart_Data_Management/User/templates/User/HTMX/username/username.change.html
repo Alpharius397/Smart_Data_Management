@@ -1,0 +1,8 @@
+{% load static %}
+
+<form hx-post="{% url 'User:userChange' %}" hx-target="this" hx-swap="outerHTML">
+    {% csrf_token %}
+    <input type="text" value="{{request.user.username}}" name="user">
+    <button class="upload-button">Change Username</button>
+    <button type="cancel" id="cancel" class="upload-button">Cancel</button>
+</form>

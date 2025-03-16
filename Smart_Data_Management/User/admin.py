@@ -71,7 +71,7 @@ class ManagerAdmin(admin.ModelAdmin):
             
             if(is_admin(request.user)):
                 user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~(Q(uploader__isnull=False)|Q(admin__isnull=False)))&(Q(manager__belongs__id=user)))
+                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(Q(admin__isnull=False)))&(Q(manager__belongs__id=user))
         
         elif(db_field.name=="belongs"):
 
@@ -103,7 +103,7 @@ class AdminAdmin(admin.ModelAdmin):
             if(is_admin(request.user)):
                 user:Admin = request.user.admin.belongs.id
                 
-                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~(Q(manager__isnull=False)|Q(uploader__isnull=False)))&(Q(admin__belongs__id=user)))
+                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~(Q(manager__isnull=False)))&(Q(admin__belongs__id=user)))
         
         elif(db_field.name=="belongs"):
             if(is_admin(request.user)):
@@ -132,7 +132,7 @@ class UserAdmin(admin.ModelAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
-    list_display = ("username", "email", "first_name", "last_name", "is_staff")
+    list_display = ("username", "email", "first_name", "last_name", "is_staff", "is_active")
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")
     search_fields = ("username", "first_name", "last_name", "email")
     ordering = ("username",)
@@ -147,7 +147,7 @@ class UserAdmin(admin.ModelAdmin):
             branch = get_post_id(request.user).get('branch',None)
             
             
-            return User.objects.filter((Q(manager__isnull=False)|Q(admin__isnull=False)|Q(uploader__isnull=False))&(Q(uploader__belongs__id=branch)|Q(admin__belongs__id=branch)|Q(manager__belongs__id=branch)))
+            return User.objects.filter((Q(manager__isnull=False)|Q(admin__isnull=False))&(Q(admin__belongs__id=branch)|Q(manager__belongs__id=branch)))
         
         return super().get_queryset(request)
 

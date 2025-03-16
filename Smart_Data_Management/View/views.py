@@ -123,7 +123,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     
     try:
         if(is_manager(req.user)):
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id}]})
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]})
             
         elif(is_admin(req.user)):
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
@@ -144,7 +144,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         page = int(page)
         pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
-        feed_list:list = list(list(result.get('data',{}).get('feed',[])))
+        feed_list:list[dict[str,str]] = list(list(result.get('data',{}).get('feed',[])))
         
         verify_idx:list[bool | None] = []
         locked_idx:list[bool | None] = []
@@ -174,7 +174,6 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         panda_idx = v_p&i_p&l_p
         panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)][page:page+MAX_RECORD]
         
-        print(pd_data.index, panda_idx)
         pd_data = pd_data.iloc[list(panda_idx)]
 
     except Exception as e:
@@ -475,7 +474,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id}]},{"data.feed":1,"header.manager":1})
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]},{"data.feed":1,"header.manager":1})
             meta_data:list[dict] = result.get('data',{}).get('feed',[])[idx]
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
             context.update({**meta_data,'manager':manager})
@@ -602,7 +601,7 @@ def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = T
             f.write(json.dumps(decrypt_data(settings.KEY,encrypt_data(settings.KEY,{"data":data,"header":header}))))
     
     buffer = BytesIO()
-    buffer.write(encrypt_data(settings.KEY,data).encode())
+    buffer.write(encrypt_data(settings.KEY,{"data":data,"header":header}).encode())
     buffer.seek(0)
     
     return buffer if(buffer_out) else data       

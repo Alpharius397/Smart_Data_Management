@@ -5,7 +5,7 @@ from django.contrib.auth.models import User, Group
 from tools.url_auth import is_hx_post, is_hx_get
 from User.models import Manager, Admin
 from University.models import Institute, Branch
-from Logs.loggers import AppLogger
+from Logs.loggers import DEFAULT_ERROR
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -29,7 +29,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                     return render(req,'HTMX/message.html',context=context)
                     
             except Exception as e:
-                context['error'] = AppLogger.get_error_info(e)
+                context['error'] = DEFAULT_ERROR
                 return render(req,'HTMX/message.html',context=context)
             
             _branch = None
@@ -61,7 +61,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 context['msg'] = "Registered Successfully"
                 
             except Exception as e:
-                context['error'] = AppLogger.get_error_info(e)
+                context['error'] = DEFAULT_ERROR
             
             return render(req,'HTMX/message.html',context=context)
             

@@ -3,16 +3,16 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
-	"os/exec"
 	"os"
-	"flag"
+	"os/exec"
 	"regexp"
+	"strings"
 	"time"
 	"golang.org/x/sys/windows/registry"
 )
@@ -216,7 +216,7 @@ func WriteCard(exe_path string, data string, response_url string, log Logger) {
 	err = cmd.Run()
 
 	if err != nil {
-		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Error: \"%s\"", exe_path, err)))
+		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
 		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was unsuccessful","status":"false"}))
 		
 	} else {
@@ -231,39 +231,40 @@ func WriteCard(exe_path string, data string, response_url string, log Logger) {
 	}
 }
 
-func ReadCard(exe_path string, response_url string, log Logger) {
+func ReadCard(exe_path string, response_url string, logger Logger) {
 
 	args, err := json.Marshal(CardArgs{}.LoadCreds("ReadData", ""))
 
 	if err != nil {
-		log.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
+		logger.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
 		return
 	}
 
-	cmd := exec.Command(exe_path, string(args))
+	cmd := exec.Command(exe_path,string(args))
 	var out strings.Builder
 	var errStd strings.Builder
 	var httpError error
 
 	cmd.Stdout = &out
 	cmd.Stderr = &errStd
+	cmd.Dir = get_last_windows(exe_path)
 
 	err = cmd.Run()
 
-	if err != nil {
-		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Error: \"%s\"", exe_path, err)))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
-		
-	} else {
-		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
+	// if err != nil {
+	// 	logger.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
+	
+	// } else {
+		logger.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Args: \"%s\".Stdout: \"%s\", Stderr: \"%s\"", string(args), out.String(), errStd.String()))
 		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":out.String()}))
 
-	}
+	// }
 
 	if httpError != nil {
-		log.WriteError("HTTP", httpError)
+		logger.WriteError("HTTP", httpError)
 	} else {
-		log.WriteInfo("HTTP", fmt.Sprintf("Response to url: \"%s\" was send successfully",response_url))
+		logger.WriteInfo("HTTP", fmt.Sprintf("Response to url: \"%s\" was send successfully",response_url))
 	}
 }
 
@@ -287,7 +288,7 @@ func CreateCard(exe_path string, data string, response_url string, log Logger) {
 	err = cmd.Run()
 
 	if err != nil {
-		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Error: \"%s\"", exe_path, err)))
+		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: \"%s\". Error: \"%s\"", exe_path, string(args), err)))
 		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
 		
 	} else {
@@ -356,7 +357,7 @@ func readProtocol(filePath string) (error) {
 	
 	defer cmdKey.Close()
 
-	command := fmt.Sprintf("\"%s\" \"--url=%%1\" \"--log=%s\" \"--exe=%s\" \"-r\"", filePath, windows_url_join(get_last_windows(filePath),"app.log"), windows_url_join(get_last_windows(filePath), "SmartCardSolutions", "SmartCardSolutions.exe"))
+	command := fmt.Sprintf("\"%s\" \"--url=%%1\" \"--log=%s\" \"--exe=%s\" \"-r\"", filePath, windows_url_join(get_last_windows(filePath),"app.log"), windows_url_join("SmartCardSolutions", "SmartCardSolutions.exe"))
 	err = cmdKey.SetStringValue("", command)
 
 	if err != nil {

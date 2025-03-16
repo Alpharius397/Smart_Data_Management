@@ -1,0 +1,93 @@
+{% load template %}
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <title>User Task Dashboard</title>
+    <style>
+        a{
+            text-decoration: none;
+        }
+
+        
+        .arrow {
+            margin-left: auto;
+            font-size: 18px;
+            color: #6c757d;
+            display: inline;
+        }
+        
+        .log-view{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .edit{
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            display: inline-flex;
+            padding: 0px;
+            margin: auto;
+        }
+
+        img.edit:hover{
+            border-bottom: 3px grey solid;
+        }
+
+        .username{
+            display: inline;
+        }
+
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To Dashboard</button></a>
+        <h1>User Account</h1>
+    </header>
+
+    <ul class="messages" id="messages">
+    </ul>
+    
+    <div class="container">
+        <h2>User Details</h2>
+        <div class="user-tab">
+            Username: 
+            <div hx-get="{% url 'User:userChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
+                {% if request.user.username %}
+                    {{request.user.username}} 
+                {% else %}
+                    None Username
+                {% endif %}
+                
+                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+            </div>
+        </div>
+
+        <div class="user-tab">
+            Email: 
+            <div hx-get="{% url 'User:mailChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
+                {% if request.user.email %}
+                    {{request.user.email}} 
+                {% else %}
+                    No Email
+                {% endif %}
+                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+</html>

@@ -6,6 +6,7 @@ from django.conf import settings
 urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('',include('Login.urls','Login')),
+	path('user/',include('User.urls','User')),
 	path('register/',include('Register.urls','Register')),
 	path('upload/',include('Upload.urls','Upload')),
 	path('logout/',include('Logout.urls','Logout')),

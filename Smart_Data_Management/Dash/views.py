@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import MongoConnection
@@ -138,6 +139,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
         try:
             # with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
             #     data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
+            print(decrypt_data(settings.KEY,req.session.get(CARD_DATA)))
             data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(CARD_DATA))
             
             profile_img = r'^Profile_Image$'
@@ -171,6 +173,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
             context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
 
         except Exception as e:
+            print(e,context)
             context['error'] = DEFAULT_ERROR
             
         return render(req,'Dash/HTMX/read.card.html',context=context)
@@ -240,7 +243,7 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
                 return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
             
-            Redis.set(token,data)
+            Redis.set(token,data[10:])
             Redis.close()
             return JsonResponse(data={"info":"Data received", "status":True},status=200)
         else:
