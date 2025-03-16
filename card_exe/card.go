@@ -82,7 +82,7 @@ type Logger struct{
 }
 
 func (l Logger) SetPrefix() Logger {
-	l.logger.SetPrefix(time.Now().Format("[2-01-2006]:[15:04:05]:"))
+	l.logger.SetPrefix(time.Now().Format("[2-01-2006 15:04:05]:"))
 	return l
 }
 
@@ -212,17 +212,18 @@ func WriteCard(exe_path string, data string, response_url string, log Logger) {
 
 	cmd.Stdout = &out
 	cmd.Stderr = &errStd
+	cmd.Dir = get_last_windows(exe_path)
 
 	err = cmd.Run()
 
-	if err != nil {
-		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was unsuccessful","status":"false"}))
+	// if err != nil {
+	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was unsuccessful","status":"false"}))
 		
-	} else {
+	// } else {
 		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
 		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was successful","status":"true"}))
-	}
+	// }
 	
 	if httpError != nil {
 		log.WriteError("HTTP", httpError)
@@ -284,17 +285,18 @@ func CreateCard(exe_path string, data string, response_url string, log Logger) {
 
 	cmd.Stdout = &out
 	cmd.Stderr = &errStd
+	cmd.Dir = get_last_windows(exe_path)
 
 	err = cmd.Run()
 
-	if err != nil {
-		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: \"%s\". Error: \"%s\"", exe_path, string(args), err)))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
+	// if err != nil {
+	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: \"%s\". Error: \"%s\"", exe_path, string(args), err)))
+	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
 		
-	} else {
+	// } else {
 		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
 		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was successful","status":"true"}))
-	}
+	// }
 	
 	if httpError != nil {
 		log.WriteError("HTTP", httpError)
