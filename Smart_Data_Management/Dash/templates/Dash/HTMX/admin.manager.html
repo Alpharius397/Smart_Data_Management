@@ -14,11 +14,15 @@
             <button class="drop-down down" id="up_{{forloop.counter}}">&#11206;</button>
         </div>
         <div class="task-info" id="up_{{forloop.counter}}">
+            Assigned To: 
             {% for j in i.manager %}
                 <li>
                     {{ j  }}
                 </li>
+            {% empty %}
+                <h4>No one Assigned Yet</h4>
             {% endfor %}
+
             <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
         </div>
 

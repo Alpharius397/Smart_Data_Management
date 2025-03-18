@@ -52,7 +52,22 @@
             display: block;
             align-items: center;
         }
-    
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            header .user-log, header .add-task{
+                color: {{request.session.mainColor}};
+            }
+
+        {% endif %}
+        
     </style>
 </head>
 

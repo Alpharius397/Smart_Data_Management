@@ -46,12 +46,27 @@
             height: 20px;
         }
 
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            header .user-log, header .add-task{
+                color: {{request.session.mainColor}};
+            }
+        {% endif %}
+
     </style>
 </head>
 <body>
     <header>
         <a href="{% url 'View:table' id=id %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Edit Form</h1>
+        <h1>Delete Form</h1>
     </header>
 
     <div id="message" class="message"></div>

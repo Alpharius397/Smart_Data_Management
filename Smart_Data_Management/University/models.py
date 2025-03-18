@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db.models import CharField,RESTRICT,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField,RESTRICT
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
+
+ColorRegex = RegexValidator(r"^#[a-fA-F0-9]{6}$", message="Invalid Hex color")
 
 
 class University(Model):
@@ -49,3 +51,14 @@ class Subjects(Model):
     def __str__(self):
         return f"{self.name} - {self.semester} - {self.branch}"
 
+class Color(Model):
+    institute = OneToOneField(to=Institute,null=True,blank=False,related_name='color',on_delete=RESTRICT)
+    main_color = CharField(max_length=7,null=False,blank=False,verbose_name="Main Color",validators=[ColorRegex])
+    sec_color = CharField(max_length=7,null=False,blank=False,verbose_name="Secondary Color",validators=[ColorRegex])
+    
+    class Meta:
+        verbose_name = "Color Theme"
+        verbose_name_plural = "Color Themes"
+        
+    def __str__(self):
+        return  f"Color Theme: {self.institute.name}" #f"Main Theme: {self.main_color}, Secondary Theme: {self.sec_color}"

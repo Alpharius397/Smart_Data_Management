@@ -29,6 +29,44 @@
         .write-card{
             display: inline-block;
         }
+        
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+            
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            .semester{
+                background-color: {{request.session.mainColor}};
+
+            }
+
+            .header-box{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+
+            .semester h3 {
+                border-color: {{request.session.secColor}};
+                color: {{request.session.secColor}};
+            }
+
+            .semester p {
+                color: {{request.session.secColor}};
+            }
+
+            header .user-log{
+                color: {{request.session.mainColor}};
+            }
+
+            .personal-info p{
+                color: {{request.session.mainColor}};
+            }
+        {% endif %}
 
     </style>
 </head>

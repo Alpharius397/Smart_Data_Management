@@ -198,14 +198,10 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
             template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
             try:
-                exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id)})
-                locked = any([i.get('locked') for i in exists.get('data',{}).get('feed',[])])
+                exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id),"data.feed.locked":{"$ne":True}})
                 
                 if(exists is None):
-                    messages.error(req, "Record not found!")
-                
-                elif(locked):
-                    messages.error(req,"Data Insertion not possible. Data is locked")
+                    messages.error(req, "Record was not found or Data is locked!")
                 else:
                     managers = exists.get('header',{}).get('manager',[])
                     template = template.add_manager(managers)

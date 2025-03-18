@@ -25,6 +25,25 @@
             width: max-content;
             margin: 10px auto;
         }
+
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+            
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            header .user-log, header .add-task{
+                color: {{request.session.mainColor}};
+            }
+
+            .personal-info p{
+                color: {{request.session.secColor}};
+            }
+        {% endif %}
     </style>
 
 </head>

@@ -16,7 +16,7 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_auth_post, is_hx_get, is_auth_get, is_hx_post, auth_needed
+from tools.url_auth import is_auth_post, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color
 from View.forms import VerifyForm
 from django.utils import timezone
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
@@ -73,9 +73,11 @@ def default_view(req: HttpRequest, id:str) -> HttpResponse:
         return auth_needed(req)
     
     elif(is_admin(req.user)):
+        get_admin_color(req,req.user)
         return render(req,'View/table/admin.html',{'id':id})
     
     elif(is_manager(req.user)):
+        get_manager_color(req,req.user)
         return render(req,'View/table/manager.html',{'id':id})    
     
     return HttpResponse(status=403)
@@ -388,6 +390,8 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return auth_needed(req)
     
     else:
+        get_admin_color(req,req.user)
+        get_manager_color(req,req.user)
         return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
 
     
@@ -447,9 +451,9 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             try:
                 column = f"data.feed"
                 index_col = f"{column}.index"
-                status_col = f"{column}.$.status"
-                feed_col = f"{column}.$.feed"
-                success = conn.update_one({"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),column:{"$exists":True},index_col:idx},{"$set":{status_col:status,feed_col:feed}})
+                status_col = f"{column}.{idx}.status"
+                feed_col = f"{column}.{idx}.feed"
+                success = conn.update_one({"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),index_col:idx},{"$set":{status_col:status,feed_col:feed}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
 
                 if(success):
@@ -661,7 +665,10 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         context = {"id":id,"idx":idx,"value":value,"admin":True,"column":column}
         try:
             column_name = f"data.excel.{column}.{idx}"
-            res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.feed.index":idx,"data.feed.locked":{"$ne":True}},{"$set":{column_name:value}})
+            feed_idx = f"data.feed.{idx}.index"
+            lock_idx = f"data.feed.{idx}.locked"
+            
+            res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:{"$ne":True}},{"$set":{column_name:value}})
             file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
             
             if(res):
@@ -712,11 +719,13 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         res = None
         try:
             column_name = f"data.excel.{column}.{idx}"
+            feed_idx = f"data.feed.{idx}.index"
+            lock_idx = f"data.feed.{idx}.locked"
             
             if("search" in context):
                 img_data = conn.find_one({"_id":ObjectId(id)},{column_name:1}).get("data",{}).get("excel",{}).get(column,{}).get(str(idx),"")
             else:
-                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exists":True},"data.feed.index":idx,"data.feed.locked":{"$ne":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
+                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exist":True},feed_idx:idx,lock_idx:{"$ne":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
             
                 if(res):
@@ -771,8 +780,11 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
             res = False
             
             try:
-                time_of_issue = f"data.feed.$.time_of_issue"
-                issued = f"data.feed.$.issued"
+                time_of_issue = f"data.feed.{idx}.time_of_issue"
+                issued = f"data.feed.{idx}.issued"            
+                feed_idx = f"data.feed.{idx}.index"
+                lock_idx = f"data.feed.{idx}.locked"
+
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
                 
                 if(Redis.get(token)!=LOADING):
@@ -780,7 +792,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                     return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
                 
                 if(status):
-                    res = conn.update_one({"_id":ObjectId(id),"data.feed.index":idx},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                    res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
                     Redis.set(token,DONE)
                 else:
                     Redis.set(token,FAILED)

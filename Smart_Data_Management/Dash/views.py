@@ -1,9 +1,8 @@
-import json
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import MongoConnection
 from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
+from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name, Admin, Manager
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 from tools.get_image import expand_image
@@ -13,8 +12,6 @@ from Main.models import *
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt
-from io import BytesIO
-from base64 import b64encode
 
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
@@ -33,15 +30,17 @@ def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[
 
     return empty, data
 
-
 def dash_board(req: HttpRequest) -> HttpResponse:
+
     if(not (is_authenticated(req.user))):
         return auth_needed(req)
     
     if(is_admin(req.user) and is_auth_get(req)):
+        get_admin_color(req,req.user)
         return render(req,'Dash/dash/admin.html')
 
     elif(is_manager(req.user) and is_auth_get(req)):
+        get_manager_color(req,req.user)
         return render(req,'Dash/dash/manager.html')
 
     else:
@@ -188,6 +187,7 @@ def read_screen(req: HttpRequest) -> HttpResponse:
     token = get_token()
     req.session[READ_TOKEN] = token
     Redis.set(hash_token(token,req.user.id),LOADING)
+    get_manager_color(req,req.user)
     
     return render(req,'Dash/read.html',context={"path":settings.READ_REGISTRY,"url":req.build_absolute_uri(reverse("Dash:__base__",args=(hash_token(token,req.user.id),)))})
 
