@@ -1,4 +1,7 @@
 {
   "name": "Smart_Data_Management",
-  "slug": "Smart_Data_Management"
+  "slug": "Smart_Data_Management",
+  "android": {
+    "package": "com.anonymous.Smart_Data_Management"
+  }
 }
