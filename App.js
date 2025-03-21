@@ -1,37 +1,33 @@
-import { createDrawerNavigator } from "@react-navigation/drawer";
-import { NavigationContainer } from "@react-navigation/native";
-import { Button, View } from "react-native";
+import React from 'react';
+import { NavigationIndependentTree, NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import Login from './screens/Login';
+import Register from './screens/Register';
+import Main from './screens/Main';
+import { View } from 'react-native';
 
-function HomeScreen({ navigation }) {
+
+const Stack = createStackNavigator();
+
+function AppStack(){
+
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Button onPress={navigation.openDrawer} title="Open navigation drawer" />
-      <Button
-        onPress={() => navigation.navigate("Notifications")}
-        title="Go to notifications"
-      />
-    </View>
+    <Stack.Navigator screenOptions={{
+      headerTitle:'',
+      headerTransparent:true,
+      headerLeft: () => {return <View></View>}
+    }}>
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="Main" component={Main} />
+  </Stack.Navigator>
   );
 }
-
-function NotificationsScreen({ navigation }) {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Button onPress={navigation.openDrawer} title="Open navigation drawer" />
-      <Button onPress={() => navigation.goBack()} title="Go back home" />
-    </View>
-  );
-}
-
-const Drawer = createDrawerNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Drawer.Navigator initialRouteName="Home">
-        <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Notifications" component={NotificationsScreen} />
-      </Drawer.Navigator>
+      <AppStack/>
     </NavigationContainer>
   );
 }
