@@ -78,6 +78,7 @@ function HomeScreen() {
 
   const showAlert = (msg,action) => Alert.alert(msg,action,[{text: 'Ok',style: 'cancel',},],{cancelable: true},);
 
+  NativeModules.MyNativeModule.myNativeMethod("in").then(res => {console.log(res)});
 
   async function checkNfcSupport() {
     try {
