@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, Icon, TouchableHighlight, Alert } from 'react-native';
+import { View, Text, StyleSheet, Button, Image, Icon, NativeEventEmitter , TouchableOpacity, TouchableHighlight, Alert } from 'react-native';
 import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
 import { NavigationContainer,NavigationIndependentTree } from '@react-navigation/native';
 import sample_data from '../scripts/sample/encrypt';
@@ -9,8 +9,10 @@ import { ScrollView } from 'react-native-gesture-handler';
 import NfcManager, {Ndef, NfcTech, NfcEvents} from 'react-native-nfc-manager';
 import bad_image from '../scripts/sample/bad_image';
 import { NativeModules } from 'react-native';
+const { MyNativeModule } = NativeModules;
 
 const Drawer = createDrawerNavigator();
+const emitter = new NativeEventEmitter(MyNativeModule);
 
 function get_column(jsonData){
   const {_, data} = jsonData;
@@ -78,11 +80,12 @@ function HomeScreen() {
 
   const showAlert = (msg,action) => Alert.alert(msg,action,[{text: 'Ok',style: 'cancel',},],{cancelable: true},);
 
-  NativeModules.MyNativeModule.myNativeMethod("in").then(res => {console.log(res)});
+  NativeModules.MyNativeModule.readyState().then(res => {console.log(res)}).catch(err => console.error(err));
+  NativeModules.MyNativeModule.onIntent().then(res => {console.log(res)}).catch(err => console.error(err));
 
   async function checkNfcSupport() {
     try {
-        const supported = await NfcModule.isNfcSupported();
+        // const supported = await NfcModule.isNfcSupported();
         console.log("NFC Supported:", supported);
         setSupport(supported);
     } catch (error) {
@@ -91,28 +94,30 @@ function HomeScreen() {
     }
 }
 
-  useEffect(() => {
-    if (!NfcModule || !NfcModule.scanCard) {
-        console.error("❌ NFC Module is not linked properly!");
-    } else {
-        console.log("✅ NFC Module Loaded Successfully!");
-    }
+  // useEffect(() => {
+  //   if (!NfcModule || !NfcModule.scanCard) {
+  //       console.error("❌ NFC Module is not linked properly!");
+  //   } else {
+  //       console.log("✅ NFC Module Loaded Successfully!");
+  //   }
 
-    checkNfcSupport();
-  }, []);
+  //   checkNfcSupport();
+  // }, []);
 
   async function scanNfcCard() {
     try {
         console.log("Starting NFC Scan...");
-        const cardData = await NfcModule.scanCard();
-        console.log("NFC Card Data:", cardData);
+        // const cardData = await NfcModule.scanCard();
+        NativeModules.MyNativeModule.onIntent().then(res => {console.log(res)}).catch(err => console.error(err));
 
-        // Process scanned NFC data
-        let decryptedData = decrypt_data(cardData, "123456789123456789123456");
-        let col = get_column(decryptedData);
-        setData(decryptedData);
-        setColumn(col);
-        setImage(generate_image(decryptedData.data[col.profile_col]) || bad_image);
+        // console.log("NFC Card Data:", cardData);
+
+        // // Process scanned NFC data
+        // let decryptedData = decrypt_data(cardData, "123456789123456789123456");
+        // let col = get_column(decryptedData);
+        // setData(decryptedData);
+        // setColumn(col);
+        // setImage(generate_image(decryptedData.data[col.profile_col]) || bad_image);
 
     } catch (error) {
         console.error("NFC Scan Error:", error.message);
@@ -318,6 +323,69 @@ function CustomDrawerContent({props,params}) {
   );
 }
 
+
+// Initialize NFC on app launch
+
+const NfcReader = () => {
+  const [tagData, setTagData] = useState(null);
+  const [nfc, setNfcData] = useState(null);
+  
+  
+  useEffect(()=>{
+    emitter.addListener('onNfcScan', (data) => {
+      
+      setNfcData(data);
+      console.log(data);
+      MyNativeModule.endNfcScan()
+    })
+    console.log("event attached")
+    
+  }, [])
+  // Function to read NFC tag
+  const readNfcTag = async () => {
+    try {
+      
+      MyNativeModule.readyState().then(res => {console.log(res)}).catch(err => console.error(err));
+      MyNativeModule.startNfcScan()
+      // Request NFC tech (NDEF)
+      
+      // Read the tag
+    } catch (error) {
+      console.warn("NFC Error:", error);
+    } finally {
+      // Stop NFC detection
+    }
+  };
+
+  console.log("NFC Event: ",nfc)
+
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 20, marginBottom: 20 }}>NFC Reader</Text>
+
+      <TouchableOpacity
+        onPress={readNfcTag}
+        style={{
+          backgroundColor: "#007AFF",
+          padding: 15,
+          borderRadius: 10,
+        }}
+      >
+        <Text style={{ color: "#fff", fontSize: 18 }}>Scan NFC</Text>
+      </TouchableOpacity>
+
+      {tagData && (
+        <View style={{ marginTop: 20 }}>
+          <Text>NFC Tag Data:</Text>
+          <Text>{JSON.stringify(tagData, null, 2)}</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+
+
 // Main App Component
 export default function App({navigation,route}) {
   return (
@@ -325,7 +393,7 @@ export default function App({navigation,route}) {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent props={{...props}} params={route.params} />}
       >
-        <Drawer.Screen name="Home" component={HomeScreen} options={{drawerItemStyle: {marginBottom:10}}}/>
+        <Drawer.Screen name="Home" component={NfcReader} options={{drawerItemStyle: {marginBottom:10}}}/>
       </Drawer.Navigator>
     </NavigationIndependentTree>
   );
@@ -449,4 +517,3 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 });
-
