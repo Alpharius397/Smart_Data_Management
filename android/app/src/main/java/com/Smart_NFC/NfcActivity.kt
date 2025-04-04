@@ -186,9 +186,6 @@ class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
 
     override fun onTagDiscovered(tag: Tag?) {
         if (tag == null) return  // Ensure the tag is not null
-        if(this.lock) return
-
-        this.lock=true
 
         var text: Result = cardLogic(tag)
         reactApplicationContext
