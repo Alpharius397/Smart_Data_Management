@@ -37,31 +37,53 @@ import javax.crypto.Cipher
 import javax.crypto.NoSuchPaddingException
 import javax.crypto.spec.IvParameterSpec
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import kotlin.text.replace
 
 data class Result(var ok: Boolean, var msg: String?, var module: String)
 
-class MyNativeModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), NfcAdapter.ReaderCallback {
+class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), NfcAdapter.ReaderCallback {
 
     private val stringBuilder = StringBuilder()
     private var libInstance: NxpNfcLib? = null
     private var mCardLogic: CardActionsLogic? = null
     private var context = reactContext
+    private var lock: Boolean = false
     companion object {
         var mString: String? = ""
     }
 
     override fun getName(): String {
-        return "MyNativeModule"
+        return "NfcModule"
     }
 
-    private fun JSON(r: Result): String{
-        return "{\"ok\":${r.ok}, \"msg\":\"${r.msg}\", \"module\":\"${r.module}\"}"
+    private fun hexToAscii(hexStr: String?): String {
+
+        if(hexStr==null) return ""
+
+        val regex = Regex("^(.*?):([0-9A-F]+)$")
+        val output = StringBuilder()
+        var cleanString: String = hexStr.replace("\n", "").replace(" ", "")
+        val matches = regex.findAll(cleanString)
+        var Hex: String = matches.map { it.groupValues[2] }.joinToString()
+
+        for (i in Hex.indices step 2) {
+            val str = Hex.substring(i, i + 2)
+            output.append(str.toInt(16).toChar())
+        }
+    
+        return output.toString().replace("\n", "")
+    }
+    
+
+    private fun JSON(r: Result, hex: Boolean = false): String{
+        var msg: String = if (hex) hexToAscii(r.msg) else r.msg?:"null"
+        return """{"ok":"${r.ok}","msg":"${msg}","module":"${r.module}"}"""
     }
 
     @ReactMethod
     fun ___DESFireCheck(promise: Promise) {
         try{
-            val a = DESFireFactory.getInstance()
+            DESFireFactory.getInstance()
             promise.resolve(JSON(Result(true, "okay", "DESFIRE")))
 
             // promise.resolve(a.toString())
@@ -142,6 +164,17 @@ class MyNativeModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
         val activity = getCurrentActivity()
         val nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(context)
         nfcAdapter?.enableReaderMode(activity, this, NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B, null)
+        this.lock = false
+    }
+
+    @ReactMethod
+    fun addListener(eventName: String) {
+        // Keep: Required for RN built in Event Emitter Calls.
+    }
+
+    @ReactMethod
+    fun removeListeners(count: Integer) {
+        // Keep: Required for RN built in Event Emitter Calls.
     }
 
     @ReactMethod
@@ -153,10 +186,14 @@ class MyNativeModule(reactContext: ReactApplicationContext) : ReactContextBaseJa
 
     override fun onTagDiscovered(tag: Tag?) {
         if (tag == null) return  // Ensure the tag is not null
-            var text: Result = cardLogic(tag)
-            reactApplicationContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                .emit("onNfcScan", JSON(text))
+        if(this.lock) return
+
+        this.lock=true
+
+        var text: Result = cardLogic(tag)
+        reactApplicationContext
+            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+            .emit("onNfcScan", JSON(text, true))
     }
 
     private fun initializeCipherinitVector() {

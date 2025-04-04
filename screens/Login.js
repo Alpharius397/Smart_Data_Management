@@ -24,7 +24,7 @@ export default function Login({ navigation }) {
 
   const handleLogin = () => {
 
-    if(true || user=='test' && password=='1234'){
+    if(true && user=='test' && password=='1234'){
         showAlert('Login','Login Successful');
         navigation.navigate("Main",{user:user});
     }
