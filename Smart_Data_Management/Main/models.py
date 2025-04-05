@@ -6,7 +6,6 @@ from django.conf import settings
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 
-
 class MongoTemplate:
     """
         Data Structure:

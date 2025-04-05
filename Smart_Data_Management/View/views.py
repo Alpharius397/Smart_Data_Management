@@ -765,8 +765,13 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         api_key = req.POST.get("api_key",None)
         secure_key = req.POST.get("secure_key",None)
         status = req.POST.get("status",None)
+        cardID = req.POST.get("cardID", None)
         
-        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+        
+        if(cardID is None):
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
+        
+        elif(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
             
             conn = MongoConnection().connect()
             Redis = RedisConnection().connect()
@@ -814,7 +819,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 Redis.close()
                 
             return JsonResponse(data={"error_occurred":error, "update_occurred":res},status=200)
-    
+        
         else:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
     

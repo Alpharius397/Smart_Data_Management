@@ -13,6 +13,7 @@ urlpatterns = [
 	path('dash/',include('Dash.urls','Dash')),
 	path('view/',include('View.urls','View')),
 	path('logs/',include('Logs.urls','Logs')),
+	path('certificate/',include('Certificate.urls','Certificate')),
 ]
 admin.site.site_header = "System Admin"
 admin.site.site_title = "Admin Portal"

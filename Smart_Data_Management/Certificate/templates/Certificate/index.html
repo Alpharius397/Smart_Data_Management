@@ -1,0 +1,73 @@
+{% load template %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/read.css' %}">
+    <title>User Task Dashboard</title>
+
+    <style>
+        img{
+            display: block;
+            margin: auto;
+        }
+
+        .spinner{
+            width: 200px;
+        }
+
+        h2{
+            width: max-content;
+            margin: 10px auto;
+        }
+
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+            
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            header .user-log, header .add-task{
+                color: {{request.session.mainColor}};
+            }
+
+            .personal-info p{
+                color: {{request.session.secColor}};
+            }
+        {% endif %}
+    </style>
+
+</head>
+
+<body>
+    <header>
+        <h1>Verify Certificate</h1>
+    </header>
+
+    <div class="container">
+        <div class="tableView" hx-get="{% url 'Dash:ping_read' %}" hx-trigger="every 2s" hx-target="this" hx-swap="outerHTML">
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
+            <h2> Attempting to Read....</h2>
+        </div>
+
+    </div>
+
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+<script>
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+        console.log("Firing exe"); window.location.href="{{path}}{{url}}";
+    });
+</script>
+
+</html>

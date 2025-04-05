@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'Upload',
     'View',
     'Logs',
+    'Card',
+    'Certificate'
 ]
 
 MIDDLEWARE = [

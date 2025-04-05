@@ -1,0 +1,59 @@
+{% load template %}
+
+
+{% if error %}
+    <div class="tableView">
+
+        <ul class="messages">
+            <li class="error">{{error}}</li>
+        </ul>
+    </div>
+
+{% else %}
+    <div class="tableView">
+
+        <div class="header-box">
+            {{university}} - {{institute}} - {{branch}}
+        </div>
+        <div class="container-box">
+            <div class="image-box">
+                {% if pic %}
+                    {% with image=data|index_str:pic|img %}
+                        <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+                    {% endwith %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="personal-info">
+
+            {% for i in personal %}
+                <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
+            {% endfor %}
+
+        </div>
+
+        <div class="semester-info">
+            <div class="semester-row">
+
+                {% for sem,subs in sem_dict.items %}
+                    <div class="semester">
+                        <h3>Semester {{sem}}</h3>
+
+                        {% for sub in subs %}
+                            <p><strong>{{sub|clean}}:</strong>{{data|index_str:sub}}</p>
+                        {% endfor %}
+
+                    </div>
+                    
+                {% endfor %}
+
+            </div>
+        </div>
+
+    </div>
+
+    {% if time %}
+        <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
+    {% endif %}
+{% endif %}

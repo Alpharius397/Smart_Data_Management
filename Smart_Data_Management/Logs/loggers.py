@@ -29,6 +29,7 @@ class Task:
     UNAUTH_REQ:int = 11
     CARD_DATA_FETCH:int = 12
     INVALID_TOKEN:int = 13
+    INVALID_ID: int = 14
 
 class Auth:
     ADMIN:int = "Admin"
@@ -224,6 +225,7 @@ class LogStructure:
             case Task.UNAUTH_REQ: return f"Received unauthorized request for Card Issue"
             case Task.CARD_DATA_FETCH: return f"Authenticated Card Data Fetch"
             case Task.INVALID_TOKEN: return f"Token is either expired or completed!"
+            case Task.INVALID_ID: return f"Card ID was not found!"
             case _: self.exception = exception
         
         return None

@@ -196,6 +196,37 @@ func FetchUrl(request_url string, log Logger) (FetchJson) {
 	return data
 }
 
+func GetCardID(exe_path string, log Logger) string {
+	args, err := json.Marshal(CardArgs{}.LoadCreds("GetID",""))
+
+	res := "Null"
+
+	if err != nil {
+		log.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
+		return res
+	}
+
+	cmd := exec.Command(exe_path, string(args))
+	var out strings.Builder
+	var errStd strings.Builder
+
+	cmd.Stdout = &out
+	cmd.Stderr = &errStd
+	cmd.Dir = get_last_windows(exe_path)
+
+	err = cmd.Run()
+
+	// if err != nil {
+	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+		
+	// } else {
+		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
+		res = out.String()
+	// }
+	
+	return res
+}
+
 func WriteCard(exe_path string, data string, response_url string, log Logger) {
 
 	args, err := json.Marshal(CardArgs{}.LoadCreds("WriteData",data))
@@ -216,13 +247,15 @@ func WriteCard(exe_path string, data string, response_url string, log Logger) {
 
 	err = cmd.Run()
 
+	cardID := GetCardID(exe_path, log)
+
 	// if err != nil {
 	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
 	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was unsuccessful","status":"false"}))
 		
 	// } else {
 		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was successful","status":"true"}))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was successful","status":"true","cardID":cardID}))
 	// }
 	
 	if httpError != nil {
