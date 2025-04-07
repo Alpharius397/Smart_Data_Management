@@ -17,6 +17,18 @@ class ColorAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         
         if(is_admin(request.user)):
-            return Color.objects.filter(Q(institute__id=request.user.branch.institute.id))
+            return Color.objects.filter(Q(institute__id=request.user.admin.belongs.institute.id))
         
-        return super().get_queryset(request)
+        if(request.user.is_superadmin):
+            return Color.objects.all()
+
+        
+        return Color.objects.none()
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        
+        if (db_field.name=="institute"):
+            
+            kwargs["queryset"] = Institute.objects.filter(id=request.user.admin.belongs.institute.id)
+        
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)

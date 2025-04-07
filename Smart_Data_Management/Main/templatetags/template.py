@@ -107,3 +107,16 @@ def url_date(obj:datetime):
         return obj.strftime("%Y-%m-%d")
     except:
         return "Incorrect Time Format"
+    
+@register.filter(name="rgb")
+def rgb(obj: str, opacity: int = 1):
+    r = g = b = 255
+    a = re.findall(r'#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})', obj)
+    
+    try:
+        r, g, b = list(map(lambda x: int(x,16), next(iter(a))))
+        
+    except Exception as e:
+        pass
+    
+    return f"rgb({r},{g},{b},{opacity})"

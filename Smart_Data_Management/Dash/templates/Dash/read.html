@@ -26,6 +26,15 @@
             margin: 10px auto;
         }
 
+        .retry{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .retry button{
+            grid-column: 2/3;
+        }
+
         {% if request.session.mainColor and request.session.secColor %}
             header{
                 background-color: {{request.session.mainColor}};
