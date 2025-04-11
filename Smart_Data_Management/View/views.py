@@ -16,12 +16,15 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_auth_post, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color
+from tools.url_auth import is_auth_post, is_hx_delete, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color, is_hx_put
 from View.forms import VerifyForm
 from django.utils import timezone
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from django.views.decorators.csrf import csrf_exempt
 from tools.token import get_token, hash_token
+from Card.models import Card
+from django.utils import timezone
+from django.http import QueryDict
 
 MAX_RECORD:int = 5
 LOADING:str = "Loading"
@@ -239,25 +242,66 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         return render(req,'View/HTMX/form.html',context=context)
     
     
-    elif(is_authenticated(req.user) and is_hx_post(req) and is_admin(req.user)):
+    elif(is_authenticated(req.user) and is_hx_put(req) and is_admin(req.user)):
         
         conn = MongoConnection().connect()
         result:dict[str,dict[str,dict]] = None
         file_name:str = None
         context = {'id':id}
 
-        user:str = req.POST.get('user',None)
-        to_do = req.POST.get('to_do',None)
-
-        match to_do:
-            case "assign": to_do = True
-            case "delete": to_do = False
-            case _: to_do = None
-        
-        if(to_do is None or user is None):
-            context['error'] = "User not found"
+        putDict = QueryDict(req.body)
+        user:str = putDict.get('user',None)
+            
+        try:
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/message.html',context=context)
             
+        
+        try:
+            manager = [i for i in result.get('header',{}).get('manager',[])]
+            file_name = result.get("data",{}).get("header",{}).get("file_name",None)
+            all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
+            _manage = Manager.objects.get(user__id=user)
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
+        
+        try:
+            
+            if(_manage.user.id in manager):
+                context['msg'] = "Manager %(manage)s is already assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+            else:
+                manager.append(_manage.user.id)
+                manager = list(set(manager))
+                
+                conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_ASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
+                context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
+        
+        finally:
+            conn.close()
+            
+        return render(req,'View/HTMX/message.html',context=context)
+    
+    elif(is_authenticated(req.user) and is_hx_delete(req) and is_admin(req.user)):
+        conn = MongoConnection().connect()
+        result:dict[str,dict[str,dict]] = None
+        file_name:str = None
+        context = {'id':id}
+
+        user:str = req.GET.get('user',None)
+
         try:
             result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
             
@@ -278,28 +322,16 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             return render(req,'View/HTMX/message.html',context=context)
         
         try:
-            if(to_do):
-                
-                if(_manage.user.id in manager):
-                    context['msg'] = "Manager %(manage)s is already assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
-                else:
-                    manager.append(_manage.user.id)
-                    manager = list(set(manager))
-                    
-                    conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_ASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
-                    context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+            
+            if(_manage.user.id not in manager):
+                context['msg'] = "Manager %(manage)s was not assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
             else:
+                manager.remove(_manage.user.id)
+                manager = list(set(manager))
                 
-                if(_manage.user.id not in manager):
-                    context['msg'] = "Manager %(manage)s was not assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
-                else:
-                    manager.remove(_manage.user.id)
-                    manager = list(set(manager))
-                    
-                    conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_UNASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
-                    context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+                conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_UNASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
+                context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -533,34 +565,49 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
 
             return render(req,'View/single/manager_form.html',context=context)
         
-        elif(is_hx_post(req)):
-            to_do = req.POST.get("to_do")
+        elif(is_hx_put(req)):
             
             conn = MongoConnection().connect()
             
             context = {'id':id,'idx':idx}
-            timestamp = None
-            locked = None
-
-            match(to_do):
-                case "issue": locked = True
-                case "cancel": locked = False
-                case _: locked = False
-                
-            if(locked):
-                timestamp = timezone.now().isoformat()
+            timestamp = timezone.now().isoformat()
             
             try:
                 time_issue = f"data.feed.{idx}.time_of_lock"
                 locked_col = f"data.feed.{idx}.locked"
-                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:locked}})
+                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:True}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
 
-                if(res and locked): 
+                if(res): 
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_LOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
                     context['msg'] = "Card Issued"
-                
-                elif(res): 
+                    
+                else: context['error'] = "Data updation failed"
+            
+            except Exception as e:
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+                context['error'] = DEFAULT_ERROR
+                return render(req,'View/HTMX/message.html',context=context)
+            
+            finally:
+                conn.close()
+            
+            return render(req,'View/HTMX/message.html',context=context)
+            
+        elif(is_hx_delete(req)):
+            
+            conn = MongoConnection().connect()
+            
+            context = {'id':id,'idx':idx}
+            timestamp = timezone.now().isoformat()
+            
+            try:
+                time_issue = f"data.feed.{idx}.time_of_lock"
+                locked_col = f"data.feed.{idx}.locked"
+                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:False}})
+                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+
+                if(res): 
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_UNLOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
                     context['msg'] = "Card Cancelled"
                     
@@ -767,11 +814,10 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         status = req.POST.get("status",None)
         cardID = req.POST.get("cardID", None)
         
-        
         if(cardID is None):
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
         
-        elif(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
             
             conn = MongoConnection().connect()
             Redis = RedisConnection().connect()
@@ -797,6 +843,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                     return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
                 
                 if(status):
+                    Card.attemptSave(cardID=cardID,mongoID=id,rowIndex=idx)
                     res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
                     Redis.set(token,DONE)
                 else:
@@ -805,7 +852,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 
                 if(res and status):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
-                
+
                 elif(res and (status is not None)):
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
                 

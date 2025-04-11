@@ -12,7 +12,7 @@ from Main.models import *
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt
-
+from tools.encrypt import monthYearHash, jsonHash
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
@@ -145,7 +145,6 @@ def read_view(req: HttpRequest)-> HttpResponse:
             sem_data = r'.+Sem_(\d+)$'
             
             result, header = data.get('data',{}), data.get('header',{})
-            
             columns = result.keys()
             
             profile_col = [i for i in columns if re.match(profile_img,i)]
@@ -156,6 +155,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
             
             profile_col = profile_col[0] if profile_col else None
             
+            hashedJson = f"{monthYearHash()}{jsonHash(result)}"
             
             wid, hei, data = result[profile_col].split(":")
 
@@ -169,7 +169,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
                     sem_dict[sem].append(i)
 
             view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
-            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,**header})
+            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,**header})
 
         except Exception as e:
             print(e,context)
@@ -243,7 +243,7 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
                 return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
             
-            Redis.set(token,data[10:])
+            Redis.set(token,data)
             Redis.close()
             return JsonResponse(data={"info":"Data received", "status":True},status=200)
         else:

@@ -6,6 +6,7 @@ from tools.url_auth import is_hx_post, is_hx_get
 from User.models import Manager, Admin
 from University.models import Institute, Branch
 from Logs.loggers import DEFAULT_ERROR
+from django.db.models import Q
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -22,10 +23,10 @@ def register_view(req:HttpRequest) -> HttpResponse:
             branch = f.cleaned_data.get("branch")
             
             try:
-                exists = User.objects.filter(username=user).exists()
-                
+                exists = User.objects.filter(Q(username=user)|Q(email=email)).exists()
+
                 if(exists):
-                    context['error'] = "Username already exists"
+                    context['error'] = "Username/Email already exists"
                     return render(req,'HTMX/message.html',context=context)
                     
             except Exception as e:

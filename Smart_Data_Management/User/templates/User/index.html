@@ -46,6 +46,29 @@
             display: inline;
         }
 
+        {% if request.session.mainColor and request.session.secColor %}
+            header{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
+
+            body{
+                color: {{request.session.mainColor}};
+            }
+
+            header .user-log, header .add-task{
+                color: {{request.session.mainColor}};
+            }
+
+            .task-item h3{
+                color: {{request.session.mainColor}};
+            }
+
+            .container{
+                background-color: {{request.session.secColor}};
+            }
+
+        {% endif %}
 
     </style>
 </head>
@@ -86,8 +109,21 @@
             </div>
         </div>
 
+        <div class="user-tab">
+            Password: 
+            <div hx-get="{% url 'User:passChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
+                {% csrf_token %}
+                ********************************
+                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+            </div>
+        </div>
+
     </div>
 
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
+<script src="{% static 'js/script.js' %}"></script>
+<script>
+    add_csrf();
+</script>
 </html>

@@ -13,6 +13,29 @@ function dontAskWhy(){
 
 function add_csrf(){
     document.body.addEventListener('htmx:configRequest', function (event) {
-        event.detail.headers['X-CSRFToken'] = document.getElementsByName('csrfmiddlewaretoken').value;
+        event.detail.headers['X-CSRFToken'] = document.getElementsByName('csrfmiddlewaretoken')?.[0].value;
     });
+}
+
+/**
+ * 
+ * @param {HTMLElement} form 
+ * @returns {Map}
+ */
+
+function formValue(formID){
+    const NODE = document.getElementById(formID);
+    let children = NODE.childNodes;
+    let memo = {};
+    console.log(children);
+    
+    for(let i of children){
+        if(i.name!="" && i.name!=undefined){
+            memo[i.name] = i.value;
+        }
     }
+
+    console.log(memo);
+    
+    return memo;
+}

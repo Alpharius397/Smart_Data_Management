@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
     <link rel="stylesheet" href="{% static 'styles/read.css' %}">
     <title>User Task Dashboard</title>
-
     <style>
         img{
             display: block;
@@ -26,26 +25,52 @@
             margin: 10px auto;
         }
 
+        .retry{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .retry button{
+            grid-column: 2/3;
+        }
+
         {% if request.session.mainColor and request.session.secColor %}
-            header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
-            
-            body{
-                color: {{request.session.mainColor}};
-            }
+        header{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
+        }
+        
+        body{
+            color: {{request.session.mainColor}};
+        }
 
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
+        .semester{
+            background-color: {{request.session.mainColor|rgb:0.7 }};
+        }
 
-            .personal-info p{
-                color: {{request.session.secColor}};
-            }
-        {% endif %}
+        .header-box{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester h3 {
+            border-color: {{request.session.secColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester p {
+            color: {{request.session.secColor}};
+        }
+
+        header .user-log{
+            color: {{request.session.mainColor}};
+        }
+
+        .personal-info p{
+            color: {{request.session.mainColor}};
+        }
+    {% endif %}
     </style>
-
 </head>
 
 <body>
@@ -54,20 +79,14 @@
     </header>
 
     <div class="container">
-        <div class="tableView" hx-get="{% url 'Dash:ping_read' %}" hx-trigger="every 2s" hx-target="this" hx-swap="outerHTML">
+        <div class="tableView" hx-get="{% url 'Certificate:__check' certificate=certificate cardID='048261826a1e80' %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
             <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
-            <h2> Attempting to Read....</h2>
+            <h2> Attempting Authentication....</h2>
         </div>
 
     </div>
 
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
-<script>
-
-    document.addEventListener("DOMContentLoaded", function(event) {
-        console.log("Firing exe"); window.location.href="{{path}}{{url}}";
-    });
-</script>
 
 </html>

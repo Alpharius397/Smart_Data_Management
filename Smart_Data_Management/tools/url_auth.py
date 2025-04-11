@@ -10,14 +10,26 @@ from django.contrib.auth.models import User
 def is_hx_get(req:HttpRequest) -> bool:
     return bool((req.method=="GET") and req.META.get('HTTP_HX_REQUEST'))
 
-def is_hx_post(req:HttpRequest) -> bool:
-    return bool((req.method=="POST") and req.META.get('HTTP_HX_REQUEST'))
-
 def is_auth_get(req: HttpRequest) -> bool:
     return bool(is_authenticated(req.user) and req.method=='GET')
 
+def is_hx_post(req:HttpRequest) -> bool:
+    return bool((req.method=="POST") and req.META.get('HTTP_HX_REQUEST'))
+
 def is_auth_post(req: HttpRequest) -> bool:
     return bool(is_authenticated(req.user) and req.method=='POST')
+
+def is_hx_put(req:HttpRequest) -> bool:
+    return bool((req.method=="PUT") and req.META.get('HTTP_HX_REQUEST'))
+
+def is_auth_put(req: HttpRequest) -> bool:
+    return bool(is_authenticated(req.user) and req.method=='PUT')
+
+def is_hx_delete(req:HttpRequest) -> bool:
+    return bool((req.method=="DELETE") and req.META.get('HTTP_HX_REQUEST'))
+
+def is_auth_delete(req: HttpRequest) -> bool:
+    return bool(is_authenticated(req.user) and req.method=='DELETE')
 
 def auth_needed(req:HttpRequest) -> HttpResponse:
     return redirect(reverse(settings.LOGIN_URL) + f"?next={req.path}&alert=Unauthenticated Request!")

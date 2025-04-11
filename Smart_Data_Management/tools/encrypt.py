@@ -1,8 +1,13 @@
 from Crypto.Cipher import DES3
+from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
+from datetime import datetime
+from django.utils import timezone
 import zlib
 import json
+
+IV_LENGTH: int = 12
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:
@@ -16,14 +21,21 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
     
     encrypted_b64 = b64encode(encrypted).decode()
     
-    return f"{iv}:{encrypted_b64}"
+    return f"{iv}{encrypted_b64}"
 
 # Decryption Function
 def decrypt_data(key: bytes, encrypted_data: str) -> str:
-    iv, encrypted_b64 = encrypted_data.split(":")
+    iv, encrypted_b64 = encrypted_data[:IV_LENGTH], encrypted_data[IV_LENGTH:]
     iv = b64decode(iv)
     encrypted = b64decode(encrypted_b64)
     cipher = DES3.new(key, DES3.MODE_CBC, iv)
     decrypted = cipher.decrypt(encrypted)
     decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
     return json.loads(decompressed.decode())
+
+def monthYearHash():
+    nowTime = datetime.now(timezone.get_current_timezone())
+    return SHA256.new(f"{nowTime.month}/{nowTime.year}".encode()).hexdigest()
+
+def jsonHash(jsons: dict):
+    return SHA256.new(json.dumps(jsons).encode()).hexdigest()

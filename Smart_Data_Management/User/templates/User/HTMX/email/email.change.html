@@ -4,5 +4,5 @@
     {% csrf_token %}
     <input type="email" value="{{request.user.email}}" name="user">
     <button class="upload-button">Change Email</button>
-    <button type="cancel" id="cancel" class="upload-button">Cancel</button>
+    <button type="cancel" id="cancel" class="upload-button" hx-put="{% url 'User:mailChange' %}" hx-swap="outerHTML">Cancel</button>
 </form>

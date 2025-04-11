@@ -17,6 +17,19 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+
+func extractMsg(s string) (string, bool) {
+	re := regexp.MustCompile(`:(\s*)(?<data>([a-zA-Z0-9\s:=+/]+))(\s*)$`)
+
+	matches := re.FindStringSubmatch(s)
+
+	if matches==nil {
+		return "Pattern Not Found", false
+	}
+
+	return strings.TrimSpace(matches[re.SubexpIndex("data")]) , true
+}
+
 // Get the url from the args
 func get_url(s string) (string, error) {
 	re := regexp.MustCompile("(?P<proto>https|http)//(?P<url>[a-zA-Z0-9.:/]+)$")
@@ -196,35 +209,44 @@ func FetchUrl(request_url string, log Logger) (FetchJson) {
 	return data
 }
 
-func GetCardID(exe_path string, log Logger) string {
+func GetCardID(exe_path string, log Logger) (id string, err error) {
 	args, err := json.Marshal(CardArgs{}.LoadCreds("GetID",""))
 
 	res := "Null"
 
 	if err != nil {
 		log.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
-		return res
+		return res, err
 	}
 
 	cmd := exec.Command(exe_path, string(args))
 	var out strings.Builder
 	var errStd strings.Builder
-
 	cmd.Stdout = &out
 	cmd.Stderr = &errStd
 	cmd.Dir = get_last_windows(exe_path)
 
 	err = cmd.Run()
 
-	// if err != nil {
-	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
-		
-	// } else {
+	if (errStd.String()!="" || out.String()=="") {
+		log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+		return id, err
+
+	} else {
+
+		var cardError error = nil
+
 		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
-		res = out.String()
-	// }
-	
-	return res
+		
+		data, ok := extractMsg(out.String())
+		id = data
+
+		if(!ok){
+			cardError = errors.New("Failed to retrieve Card ID")
+		}
+
+		return id, cardError
+	}
 }
 
 func WriteCard(exe_path string, data string, response_url string, log Logger) {
@@ -247,16 +269,22 @@ func WriteCard(exe_path string, data string, response_url string, log Logger) {
 
 	err = cmd.Run()
 
-	cardID := GetCardID(exe_path, log)
+	cardID, err := GetCardID(exe_path, log)
 
-	// if err != nil {
-	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
-	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was unsuccessful","status":"false"}))
+	if err!=nil {
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
+		return
+	}
+	
+	if(out.String()=="" || errStd.String()!=""){
+		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed unsuccessfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
 		
-	// } else {
+	} else {
 		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Write was successful","status":"true","cardID":cardID}))
-	// }
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was successful","status":"true","cardID":cardID}))
+	}
+
 	
 	if httpError != nil {
 		log.WriteError("HTTP", httpError)
@@ -285,15 +313,15 @@ func ReadCard(exe_path string, response_url string, logger Logger) {
 
 	err = cmd.Run()
 
-	// if err != nil {
-	// 	logger.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
-	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
+	if (out.String()=="" || errStd.String()!="") {
+		logger.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
 	
-	// } else {
+	} else {
 		logger.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Args: \"%s\".Stdout: \"%s\", Stderr: \"%s\"", string(args), out.String(), errStd.String()))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":out.String()}))
-
-	// }
+		data, _ := extractMsg(out.String())
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":data}))
+	}
 
 	if httpError != nil {
 		logger.WriteError("HTTP", httpError)
@@ -302,12 +330,12 @@ func ReadCard(exe_path string, response_url string, logger Logger) {
 	}
 }
 
-func CreateCard(exe_path string, data string, response_url string, log Logger) {
+func CreateCard(exe_path string, data string, response_url string, logger Logger) {
 
 	args, err := json.Marshal(CardArgs{}.LoadCreds("CreateCard", ""))
 
 	if err != nil {
-		log.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
+		logger.WriteError("ARGS", errors.New(fmt.Sprintf("Parsing Args to JSON failed. Error: \"%s\"", err)))
 		return
 	}
 
@@ -322,19 +350,19 @@ func CreateCard(exe_path string, data string, response_url string, log Logger) {
 
 	err = cmd.Run()
 
-	// if err != nil {
-	// 	log.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: \"%s\". Error: \"%s\"", exe_path, string(args), err)))
-	// 	httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was unsuccessful","status":"false"}))
-		
-	// } else {
-		log.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Stdout: \"%s\", Stderr: \"%s\"", out.String(), errStd.String()))
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Card Creation was successful","status":"true"}))
-	// }
+	if (out.String()=="" || errStd.String()!="") {
+		logger.WriteError("EXE", errors.New(fmt.Sprintf("Failed to run the exe \"%s\". Args: %s. Error: \"%s\"", exe_path, string(args), err)))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
+	
+	} else {
+		logger.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Args: \"%s\".Stdout: \"%s\", Stderr: \"%s\"", string(args), out.String(), errStd.String()))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":out.String()}))
+	}
 	
 	if httpError != nil {
-		log.WriteError("HTTP", httpError)
+		logger.WriteError("HTTP", httpError)
 	} else {
-		log.WriteInfo("HTTP", fmt.Sprintf("Response to url: \"%s\" was send successfully",response_url))
+		logger.WriteInfo("HTTP", fmt.Sprintf("Response to url: \"%s\" was send successfully",response_url))
 	}
 }
 

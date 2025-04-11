@@ -58,4 +58,6 @@
     {% if time %}
         <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
     {% endif %}
+
+    <a href="{% url 'Certificate:certi' certificate=link cardID='048261826a1e80' %}">Click to Auth</a>
 {% endif %}
