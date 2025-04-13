@@ -19,3 +19,8 @@
 - This is a very basic example from the [react navigation](https://reactnavigation.org/) docs.
 - [Drawer navigation documentation](https://reactnavigation.org/docs/drawer-based-navigation).
 - [Reanimated Babel plugin may be required](https://github.com/software-mansion/react-native-reanimated/issues/3410)
+
+## How to connect PC to mobile
+  - adb devices
+  - adb reverse tcp:8000 tcp:8000 // Android -> PC:8000
+  - Access the site from android

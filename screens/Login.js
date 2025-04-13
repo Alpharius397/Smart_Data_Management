@@ -1,37 +1,57 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-
+import Axios from '../http/axios';
+import { setAccessToken, setRefreshToken } from '../storage/storage';
+import { isAxiosError } from 'axios';
 
 export default function Login({ navigation }) {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
 
   const showAlert = (msg,action) =>
-    Alert.alert(
-      msg,
-      action,
-      [
-        {
-          text: 'Ok',
-          style: 'cancel',
-        },
-      ],
-      {
-        cancelable: true
-      },
-    );
+    Alert.alert( msg, action, [{ text: 'Ok', style: 'cancel' }], { cancelable: true });
 
   const handleLogin = () => {
 
-    if(true && user=='test' && password=='1234'){
-        showAlert('Login','Login Successful');
-        navigation.navigate("Main",{user:user});
-    }
-    else{
-        showAlert('Login','Login Failed');
-    }
+      async function login() {
 
+        try{
+          const response = await Axios.post('user/auth/login/', 
+            {
+              "user": user,
+              "password": password
+            });
+          console.log(response.data);
+
+          const { token, refresh, status, error } = response.data;
+
+          if(error==null && status && token && refresh){
+            await Promise.all([setAccessToken(token), setRefreshToken(refresh)])
+          }
+
+          showAlert("Login Success", "Login Successful");
+          navigation.navigate('Main', {user:user})
+        }
+
+        catch(error){
+          if(isAxiosError(error)){
+            if(error.status==401){
+              showAlert("Login Failure", "Login Failed! Check username / password")
+            }
+            else if(error.status==500){
+              showAlert("Login Failure", "Server Error Occurred")
+            }
+            else if(error.status==403){
+              showAlert("Login Failure", "Unauthorized Entry")
+            }
+          }
+          console.warn(e);
+        }
+      }
+
+      login().then();
+    
 
   };
 

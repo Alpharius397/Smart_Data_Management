@@ -64,8 +64,6 @@ function HomeScreen() {
 
   const eventType = "onNfcScan";
 
-  const showAlert = (msg,action) => Alert.alert(msg,action,[{text: 'Ok',style: 'cancel',},],{cancelable: true},);
-
   async function checkNfcSupport() {
     try {
         const supported = await NfcModule.isSupported();
@@ -87,7 +85,6 @@ function HomeScreen() {
       try{
         var res=data.replace(/[\u0000-\u001F]/g, '');
         data = JSON.parse(res).msg;
-        console.log(res,data)
         setNfcData(data);
         scanning(data);
         emitter.removeAllListeners(eventType);
@@ -116,6 +113,7 @@ function HomeScreen() {
     if(Data==null) return
 
       let nfcdata = decrypt_data(Data,"123456789123456789123456");
+      console.log("JSON Data: ",nfcdata);
       let col = get_column(nfcdata);
       setData(nfcdata);
       setImage(generate_image(nfcdata.data[col.profile_col])||bad_image);
@@ -179,23 +177,46 @@ function HomeScreen() {
 
   }
 
+  const completeView = () => {
+    return (
+      <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.table}>
+              {(data && data.header) ? HeaderRender() : null}
+              {(image) ? ImageRender() : null}
+              {(data && data.data && column && column.personal_col) ? DataRender() : null}
+          </View>
+          {(data && data.data && column && column.sem_dict) ? SemRender() : null}
+  
+          {nfcSupport ? (
+              <Button onPress={startNfcScan} style={styles.button} title='Scan NFC Card' />
+          ) : (
+              <Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>
+          )}
+      </ScrollView>
+    );
+  }
 
-  return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.table}>
-            {(data && data.header) ? HeaderRender() : null}
-            {(image) ? ImageRender() : null}
-            {(data && data.data && column && column.personal_col) ? DataRender() : null}
+  const initialView = () => {
+    return (
+      <ScrollView contentContainerStyle={styles.centeredContainer}>
+        <View style={styles.buttonWrapper}>
+          {nfcSupport ? (
+              <Button onPress={startNfcScan} title='Scan NFC Card' />
+          ) : (
+              <Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>
+          )}
         </View>
-        {(data && data.data && column && column.sem_dict) ? SemRender() : null}
+      </ScrollView>
+  );
+  }
 
-        {nfcSupport ? (
-            <Button onPress={startNfcScan} style={styles.button} title='Scan NFC Card' />
-        ) : (
-            <Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>
-        )}
-    </ScrollView>
-);
+
+  const dataAvailable = () => {
+    return data && data.header && data.data && column && column.personal_col && image;
+  }
+
+  return (dataAvailable()?completeView():initialView());
+
 }
 
 
@@ -378,5 +399,17 @@ const styles = StyleSheet.create({
       textAlign:'center',
       color:'white',
       fontWeight:'bold',
-    }
+    },
+    centeredContainer: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 16,
+    },
+    
+    buttonWrapper: {
+      alignItems: 'center',
+      width:500
+    },
+    
 });
