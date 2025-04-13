@@ -890,7 +890,7 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
                     return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
                 if(verified):
-                    result.update({"data":{"data":compress_data(res,idx,False,True).getvalue().decode()}, "status":200})
+                    result.update({"data":{"data":compress_data(res,idx,True,True).getvalue().decode()}, "status":200})
                 else:
                     result.update({"data":{"error":f"Mongo ID: {id}, Index: {idx} is not locked"}, "status":403})
                     

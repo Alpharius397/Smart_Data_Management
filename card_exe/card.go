@@ -23,7 +23,7 @@ const api_key string = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741f
 const secret_key string = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
 
 func getAuthKey() string {
-	date := time.Now().Format("15:2:1:2006")
+	date := time.Now().Format("15:02:01:2006")
 	h := sha256.New()
 	h.Write([]byte(date))
 	h.Write([]byte(api_key))

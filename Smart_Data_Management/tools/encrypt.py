@@ -45,7 +45,7 @@ def getAuthKey():
     nowTime = datetime.now(timezone.get_current_timezone()).strftime("%H:%d:%m:%Y").encode()
     
     hashKey = SHA256.new(nowTime)
-    hashKey.update(settings.API_KEY)
-    hashKey.update(settings.SECURE_KEY)
+    hashKey.update(settings.API_KEY.encode())
+    hashKey.update(settings.SECURE_KEY.encode())
     
     return hashKey.hexdigest()

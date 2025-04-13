@@ -22,12 +22,11 @@ def get_image_data(sheet:openpyxl.worksheet.worksheet.Worksheet) -> dict[tuple[i
 def compress_image(img_data:BytesIO) -> str:
     image = Image.open(img_data)
     width, height = image.width, image.height
-        
     compressed = image.reduce(REDUCE_FACTOR)
     
     image_data = BytesIO()
     
-    compressed.save(image_data,format=image.format,quality=75)
+    compressed.save(image_data,format=image.format,quality=75, optimize=True)
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 
 def expand_image(img_data:str, width:int, height:int) -> str:
