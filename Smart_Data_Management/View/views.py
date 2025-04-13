@@ -14,7 +14,7 @@ from User.models import Manager, get_post_id, is_admin, is_manager, is_authentic
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
-from tools.encrypt import encrypt_data, decrypt_data
+from tools.encrypt import encrypt_data, decrypt_data, getAuthKey
 from Main.templatetags.bad_image import bad_image
 from tools.url_auth import is_auth_post, is_hx_delete, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color, is_hx_put
 from View.forms import VerifyForm
@@ -205,7 +205,6 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
     
     else:
         return auth_needed(req)
-
 
 def assign_form(req:HttpRequest, id:str) -> HttpResponse:
     
@@ -810,14 +809,13 @@ def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
 def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
         api_key = req.POST.get("api_key",None)
-        secure_key = req.POST.get("secure_key",None)
         status = req.POST.get("status",None)
         cardID = req.POST.get("cardID", None)
         
         if(cardID is None):
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
         
-        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+        if(api_key==getAuthKey()):
             
             conn = MongoConnection().connect()
             Redis = RedisConnection().connect()
@@ -876,9 +874,8 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
 def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
         api_key = req.POST.get("api_key",None)
-        secure_key = req.POST.get("secure_key",None)
 
-        if(api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+        if(api_key==getAuthKey()):
             conn = MongoConnection().connect()
             Redis = RedisConnection().connect()
             

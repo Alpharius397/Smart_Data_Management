@@ -1,5 +1,5 @@
 from django.contrib import admin
-from User.models import Admin, Manager, is_admin, get_post_id
+from User.models import Admin, Manager, is_admin, get_post_id, Student
 from django.db.models import Q
 from University.models import Branch
 from django.contrib.auth.models import User
@@ -80,6 +80,18 @@ class ManagerAdmin(admin.ModelAdmin):
                 kwargs["queryset"] = Branch.objects.filter(id=request.user.admin.belongs.id)
                             
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    search_fields = ('user__username',)
+    search_help_text = "Search by username"
+    
+    def get_queryset(self, request):
+        
+        if(request.user.is_authenticated and request.user.is_superuser):
+            return User.objects.all()
+        
+        return User.objects.none()
 
 
 @admin.register(Admin)

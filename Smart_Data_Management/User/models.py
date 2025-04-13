@@ -16,10 +16,22 @@ class Admin(Model):
     def __str__(self):
         return f"{self.user.username}:{self.belongs}"
 
+class Student(Model):
+    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='student')
+
+    def __str__(self):
+        return f"{self.user.username}"
 
 def is_manager(user:User) -> bool:
     try:
         manager = user.manager
+        return True
+    except:
+        return False
+
+def is_student(user:User) -> bool:
+    try:
+        student = user.student
         return True
     except:
         return False

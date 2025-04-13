@@ -6,6 +6,7 @@ from datetime import datetime
 from django.utils import timezone
 import zlib
 import json
+from django.conf import settings
 
 IV_LENGTH: int = 12
 
@@ -39,3 +40,12 @@ def monthYearHash():
 
 def jsonHash(jsons: dict):
     return SHA256.new(json.dumps(jsons).encode()).hexdigest()
+
+def getAuthKey():
+    nowTime = datetime.now(timezone.get_current_timezone()).strftime("%H:%d:%m:%Y").encode()
+    
+    hashKey = SHA256.new(nowTime)
+    hashKey.update(settings.API_KEY)
+    hashKey.update(settings.SECURE_KEY)
+    
+    return hashKey.hexdigest()

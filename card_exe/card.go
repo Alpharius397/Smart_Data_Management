@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -17,6 +19,17 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+const api_key string = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
+const secret_key string = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
+
+func getAuthKey() string {
+	date := time.Now().Format("15:2:1:2006")
+	h := sha256.New()
+	h.Write([]byte(date))
+	h.Write([]byte(api_key))
+	h.Write([]byte(secret_key))
+	return hex.EncodeToString(h.Sum(nil))
+}
 
 func extractMsg(s string) (string, bool) {
 	re := regexp.MustCompile(`:(\s*)(?<data>([a-zA-Z0-9\s:=+/]+))(\s*)$`)
@@ -140,16 +153,15 @@ func (c CardArgs) LoadCreds(what string, data string) CardArgs {
 func CREDS() url.Values {
 	f:=url.Values{}
 
-	f.Set("api_key","LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN")
-	f.Set("secure_key","FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB")
+	f.Set("api_key",getAuthKey())
 	
 	return f
 }
 
 func Response(memo map[string] string) url.Values {
 	f:=url.Values{}
-	f.Set("api_key","LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN")
-	f.Set("secure_key","FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB")
+
+	f.Set("api_key",getAuthKey())
 
 	for key,val := range(memo){
 		f.Set(key, val)
@@ -161,7 +173,7 @@ func Response(memo map[string] string) url.Values {
 func makeFetchPOST(request_url string, f url.Values) (FetchJson, error){
 	data := FetchJson{}
 
-	resp, err := http.PostForm(request_url, f)
+	resp, err := __Request("POST", request_url, f)
 
 	if err != nil {
 		return data, err
@@ -183,16 +195,34 @@ func makeFetchPOST(request_url string, f url.Values) (FetchJson, error){
 	return data, err
 }
 
-// One Way Request
-func makeResponsePOST(response_url string, f url.Values) (error){
-	resp, err := http.PostForm(response_url, f)
-	
+func __Request(method string, url string ,body url.Values) (*http.Response, error) {
+
+	request, err := http.NewRequest(method, url, strings.NewReader(body.Encode()))
+
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	defer resp.Body.Close()
-	
+	var authBearer strings.Builder
+
+	authBearer.WriteString("Bearer ")
+	authBearer.WriteString(getAuthKey())
+
+	request.Header.Add("Authorization", authBearer.String())
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := http.DefaultClient.Do(request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// One Way Request
+func makeResponsePOST(response_url string, f url.Values) (error){	
+	_, err := __Request("POST", response_url, f)
 	return err
 }
 

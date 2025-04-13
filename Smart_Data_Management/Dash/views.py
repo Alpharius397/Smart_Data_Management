@@ -2,9 +2,9 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import MongoConnection
 from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name, Admin, Manager
+from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
 from tools.url_auth import *
-from tools.encrypt import decrypt_data
+from tools.encrypt import decrypt_data, getAuthKey
 from tools.get_image import expand_image
 import typing
 import re
@@ -233,10 +233,9 @@ def check_write(req: HttpRequest) -> HttpResponse:
 def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
     if(req.method=="POST"):
         api_key = req.POST.get("api_key",None)
-        secure_key = req.POST.get("secure_key",None)
         data = req.POST.get("data",None)
 
-        if(data and api_key==settings.API_KEY and secure_key==settings.SECURE_KEY):
+        if(data and api_key==getAuthKey()):
             Redis = RedisConnection().connect()
             
             if(Redis.get(token)!=LOADING):

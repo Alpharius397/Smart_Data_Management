@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'View',
     'Logs',
     'Card',
-    'Certificate'
+    'Certificate',
 ]
 
 MIDDLEWARE = [
@@ -160,6 +160,12 @@ MONGO_CRED = MongoDB("smart","excel")
 KEY = b"123456789123456789123456"
 WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
+
 API_KEY = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
 SECURE_KEY = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
 REDIS = {'host':'localhost','port':6379}
+
+JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
+JWT_ALGORITHM = 'HS256'
+JWT_EXP_DELTA_MINUTES = 30
+REFRESH_EXP_DELTA_MINUTES = 360
