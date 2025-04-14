@@ -1,13 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, Icon, NativeEventEmitter , TouchableOpacity, TouchableHighlight, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Button, Image, NativeEventEmitter, TouchableHighlight, Alert } from 'react-native';
 import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
-import { NavigationContainer, NavigationIndependentTree } from '@react-navigation/native';
-import sample_data from '../scripts/sample/encrypt';
+import { NavigationIndependentTree, NavigationContext } from '@react-navigation/native';
 import {decrypt_data} from '../scripts/encryption';
 import {generate_image} from '../scripts/image';
 import { ScrollView } from 'react-native-gesture-handler';
-import bad_image from '../scripts/sample/bad_image';
+import bad_image from '../scripts/bad_image';
 import { NativeModules } from 'react-native';
+import { beginPayment, generateOption } from '../razorpay/payment';
+import Axios, { REFRESH, SUBSCRIBER } from '../http/axios';
+import { getRefreshToken, removeAccessToken, removeRefreshToken, setAccessToken, setRefreshToken } from '../storage/storage';
+import { showAlert } from '../utils/alert';
+
 const { NfcModule } = NativeModules;
 
 const Drawer = createDrawerNavigator();
@@ -53,14 +57,32 @@ function get_column(jsonData){
   return {profile_col,sem_dict,personal_col};
 }
 
+const Logout = (navigation, message) => {
+
+  async function __logout__() {
+    try{
+      await removeAccessToken();
+      await removeRefreshToken();
+    }
+    catch(e){
+      console.error(e)  
+    }
+    showAlert("Auth Status", message);
+    navigation.navigate("Login");
+  }
+
+  __logout__().then().catch()
+}
+
 // Home Screen Component
-function HomeScreen() {
+function HomeScreen({ navigation }) {
 
   const [image,setImage] = useState(null);
   const [nfcData, setNfcData] = useState(null);
   const [column, setColumn] = useState(null);
   const [nfcSupport, setSupport] = useState(null);
   const [data, setData] = useState(true);
+  const [sub, setSub] = useState(false);
 
   const eventType = "onNfcScan";
 
@@ -77,6 +99,7 @@ function HomeScreen() {
 
   useEffect(() => {
     checkNfcSupport();
+    isPub();
   }, []);
 
   function setListener(){
@@ -84,9 +107,10 @@ function HomeScreen() {
       
       try{
         var res=data.replace(/[\u0000-\u001F]/g, '');
-        data = JSON.parse(res).msg;
-        setNfcData(data);
-        scanning(data);
+        console.log(res)
+        msg = JSON.parse(res).msg;
+        setNfcData(msg);
+        scanning(msg);
         emitter.removeAllListeners(eventType);
       }
       catch(error){
@@ -114,10 +138,16 @@ function HomeScreen() {
 
       let nfcdata = decrypt_data(Data,"123456789123456789123456");
       console.log("JSON Data: ",nfcdata);
-      let col = get_column(nfcdata);
-      setData(nfcdata);
-      setImage(generate_image(nfcdata.data[col.profile_col])||bad_image);
-      setColumn(col);
+
+      try{
+        let col = get_column(nfcdata);
+        setData(nfcdata);
+        setImage(generate_image(nfcdata.data[col.profile_col])||bad_image);
+        setColumn(col);
+      }
+      catch(e){
+        showAlert("NFC Card", "Data cannot be parsed")
+      }
   }
 
   function HeaderRender(){
@@ -177,6 +207,30 @@ function HomeScreen() {
 
   }
 
+  const NfcScanButton = () => {
+    
+    if(nfcSupport && sub){
+      return (<Button onPress={startNfcScan} style={styles.button} title='Scan NFC Card' />)
+
+    }
+    else if(sub){
+      return (<Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>)
+
+    }
+    else{
+      return null;
+    }
+  }
+
+  const PaymentScan = () => {
+    
+    return !sub ? (
+        <Button onPress={() => beginPayment(generateOption(), paymentSuccess, paymentError)} style={styles.button} title='Payment' />
+      ) : (
+        null
+      )
+  }
+
   const completeView = () => {
     return (
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -186,25 +240,20 @@ function HomeScreen() {
               {(data && data.data && column && column.personal_col) ? DataRender() : null}
           </View>
           {(data && data.data && column && column.sem_dict) ? SemRender() : null}
-  
-          {nfcSupport ? (
-              <Button onPress={startNfcScan} style={styles.button} title='Scan NFC Card' />
-          ) : (
-              <Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>
-          )}
+          <NfcScanButton/>
+          <PaymentScan/>
+
       </ScrollView>
     );
   }
+
 
   const initialView = () => {
     return (
       <ScrollView contentContainerStyle={styles.centeredContainer}>
         <View style={styles.buttonWrapper}>
-          {nfcSupport ? (
-              <Button onPress={startNfcScan} title='Scan NFC Card' />
-          ) : (
-              <Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>
-          )}
+          <NfcScanButton/>
+          <PaymentScan/>
         </View>
       </ScrollView>
   );
@@ -214,10 +263,107 @@ function HomeScreen() {
   const dataAvailable = () => {
     return data && data.header && data.data && column && column.personal_col && image;
   }
+  /**
+ * @param {string} order_id
+ * @param {string} payment_id
+ * @returns {void}
+ */
+function paymentSuccess(order_id, payment_id){
+  let retry = true;
+
+  async function success() {
+
+    try{
+      const response = await Axios.put(SUBSCRIBER, 
+        {
+          order_id: order_id,
+          payment_id: payment_id
+        }
+      )
+
+      const { status, error } = response.data;
+
+      if(status){
+        showAlert("Payment Success", (error==null)?"Payment was successful":error)
+        setSub(true);
+      }
+    }
+    catch(error){
+      if(isAxiosError(error)){
+        if(error.status==409){
+          showAlert("Payment Status", error.response.data.error)
+        }
+        else if(error.status==500){
+          showAlert("Login Failure", "Server Error Occurred")
+        }
+        else if(error.status==403){
+          showAlert("Login Failure", "Unauthorized Entry")
+        }
+        else if(error.status==401 && retry){
+          retry = false;
+          
+          const refresh = await getRefreshToken();
+
+          if(refresh==null){
+            Logout(navigation, 'Unauthorized Entry! Logging Out')
+          }
+
+          try{
+            const retryAttempt = await Axios.post(REFRESH,{
+              'refresh':refresh
+            });
+
+            const {token, status, error} = retryAttempt.data;
+
+            if(token && status && error==null){
+              await setAccessToken(token);
+              await success();
+            }
+          }
+          catch(error){
+            console.warn(e);
+          }
+          Logout(navigation, 'Unauthorized Entry! Logging Out');
+        }
+
+        console.warn(e);
+
+      }
+    }
+
+  }
+  success();
+
+}
+/**
+ * @param {{error: {code: string, description: string, source: string, step: string, reason: string, metadata: object}}} param
+ * @returns {void}
+ */
+function paymentError(param){
+  console.log("Received: " ,param.error)
+  showAlert("Payment Failed", "Reason: "+param.error.reason+", By: "+param.error.source+", Step: "+param.error.step);
+}
+
+async function isPub(){
+  try{
+    const response = await Axios.get(SUBSCRIBER);
+    const { status, error } = response.data;
+
+    if(status && error==null){
+      setSub(true);
+    }
+  }
+  catch(e){
+    console.warn(e);
+  }
+}
 
   return (dataAvailable()?completeView():initialView());
 
 }
+
+
+
 
 
 // Custom Drawer Content Component
@@ -225,7 +371,6 @@ function CustomDrawerContent({props,params}) {
 
   const userName = params.user;
   const closeDrawer = () => {props.navigation.closeDrawer()}
-  const logout = () => {Alert.alert("Logout", "Logout Successfully",[{text: 'Ok',style: 'cancel'}],{cancelable: true});props.navigation.navigate("Login")}
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
@@ -244,7 +389,7 @@ function CustomDrawerContent({props,params}) {
 
       <DrawerItem 
             label="Log out"
-            onPress={()=>{ logout(); }}
+            onPress={()=>{ Logout(props.navigation,"Logout Successfully"); }}
       />
 
     </View>
@@ -258,7 +403,7 @@ export default function App({navigation,route}) {
       <Drawer.Navigator
         drawerContent={(props) => <CustomDrawerContent props={{...props}} params={route.params} />}
       >
-        <Drawer.Screen name="Home" component={HomeScreen} options={{drawerItemStyle: {marginBottom:10}}}/>
+        <Drawer.Screen name="Home" children={(props) => <HomeScreen navigation={navigation} />} props options={{drawerItemStyle: {marginBottom:10}}}/>
       </Drawer.Navigator>
     </NavigationIndependentTree>
   );

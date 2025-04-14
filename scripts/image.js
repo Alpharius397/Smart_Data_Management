@@ -53,5 +53,5 @@ function generate_image(a) {
 }
 
 // generate_image(sample.data.Profile_Image).then((res) => {console.log(res)});
-
+const BAD_IMAGE = 
 module.exports = {generate_image}

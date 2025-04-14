@@ -4,6 +4,10 @@ import { getAccessToken } from '../storage/storage'
 
 const BASE_URL = 'http://127.0.0.1:8000/';
 
+export const LOGIN = 'mobile/auth/login/';
+export const REGISTER = 'mobile/auth/register/';
+export const REFRESH = 'mobile/auth/refresh/';
+export const SUBSCRIBER = 'mobile/subscriber/'
 
 const Axios = axios.create({
     baseURL: BASE_URL,

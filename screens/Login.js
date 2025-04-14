@@ -1,23 +1,21 @@
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import Axios from '../http/axios';
+import Axios, { LOGIN } from '../http/axios';
 import { setAccessToken, setRefreshToken } from '../storage/storage';
 import { isAxiosError } from 'axios';
+import { showAlert } from '../utils/alert';
 
 export default function Login({ navigation }) {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
-
-  const showAlert = (msg,action) =>
-    Alert.alert( msg, action, [{ text: 'Ok', style: 'cancel' }], { cancelable: true });
 
   const handleLogin = () => {
 
       async function login() {
 
         try{
-          const response = await Axios.post('user/auth/login/', 
+          const response = await Axios.post(LOGIN, 
             {
               "user": user,
               "password": password
