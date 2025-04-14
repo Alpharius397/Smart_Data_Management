@@ -341,6 +341,12 @@ func ReadCard(exe_path string, response_url string, logger Logger) {
 	cmd.Stderr = &errStd
 	cmd.Dir = get_last_windows(exe_path)
 
+	cardID, err := GetCardID(exe_path, logger)
+
+	if err!=nil {
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was unsuccessful","status":"false"}))
+	}
+
 	err = cmd.Run()
 
 	if (out.String()=="" || errStd.String()!="") {
@@ -350,7 +356,7 @@ func ReadCard(exe_path string, response_url string, logger Logger) {
 	} else {
 		logger.WriteInfo("EXE",fmt.Sprintf("Exe was executed successfully. Args: \"%s\".Stdout: \"%s\", Stderr: \"%s\"", string(args), out.String(), errStd.String()))
 		data, _ := extractMsg(out.String())
-		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":data}))
+		httpError = makeResponsePOST(response_url, Response(map[string]string{"info":"Data Read was successful","status":"true","data":data,"cardID":cardID}))
 	}
 
 	if httpError != nil {

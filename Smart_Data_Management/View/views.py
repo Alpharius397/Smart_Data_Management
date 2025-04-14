@@ -16,7 +16,7 @@ from bson.objectid import ObjectId
 from django.contrib.auth.models import User
 from tools.encrypt import encrypt_data, decrypt_data, getAuthKey
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import is_auth_post, is_hx_delete, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color, is_hx_put
+from tools.url_auth import api_key_required, is_auth_post, is_hx_delete, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color, is_hx_put
 from View.forms import VerifyForm
 from django.utils import timezone
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
@@ -806,103 +806,100 @@ def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
     return HttpResponse(status=403)
 
 @csrf_exempt
+@api_key_required
 def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
-        api_key = req.POST.get("api_key",None)
         status = req.POST.get("status",None)
         cardID = req.POST.get("cardID", None)
         
         if(cardID is None):
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
         
-        if(api_key==getAuthKey()):
-            
-            conn = MongoConnection().connect()
-            Redis = RedisConnection().connect()
-            
-            match(status):
-                case "true": status = True
-                case "false": status = False
-                case _: status = None
-                
-            error:str = None
-            res = False
-            
-            try:
-                time_of_issue = f"data.feed.{idx}.time_of_issue"
-                issued = f"data.feed.{idx}.issued"            
-                feed_idx = f"data.feed.{idx}.index"
-                lock_idx = f"data.feed.{idx}.locked"
-
-                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-                
-                if(Redis.get(token)!=LOADING):
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
-                    return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
-                
-                if(status):
-                    Card.attemptSave(cardID=cardID,mongoID=id,rowIndex=idx)
-                    res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
-                    Redis.set(token,DONE)
-                else:
-                    Redis.set(token,FAILED)
-                    
-                
-                if(res and status):
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
-
-                elif(res and (status is not None)):
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
-                
-                
-            except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
-                error = DEFAULT_ERROR
-                
-            finally:
-                conn.close()
-                Redis.close()
-                
-            return JsonResponse(data={"error_occurred":error, "update_occurred":res},status=200)
+        conn = MongoConnection().connect()
+        Redis = RedisConnection().connect()
         
-        else:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
+        match(status):
+            case "true": status = True
+            case "false": status = False
+            case _: status = None
+            
+        error:str = None
+        res = False
+        
+        try:
+            time_of_issue = f"data.feed.{idx}.time_of_issue"
+            issued = f"data.feed.{idx}.issued"            
+            feed_idx = f"data.feed.{idx}.index"
+            lock_idx = f"data.feed.{idx}.locked"
+
+            file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+            
+            if(Redis.get(token)!=LOADING):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+                return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
+            
+            if(status):
+                Card.attemptSave(cardID=cardID,mongoID=id,rowIndex=idx)
+                res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                Redis.set(token,DONE)
+            else:
+                Redis.set(token,FAILED)
+                
+            
+            if(res and status):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
+
+            elif(res and (status is not None)):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
+            
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
+            error = DEFAULT_ERROR
+            
+        finally:
+            conn.close()
+            Redis.close()
+            
+        return JsonResponse(data={"error_occurred":error, "update_occurred":res},status=200)
+    
+    else:
+        APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
     
     return JsonResponse(data=ERROR_JSON, status=403)
     
 @csrf_exempt
+@api_key_required
 def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
     if(req.method=="POST"):
-        api_key = req.POST.get("api_key",None)
 
-        if(api_key==getAuthKey()):
-            conn = MongoConnection().connect()
-            Redis = RedisConnection().connect()
+        conn = MongoConnection().connect()
+        Redis = RedisConnection().connect()
+        
+        result:dict[str,Any] = {"data":"Default Data"}
+        
+        try:
+            res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
+            file_name = res.get("data",{}).get("header",{}).get("file_name",None)
+            verified:bool = res.get("data",{}).get("feed",{})[idx].get("locked", False)
             
-            result:dict[str,Any] = {"data":"Default Data"}
-            
-            try:
-                res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
-                file_name = res.get("data",{}).get("header",{}).get("file_name",None)
-                verified:bool = res.get("data",{}).get("feed",{})[idx].get("locked", False)
+            if(Redis.get(token)!=LOADING):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+                return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
+            if(verified):
+                result.update({"data":{"data":compress_data(res,idx,True,True).getvalue().decode()}, "status":200})
+            else:
+                result.update({"data":{"error":f"Mongo ID: {id}, Index: {idx} is not locked"}, "status":403})
                 
-                if(Redis.get(token)!=LOADING):
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
-                    return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
-                if(verified):
-                    result.update({"data":{"data":compress_data(res,idx,True,True).getvalue().decode()}, "status":200})
-                else:
-                    result.update({"data":{"error":f"Mongo ID: {id}, Index: {idx} is not locked"}, "status":403})
-                    
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_DATA_FETCH,user=req.user,taskID=id,fileName=file_name,index=idx))
-            
-            except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                result.update({"data":{"error":"Some error occurred!"},"status":500})
-            finally:
-                conn.close()
-                Redis.close()
+            APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_DATA_FETCH,user=req.user,taskID=id,fileName=file_name,index=idx))
+        
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            result.update({"data":{"error":"Some error occurred!"},"status":500})
+        finally:
+            conn.close()
+            Redis.close()
 
-            return JsonResponse(**result,safe=False)
+        return JsonResponse(**result,safe=False)
     
     return JsonResponse(data=ERROR_JSON,status=403)

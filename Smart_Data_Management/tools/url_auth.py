@@ -3,6 +3,7 @@ import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse
 import jwt
 from Logs.loggers import DEFAULT_ERROR
+from tools.encrypt import getAuthKey
 from User.models import is_authenticated
 from django.conf import settings
 from django.shortcuts import redirect
@@ -127,6 +128,29 @@ def jwt_required(view_func):
         
         except User.DoesNotExist:
             return JsonResponse({'error': 'User not found'}, status=403)
+        
+        except Exception as e:
+            return JsonResponse({'error':DEFAULT_ERROR}, status=404)
+
+    return _wrapped_view
+
+
+def api_key_required(view_func):
+    
+    @wraps(view_func)
+    def _wrapped_view(request:HttpRequest, *args, **kwargs):
+        
+        try:
+            auth_header = request.headers.get('Authorization', '')
+        
+            if not auth_header.startswith('Bearer '):
+                return JsonResponse({'error': 'Authorization header missing or malformed'}, status=401)
+
+            token = auth_header.split(' ')[1]
+            if(token and (token==getAuthKey())):
+                return view_func(request, *args, **kwargs)
+            else:
+                return JsonResponse({'error': 'Authorization Token is invalid'}, status=401)
         
         except Exception as e:
             return JsonResponse({'error':DEFAULT_ERROR}, status=404)

@@ -26,7 +26,7 @@ def compress_image(img_data:BytesIO) -> str:
     
     image_data = BytesIO()
     
-    compressed.save(image_data,format=image.format,quality=75, optimize=True)
+    compressed.save(image_data,format=image.format,quality=65, optimize=True)
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 
 def expand_image(img_data:str, width:int, height:int) -> str:

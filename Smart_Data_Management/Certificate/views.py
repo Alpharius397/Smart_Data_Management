@@ -1,30 +1,22 @@
 from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse
 from Main.models import MongoConnection
-from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name, Admin, Manager
+from User.models import is_authenticated
 from tools.url_auth import *
-from tools.encrypt import decrypt_data
 from tools.get_image import expand_image
 import typing
 import re
-from Main.models import *
-from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
-from tools.token import get_token, hash_token
-from django.views.decorators.csrf import csrf_exempt
 from Card.models import Card
 from pymongo.collection import ObjectId
-from django.utils import timezone
-from datetime import datetime
 import json
 from Crypto.Hash import SHA256
 import pandas as pd
 from tools.get_image import compress_image
 from Main.templatetags.bad_image import bad_image
-from base64 import b64decode, b64encode
+from base64 import b64decode
 from io import BytesIO
-from User.models import Manager, get_post_by_ID
-from tools.encrypt import monthYearHash, jsonHash
+from User.models import get_post_by_ID
+from tools.encrypt import monthYearHash
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
@@ -62,12 +54,11 @@ def getCertificateData(certificate: str) -> Certificate | None:
     except:
         return None
 
-def getData(pds: dict[str,dict[str,dict]], idx:int) -> dict | None:
+def getData(pds: dict[str,dict[str,dict]], idx:int) -> str | None:
     try:
         pd_data = pd.DataFrame(pds.get('data',{}).get('excel',{}))
         image_idx:list = pds.get('data',{}).get('header',{}).get('image_column',[])
         data = pd_data.iloc[idx].to_dict()
-        header = get_post_by_ID(**pds.get('header',{}).get("post",{}))
 
         for i in image_idx:
             img_data = data[i]
@@ -80,14 +71,26 @@ def getData(pds: dict[str,dict[str,dict]], idx:int) -> dict | None:
 
             img = compress_image(BytesIO(b64decode(img)))
             data[i] = img
+            
+        return json.dumps(data)
+    except:
+        return None
+    
+def getActualData(pds: dict[str,dict[str,dict]], idx:int) -> dict | None:
+    try:
+        pd_data = pd.DataFrame(pds.get('data',{}).get('excel',{}))
+        data = pd_data.iloc[idx].to_dict()
+        header = get_post_by_ID(**pds.get('header',{}).get("post",{}))
         return {"data":data,"header":header}
     except:
         return None
     
-def getSHA(data: str) -> str:
-    Hash = SHA256.new(data.encode())
-    return Hash.hexdigest()
-
+def getSHA(data: str) -> str|None:
+    try:
+        Hash = SHA256.new(data.encode())
+        return Hash.hexdigest()
+    except Exception as e:
+        return None
 
 def certificate_check(req :HttpRequest, certificate: str, cardID:str) -> HttpResponse:
     """ certificate is sha256 encoding of data, cardID is cardID """
@@ -112,16 +115,18 @@ def certificate_check(req :HttpRequest, certificate: str, cardID:str) -> HttpRes
             return render(req, "Certificate/HTMX/error.html", context={"error":"Certificate Expired!"})        
         
         record = conn.find_one({"_id":ObjectId(mongoID)})
-        pd_data = getData(record,row)
-        
-        if(pd_data is None):
-            return render(req, "Certificate/HTMX/error.html", context={"error":"Data Loading Failed!"})
-        
-        if(getSHA(json.dumps(pd_data['data']))!=info.certificateHash):
-            return render(req, "Certificate/HTMX/error.html", context={"error":"Invalid Certificate Credentials"})
+        checkData = getData(record,row)
+        pd_data = getActualData(record, row)
         
         if(record is None):
-            return render(req, "Certificate/HTMX/error.html", context={"error":"MongoID found!"})
+            return render(req, "Certificate/HTMX/error.html", context={"error":"MongoID not found!"})
+        
+        if((checkData is None) or (info.certificateHash is None)):
+            return render(req, "Certificate/HTMX/error.html", context={"error":"Data Loading Failed!"})
+        
+        if((getSHA(checkData)!=info.certificateHash)):
+            return render(req, "Certificate/HTMX/error.html", context={"error":"Invalid Certificate Credentials"})
+        
         
         profile_img = r'^Profile_Image$'
         sem_data = r'.+Sem_(\d+)$'
@@ -160,4 +165,8 @@ def certificate_check(req :HttpRequest, certificate: str, cardID:str) -> HttpRes
 
 def loadCertificate(req :HttpRequest, certificate: str, cardID:str) -> HttpResponse:
     if(req.method=="GET"):
-        return render(req,"Certificate/index.html",context={"certificate":certificate, "cardID":cardID})
+        context = {"certificate":certificate, "cardID":cardID, 'auth': False}
+        if(is_authenticated(req.user)):
+            context['auth'] = True
+            
+        return render(req,"Certificate/index.html",context=context)

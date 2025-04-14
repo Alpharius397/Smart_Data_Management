@@ -1,8 +1,7 @@
-from django.db.models import CharField,RESTRICT,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField,RESTRICT
+from django.db.models import CharField,Model,IntegerField
 from django.core.validators import MinValueValidator, RegexValidator
 
 MongoID = RegexValidator(r"^[0-9a-f]{24}$", message="Invalid MongoID")
-
 
 class Card(Model):
     cardID = CharField(max_length=200,null=False,blank=False,verbose_name='Card ID',primary_key=True)
@@ -24,3 +23,7 @@ class Card(Model):
             return True
         except:
             return False
+        
+    def save(self, *args, **kwargs):
+        self.clean_fields()
+        super().save(*args, **kwargs)

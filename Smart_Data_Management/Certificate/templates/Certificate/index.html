@@ -75,11 +75,16 @@
 
 <body>
     <header>
-        <h1>Verify Certificate</h1>
+        {% if auth is True %}
+        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To Dashboard</button></a>
+        {% else %}
+            <a href="{% url 'Login:login' %}"><button class="user-log">Login</button></a>
+        {% endif %}
+            <h1>Verify Certificate</h1>
     </header>
 
     <div class="container">
-        <div class="tableView" hx-get="{% url 'Certificate:__check' certificate=certificate cardID='048261826a1e80' %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
+        <div class="tableView" hx-get="{% url 'Certificate:__check' certificate=certificate cardID=cardID %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
             <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
             <h2> Attempting Authentication....</h2>
         </div>

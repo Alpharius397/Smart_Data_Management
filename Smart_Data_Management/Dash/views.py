@@ -1,10 +1,11 @@
+import json
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import MongoConnection
 from django.conf import settings
 from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
 from tools.url_auth import *
-from tools.encrypt import decrypt_data, getAuthKey
+from tools.encrypt import decrypt_data
 from tools.get_image import expand_image
 import typing
 import re
@@ -136,10 +137,12 @@ def read_view(req: HttpRequest)-> HttpResponse:
         context = {}
             
         try:
-            # with open(settings.MEDIA_ROOT + '/compress.txt','r') as f:
-            #     data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,f.read())
-            print(decrypt_data(settings.KEY,req.session.get(CARD_DATA)))
-            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,req.session.get(CARD_DATA))
+            session_data:dict[str, str] = json.loads(req.session.get(CARD_DATA))
+            
+            cardData:str = session_data.get("data",None)
+            cardID:str = session_data.get("cardID", None)
+
+            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,cardData)
             
             profile_img = r'^Profile_Image$'
             sem_data = r'.+Sem_(\d+)$'
@@ -169,7 +172,7 @@ def read_view(req: HttpRequest)-> HttpResponse:
                     sem_dict[sem].append(i)
 
             view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
-            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,**header})
+            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,'cardID':cardID,**header})
 
         except Exception as e:
             print(e,context)
@@ -230,19 +233,20 @@ def check_write(req: HttpRequest) -> HttpResponse:
     return HttpResponse(status=403)
 
 @csrf_exempt
+@api_key_required
 def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
     if(req.method=="POST"):
-        api_key = req.POST.get("api_key",None)
+        cardID = req.POST.get("cardID", None)
         data = req.POST.get("data",None)
 
-        if(data and api_key==getAuthKey()):
+        if(data and cardID):
             Redis = RedisConnection().connect()
             
             if(Redis.get(token)!=LOADING):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
                 return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
             
-            Redis.set(token,data)
+            Redis.set(token,json.dumps({"data":data, "cardID":cardID}))
             Redis.close()
             return JsonResponse(data={"info":"Data received", "status":True},status=200)
         else:
