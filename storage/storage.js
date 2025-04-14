@@ -6,23 +6,44 @@ const REFRESH_TOKEN = 'refresh';
 export async function getAccessToken() {
     try{
         const token =  await AsyncStorage.getItem(ACCESS_TOKEN); 
-        Promise.resolve(token);
+        return token;
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
-        Promise.reject(error);
+        return null;
     }
 }
-
 
 export async function getRefreshToken() {
     try{
         const token =  await AsyncStorage.getItem(REFRESH_TOKEN); 
-        Promise.resolve(token);
+        return token;
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
-        Promise.reject(error);
+        return error;
+    }
+}
+
+export async function removeRefreshToken() {
+    try{
+        const token =  await AsyncStorage.removeItem(REFRESH_TOKEN); 
+        return true;
+    }
+    catch(error){
+        console.warn("Async Storage Error: ",error);
+        return false;
+    }
+}
+
+export async function removeAccessToken() {
+    try{
+        const token =  await AsyncStorage.removeItem(ACCESS_TOKEN); 
+        return true;
+    }
+    catch(error){
+        console.warn("Async Storage Error: ",error);
+        return false;
     }
 }
 
