@@ -14,7 +14,9 @@ urlpatterns = [
 	path('view/',include('View.urls','View')),
 	path('logs/',include('Logs.urls','Logs')),
 	path('certificate/',include('Certificate.urls','Certificate')),
+	path('mobile/',include('Mobile.urls','Mobile')),
 ]
+
 admin.site.site_header = "System Admin"
 admin.site.site_title = "Admin Portal"
 admin.site.index_title = "Welcome to Smart Data Management Site"

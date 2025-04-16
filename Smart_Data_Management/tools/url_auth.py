@@ -1,4 +1,5 @@
 import datetime
+import json
 import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse
 import jwt
@@ -71,26 +72,33 @@ def noneCheck(*args: typing.Any) -> bool:
 class PayLoad:
     
     __type: str = None
-    expire_second:int
+    expire_minutes: int
     
-    def __init__(self, user: User, type:str = None):
+    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None, **kawrgs):
         self.username:str = user.username
         self.userID:int = user.id
-        self.type:str = type if(type is not None) else self.__type
+        self.type = type if(type is not None) else self.__type
+        self.expire = (expire if(expire is not None) else timezone.now())
     
-    def to_json(self) -> dict[str, str]:
-        return {'userID':self.userID, 'username':self.username, 'type':self.type, 'exp': timezone.now() + datetime.timedelta(minutes=self.expire_second)}
+    def to_json(self, newToken: bool = False) -> dict[str, str]:
+        return {'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': ((self.expire if (not newToken) else timezone.now()) + datetime.timedelta(seconds=self.expire_minutes)).isoformat()}
     
     def getToken(self) -> str:
         return jwt.encode(self.to_json(), settings.JWT_SECRET, settings.JWT_ALGORITHM)
     
+    def getNewToken(self) -> str:
+        return jwt.encode(self.to_json(newToken=True), settings.JWT_SECRET, settings.JWT_ALGORITHM)
+    
     def isCorrectType(self) -> bool:
         return self.type == self.__type
     
+    def __str__(self):
+        return json.dumps({'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': (self.expire + datetime.timedelta(seconds=self.expire_minutes)).isoformat()})
+    
     @staticmethod
-    def from_json(classConstruct: 'PayLoad', userID:int, username:str, **kwargs) -> 'PayLoad':
+    def from_json(classConstruct: 'PayLoad', userID:int, username:str, type:str, expire:str) -> 'PayLoad':
         user:User = User.objects.get(id=userID, username=username)
-        return classConstruct(user)  
+        return classConstruct(user=user, type=type, expire=datetime.datetime.fromisoformat(expire))  
     
     @staticmethod
     def decodeToken(classConstruct: 'PayLoad', token: str) -> 'PayLoad':
@@ -99,37 +107,76 @@ class PayLoad:
 
 class AccessPayLoad(PayLoad):
     __type: str = 'access'
-    expire_second = settings.JWT_EXP_DELTA_MINUTES
+    expire_minutes = settings.JWT_EXP_DELTA_MINUTES
+    
+    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None):
+        self.username:str = user.username
+        self.userID:int = user.id
+        self.type = type if(type is not None) else self.__type
+        self.expire = (expire if(expire is not None) else timezone.now())
+
 
 class RefreshPayLoad(PayLoad):
     __type: str = 'refresh'
-    expire_second = settings.REFRESH_EXP_DELTA_MINUTES
+    expire_minutes = settings.REFRESH_EXP_DELTA_MINUTES
+    
+    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None):
+        self.username:str = user.username
+        self.userID:int = user.id
+        self.type = type if(type is not None) else self.__type
+        self.expire = (expire if(expire is not None) else timezone.now())       
 
 def jwt_required(view_func):
     
     @wraps(view_func)
     def _wrapped_view(request:HttpRequest, *args, **kwargs):
         auth_header = request.headers.get('Authorization', '')
+        refresh_header = request.headers.get('Refresh', '')
         
         if not auth_header.startswith('Bearer '):
             return JsonResponse({'error': 'Authorization header missing or malformed'}, status=401)
 
-        token = auth_header.split(' ')[1]
+        if not refresh_header.startswith('Bearer '):
+            return JsonResponse({'error': 'Authorization header missing or malformed'}, status=401)
+
         try:
-            payload = AccessPayLoad.decodeToken(AccessPayLoad, token)
-            request.user = payload.user
+            access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
+            
+            access_payload = AccessPayLoad.decodeToken(AccessPayLoad, access)
+            refresh_payload = RefreshPayLoad.decodeToken(RefreshPayLoad, refresh)
+            
+            if(access_payload.expire<timezone.now() and refresh_payload.expire<timezone.now()):
+                raise jwt.ExpiredSignatureError()
+            
+            if(access_payload.userID != refresh_payload.userID):
+                raise jwt.InvalidTokenError()
+            
+            if(access_payload.expire<timezone.now()):
+                print("refreshing")
+                access_token = access_payload.getNewToken()
+                refresh_token = refresh_payload.getNewToken()
+            
+            else:
+                access_token = access_payload.getToken()
+                refresh_token = refresh_payload.getToken()
+            
+            user = User.objects.get(id=access_payload.userID, username=access_payload.username)
+            request.user = user
+            request.headers.__setattr__('access', access_token)
+            request.headers.__setattr__('refresh', refresh_token)
             return view_func(request, *args, **kwargs)
 
         except jwt.ExpiredSignatureError:
-            return JsonResponse({'error': 'Token expired'}, status=401)
+            return JsonResponse({'error': 'Token expireired'}, status=401)
         
         except jwt.InvalidTokenError:
             return JsonResponse({'error': 'Invalid token'}, status=401)
         
         except User.DoesNotExist:
-            return JsonResponse({'error': 'User not found'}, status=403)
+            return JsonResponse({'error': 'User not found'}, status=401)
         
         except Exception as e:
+            print(e)
             return JsonResponse({'error':DEFAULT_ERROR}, status=404)
 
     return _wrapped_view
