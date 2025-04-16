@@ -1,12 +1,11 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { getAccessToken } from '../storage/storage'
+import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '../storage/storage'
 
 
 const BASE_URL = 'http://127.0.0.1:8000/';
 
 export const LOGIN = 'mobile/auth/login/';
 export const REGISTER = 'mobile/auth/register/';
-export const REFRESH = 'mobile/auth/refresh/';
 export const SUBSCRIBER = 'mobile/subscriber/'
 
 const Axios = axios.create({
@@ -21,8 +20,10 @@ Axios.interceptors.request.use(
     async (config) => {
         try {
             const token = await getAccessToken(); 
+            const refresh = await getRefreshToken(); 
             if (token!==null && config.headers) {
                 config.headers.Authorization = `Bearer ${token}`;
+                config.headers.Refresh = `Bearer ${refresh}`;
             }
         } catch (error) {
             console.error('Error fetching token:', error);
@@ -37,7 +38,10 @@ Axios.interceptors.request.use(
 );
 
 Axios.interceptors.response.use(
-    (response) => {
+    async (response) => {
+        const {access, refresh} = response.data;
+        await setAccessToken(access); 
+        await setRefreshToken(refresh); 
         return response;    
     }
 );

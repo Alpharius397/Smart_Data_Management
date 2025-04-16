@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import Axios, { LOGIN } from '../http/axios';
-import { setAccessToken, setRefreshToken } from '../storage/storage';
 import { isAxiosError } from 'axios';
 import { showAlert } from '../utils/alert';
 
@@ -15,18 +14,11 @@ export default function Login({ navigation }) {
       async function login() {
 
         try{
-          const response = await Axios.post(LOGIN, 
+          await Axios.post(LOGIN, 
             {
               "user": user,
               "password": password
             });
-          console.log(response.data);
-
-          const { token, refresh, status, error } = response.data;
-
-          if(error==null && status && token && refresh){
-            await Promise.all([setAccessToken(token), setRefreshToken(refresh)])
-          }
 
           showAlert("Login Success", "Login Successful");
           navigation.navigate('Main', {user:user})
@@ -44,14 +36,18 @@ export default function Login({ navigation }) {
               showAlert("Login Failure", "Unauthorized Entry")
             }
           }
-          console.warn(e);
+          console.warn(error);
         }
       }
 
-      login().then();
+      login().then().catch();
     
 
   };
+
+  const canLoginNow = () => {
+    return (user=='' || password=='')
+  }
 
   return (
     <View style={styles.container}>
@@ -72,7 +68,7 @@ export default function Login({ navigation }) {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
+      <Button title="Login" onPress={handleLogin} disabled={canLoginNow()}/>
       <Text style={styles.link} onPress={() => navigation.navigate('Register')}>
         Don't have an account? Register
       </Text>

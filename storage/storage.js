@@ -51,11 +51,11 @@ export async function setAccessToken(value) {
     try{
         await AsyncStorage.setItem(ACCESS_TOKEN, value); 
         console.log("Saving Value: ",value);
-        Promise.resolve(true);
+        return true;
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
-        Promise.reject(error);
+        return false;
     }
 }
 
@@ -63,10 +63,10 @@ export async function setRefreshToken(value) {
     try{
         await AsyncStorage.setItem(REFRESH_TOKEN, value); 
         console.log("Saving Value: ",value);
-        Promise.resolve(true);
+        return true;
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
-        Promise.reject(error);
+        return false;
     }
 }
