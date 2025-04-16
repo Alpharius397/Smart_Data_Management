@@ -8,9 +8,10 @@ import { ScrollView } from 'react-native-gesture-handler';
 import bad_image from '../scripts/bad_image';
 import { NativeModules } from 'react-native';
 import { beginPayment, generateOption } from '../razorpay/payment';
-import Axios, { REFRESH, SUBSCRIBER } from '../http/axios';
-import { getRefreshToken, removeAccessToken, removeRefreshToken, setAccessToken, setRefreshToken } from '../storage/storage';
+import Axios, { SUBSCRIBER } from '../http/axios';
+import { removeAccessToken, removeRefreshToken } from '../storage/storage';
 import { showAlert } from '../utils/alert';
+import { isAxiosError } from 'axios';
 
 const { NfcModule } = NativeModules;
 
@@ -100,7 +101,7 @@ function HomeScreen({ navigation }) {
   useEffect(() => {
     checkNfcSupport();
     isPub();
-  }, []);
+  }, [sub]);
 
   function setListener(){
     emitter.addListener(eventType, (data) => {
@@ -290,49 +291,30 @@ function paymentSuccess(order_id, payment_id){
     }
     catch(error){
       if(isAxiosError(error)){
+        console.log(error.response.data);
         if(error.status==409){
           showAlert("Payment Status", error.response.data.error)
         }
         else if(error.status==500){
-          showAlert("Login Failure", "Server Error Occurred")
+          showAlert("Payment Status", "Server Error Occurred")
+        }
+        else if(error.status==422){
+          showAlert("Payment Status", "Payment was unsuccessful")
+        }
+        else if(error.status==401){
+            Logout(navigation, 'Unauthorized Entry! Logging Out')
         }
         else if(error.status==403){
-          showAlert("Login Failure", "Unauthorized Entry")
-        }
-        else if(error.status==401 && retry){
-          retry = false;
-          
-          const refresh = await getRefreshToken();
-
-          if(refresh==null){
-            Logout(navigation, 'Unauthorized Entry! Logging Out')
-          }
-
-          try{
-            const retryAttempt = await Axios.post(REFRESH,{
-              'refresh':refresh
-            });
-
-            const {token, status, error} = retryAttempt.data;
-
-            if(token && status && error==null){
-              await setAccessToken(token);
-              await success();
-            }
-          }
-          catch(error){
-            console.warn(e);
-          }
-          Logout(navigation, 'Unauthorized Entry! Logging Out');
+          showAlert("Payment Status", error.response.data.error)
         }
 
-        console.warn(e);
+        console.warn(error);
 
       }
     }
 
   }
-  success();
+  success().then().catch();
 
 }
 /**
@@ -361,10 +343,6 @@ async function isPub(){
   return (dataAvailable()?completeView():initialView());
 
 }
-
-
-
-
 
 // Custom Drawer Content Component
 function CustomDrawerContent({props,params}) {

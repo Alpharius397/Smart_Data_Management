@@ -37,12 +37,9 @@ export function beginPayment(option, successCallback, errorCallback){
 
     RazorpayCheckout.open(option)
         .then(data => {
-            console.log('Yes');
-            successCallback(data.razorpay_order_id, data.razorpay_payment_id)
+            successCallback(data.razorpay_order_id, data.razorpay_payment_id);
         })
         .catch(error => {
-            console.log('No');
-            console.log(error.description)
             errorCallback(JSON.parse(error.description));
     });
 }
