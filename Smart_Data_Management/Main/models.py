@@ -1,3 +1,4 @@
+import pandas as pd
 import pymongo
 import pymongo.collection
 import pymongo.client_session
@@ -20,8 +21,13 @@ class MongoTemplate:
                 manager
             }
             data:{
-                excel,   
+                excel:{
+                    row_index:{
+                        column_index
+                    }
+                },   
                 header:{
+                    columns,
                     image_column,
                     file_name,
                 },
@@ -39,13 +45,11 @@ class MongoTemplate:
     def __init__(self) -> None:
         
         self.header:dict[str,dict[str,str]|list] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
-        self.data_header:dict[str,str|list] = {'file_name':None,'image_column':[]}
+        self.data_header:dict[str,str|list] = {'file_name':None,'image_column':[],'columns':[]}
         self.data_feed:dict[str,str] = {'locked':None,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':None}
-        self.data = None
+        self.data = {}
         self.feed:dict[str,dict[str,str]] = {}
         
-        self.template = {'header':self.header,'data':{'excel':self.data,'header':self.data_header,'feed':self.feed}}
-
     def add_post(self, university:str,institute:str, branch:str) -> 'MongoTemplate':
         self.header['post'] = {'university':university,'institute':institute,'branch':branch}
         return self
@@ -62,17 +66,20 @@ class MongoTemplate:
         self.data_header['image_column'] = image_col
         return self
     
-    def add_excel(self, excel:dict) -> 'MongoTemplate':
-        self.data = excel
+    def add_excel(self, excel:pd.DataFrame) -> 'MongoTemplate':
+
+        self.data = {str(idx):list(i) for idx, i in enumerate(excel.itertuples(index=False))}
+
+        self.data_header['columns'] = list(excel.columns)
+        
         return self
     
     def add_feed(self, rows:int) -> 'MongoTemplate':
-        self.feed = [{"index":i,**self.data_feed} for i in range(rows)]
+        self.feed = {str(i):self.data_feed for i in range(rows)}
         return self
     
     def add_manager(self, managers:list[str]) -> 'MongoTemplate':
-        for i in managers:
-            self.header['manager'].append(i)
+        self.header['manager'] = list(managers)
         return self
     
     def get_json(self) -> dict:
@@ -188,7 +195,17 @@ class MongoConnection:
             self.log.write_info("Closing MongoDB connection")
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
+    
+    @staticmethod
+    def getValue(dictionary: dict, *keyString:str) -> str | dict | list:
         
+        val = dictionary
+        
+        for key in keyString:
+            if(isinstance(val,dict) and val is not None):
+                val = val.get(key, None)
+        
+        return val        
 class RedisConnection:
     
     MAX_DURATION:int = 3

@@ -116,13 +116,11 @@ def upload(req: HttpRequest) -> HttpResponse:
             try:
                 with excel_file.open() as file:
                     image_idx, pd_data = image_load(file.read())
-                    
                     if(pd_data is None):
                         messages.error(req,"Data Extraction failed")
                         return render(req,'Upload/HTMX/message.html')
                     
                     rows, _ = pd_data.shape
-                    pd_data = pd_data.to_json()
                     
             except Exception as e:
                 APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
@@ -130,7 +128,7 @@ def upload(req: HttpRequest) -> HttpResponse:
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
             
-            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
+            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(pd_data).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
             try:
                 res = conn.insert_one(template)
@@ -188,14 +186,13 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                         return render(req,'Upload/HTMX/message.html')
                     
                     rows, _ = pd_data.shape
-                    pd_data = pd_data.to_json()
                     
             except Exception as e:
                 APP_LOG.write_error( LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))    
                 messages.error(req,DEFAULT_ERROR)
                 return render(req,'Upload/HTMX/message.html')
             
-            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(json.loads(pd_data)).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
+            template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(pd_data).add_file(file_name).add_uploader(req.user.id).add_feed(rows)
             
             try:
                 exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id),"data.feed.locked":{"$ne":True}})

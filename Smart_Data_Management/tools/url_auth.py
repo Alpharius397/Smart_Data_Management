@@ -157,8 +157,8 @@ def jwt_required(view_func):
                 refresh_token = refresh_payload.getNewToken()
             
             else:
-                access_token = access_payload.getToken()
-                refresh_token = refresh_payload.getToken()
+                access_token = access
+                refresh_token = refresh
             
             user = User.objects.get(id=access_payload.userID, username=access_payload.username)
             request.user = user
@@ -203,3 +203,6 @@ def api_key_required(view_func):
             return JsonResponse({'error':DEFAULT_ERROR}, status=404)
 
     return _wrapped_view
+
+def getRequestToken(req: HttpRequest):
+    return {'access':req.headers.access,'refresh':req.headers.refresh}

@@ -4,7 +4,7 @@ from Logs.loggers import DEFAULT_ERROR
 from Mobile.models import razorPayment
 from User.models import is_student, Student
 from django.db.models.expressions import Q
-from tools.url_auth import AccessPayLoad, PayLoad, RefreshPayLoad, is_auth_get, is_auth_post, is_auth_put, jwt_required, noneCheck
+from tools.url_auth import AccessPayLoad, PayLoad, RefreshPayLoad, getRequestToken, is_auth_get, is_auth_post, is_auth_put, jwt_required, noneCheck
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
@@ -101,7 +101,7 @@ def mobile_register(req: HttpRequest) -> JsonResponse:
 @jwt_required
 def subscriber(req: HttpRequest):
     if(is_student(req.user) and req.method=="GET"): # Check if user has paid money
-        response = {'status':False, 'error': None}
+        response = {'status':False, 'error': None, **getRequestToken(req)}
         
         try:
             paymentDone = razorPayment.objects.filter(user=req.user).exists()
@@ -126,7 +126,7 @@ def subscriber(req: HttpRequest):
             order_id = data.get("order_id", None)
             payment_id = data.get("payment_id", None)
             
-            if(order_id is None):
+            if(order_id is None or payment_id is None):
                 response['error'] = "Payment was unsuccessful"
                 return JsonResponse(data=response, safe=False, status=422)
             

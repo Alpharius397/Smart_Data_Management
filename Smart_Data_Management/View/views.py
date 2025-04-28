@@ -36,6 +36,10 @@ ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
 def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
+def buffered_data(conn: MongoConnection, condition: dict, filters: dict,start: int, end: int) -> dict[str,str]:
+    
+    return conn.find_one(condition, {**{f"data.excel.{i}":1 for i in range(start, end)}, **{f"data.feed.{i}":1 for i in range(start, end)}, "data.header":1 ,**filters})
+
 class ReportStructure(NamedTuple):
     profile_img:str
     personal_info:dict[str,str]
@@ -94,7 +98,6 @@ def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list
 
 def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None, value:str = None, issue:str = None, status:str = None, lock:str = None, page:str = '0') -> dict[str,str]:
     
-    
     def state_2_convert(val :str) -> bool | None:
         match(val):
             case "true": return True
@@ -127,16 +130,18 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     conn.connect()
     
     try:
+        page = int(page)
         if(is_manager(req.user)):
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]})
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, {}, page, page+MAX_RECORD)
             
         elif(is_admin(req.user)):
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, {}, page, page+MAX_RECORD)
             
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
         context['error'] = DEFAULT_ERROR
         return context
+
     finally:
         conn.close()
     
@@ -146,38 +151,38 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         return context
     
     try:
-        page = int(page)
-        pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
-        image_idx:list = result.get('data',{}).get('header',{}).get('image_column',[])
-        feed_list:list[dict[str,str]] = list(list(result.get('data',{}).get('feed',[])))
+        image_idx:list = MongoConnection.getValue(result, "data", "header", "image_column")
+        columns:list = MongoConnection.getValue(result, "data", "header", "columns")
+        feed_list:dict[str,dict[str,str]] = MongoConnection.getValue(result, "data", "feed")
+        data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
+        pd_data = pd.DataFrame(list(data.values()), columns=columns)
         
         verify_idx:list[bool | None] = []
         locked_idx:list[bool | None] = []
         issued_idx:list[bool | None] = []
         v_p, i_p, l_p = set(),set(),set()
         status, issue, lock = state_3_convert(status), state_2_convert(issue), state_2_convert(lock)
+
+        for i,j in enumerate(feed_list.values()):
+            if(state_3_check(j.get('status'),status)):
+                v_p.add(i)
         
-        for i in feed_list:
-            if(state_3_check(i.get('status'),status)):
-                v_p.add(i.get('index'))
+            if(state_2_check(j.get('issued'),issue)):
+                i_p.add(i)
         
-            if(state_2_check(i.get('issued'),issue)):
-                i_p.add(i.get('index'))
+            if(state_2_check(j.get('locked'),lock)):
+                l_p.add(i)
         
-            if(state_2_check(i.get('locked'),lock)):
-                l_p.add(i.get('index'))
+            issued_idx.append(j.get('issued'))
+            locked_idx.append(j.get('locked'))
+            verify_idx.append(j.get('status'))
         
-            issued_idx.append(i.get('issued'))
-            locked_idx.append(i.get('locked'))
-            verify_idx.append(i.get('status'))
-        
-        available_column = sorted(list(set(pd_data.columns.to_list()) - set([ i for i in image_idx])))
+        available_column = sorted(list(set(columns) - set(image_idx)))
         uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
         manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
-        
         search, pd_data = search_query(pd_data,column,value,available_column)
         panda_idx = v_p&i_p&l_p
-        panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)][page:page+MAX_RECORD]
+        panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)]
         
         pd_data = pd_data.iloc[list(panda_idx)]
 
@@ -434,9 +439,15 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"header":1,"data.header":1,"data.feed":1,"data.excel":1})
-            meta_data:dict = result.get('data',{}).get('feed',[])[idx]
-            pd_data = pd.DataFrame(result.get('data',{}).get('excel',{})).iloc[idx]
+            image_idx:list = MongoConnection.getValue(result, "data", "header", "image_column")
+            columns:list = MongoConnection.getValue(result, "data", "header", "columns")
+            feed_list:dict[str,dict[str,str]] = MongoConnection.getValue(result, "data", "feed")
+            data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
+            pd_data = pd.DataFrame(list(data.values()), columns=columns)
+            
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"header":1,"data.header":1,f"data.feed.{idx}":1,f"data.excel.{idx}":1})
+            meta_data:dict = result.get('data',{}).get('feed',[])
+            pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR

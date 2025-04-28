@@ -1,5 +1,6 @@
-from django.db.models import CharField,Model,IntegerField
+from django.db.models import CharField,Model,IntegerField,QuerySet
 from django.core.validators import MinValueValidator, RegexValidator
+from Main.models import MongoConnection
 
 MongoID = RegexValidator(r"^[0-9a-f]{24}$", message="Invalid MongoID")
 
@@ -27,3 +28,4 @@ class Card(Model):
     def save(self, *args, **kwargs):
         self.clean_fields()
         super().save(*args, **kwargs)
+        

@@ -10,7 +10,6 @@ from User.models import is_manager, is_admin
 def login_view(req:HttpRequest) -> HttpResponse:
     
     if(req.method=="GET"):
-        print(req.META)
         return render(req,'Login/index.html',{'form':LoginForm})
     
     elif(req.method=="POST"):
