@@ -14,12 +14,12 @@ from User.models import Manager, get_post_id, is_admin, is_manager, is_authentic
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
-from tools.encrypt import encrypt_data, decrypt_data, getAuthKey
+from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
-from tools.url_auth import api_key_required, is_auth_post, is_hx_delete, is_hx_get, is_auth_get, is_hx_post, auth_needed, get_admin_color, get_manager_color, is_hx_put
+from tools.url_auth import *
 from View.forms import VerifyForm
 from django.utils import timezone
-from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, MONGO_ERROR, Task
 from django.views.decorators.csrf import csrf_exempt
 from tools.token import get_token, hash_token
 from Card.models import Card
@@ -34,11 +34,11 @@ FAILED:str = "Failed"
 WRITE_TOKEN:str = "write-token"
 ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
-def AUTH_VIEW(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
+def auth_view(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
-def buffered_data(conn: MongoConnection, condition: dict, filters: dict,start: int, end: int) -> dict[str,str]:
+def buffered_data(conn: MongoConnection, condition: dict, start: int, end: int, filters: dict = {}) -> dict[str,str]:
     
-    return conn.find_one(condition, {**{f"data.excel.{i}":1 for i in range(start, end)}, **{f"data.feed.{i}":1 for i in range(start, end)}, "data.header":1 ,**filters})
+    return conn.find_one(condition, {**{f"data.excel.{i}":1 for i in range(start, end)}, **{f"data.feed.{i}":1 for i in range(start, end)}, "header":1, "data.header":1 ,**filters})
 
 class ReportStructure(NamedTuple):
     profile_img:str
@@ -71,13 +71,11 @@ def report_structure(result:dict[str,Any]) -> ReportStructure:
 
     return ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
 
+@login_needed()
 def default_view(req: HttpRequest, id:str) -> HttpResponse:
     
     if(is_hx_get(req)):
         return data_view(req,id)
-    
-    elif(not (is_authenticated(req.user))):
-        return auth_needed(req)
     
     elif(is_admin(req.user)):
         get_admin_color(req,req.user)
@@ -86,8 +84,7 @@ def default_view(req: HttpRequest, id:str) -> HttpResponse:
     elif(is_manager(req.user)):
         get_manager_color(req,req.user)
         return render(req,'View/table/manager.html',{'id':id})    
-    
-    return HttpResponse(status=403)
+
 
 def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list) -> tuple[bool,pd.DataFrame]:
     
@@ -132,10 +129,10 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     try:
         page = int(page)
         if(is_manager(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, {}, page, page+MAX_RECORD)
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, page, page+MAX_RECORD)
             
         elif(is_admin(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, {}, page, page+MAX_RECORD)
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, page, page+MAX_RECORD)
             
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -144,7 +141,6 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
 
     finally:
         conn.close()
-    
     
     if(result is None):
         context['error'] = "Mongo ID %s was not found" % id
@@ -157,10 +153,13 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
         pd_data = pd.DataFrame(list(data.values()), columns=columns)
         
+        if(pd_data.empty): # no buffer left
+            context['empty'] = True
+            
         verify_idx:list[bool | None] = []
         locked_idx:list[bool | None] = []
         issued_idx:list[bool | None] = []
-        v_p, i_p, l_p = set(),set(),set()
+        v_p, i_p, l_p = set(), set(), set()
         status, issue, lock = state_3_convert(status), state_2_convert(issue), state_2_convert(lock)
 
         for i,j in enumerate(feed_list.values()):
@@ -177,11 +176,12 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
             locked_idx.append(j.get('locked'))
             verify_idx.append(j.get('status'))
         
-        available_column = sorted(list(set(columns) - set(image_idx)))
-        uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
-        manager = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
+        available_column = sorted((set(columns) - set(image_idx)))
+        uploader = get_user_by_id(MongoConnection.getValue(result, "header", "uploader"))
+        manager = [get_user_by_id(i) for i in MongoConnection.getValue(result,"header","manager")]
         search, pd_data = search_query(pd_data,column,value,available_column)
         panda_idx = v_p&i_p&l_p
+
         panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)]
         
         pd_data = pd_data.iloc[list(panda_idx)]
@@ -198,6 +198,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     return context
 
 
+@login_needed()
 def data_view(req: HttpRequest,id) -> HttpResponse:
 
     if(is_auth_get(req)):
@@ -207,11 +208,10 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         conn.close()
         context.update({"admin":is_admin(req.user)})
         return render(req,'View/HTMX/page.html',context=context)
-    
-    else:
-        return auth_needed(req)
 
+@htmx_response
 def assign_form(req:HttpRequest, id:str) -> HttpResponse:
+    
     
     if(is_authenticated(req.user) and is_hx_get(req) and is_admin(req.user)):
         
@@ -220,137 +220,102 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         context = {'id':id}
         
         try:
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.uploader":1,"header.manager":1})
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header":1})
             
         except Exception as e:            
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            conn.close()
+            context['error'] = MONGO_ERROR
             
             return render(req,'View/HTMX/form.html',context=context)
+        
+        finally:
+            conn.close()
 
         try:
-            user:User = req.user
-            uploader = get_user_by_id(result.get('header',{}).get('uploader',None))
-            manager = {i:get_user_by_id(i) for i in result.get('header',{}).get('manager',[])}
-            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=user.admin.belongs.id).exclude(user__id__in=list(manager.keys())).values()}
+            uploader = get_user_by_id(MongoConnection.getValue(result,'header','uploader'))
+            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,'header','manager')}
+            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=list(manager.keys())).values()}
             context.update({'upload':uploader,'manage':manager,'option':all_manager})
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
-
-        finally:
-            conn.close()
-            
+        
         return render(req,'View/HTMX/form.html',context=context)
     
     
-    elif(is_authenticated(req.user) and is_hx_put(req) and is_admin(req.user)):
+    elif(is_authenticated(req.user) and is_admin(req.user) and (is_hx_put(req) or is_hx_delete(req))):
         
         conn = MongoConnection().connect()
         result:dict[str,dict[str,dict]] = None
         file_name:str = None
+        user:str = None
         context = {'id':id}
 
-        putDict = QueryDict(req.body)
-        user:str = putDict.get('user',None)
-            
-        try:
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
-            
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
-            
+        value:QueryDict = None
+        
+        if(is_hx_put(req)):
+            value = QueryDict(req.body)
+        else:
+            value = req.GET
+        
+        if(value is not None):
+            user:str = value.get('user',None)            
         
         try:
-            manager = [i for i in result.get('header',{}).get('manager',[])]
-            file_name = result.get("data",{}).get("header",{}).get("file_name",None)
-            all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
+            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header":1,"data.header.file_name":1})
+            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,'header','manager')}
+            file_name = MongoConnection.getValue(result,"data","header","file_name",)
+            uploader = get_user_by_id(MongoConnection.getValue(result, "header","uploader"))
+            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()}
             _manage = Manager.objects.get(user__id=user)
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
+            context['error'] = MONGO_ERROR
+            return render(req,'View/HTMX/form.html',context=context)
         
         try:
+            updateManagers:dict[str,str] = {}
             
-            if(_manage.user.id in manager):
-                context['msg'] = "Manager %(manage)s is already assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
-            else:
-                manager.append(_manage.user.id)
-                manager = list(set(manager))
+            if(is_hx_put(req)):
+                if(_manage.user.id in manager):
+                    context['msg'] = "Manager %(manage)s is already assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+                else:
+                    manager.update({_manage.user.id:all_manager.pop(_manage.user.id, None)})
+                    updateManagers.update({"$push":{"header.manager":_manage.user.id}})
+                    context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
                 
-                conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
+            else:
+                
+                if(_manage.user.id not in manager):
+                    context['msg'] = "Manager %(manage)s was not assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+                else:
+                    all_manager.update({_manage.user.id:manager.pop(_manage.user.id,None)})
+                
+                    updateManagers = {"$pull":{"header.manager":_manage.user.id}}
+                    context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+
+            context.update({'upload':uploader,'manage':manager,'option':all_manager})
+            conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},updateManagers)
+
+            if(is_hx_put(req)):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_ASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
-                context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
-
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
-        
-        finally:
-            conn.close()
             
-        return render(req,'View/HTMX/message.html',context=context)
-    
-    elif(is_authenticated(req.user) and is_hx_delete(req) and is_admin(req.user)):
-        conn = MongoConnection().connect()
-        result:dict[str,dict[str,dict]] = None
-        file_name:str = None
-        context = {'id':id}
-
-        user:str = req.GET.get('user',None)
-
-        try:
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header.manager":1,"data.header.file_name":1})
-            
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
-            
-        
-        try:
-            manager = [i for i in result.get('header',{}).get('manager',[])]
-            file_name = result.get("data",{}).get("header",{}).get("file_name",None)
-            all_manager = [get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()]
-            _manage = Manager.objects.get(user__id=user)
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
-        
-        try:
-            
-            if(_manage.user.id not in manager):
-                context['msg'] = "Manager %(manage)s was not assigned to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
             else:
-                manager.remove(_manage.user.id)
-                manager = list(set(manager))
-                
-                conn.update_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"$set":{'header.manager':manager}})
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.TASK_UNASSIGN,taskID=id,manager=_manage.user,fileName=file_name,user=req.user))
-                context['msg'] = "Removed Manager %(manage)s from task ID %(id)s" % {'manage':_manage.user.username,'id':id}
 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
-            return render(req,'View/HTMX/message.html',context=context)
+            return render(req,'View/HTMX/form.html',context=context)
         
         finally:
             conn.close()
             
-        return render(req,'View/HTMX/message.html',context=context)
-            
+        return render(req,'View/HTMX/form.html',context=context)            
 
-    return HttpResponse(status=403)
-
-
+@htmx_response
 def table_query(req: HttpRequest, id:str) -> HttpResponse:
     
     if((is_authenticated(req.user)) and is_hx_get(req)):
@@ -370,6 +335,7 @@ def table_query(req: HttpRequest, id:str) -> HttpResponse:
     
     return HttpResponse(status=403)
 
+@htmx_response
 def row_view(req: HttpRequest, id:str) -> HttpResponse:
     
     if((is_authenticated(req.user)) and is_hx_get(req)):
@@ -390,7 +356,7 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
     
     return HttpResponse(status=403)
     
-
+@htmx_response
 def quick_query(req: HttpRequest, id:str):
     if((is_authenticated(req.user)) and is_hx_get(req)):
     
@@ -400,7 +366,7 @@ def quick_query(req: HttpRequest, id:str):
         context = {'option':[]}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.excel":1})
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"data.excel":1})
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
             
             if(column in pd_data.columns):
@@ -413,7 +379,7 @@ def quick_query(req: HttpRequest, id:str):
             
         return render(req,'View/HTMX/suggests.html',context=context)
     
-    
+@login_needed()
 def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
     
     if(is_hx_get(req)):
@@ -422,15 +388,12 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
     elif(is_hx_post(req)):
         return report_view(req,id,idx)
     
-    elif(not (is_authenticated(req.user))):
-        return auth_needed(req)
-    
     else:
         get_admin_color(req,req.user)
         get_manager_color(req,req.user)
         return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
 
-    
+@htmx_response
 def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
 
     if(is_authenticated(req.user) and is_hx_get(req)):
@@ -445,7 +408,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
             pd_data = pd.DataFrame(list(data.values()), columns=columns)
             
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"header":1,"data.header":1,f"data.feed.{idx}":1,f"data.excel.{idx}":1})
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"header":1,"data.header":1,f"data.feed.{idx}":1,f"data.excel.{idx}":1})
             meta_data:dict = result.get('data',{}).get('feed',[])
             pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
         except Exception as e:
@@ -495,7 +458,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 index_col = f"{column}.index"
                 status_col = f"{column}.{idx}.status"
                 feed_col = f"{column}.{idx}.feed"
-                success = conn.update_one({"_id":ObjectId(id),"$or":AUTH_VIEW(req.user),index_col:idx},{"$set":{status_col:status,feed_col:feed}})
+                success = conn.update_one({"_id":ObjectId(id),"$or":auth_view(req.user),index_col:idx},{"$set":{status_col:status,feed_col:feed}})
                 file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
 
                 if(success):
@@ -539,7 +502,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]},{"data.feed":1,"header.manager":1})
+            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"data.feed":1,"header.manager":1})
             meta_data:dict = result.get('data',{}).get('feed',[])[idx]
             manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
             context.update({**meta_data,'manager':manager})
@@ -565,7 +528,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             
             context = {'id':id,'idx':idx}
             try:
-                result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":AUTH_VIEW(req.user)}]})
+                result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]})
                 meta_data:dict = result.get('data',{}).get('feed',[])[idx]
                 context.update({**meta_data})
             except Exception as e:

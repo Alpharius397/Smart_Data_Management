@@ -3,52 +3,53 @@
 
 <div class="assign">
 
-    {% if error %}
+    <h3> Assign Task </h3>
 
-        <ul class="messages">
-            <li class="error">{{error}}</li>
-        </ul>
+    <h4>Uploader: {{upload}}</h4>
+    <h4>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h4>
 
-    {% else %}
-        <h3> Assign Task </h3>
+    <form hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:#assign" hx-target="closest .assign" hx-swap="outerHTML">
+        {% csrf_token %}
+        Add a user
 
-        <h4>Uploader: {{upload}}</h4>
-        <h4>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h4>
+        <select name="user" required>
+            <option value>--------</option>
 
-        <form hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:#assign" hx-target=".messages" hx-swap="innerHTML">
-            {% csrf_token %}
-            Add a user
+            {% for i,j in option.items %}
+                <option value="{{i}}">{{j}}</option>
+            {% endfor %}
 
-            <select name="user" required>
-                <option value>--------</option>
+        </select>
 
-                {% for i,j in option.items %}
-                    <option value="{{i}}">{{j}}</option>
-                {% endfor %}
+        <button id="assign">Assign User</button>
+    </form>
 
-            </select>
- 
-            <button id="assign">Assign User</button>
-        </form>
+    <form hx-delete="{% url 'View:assign' id=id %}" id="unassign-form" hx-trigger="click from:#delete" hx-target="closest .assign" hx-swap="outerHTML">
+        {% csrf_token %}
 
-        <form hx-post="{% url 'View:assign' id=id %}" id="unassign-form" hx-trigger="click from:#delete" hx-target=".messages" hx-swap="innerHTML">
-            {% csrf_token %}
+        Delete a user
+        <select name="user" required>
+            <option value>--------</option>
 
-            Delete a user
-            <select name="user" required>
-                <option value>--------</option>
+            {% for i,j in manage.items %}
+                <option value="{{i}}">{{j}}</option>
+            {% endfor %}
+        </select>
 
-                {% for i,j in manage.items %}
-                    <option value="{{i}}">{{j}}</option>
-                {% endfor %}
-            </select>
-
-            <button type='cancel' id="delete">Unassign User</button>
-        </form>
-
-    {% endif %}
+        <button type='cancel' id="delete">Unassign User</button>
+    </form>
 </div>
 
+{% if msg or error %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+
+        {% if msg %}
+            <li class="success">{{msg}}</li>
+        {% elif error %}
+            <li class="error">{{error}}</li>
+        {% endif %}
+    </ul>
+{% endif %}
 
 <script>
     add_csrf();

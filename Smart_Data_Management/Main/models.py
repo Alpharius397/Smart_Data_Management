@@ -6,6 +6,7 @@ from typing import NamedTuple
 from django.conf import settings
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
+import json
 
 class MongoTemplate:
     """
@@ -29,16 +30,16 @@ class MongoTemplate:
                 header:{
                     columns,
                     image_column,
-                    file_name,
+                    file_name
                 },
-                feed:[
-                    {
+                feed:{
+                    row_index:{
                         locked,
                         time_of_issue,
                         status,
-                        feed,
-                    },
-                ]
+                        feed,    
+                    }
+                }
             }
         }
     """
@@ -99,7 +100,6 @@ class MongoConnection:
     
     def is_connected(self) -> bool:
         return (self.collection is not None)
-    
     
     def connect(self) -> 'MongoConnection':
 
@@ -168,6 +168,7 @@ class MongoConnection:
     def insert_one(self, doc:MongoTemplate) -> str:
         
         id:str = None
+        
         try:
             _ = self.collection.insert_one(doc.get_json())
             id = _.inserted_id
@@ -179,6 +180,7 @@ class MongoConnection:
         return id
     
     def replace_one(self, condition:dict, doc: MongoTemplate) -> bool:
+        
         success:bool = False
         
         try:
@@ -205,7 +207,8 @@ class MongoConnection:
             if(isinstance(val,dict) and val is not None):
                 val = val.get(key, None)
         
-        return val        
+        return val    
+        
 class RedisConnection:
     
     MAX_DURATION:int = 3
@@ -224,23 +227,24 @@ class RedisConnection:
             
         return self
     
-    def get(self, key:str) -> str | None:
+    def get(self, key:str) -> dict | None:
         
         try:
             value = self.r.get(key)
             self.log.write_info(f"Fetching Key: {key}")
-            return value
+            return json.loads(value)
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
             
         return None
     
-    def set(self, key:str, value:str, duration:int = None) -> None:
+    def set(self, key:str, value:dict, duration:int = None) -> None:
         
         duration = RedisConnection.MAX_DURATION if(duration is None) else duration
         try:
-            self.r.set(key, value, ex=RedisConnection.get_secs_from_minutes(duration))
-            self.log.write_info(f"Setting Key: {key}, with Value: {value} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds")
+            jsonText = json.dumps(value)
+            self.r.set(key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration))
+            self.log.write_info(f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds")
             
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))

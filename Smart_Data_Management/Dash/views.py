@@ -20,33 +20,54 @@ READ_TOKEN:str = "read-token"
 LOADING:str = "Loading"
 DONE:str = "Done"
 CARD_DATA:str = "Data"
-ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
 def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[str,str|list]]:
-    data = []
-    empty = True
+    data:list[dict[str, str|list]] = []
+    empty = bool(result)
+    
     for i in result:
-        if(empty): empty=False
-        data.append({'id':i.get('_id'), 'uploader':get_user_by_id(i.get('header',{}).get('uploader')), 'manager':[get_user_by_id(j) for j in i.get('header',{}).get('manager',[])],'file_name':i.get('data',{}).get('header',{}).get('file_name')})
+        
+        data.append({
+            'id': MongoConnection.getValue(i,'_id'), 
+            'uploader': get_user_by_id(MongoConnection.getValue(i, 'header', 'uploader')), 
+            'manager': [ get_user_by_id(j) for j in MongoConnection.getValue(i, 'header', 'manager') ],
+            'file_name': MongoConnection.getValue(i, 'data', 'header', 'file_name')
+        })
 
     return empty, data
 
-def dash_board(req: HttpRequest) -> HttpResponse:
+def get_query(req: HttpRequest) -> dict[str,str]:
+    
+    query = req.GET.get('query',None)
+    value = req.GET.get('value',None)
+    query_dict = {}
+    
+    if(query and value):
+        
+        if(query=='uploader'):
+            query_dict.update({"header.uploader":{"$in":get_admin_by_name(value)}})
+        elif(query=='manager'):
+            manager_list = get_manager_by_name(value)
+            query_list = manager_list if (manager_list) else [None]
+            query_dict.update({"$or": query_list})
+        elif(query=='file_name'):
+            query_dict.update({"data.header.file_name":{"$regex":f"{value}","$options":"i"}})
+            
+    return query_dict
 
-    if(not (is_authenticated(req.user))):
-        return auth_needed(req)
+@login_needed()
+def dash_board(req: HttpRequest) -> HttpResponse:
     
     if(is_admin(req.user) and is_auth_get(req)):
         get_admin_color(req,req.user)
         return render(req,'Dash/dash/admin.html')
 
-    elif(is_manager(req.user) and is_auth_get(req)):
+    if(is_manager(req.user) and is_auth_get(req)):
         get_manager_color(req,req.user)
         return render(req,'Dash/dash/manager.html')
 
-    else:
-        return HttpResponse(status=403)
 
+@htmx_response
 def manager_fetch(req: HttpRequest) -> HttpResponse:
     
     if(is_authenticated(req.user) and is_manager(req.user) and is_hx_get(req)):
@@ -59,7 +80,7 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
         try:
             
             result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
-            flag,manage = get_data(result)
+            flag , manage = get_data(result)
             if(flag and queryset): error='No matching records found!'
             
         except Exception as e:            
@@ -70,10 +91,8 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             conn.close()
             
         return render(req,'Dash/HTMX/manager.html',context={'manage':manage,'error':error})
-    
-    return HttpResponse(status=403)
-    
-    
+
+@htmx_response
 def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
     
     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
@@ -96,10 +115,8 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
             conn.close()
             
         return render(req,'Dash/HTMX/admin.uploader.html',context={'upload':admin,'error':error})
-    
-    return HttpResponse(status=403)
-    
 
+@htmx_response
 def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
     
     if(is_authenticated(req.user) and is_admin(req.user) and is_hx_get(req)):
@@ -124,20 +141,20 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
             
         return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
 
-    return HttpResponse(status=403)
 
 class ReportStructure(typing.NamedTuple):
     profile_img:str
     personal_info:dict[str,str]
     sem_data:dict[str,dict[str,str]]
-    
+
+@htmx_response
 def read_view(req: HttpRequest)-> HttpResponse:
     
     if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         context = {}
             
         try:
-            session_data:dict[str, str] = json.loads(req.session.get(CARD_DATA))
+            session_data:dict[str, str] = req.session.get(CARD_DATA)
             
             cardData:str = session_data.get("data",None)
             cardID:str = session_data.get("cardID", None)
@@ -180,11 +197,8 @@ def read_view(req: HttpRequest)-> HttpResponse:
             
         return render(req,'Dash/HTMX/read.card.html',context=context)
 
-    return HttpResponse(status=403)
-
+@login_needed(manager_only=True)
 def read_screen(req: HttpRequest) -> HttpResponse:
-    if(not (is_authenticated(req.user) and (is_manager(req.user)))):
-        return auth_needed(req)
     
     Redis = RedisConnection().connect()
     token = get_token()
@@ -194,25 +208,8 @@ def read_screen(req: HttpRequest) -> HttpResponse:
     
     return render(req,'Dash/read.html',context={"path":settings.READ_REGISTRY,"url":req.build_absolute_uri(reverse("Dash:__base__",args=(hash_token(token,req.user.id),)))})
 
-def get_query(req: HttpRequest) -> dict[str,str]:
-    
-    query = req.GET.get('query',None)
-    value = req.GET.get('value',None)
-    query_dict = {}
-    
-    if(query and value):
-        
-        if(query=='uploader'):
-            query_dict.update({"header.uploader":{"$in":get_admin_by_name(value)}})
-        elif(query=='manager'):
-            query_dict.update({"$or":[{"header.manager":i} for i in get_manager_by_name(value)]+[{"header.manager":None}]})
-        elif(query=='file_name'):
-            query_dict.update({"data.header.file_name":{"$regex":f"{value}","$options":"i"}})
-            
-    return query_dict
-
-    
-def check_write(req: HttpRequest) -> HttpResponse:
+@htmx_response
+def check_read(req: HttpRequest) -> HttpResponse:
     if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         
         token = req.session.get(READ_TOKEN)
@@ -229,28 +226,35 @@ def check_write(req: HttpRequest) -> HttpResponse:
         
         else:            
             return render(req,'Dash/HTMX/read.status.html',context={"error":"Read Token Expired! Please Try Again"})
-        
-    return HttpResponse(status=403)
 
 @csrf_exempt
 @api_key_required
 def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
+    
+    json_resp = {"info":"Unauthenticated Request","status":False}
+    
     if(req.method=="POST"):
+        
         cardID = req.POST.get("cardID", None)
         data = req.POST.get("data",None)
 
         if(data and cardID):
             Redis = RedisConnection().connect()
-            
+
             if(Redis.get(token)!=LOADING):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
-                return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
+                json_resp['info'] = "Invalid Token"
+                return JsonResponse(data=json_resp, status=403, safe=False)
             
-            Redis.set(token,json.dumps({"data":data, "cardID":cardID}))
+            Redis.set(token,{"data":data, "cardID":cardID})
             Redis.close()
-            return JsonResponse(data={"info":"Data received", "status":True},status=200)
+            
+            json_resp['info'] = "Data received"
+            json_resp['status'] = True
+            return JsonResponse(data=json_resp,status=200)
         else:
-            return JsonResponse(data={"info":"Incorrect Credentials / Data not Found", "status":False},status=404)
+            json_resp['info'] = "Incorrect Credentials / Data not Found"
+            return JsonResponse(data=json_resp,status=404)
 
-    return JsonResponse(data=ERROR_JSON,status=403)
+    return JsonResponse(data=json_resp,status=403)
 

@@ -7,6 +7,7 @@ from User.models import Manager, Admin
 from University.models import Institute, Branch
 from Logs.loggers import DEFAULT_ERROR
 from django.db.models import Q
+from django.contrib import messages
 
 # Create your views here.
 def register_view(req:HttpRequest) -> HttpResponse:
@@ -26,20 +27,20 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 exists = User.objects.filter(Q(username=user)|Q(email=email)).exists()
 
                 if(exists):
-                    context['error'] = "Username/Email already exists"
-                    return render(req,'HTMX/message.html',context=context)
+                    messages.error(req,"Username/Email already exists")
+                    return render(req,'Register/HTMX/message.html',context=context)
                     
             except Exception as e:
-                context['error'] = DEFAULT_ERROR
-                return render(req,'HTMX/message.html',context=context)
+                messages.error(req,DEFAULT_ERROR)
+                return render(req,'Register/HTMX/message.html',context=context)
             
             _branch = None
             
             try:
                 _branch = Branch.objects.get(id=branch)
             except Exception as e:
-                context['error'] = "Branch not found"
-                return render(req,'HTMX/message.html',context=context)
+                messages.error(req,"Branch not found")
+                return render(req,'Register/HTMX/message.html',context=context)
                 
             try:
                 group = Group.objects.get(name='Admin')
@@ -58,19 +59,19 @@ def register_view(req:HttpRequest) -> HttpResponse:
                     admin.user.groups.add(group)
                     admin.save()
                 else:
-                    context['error'] = "Level not found"
+                    messages.error(req,"Level not found")
                 context['msg'] = "Registered Successfully"
                 
             except Exception as e:
-                context['error'] = DEFAULT_ERROR
+                messages.error(req,DEFAULT_ERROR)
             
-            return render(req,'HTMX/message.html',context=context)
+            return render(req,'Register/HTMX/message.html',context=context)
             
         else:
             
-            context['error'] = f.errors.as_text()
+            messages.error(req,f.errors.as_text())
             
-            return render(req,'HTMX/message.html',context=context)
+            return render(req,'Register/HTMX/message.html',context=context)
                 
 
 def insti_change(req: HttpRequest) -> HttpResponse:
@@ -83,7 +84,7 @@ def insti_change(req: HttpRequest) -> HttpResponse:
         else:
             insti = list(Institute.objects.none())
             
-        return render(req,'HTMX/option.html',{'option':insti})
+        return render(req,'Register/HTMX/option.html',{'option':insti})
     
     return HttpResponse(status=403)
     
@@ -99,6 +100,6 @@ def branch_change(req: HttpRequest) -> HttpResponse:
         else:
             branch = list(Branch.objects.none())
             
-        return render(req,'HTMX/option.html',{'option':branch})
+        return render(req,'Register/HTMX/option.html',{'option':branch})
 
     return HttpResponse(status=403)

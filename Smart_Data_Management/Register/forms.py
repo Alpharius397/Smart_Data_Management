@@ -7,10 +7,10 @@ LEVEL = ['Admin','Manager']
 class RegisterForm(Form):
     username = forms.CharField(max_length=100, required=True,help_text='Enter the username')
     email = forms.EmailField(max_length=255,required=True,help_text='Enter the email')
+    level = forms.ChoiceField(help_text='Enter the role',required=True,choices=[('Manager','Manager'),('Admin','Admin')])
     university = forms.ModelChoiceField(help_text='Enter the University',required=True,queryset=University.objects.all(),widget=forms.Select(attrs={'hx-get':'uni/','hx-target':'#id_institute','hx-swap':'innerHTML','hx-trigger':'load,click'}))
     institute = forms.CharField(help_text='Enter the Institute',required=True,widget=forms.Select(attrs={'hx-get':'insti/','hx-target':'#id_branch','hx-swap':'innerHTML','hx-trigger':'load,click'}))
     branch = forms.CharField(help_text='Enter the Branch',required=True,widget=forms.Select())
-    level = forms.ChoiceField(help_text='Enter the role',required=True,choices=[('Manager','Manager'),('Admin','Admin')])
     password = forms.CharField(widget=forms.PasswordInput(),help_text='Enter the password')
     confirm_password = forms.CharField(widget=forms.PasswordInput(),help_text='Re-enter the password')
     

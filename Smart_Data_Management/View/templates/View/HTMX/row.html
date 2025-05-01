@@ -73,9 +73,17 @@
         </div>
     {% endif %}
 {% empty %}
-<div class="loading">
-    <ul class="messages">
-        <li class="error"><span>End of Search Reached</span></li>
-    </ul>
-</div>
+
+    {% if empty %}
+        <div class="loading">
+            <ul class="messages">
+                <li class="error"><span>End of Search Reached</span></li>
+            </ul>
+        </div>
+    {% else %}
+        <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-target='this' hx-swap="outerHTML">
+            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+        </div>
+    {% endif %}
+
 {% endfor %}

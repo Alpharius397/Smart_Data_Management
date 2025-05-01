@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -167,25 +169,21 @@
 
     <div class="msg-box">
         {% if request.GET.success %}
-        <ul class="messages">
-            <li class="success">{{request.GET.success}}</li>
-        </ul>
-        {% elif alert %}
-        <ul class="messages">
-            <li class="error">{{alert}}</li>
-        </ul>
+            <ul class="messages">
+                <li class="success">{{request.GET.success}}</li>
+            </ul>
         {% elif request.GET.alert %}
             <ul class="messages">
                 <li class="error">{{request.GET.alert}}</li>
             </ul>
-
         {% endif %}
     </div>
+
 
     <div class="login">
         <div class="login-container">
             <h2>Login</h2>
-            <form action="{% url 'Login:login' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" method="POST">
+            <form hx-post="{% url 'Login:login' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" hx-target=".msg-box" hx-swap="innerHTML" onsubmit="return false;" hx-trigger="click from:.login-button">
                 {% csrf_token %}
 
                 {% for field in form %}
@@ -202,7 +200,7 @@
                         
                     </div>
                 {% endfor %}
-                <button type="submit" class="login-button">Login</button>
+                <button class="login-button">Login</button>
             </form>
             <div class="form-footer">
                 <p>Don't have an account? <a href="{% url 'Register:register' %}">Sign up</a></p>
@@ -212,4 +210,5 @@
     </div>
 
 </body>
+<script src="{% static 'js/htmx.js' %}"></script>
 </html>

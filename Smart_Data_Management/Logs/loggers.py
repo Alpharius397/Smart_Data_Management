@@ -12,6 +12,7 @@ from Logs.models import LogMessage
 from django.conf import settings
 
 DEFAULT_ERROR = "Something Went Wrong! Please try Again"
+MONGO_ERROR = "MongoDB Connection Failed"
 
 class Task:
     EXCEPTION:int = -1

@@ -1,38 +1,43 @@
 from django.shortcuts import render, redirect
 from Login.forms import LoginForm
-from django.http import HttpRequest, HttpResponse 
+from django.http import HttpRequest, HttpResponse
 from Login.forms import LoginForm
 from django.urls import reverse
 from django.contrib.auth import login, authenticate
 from User.models import is_manager, is_admin
+from django.contrib import messages
+from tools.url_auth import is_hx_post
+from Logs.loggers import DEFAULT_ERROR
 
-# Create your views here.
 def login_view(req:HttpRequest) -> HttpResponse:
     
     if(req.method=="GET"):
         return render(req,'Login/index.html',{'form':LoginForm})
     
-    elif(req.method=="POST"):
-        next_url = req.GET.get('next') if req.GET.get('next') else reverse('Dash:dash')
-        f = LoginForm(req.POST)
+    elif(is_hx_post(req)):
         
-        if(f.is_valid()):
+        try:
+            next_url = req.GET.get('next') if req.GET.get('next') else reverse('Dash:dash')
+            f = LoginForm(req.POST)
             
-            username = f.cleaned_data.get("username")
-            password = f.cleaned_data.get("password")
-            
-            user = authenticate(req,username=username,password=password)
-            
-            if(user is not None):
+            if(f.is_valid()):
                 
-                if(is_manager(user) or is_admin(user)):                
+                username = f.cleaned_data.get("username")
+                password = f.cleaned_data.get("password")
+                
+                user = authenticate(req,username=username,password=password)
+                
+                if((user is not None) and (is_manager(user) or is_admin(user))):            
                     login(req,user)
-                    return redirect(next_url + '?success=Login Successful')
-
-            return render(req,'Login/index.html',{'form':f,'alert':'Incorrect Credentials'})
-        else:
-            return render(req,'Login/index.html',{'form':f,'alert':'Login Failed'})
+                    return render(req,'Login/HTMX/messages.html',{'redirect':next_url})
+                
+                messages.error(req, 'Incorrect Credentials')
+                return render(req,'Login/HTMX/messages.html')
+            
+            else:
+                messages.error(req, 'Login Failed')
+                return render(req,'Login/HTMX/messages.html')
+        except:
+            messages.error(req, DEFAULT_ERROR)
     
     return HttpResponse(status=403)
-    
-

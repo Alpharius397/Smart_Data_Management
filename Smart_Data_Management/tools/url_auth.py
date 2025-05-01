@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 import jwt
 from Logs.loggers import DEFAULT_ERROR
 from tools.encrypt import getAuthKey
-from User.models import is_authenticated
+from User.models import is_admin, is_authenticated, is_manager
 from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -126,7 +126,44 @@ class RefreshPayLoad(PayLoad):
         self.type = type if(type is not None) else self.__type
         self.expire = (expire if(expire is not None) else timezone.now())       
 
-def jwt_required(view_func):
+
+def login_needed(manager_only=False, admin_only=False):
+    """ Wrapper for views that need authenticated users """
+    
+    def  wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper(view_func: typing.Callable[[HttpRequest, list[typing.Any], dict[str, typing.Any]], HttpResponse]):
+        """ *It's the wrap-ception of decorators — a wrap that's wrapped by a wrapper that wraps wrappers.* """
+        
+        @wraps(view_func)
+        def _wrapped_view(request:HttpRequest, *args, **kwargs):
+            if(is_authenticated(request.user)):
+                
+                if((not manager_only) and (not admin_only)):
+                    return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+                
+                if((manager_only and is_manager(request.user)) or (admin_only and is_admin(request.user))):
+                    return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+            
+            return auth_needed(request)
+        
+        return _wrapped_view
+    
+    return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
+
+
+def htmx_response(view_func: typing.Callable[[HttpRequest, list[typing.Any], dict[str, typing.Any]], HttpResponse]):
+    """ Wrapper for views that are HTMX response """
+    
+    @wraps(view_func)
+    def _wrapped_view(request:HttpRequest, *args, **kwargs):
+        
+        if(request.META.get('HTTP_HX_REQUEST')):
+            return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+
+        return HttpResponse(status=403)
+    
+    return _wrapped_view
+
+def jwt_required(view_func: typing.Callable[[HttpRequest, list[typing.Any], dict[str, typing.Any]], HttpResponse]):
     
     @wraps(view_func)
     def _wrapped_view(request:HttpRequest, *args, **kwargs):
@@ -152,13 +189,12 @@ def jwt_required(view_func):
                 raise jwt.InvalidTokenError()
             
             if(access_payload.expire<timezone.now()):
-                print("refreshing")
                 access_token = access_payload.getNewToken()
                 refresh_token = refresh_payload.getNewToken()
             
             else:
-                access_token = access
-                refresh_token = refresh
+                access_token = access_payload.getToken()
+                refresh_token = refresh_payload.getToken()
             
             user = User.objects.get(id=access_payload.userID, username=access_payload.username)
             request.user = user
