@@ -39,7 +39,7 @@ def is_hx_delete(req:HttpRequest) -> bool:
 def is_auth_delete(req: HttpRequest) -> bool:
     return bool(is_authenticated(req.user) and req.method=='DELETE')
 
-def auth_needed(req:HttpRequest) -> HttpResponse:
+def auth_page(req:HttpRequest) -> HttpResponse:
     return redirect(reverse(settings.LOGIN_URL) + f"?next={req.path}&alert=Unauthenticated Request!")
 
 def get_admin_color(req: HttpRequest, user: User):
@@ -143,12 +143,33 @@ def login_needed(manager_only=False, admin_only=False):
                 if((manager_only and is_manager(request.user)) or (admin_only and is_admin(request.user))):
                     return view_func(request, *args, **kwargs) or HttpResponse(status=403)
             
-            return auth_needed(request)
+            return auth_page(request)
         
         return _wrapped_view
     
     return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
+def auth_needed(manager_only=False, admin_only=False):
+    """ Wrapper for views that need authenticated users (HTMX Version) """
+    
+    def  wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper(view_func: typing.Callable[[HttpRequest, list[typing.Any], dict[str, typing.Any]], HttpResponse]):
+        """ *It's the wrap-ception of decorators — a wrap that's wrapped by a wrapper that wraps wrappers.* """
+        
+        @wraps(view_func)
+        def _wrapped_view(request:HttpRequest, *args, **kwargs):
+            if(is_authenticated(request.user)):
+                
+                if((not manager_only) and (not admin_only)):
+                    return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+                
+                if((manager_only and is_manager(request.user)) or (admin_only and is_admin(request.user))):
+                    return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+            
+            return HttpResponse(status=403)
+        
+        return _wrapped_view
+    
+    return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
 def htmx_response(view_func: typing.Callable[[HttpRequest, list[typing.Any], dict[str, typing.Any]], HttpResponse]):
     """ Wrapper for views that are HTMX response """

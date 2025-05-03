@@ -98,8 +98,7 @@
     </div>
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
-
-
+<script src="{% static 'js/script.js' %}"></script>
 <script>
 
     htmx.on("#form","htmx:beforeSend", function(event){
@@ -115,5 +114,7 @@
             htmx.find('#progress').setAttribute('style', "display:none;");
         }
     });
+
+    add_csrf();
 </script>
 </html>

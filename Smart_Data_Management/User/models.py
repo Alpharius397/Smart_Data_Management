@@ -22,21 +22,28 @@ class Student(Model):
     def __str__(self):
         return f"{self.user.username}"
 
-def is_manager(user:User) -> bool:
+class UserObject(User):
+    id:int
+    student:Student
+    manager:Manager
+    admin:Admin
+    
+
+def is_manager(user:UserObject) -> bool:
     try:
         manager = user.manager
         return True
     except:
         return False
 
-def is_student(user:User) -> bool:
+def is_student(user:UserObject) -> bool:
     try:
         student = user.student
         return True
     except:
         return False
 
-def is_admin(user:User) -> bool:
+def is_admin(user:UserObject) -> bool:
     try:
         admin = user.admin
         return True
@@ -54,12 +61,12 @@ def get_user_by_id(id:int) -> str|None:
 def get_user_id(name:int) -> str|None:
     
     try:
-        user = User.objects.get(username=name)
+        user:UserObject = User.objects.get(username=name)
         return user.id        
     except:
         return None
 
-def get_post(user: User) -> dict[str,str]:
+def get_post(user: UserObject) -> dict[str,str]:
     uni = None
     insti = None
     branch = None
@@ -79,7 +86,7 @@ def get_post(user: User) -> dict[str,str]:
     
     return {'university':uni.name,'institute':insti.name,'branch':branch.name}
 
-def get_post_id(user:User) -> dict[str,int]:
+def get_post_id(user:UserObject) -> dict[str,int]:
     uni = None
     insti = None
     branch = None
@@ -99,7 +106,7 @@ def get_post_id(user:User) -> dict[str,int]:
     
     return {'university':uni.id,'institute':insti.id,'branch':branch.id}
 
-def is_authenticated(user:User) -> bool:
+def is_authenticated(user:UserObject) -> bool:
     
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
@@ -129,6 +136,7 @@ def get_post_by_ID(university: int, institute: int, branch: int) -> dict[str,str
         pass
     
     return {"university": uni, "institute": insti, "branch": bra}
+
 
 
 """

@@ -1,12 +1,46 @@
+from copy import copy
 import pandas as pd
 import pymongo
 import pymongo.collection
-import pymongo.client_session
 from typing import NamedTuple
 from django.conf import settings
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
+from bson  import ObjectId
+import typing
+
+class MongoFindQuery(typing.NamedTuple):
+    filters:dict[str, str]
+    conditions:dict[str, str]
+    
+    def __iter__(self):
+        yield self.conditions
+        yield self.filters
+
+class MongoUpdateQuery(typing.NamedTuple):
+    where:dict[str, str]
+    updates:dict[str, str]
+
+    def __iter__(self):
+        yield self.where
+        yield self.updates
+
+class MongoDeleteQuery(typing.NamedTuple):
+    filters:dict[str, str]
+    updates:dict[str, str]
+    
+    def __iter__(self):
+        yield self.filters
+        yield self.updates
+
+class MergeQuery(typing.NamedTuple):
+    first: dict[str, str] = {}
+    second: dict[str, str] = {}
+
+    def __iter__(self):
+        yield self.first
+        yield self.second
 
 class MongoTemplate:
     """
@@ -22,23 +56,23 @@ class MongoTemplate:
                 manager
             }
             data:{
-                excel:{
-                    row_index:{
-                        column_index
+                excel:[
+                    {
+                        row,
+                        feed:{
+                            locked,
+                            time_of_issue,
+                            status,
+                            feed,   
+                            index
+                        }
                     }
-                },   
+                ],
                 header:{
                     columns,
                     image_column,
                     file_name
                 },
-                feed:{
-                    row_index:{
-                        locked,
-                        time_of_issue,
-                        status,
-                        feed,    
-                    }
                 }
             }
         }
@@ -50,6 +84,11 @@ class MongoTemplate:
         self.data_feed:dict[str,str] = {'locked':None,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':None}
         self.data = {}
         self.feed:dict[str,dict[str,str]] = {}
+    
+    def __generate_feed_idx(self, idx:int) -> dict[str, str]:
+        temp = copy(self.data_feed)
+        temp.update({'index':idx})
+        return temp
         
     def add_post(self, university:str,institute:str, branch:str) -> 'MongoTemplate':
         self.header['post'] = {'university':university,'institute':institute,'branch':branch}
@@ -69,14 +108,10 @@ class MongoTemplate:
     
     def add_excel(self, excel:pd.DataFrame) -> 'MongoTemplate':
 
-        self.data = {str(idx):list(i) for idx, i in enumerate(excel.itertuples(index=False))}
+        self.data = [{'row':list(i[1:]), 'feed':self.__generate_feed_idx(i[0])} for i in excel.itertuples()]
 
         self.data_header['columns'] = list(excel.columns)
         
-        return self
-    
-    def add_feed(self, rows:int) -> 'MongoTemplate':
-        self.feed = {str(i):self.data_feed for i in range(rows)}
         return self
     
     def add_manager(self, managers:list[str]) -> 'MongoTemplate':
@@ -84,8 +119,115 @@ class MongoTemplate:
         return self
     
     def get_json(self) -> dict:
-        return {'header':self.header,'data':{'excel':self.data,'header':self.data_header,'feed':self.feed}}
+        return {'header':self.header,'data':{'excel':self.data,'header':self.data_header}}
     
+    @staticmethod
+    def _buffer_find_query_factory(column_name:str, start:int, limit:int) -> MongoFindQuery:
+        conditions:dict[str, str] = {}
+        filters:dict[str, str] = {}
+        
+        if(limit is None):
+            filters.update({column_name:{"$slice":[start]}})
+            
+        else:
+            filters.update({column_name:{"$slice":[start, limit]}})
+
+        return MongoFindQuery(filters, conditions)
+
+    @staticmethod
+    def _full_find_query_factory(column_name:str) -> MongoFindQuery:
+        conditions:dict[str, str] = {}
+        filters:dict[str, str] = {}
+        
+        filters.update({column_name:1})
+        
+        return MongoFindQuery(filters, conditions)
+    
+    @staticmethod
+    def _single_update_query(column_name:str, value:str|dict|list) -> MongoUpdateQuery:
+        where:dict[str, str] = {}
+        updates:dict[str, str] = {}
+        
+        where.update({column_name:{"$exists":True}})
+        updates.update({column_name:{"$set":value}})
+        
+        return MongoUpdateQuery(where=where, updates=updates)
+
+    @staticmethod
+    def get_header_query(conditions:dict = {}) -> MongoFindQuery:
+        res = MongoTemplate._full_find_query_factory("header")
+        res.conditions.update(conditions)
+        return res
+    
+    @staticmethod
+    def get_file_name_query(conditions:dict = {}) -> MongoFindQuery:
+        res = MongoTemplate._full_find_query_factory("data.header.file_name")
+        res.conditions.update(conditions)
+        return res
+
+    @staticmethod
+    def get_feedback_query(conditions:dict = {}, start:int = 0, limit:int = None) -> MongoFindQuery:
+        res = MongoTemplate._buffer_find_query_factory("data.excel.feed", start, limit)
+        res.conditions.update(conditions)
+        return res
+
+    @staticmethod
+    def get_buffer_query(conditions:dict = {}, start:int = 0, limit:int = None) -> MongoFindQuery:
+        data_part =  MongoTemplate._buffer_find_query_factory("data.excel", start, limit)
+        column_part =  MongoTemplate._full_find_query_factory("data.header")
+        
+        return MongoTemplate.merge_everything(data_part, column_part, initial_a=conditions)
+    
+    # db.excel.aggregate([{$match:{_id:ObjectId('6814c195eed58efa05158976')}},{$project:{"data.excel":{$filter:{input:"$data.excel",as:"i", cond:{$eq:[{$arrayElemAt:["$$i", 0]},"z"]}}}}}])
+    # db.excel.aggregate([{$project:{arrays:{$filter:{input:"$data.excel",}}}},{$project:{options:{$map:{input:"$$arrays",as:"i", in:{$arrayElemAt:["$$i",0]}}}}},{$project:{final:{$filter:{input:"$options",as:"j",cond:{$regexMatch:{input:"$$j",regex:/[0-9]+/}}}}}}])
+    
+    @staticmethod
+    def get_search_buffer(column_index:int, mongoID:str, value:str, start:int, limit:int) -> list[dict]:
+        
+        match_pipeline = {"$match":{"_id":ObjectId(mongoID)}}
+        search_pipeline = {
+                            '$project':{
+                                "data.excel":{
+                                    '$filter':{
+                                        'input':"$data.excel",
+                                        'as':"i",
+                                        'cond':{
+                                            '$regexMatch':{
+                                                'input':{
+                                                    '$arrayElemAt':["$$i",column_index]
+                                                    },
+                                                'regex':f'/{value}/i'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+        
+        slice_pipeline = {
+                            '$project':{
+                                "data.excel":{
+                                    '$slice':["$data.excel", start, limit]
+                                },
+                                "header":1,
+                                "data.header":1
+                            }
+                        }
+        
+        return [match_pipeline,search_pipeline,slice_pipeline]
+    
+            
+    @staticmethod
+    def merge_everything(*query:MongoFindQuery|MongoDeleteQuery|MongoUpdateQuery, initial_a:dict = {}, initial_b:dict = {}) -> dict[str, str]:
+        
+        res = MergeQuery(initial_a, initial_b)
+        
+        for a,b in query:
+            res.first.update(a)
+            res.second.update(b)
+            
+        return res
+
 class MongoDB(NamedTuple):
     database:str
     collection:str
@@ -125,7 +267,7 @@ class MongoConnection:
         
         return res
     
-    def find_all(self, condition:dict, filters:dict = {}) -> dict:
+    def find_all(self, condition:dict, filters:dict = {}) -> list[dict]:
         res:dict = None
         
         try:
@@ -186,6 +328,8 @@ class MongoConnection:
         try:
             _ = self.collection.replace_one(condition,doc.get_json())
             success = bool(_.matched_count==1)
+            self.log.write_info(f"Replacing document with filters '{condition}'")
+            
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
         
@@ -198,16 +342,39 @@ class MongoConnection:
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
     
+    def aggregate(self, match_pipeline:dict[str,str|dict], search_pipeline:dict[str,str|dict]) -> list[dict[str, str]]:
+        result:list[dict[str, str]] = []
+        try: 
+            result = self.collection.aggregate([match_pipeline, search_pipeline])
+            self.log.write_info(f"Aggregating pipeline with [{match_pipeline},{search_pipeline}]")
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+        
+        return result
+    
     @staticmethod
-    def getValue(dictionary: dict, *keyString:str) -> str | dict | list:
+    def getValue(dictionary: dict, default:dict|list|str|int, *keyString:str|int) -> str | int | dict | list:
+        
+        def get_default(value: dict|list, key:str|int):
+            try:
+                if(isinstance(value,dict)):
+                    return value.get(key, None)
+                elif(isinstance(value, list) and isinstance(key, int)):
+                    return value.__getitem__(int(key))
+                else:
+                    return value
+            except Exception as e:
+                return default()
         
         val = dictionary
         
         for key in keyString:
-            if(isinstance(val,dict) and val is not None):
-                val = val.get(key, None)
-        
-        return val    
+            
+            if(val is None): continue
+            
+            val = get_default(val, key)
+            print(val)
+        return default(val)  
         
 class RedisConnection:
     

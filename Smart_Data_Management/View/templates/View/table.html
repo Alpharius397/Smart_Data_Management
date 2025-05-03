@@ -149,6 +149,25 @@
             left:35vw;
         }
 
+        .refresh{
+            display: inline-flex;
+            background-color:#0098ff;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .refresh:hover{
+            background-color: #0098ff;
+            opacity: 0.5;
+        }
+
+        .refresh img{
+            width: 30px;
+            height: 30px;
+            margin: 0;
+            padding: 0;
+            transition: 1s;
+        }
         
         {% if request.session.mainColor and request.session.secColor %}
             header{

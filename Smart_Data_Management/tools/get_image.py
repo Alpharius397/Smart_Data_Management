@@ -61,7 +61,7 @@ def image_load(data: bytes) -> tuple[list[str], pandas.DataFrame]:
             
             pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)
             if((i+1,j) in image):
-                converted.add(pd_data.columns[j])
+                converted.add(j)
                     
                 pd_data.iat[i,j] = image[(i+1,j)]
                     

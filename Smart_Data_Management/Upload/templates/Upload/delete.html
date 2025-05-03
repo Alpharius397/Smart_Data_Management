@@ -73,24 +73,9 @@
 
     <div class="upload-container">
         <h2>Delete Uploaded Excel</h2>
-        <form id="form" hx-post="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
+        <form id="form" hx-delete="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
-            {% for field in form %}
-                <div class="form-group">
-                    <label for='{{ field.name }}'>{{ field.label }}: </label>
-                    {{ field }}
-
-                    {% if field.errors %}
-                        {{ field.errors }}
-
-                    {% else %}
-                        <p class="help_text">{{ field.help_text }} </p>
-                    
-                    {% endif %}
-                    
-                </div>
-            {% endfor %}
             <button class="upload-button">Delete Record</button>
 
             <div class="form-footer">
@@ -103,7 +88,7 @@
     </div>
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
-
+<script src="{% static 'js/script.js' %}"></script>
 <script>
 
     htmx.on("#form","htmx:beforeSend", function(event){
@@ -119,6 +104,8 @@
             htmx.find('#progress').setAttribute('style', "display:none;");
         }
     });
+
+    add_csrf();
 
 </script>
 </html>

@@ -10,8 +10,8 @@
             <label for="column">Column: </label>
             <select name="column" id="column" class="searchSelect">
                 <option value="">----------</option>
-                {% for i in available %}
-                    <option value="{{ i }}"> {{ i }}</option>
+                {% for i,j in available.items %}
+                    <option value="{{ i }}"> {{ j }}</option>
                 {% endfor %}
             </select>
 

@@ -10,10 +10,11 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 from Main.models import *
 from django.conf import settings
 from tools.get_image import compress_image
-from User.models import Manager, get_post_id, is_admin, is_manager, is_authenticated, get_post, get_user_by_id, get_post_by_ID
+from User.models import Manager, get_post_id, is_admin, is_manager, get_post, get_user_by_id, get_post_by_ID
 import pandas as pd
 from bson.objectid import ObjectId
 from django.contrib.auth.models import User
+from User.models import UserObject
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
 from tools.url_auth import *
@@ -34,11 +35,11 @@ FAILED:str = "Failed"
 WRITE_TOKEN:str = "write-token"
 ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
 
-def auth_view(user: User): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
+def auth_view(user: UserObject): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
-def buffered_data(conn: MongoConnection, condition: dict, start: int, end: int, filters: dict = {}) -> dict[str,str]:
-    
-    return conn.find_one(condition, {**{f"data.excel.{i}":1 for i in range(start, end)}, **{f"data.feed.{i}":1 for i in range(start, end)}, "header":1, "data.header":1 ,**filters})
+def buffered_data(conn: MongoConnection, condition: dict, start: int, limit: int) -> dict[str,str]:
+    conditions, filters = MongoTemplate.merge_everything(MongoTemplate.get_header_query(condition), MongoTemplate.get_buffer_query(condition, start, limit))
+    return conn.find_one(conditions,filters)
 
 class ReportStructure(NamedTuple):
     profile_img:str
@@ -60,7 +61,7 @@ def report_structure(result:dict[str,Any]) -> ReportStructure:
     sem_dict:dict[str,list[str]] = {}
     
     profile_col = profile_col[0] if profile_col else None
-    
+
     for i in sem_col:
         sem:list[str] = re.findall(sem_data,i)
         
@@ -93,7 +94,7 @@ def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list
 
     return (pd_data.empty,pd_data)
 
-def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None, value:str = None, issue:str = None, status:str = None, lock:str = None, page:str = '0') -> dict[str,str]:
+def get_context(req: HttpRequest, id:str, conn:MongoConnection, column:str = None, value:str = None, issue:str = None, status:str = None, lock:str = None, page:str = '0') -> dict[str,str]:
     
     def state_2_convert(val :str) -> bool | None:
         match(val):
@@ -129,10 +130,10 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
     try:
         page = int(page)
         if(is_manager(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, page, page+MAX_RECORD)
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, page, MAX_RECORD)
             
         elif(is_admin(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, page, page+MAX_RECORD)
+            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, page, MAX_RECORD)
             
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -147,13 +148,13 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         return context
     
     try:
-        image_idx:list = MongoConnection.getValue(result, "data", "header", "image_column")
-        columns:list = MongoConnection.getValue(result, "data", "header", "columns")
-        feed_list:dict[str,dict[str,str]] = MongoConnection.getValue(result, "data", "feed")
-        data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
-        pd_data = pd.DataFrame(list(data.values()), columns=columns)
-        
-        if(pd_data.empty): # no buffer left
+        columns:list = MongoConnection.getValue(result, list, "data", "header", "columns")
+        image_idx:list = [columns[int(i)] for i in MongoConnection.getValue(result, list, "data", "header", "image_column")]
+        feed_list:list[dict[str,str]] = MongoConnection.getValue(result, list, "data", "feed")
+        data:list[list[str]] = MongoConnection.getValue(result, list, "data", "excel")
+        pd_data = pd.DataFrame(data, columns=columns, index=list(range(page,page+MAX_RECORD)))
+
+        if(pd_data.empty or (not bool(data))): # no buffer left
             context['empty'] = True
             
         verify_idx:list[bool | None] = []
@@ -162,7 +163,7 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         v_p, i_p, l_p = set(), set(), set()
         status, issue, lock = state_3_convert(status), state_2_convert(issue), state_2_convert(lock)
 
-        for i,j in enumerate(feed_list.values()):
+        for i,j in enumerate(feed_list):
             if(state_3_check(j.get('status'),status)):
                 v_p.add(i)
         
@@ -176,14 +177,12 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
             locked_idx.append(j.get('locked'))
             verify_idx.append(j.get('status'))
         
-        available_column = sorted((set(columns) - set(image_idx)))
-        uploader = get_user_by_id(MongoConnection.getValue(result, "header", "uploader"))
-        manager = [get_user_by_id(i) for i in MongoConnection.getValue(result,"header","manager")]
+        available_column = sorted([i for idx,i in enumerate(columns) if (idx not in image_idx)])
+        uploader = get_user_by_id(MongoConnection.getValue(result, int,"header", "uploader"))
+        manager:list[str] = list(map(lambda x: (get_user_by_id(int(x))), MongoConnection.getValue(result, list, 'header', 'manager')))
         search, pd_data = search_query(pd_data,column,value,available_column)
         panda_idx = v_p&i_p&l_p
 
-        panda_idx = [i for i,j in enumerate(list(pd_data.index.astype(int))) if(j in panda_idx)]
-        
         pd_data = pd_data.iloc[list(panda_idx)]
 
     except Exception as e:
@@ -195,33 +194,50 @@ def get_context(req: HttpRequest,id:str,conn:MongoConnection, column:str = None,
         context['error'] = "No matching records found"
     else:
         context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'issued':issued_idx,'available':available_column,'start':page,'max_record':page+MAX_RECORD,'locked':locked_idx})
+
     return context
 
-
-@login_needed()
+@htmx_response
+@auth_needed()
 def data_view(req: HttpRequest,id) -> HttpResponse:
 
-    if(is_auth_get(req)):
+    if(is_hx_get(req)):
     
         conn = MongoConnection().connect()
-        context = get_context(req, id, conn)
-        conn.close()
+        
+        context = {'id':id}
         context.update({"admin":is_admin(req.user)})
+        
+        try:
+            result = conn.find_one({"_id":ObjectId(id)},{"data.header.columns":1, "data.header.image_column":1})
+            columns = MongoConnection.getValue(result, list, "data", "header", "columns")
+            image_columns = set(MongoConnection.getValue(result, list, "data", "header", "image_column"))
+            available_column = {idx:val for idx,val in enumerate(columns) if(idx not in image_columns)}
+            context.update({"column":columns, "available":available_column})
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
+        
+        finally:
+            conn.close()
+
         return render(req,'View/HTMX/page.html',context=context)
 
 @htmx_response
+@auth_needed(admin_only=True)
 def assign_form(req:HttpRequest, id:str) -> HttpResponse:
     
-    
-    if(is_authenticated(req.user) and is_hx_get(req) and is_admin(req.user)):
+    if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
         result:dict[str,dict[str,dict]] = None
         context = {'id':id}
         
         try:
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header":1})
-            
+            conditions, filters = MongoTemplate.get_header_query({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+            result = conn.find_one(conditions,filters)
+
         except Exception as e:            
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['error'] = MONGO_ERROR
@@ -232,8 +248,8 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             conn.close()
 
         try:
-            uploader = get_user_by_id(MongoConnection.getValue(result,'header','uploader'))
-            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,'header','manager')}
+            uploader = get_user_by_id(MongoConnection.getValue(result,int,'header','uploader'))
+            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,list,'header','manager')}
             all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=list(manager.keys())).values()}
             context.update({'upload':uploader,'manage':manager,'option':all_manager})
             
@@ -244,7 +260,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         return render(req,'View/HTMX/form.html',context=context)
     
     
-    elif(is_authenticated(req.user) and is_admin(req.user) and (is_hx_put(req) or is_hx_delete(req))):
+    elif((is_hx_put(req) or is_hx_delete(req))):
         
         conn = MongoConnection().connect()
         result:dict[str,dict[str,dict]] = None
@@ -263,10 +279,11 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             user:str = value.get('user',None)            
         
         try:
-            result = conn.find_one({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]},{"header":1,"data.header.file_name":1})
-            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,'header','manager')}
-            file_name = MongoConnection.getValue(result,"data","header","file_name",)
-            uploader = get_user_by_id(MongoConnection.getValue(result, "header","uploader"))
+            conditions, filters = MongoTemplate.get_header_query({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
+            result = conn.find_one(conditions,filters)
+            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,list,'header','manager')}
+            file_name = MongoConnection.getValue(result,str,"data","header","file_name",)
+            uploader = get_user_by_id(MongoConnection.getValue(result, int,"header","uploader"))
             all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()}
             _manage = Manager.objects.get(user__id=user)
             
@@ -316,29 +333,35 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
         return render(req,'View/HTMX/form.html',context=context)            
 
 @htmx_response
+@auth_needed()
 def table_query(req: HttpRequest, id:str) -> HttpResponse:
     
-    if((is_authenticated(req.user)) and is_hx_get(req)):
+    if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
-        column = req.GET.get('column',None)
-        value = req.GET.get('search',None)
-        issue = req.GET.get('issue',None)
-        status = req.GET.get('status',None)
-        lock = req.GET.get('lock',None)
-        page = req.GET.get('page','0')
         
-        context = get_context(req,id,conn,column,value,issue,status,lock,page)
+        context = {}
         context.update({"admin":is_admin(req.user)})
-        conn.close()
+        
+        try:
+            result = conn.find_one({"_id":ObjectId(id)},{"data.header.columns":1})
+            columns = MongoConnection.getValue(result, list, "data", "header", "columns")
+            context.update({"column":columns})
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
+        
+        finally:
+            conn.close()
+
         return render(req,'View/HTMX/table.html',context=context)
-    
-    return HttpResponse(status=403)
+
 
 @htmx_response
+@auth_needed()
 def row_view(req: HttpRequest, id:str) -> HttpResponse:
     
-    if((is_authenticated(req.user)) and is_hx_get(req)):
+    if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
         column = req.GET.get('column',None)
@@ -355,10 +378,11 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
         return render(req,'View/HTMX/row.html',context=context)
     
     return HttpResponse(status=403)
-    
+
 @htmx_response
+@auth_needed()
 def quick_query(req: HttpRequest, id:str):
-    if((is_authenticated(req.user)) and is_hx_get(req)):
+    if(is_hx_get(req)):
     
         conn = MongoConnection().connect()
         column = req.GET.get('column',None)
@@ -394,24 +418,25 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
 
 @htmx_response
+@auth_needed()
 def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
 
-    if(is_authenticated(req.user) and is_hx_get(req)):
+    if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
         context = {'id':id,'idx':idx}
         
         try:
-            image_idx:list = MongoConnection.getValue(result, "data", "header", "image_column")
-            columns:list = MongoConnection.getValue(result, "data", "header", "columns")
-            feed_list:dict[str,dict[str,str]] = MongoConnection.getValue(result, "data", "feed")
-            data:dict[str, list[str]] = MongoConnection.getValue(result, "data", "excel")
-            pd_data = pd.DataFrame(list(data.values()), columns=columns)
+            conditions, filters = MongoTemplate.merge_everything(MongoTemplate.get_buffer_query({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]}, idx, 1))
+            result:dict[str,dict[str,dict]] = conn.find_one(conditions, filters)
             
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"header":1,"data.header":1,f"data.feed.{idx}":1,f"data.excel.{idx}":1})
-            meta_data:dict = result.get('data',{}).get('feed',[])
-            pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
+            columns:list = MongoConnection.getValue(result, list, "data", "header", "columns")
+            data:list[str] = MongoConnection.getValue(result, list, "data", "excel", 0)
+            pd_data = {columns[(idx%len(columns))]:val for idx,val in enumerate(data)}
+            meta_data:dict = MongoConnection.getValue(result, dict, 'data', 'feed', 0)
+            
         except Exception as e:
+            print(e)
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/report.html',context=context)
@@ -419,24 +444,24 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         finally:
             conn.close()
             
-        if(pd_data.empty or (not meta_data)):
-            context['error'] = "Mongo ID %s and index %s not found!" % id,idx
+        if((not bool(pd_data)) or (not meta_data)):
+            context['error'] = "Mongo ID %s and index %s not found!" % (id,idx)
             return render(req,'View/HTMX/report.html',context=context)
         
         else:
-            pd_data = pd_data.to_dict()
             
             report = report_structure(pd_data)
-            
+
             context.update({'data':pd_data,'personal':report.personal_info,'pic':report.profile_img,'sem_dict':report.sem_data,**get_post(req.user),**meta_data})
             
         return render(req,'View/HTMX/report.html',context=context)
-    
-    return HttpResponse(status=403)
-    
+
+
+@htmx_response
+@auth_needed()
 def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
 
-    if(is_authenticated(req.user) and is_hx_post(req) and is_manager(req.user)):
+    if(is_hx_post(req)):
         
         conn = MongoConnection().connect()
         context = {'id':id,'idx':idx}
@@ -454,12 +479,10 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 status = None
                 
             try:
-                column = f"data.feed"
-                index_col = f"{column}.index"
-                status_col = f"{column}.{idx}.status"
-                feed_col = f"{column}.{idx}.feed"
-                success = conn.update_one({"_id":ObjectId(id),"$or":auth_view(req.user),index_col:idx},{"$set":{status_col:status,feed_col:feed}})
-                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
+                status_col = f"data.feed.{idx}.status"
+                feed_col = f"data.feed.{idx}.feed"
+                success = conn.update_one({"_id":ObjectId(id),"$or":auth_view(req.user),f"data.feed.{idx}":{"$exists":True}},{"$set":{status_col:status,feed_col:feed}})
+                file_name = MongoConnection.getValue(conn.find_one(**MongoTemplate.merge_everything(MongoTemplate.get_header_query({"_id":ObjectId(id)}))),str,"data", "header","file_name")
 
                 if(success):
                     context['msg'] = "Status Updated!"
@@ -478,17 +501,19 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             
         return render(req,'View/HTMX/message.html',context=context)
     
-    elif(is_authenticated(req.user) and is_hx_get(req) and is_manager(req.user)):
+    elif(is_hx_get(req) and is_manager(req.user)):
         conn = MongoConnection().connect()
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]},{"data.feed":1,"header.manager":1})
-            meta_data:list[dict] = result.get('data',{}).get('feed',[])[idx]
-            manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
+            conditions, filters = (MongoTemplate.merge_everything(MongoTemplate.get_buffer_query(start=idx,limit=1),MongoTemplate.get_feedback_query(start=idx,limit=1),initial_a={"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}))
+            result:dict[str,dict[str,dict]] = conn.find_one(conditions, filters)
+            meta_data:list[dict] = MongoConnection.getValue(result, list,'data', 'feed', 0)
+            manager:list[str] = list(map(get_user_by_id,MongoConnection.getValue(result, list,'header', 'manager')))
             context.update({**meta_data,'manager':manager})
 
         except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
         finally:
             conn.close()
@@ -496,15 +521,16 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         context.update({'form':VerifyForm(data={'status':(lambda x: 'True' if x else ('False') if x is not None else ('None'))(context.get('status','None')),'feed':context.get('feed','')})})
         return render(req,'View/single/manager.html',context=context)
     
-    elif(is_authenticated(req.user) and is_hx_get(req)):
+    elif(is_hx_get(req) and is_admin(req.user)):
 
         conn = MongoConnection().connect()
         context = {'id':id,'idx':idx}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"data.feed":1,"header.manager":1})
-            meta_data:dict = result.get('data',{}).get('feed',[])[idx]
-            manager:list[str] = [get_user_by_id(i) for i in result.get('header',{}).get('manager',[])]
+            conditions, filters = (MongoTemplate.merge_everything(MongoTemplate.get_header_query(),MongoTemplate.get_feedback_query(start=idx,limit=1),initial_a={"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]}))
+            result:dict[str,dict[str,dict]] = conn.find_one(conditions, filters)
+            meta_data:dict = MongoConnection.getValue(result, dict,'data', 'feed', 0)
+            manager:list[str] = list(map(get_user_by_id,MongoConnection.getValue(result, list,'header', 'manager')))
             context.update({**meta_data,'manager':manager})
             
         except Exception as e:
@@ -515,88 +541,86 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             conn.close()
             
         return render(req,'View/single/admin.html',context=context)
-        
-    return HttpResponse(status=403)
-            
+
+@htmx_response
+@auth_needed(manager_only=True)
 def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
-    
-    if(is_authenticated(req.user) and is_manager(req.user)):
-        
-        if(is_hx_get(req)):
-            
-            conn = MongoConnection().connect()
-            
-            context = {'id':id,'idx':idx}
-            try:
-                result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]})
-                meta_data:dict = result.get('data',{}).get('feed',[])[idx]
-                context.update({**meta_data})
-            except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['error'] = DEFAULT_ERROR
-                return render(req,'View/single/manager_form.html',context=context)
 
+    if(is_hx_get(req)):
+        
+        conn = MongoConnection().connect()
+        
+        context = {'id':id,'idx':idx}
+        try:
+            conditions, filters = (MongoTemplate.merge_everything(MongoTemplate.get_header_query(),MongoTemplate.get_feedback_query(start=idx,limit=1),initial_a={"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]}))
+            result:dict[str,dict[str,dict]] = conn.find_one(conditions, filters)
+            meta_data:list[dict] = MongoConnection.getValue(result, 'data', 'feed',str(idx))
+
+            context.update({**meta_data})
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/single/manager_form.html',context=context)
+
+        return render(req,'View/single/manager_form.html',context=context)
+    
+    elif(is_hx_put(req)):
         
-        elif(is_hx_put(req)):
+        conn = MongoConnection().connect()
+        
+        context = {'id':id,'idx':idx}
+        timestamp = timezone.now().isoformat()
+        
+        try:
+            time_issue = f"data.feed.{idx}.time_of_lock"
+            locked_col = f"data.feed.{idx}.locked"
+            res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:True}})
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}),"data", "header","file_name")
             
-            conn = MongoConnection().connect()
-            
-            context = {'id':id,'idx':idx}
-            timestamp = timezone.now().isoformat()
-            
-            try:
-                time_issue = f"data.feed.{idx}.time_of_lock"
-                locked_col = f"data.feed.{idx}.locked"
-                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:True}})
-                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-
-                if(res): 
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_LOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
-                    context['msg'] = "Card Issued"
-                    
-                else: context['error'] = "Data updation failed"
-            
-            except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['error'] = DEFAULT_ERROR
-                return render(req,'View/HTMX/message.html',context=context)
-            
-            finally:
-                conn.close()
-            
-            return render(req,'View/HTMX/message.html',context=context)
-            
-        elif(is_hx_delete(req)):
-            
-            conn = MongoConnection().connect()
-            
-            context = {'id':id,'idx':idx}
-            timestamp = timezone.now().isoformat()
-            
-            try:
-                time_issue = f"data.feed.{idx}.time_of_lock"
-                locked_col = f"data.feed.{idx}.locked"
-                res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:False}})
-                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-
-                if(res): 
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_UNLOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
-                    context['msg'] = "Card Cancelled"
-                    
-                else: context['error'] = "Data updation failed"
-            
-            except Exception as e:
-                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
-                context['error'] = DEFAULT_ERROR
-                return render(req,'View/HTMX/message.html',context=context)
-            
-            finally:
-                conn.close()
-            
+            if(res): 
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_LOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
+                context['msg'] = "Card Issued"
+                
+            else: context['error'] = "Data updation failed"
+        
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/message.html',context=context)
         
-    return HttpResponse(status=403)
+        finally:
+            conn.close()
+        
+        return render(req,'View/HTMX/message.html',context=context)
+        
+    elif(is_hx_delete(req)):
+        
+        conn = MongoConnection().connect()
+        
+        context = {'id':id,'idx':idx}
+        timestamp = timezone.now().isoformat()
+        
+        try:
+            time_issue = f"data.feed.{idx}.time_of_lock"
+            locked_col = f"data.feed.{idx}.locked"
+            res = conn.update_one({"_id":ObjectId(id)},{"$set":{time_issue:timestamp,locked_col:False}})
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}),"data", "header","file_name")
+            if(res): 
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_UNLOCK,taskID=id,index=idx,user=req.user,fileName=file_name))
+                context['msg'] = "Card Cancelled"
+                
+            else: context['error'] = "Data updation failed"
+        
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            context['error'] = DEFAULT_ERROR
+            return render(req,'View/HTMX/message.html',context=context)
+        
+        finally:
+            conn.close()
+        
+        return render(req,'View/HTMX/message.html',context=context)
+    
             
 def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = True, buffer_out:bool = True) -> BytesIO | dict:
     
@@ -630,9 +654,11 @@ def compress_data(result:dict[str,dict[str,dict]], idx:int, local_write:bool = T
     
     return buffer if(buffer_out) else data       
 
+@htmx_response
+@auth_needed(manager_only=True)
 def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
     
-    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
+    if(is_hx_get(req)):
         
         req.session[WRITE_TOKEN] = get_token()     
         hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
@@ -640,57 +666,58 @@ def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         
         return render(req,"View/HTMX/exe/end.html",context={"id":id,"idx":idx,"data":api_endpoint,"path":settings.WRITE_REGISTRY}) # end write op
 
-    if(is_auth_post(req) and is_hx_post(req) and is_manager(req.user)):
+    if(is_hx_post(req)):
         Redis = RedisConnection().connect()
         hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
-        Redis.set(hashToken, LOADING)
+        Redis.set(hashToken, {"status":LOADING, "user":req.user.id})
         
         return render(req,"View/HTMX/exe/begin.html",context={"id":id,"idx":idx}) # begin write op
 
-    return HttpResponse(status=403)
-
+@htmx_response
+@auth_needed(manager_only=True)
 def check_write(req: HttpRequest) -> HttpResponse:
     if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
         
         token = req.session.get(WRITE_TOKEN)
-        Redis = RedisConnection().connect().get(hash_token(token,req.user.id))
+        Redis = RedisConnection().connect()
+        
+        status:str = Redis.get(hash_token(token,req.user.id)).get("status",None)
 
-        if(Redis==LOADING): # continue to ping as confirmation has not been received
+        if(status==LOADING): # continue to ping as confirmation has not been received
             return HttpResponse(status=404)
-        elif(Redis==DONE):
+        elif(status==DONE):
             return render(req,'View/HTMX/exe/status.html',context={"status":"Data written to card successfully"})
-        elif(Redis==FAILED):
+        elif(status==FAILED):
             return render(req,'View/HTMX/exe/status.html',context={"status":"Data write was unsuccessfully"})
         else:   
             return render(req,'View/HTMX/exe/status.html',context={"status":"Write Token Expired! Please Try Again"})
-        
-    return HttpResponse(status=403)
 
-
+@htmx_response
+@auth_needed(admin_only=True)
 def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
-    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+    if(is_hx_get(req)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
         
         return render(req,'View/HTMX/edit_form/edit_form.html',context={"id":id,"column":column,"idx":idx,"value":value,})
     
-    elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
-        column = req.POST.get('column',None)
-        value = req.POST.get("value",)
-        j = req.POST.get("j","")
-        old = req.POST.get("old","")
+    elif (is_hx_post(req)):
+
+        column:int = req.POST.get('column',None)
+        value:str = req.POST.get("value",)
+        old:str = req.POST.get("old","")
         
         conn = MongoConnection().connect()
 
         context = {"id":id,"idx":idx,"value":value,"admin":True,"column":column}
+        
         try:
-            column_name = f"data.excel.{column}.{idx}"
-            feed_idx = f"data.feed.{idx}.index"
+            column_name = f"data.excel.{idx}.{column}"
             lock_idx = f"data.feed.{idx}.locked"
             
-            res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:{"$ne":True}},{"$set":{column_name:value}})
-            file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-            
+            res = conn.update_one({"_id":ObjectId(id),lock_idx:{"$exists":True},lock_idx:{"$ne":True},column_name:{"$exists":True}},{"$set":{column_name:value}})
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}),"data", "header","file_name")
+
             if(res):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
             else:
@@ -704,16 +731,16 @@ def edit_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             return render(req,'View/HTMX/normal_view/normal_view.html',context=context)
                     
         return render(req,'View/HTMX/normal_view/normal_view.html',context=context)
-        
-    return HttpResponse(status=403)
 
+@htmx_response
+@auth_needed(admin_only=True)
 def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
-    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+    if(is_hx_get(req)):
         column = req.GET.get('column',None)
         
         return render(req,'View/HTMX/edit_form/edit_image_form.html',context={"id":id,"column":column,"idx":idx})
     
-    elif (is_hx_post(req) and is_authenticated(req.user) and is_admin(req.user)):
+    elif (is_hx_post(req)):
         column = req.POST.get('column',None)
         file = req.FILES.get('file')
         context = {"id":id,"idx":idx,"admin":True,"column":column,}
@@ -738,22 +765,17 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
         conn = MongoConnection().connect()
         res = None
         try:
-            column_name = f"data.excel.{column}.{idx}"
-            feed_idx = f"data.feed.{idx}.index"
+            column_name = f"data.excel.{idx}.{column}"
             lock_idx = f"data.feed.{idx}.locked"
-            
-            if("search" in context):
-                img_data = conn.find_one({"_id":ObjectId(id)},{column_name:1}).get("data",{}).get("excel",{}).get(column,{}).get(str(idx),"")
+            res = conn.update_one({"_id":ObjectId(id),lock_idx:{"$exists":True},lock_idx:{"$ne":True},column_name:{"$exists":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}),"data", "header","file_name")
+
+            if(res):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
             else:
-                res = conn.update_one({"_id":ObjectId(id),column_name:{"$exist":True},feed_idx:idx,lock_idx:{"$ne":True},"data.header.image_column":column},{"$set":{column_name:img_data}})
-                file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-            
-                if(res):
-                    APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.DATA_EDIT,taskID=id,index=idx,column=column,user=req.user,fileName=file_name))
-                else:
-                    context['error'] = "Cannot Edit this index is locked"
-                    context['lock'] = True
-                    return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
+                context['error'] = "Cannot Edit this index is locked"
+                context['lock'] = True
+                return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
                 
             context.update({'value':img_data})
             
@@ -763,21 +785,19 @@ def edit_image_form(req: HttpRequest, id: str, idx:int) -> HttpResponse:
             return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
                     
         return render(req,'View/HTMX/normal_view/normal_image.html',context=context)
-        
-    return HttpResponse(status=403)
 
+@htmx_response
+@auth_needed(admin_only=True)
 def normal_image(req: HttpRequest, id: str, idx:int) -> HttpResponse:
-    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+    if(is_hx_get(req)):
         column = req.GET.get('column',None)
         return render(req,'View/HTMX/normal_view/normal_image.html',context={"id":id,"column":column,"idx":idx})
-    return HttpResponse(status=403)
 
 def normal_view(req: HttpRequest, id: str, idx:int) -> HttpResponse:
-    if(is_hx_get(req) and is_authenticated(req.user) and is_admin(req.user)):
+    if(is_hx_get(req)):
         column = req.GET.get('column',None)
         value = req.GET.get("value","")
         return render(req,'View/HTMX/normal_view/normal_view.html',context={"id":id,"column":column,"idx":idx,"value":value,"admin":True})
-    return HttpResponse(status=403)
 
 @csrf_exempt
 @api_key_required
@@ -788,6 +808,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         
         if(cardID is None):
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.UNAUTH_REQ,taskID=id,index=idx))
+            return JsonResponse(data=ERROR_JSON, status=403)
         
         conn = MongoConnection().connect()
         Redis = RedisConnection().connect()
@@ -801,30 +822,34 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         res = False
         
         try:
+            
+            data:dict[str, str] = Redis.get(token)
+            
+            user:UserObject = User.objects.get(id=data["user"])
+            
             time_of_issue = f"data.feed.{idx}.time_of_issue"
             issued = f"data.feed.{idx}.issued"            
-            feed_idx = f"data.feed.{idx}.index"
             lock_idx = f"data.feed.{idx}.locked"
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}),"data", "header","file_name")
 
-            file_name = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}).get("data",{}).get("header",{}).get("file_name",None)
-            
             if(Redis.get(token)!=LOADING):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name,user=user))
                 return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
             
             if(status):
                 Card.attemptSave(cardID=cardID,mongoID=id,rowIndex=idx)
-                res = conn.update_one({"_id":ObjectId(id),feed_idx:idx,lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
-                Redis.set(token,DONE)
+                res = conn.update_one({"_id":ObjectId(id),lock_idx:True},{"$set":{time_of_issue:timezone.now().isoformat(),issued:status}})
+                data['status'] = DONE
             else:
-                Redis.set(token,FAILED)
+                data['status'] = FAILED
                 
+            Redis.set(token,data)
             
             if(res and status):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name))
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_READ,taskID=id,index=idx,fileName=file_name,user=user))
 
             elif(res and (status is not None)):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name))
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_CANCEL,taskID=id,index=idx,fileName=file_name,user=user))
             
             
         except Exception as e:
@@ -853,22 +878,25 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         result:dict[str,Any] = {"data":"Default Data"}
         
         try:
-            res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)})   
-            file_name = res.get("data",{}).get("header",{}).get("file_name",None)
-            verified:bool = res.get("data",{}).get("feed",{})[idx].get("locked", False)
-            
-            if(Redis.get(token)!=LOADING):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name))
+            res:dict[str,dict[str,dict[str,str]]] = conn.find_one({"_id":ObjectId(id)},{f"data.excel.{idx}":1,f"data.feed.{idx}":1})   
+            file_name = MongoConnection.getValue(conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1}), "data", "header","file_name")
+
+            verified:bool = MongoConnection.getValue(res,"data","feed",str(idx),"locked")
+            data:dict[str,str] = Redis.get(token)
+            user:UserObject = User.objects.get(id=data["user"])
+            if(data["status"]!=LOADING):
+                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,fileName=file_name,user=user))
                 return JsonResponse(data={"error":"Invalid Token"}, status=403, safe=False)
+            
             if(verified):
                 result.update({"data":{"data":compress_data(res,idx,True,True).getvalue().decode()}, "status":200})
             else:
                 result.update({"data":{"error":f"Mongo ID: {id}, Index: {idx} is not locked"}, "status":403})
                 
-            APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_DATA_FETCH,user=req.user,taskID=id,fileName=file_name,index=idx))
+            APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.CARD_DATA_FETCH,user=user,taskID=id,fileName=file_name,index=idx))
         
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
+            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=user,exception=e))
             result.update({"data":{"error":"Some error occurred!"},"status":500})
         finally:
             conn.close()
