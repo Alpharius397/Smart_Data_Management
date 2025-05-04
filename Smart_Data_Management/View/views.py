@@ -4,24 +4,25 @@ import json
 import re
 from PIL import Image
 from typing import NamedTuple, Any
-from django.shortcuts import render
-from django.urls import reverse
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render # type: ignore
+from django.urls import reverse # type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 from Main.models import *
-from django.conf import settings
+from django.conf import settings # type: ignore
 from tools.get_image import compress_image
 from User.models import Manager, get_post_id, is_admin, is_manager, get_post, get_user_by_id, get_post_by_ID
 import pandas as pd
 from bson.objectid import ObjectId
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User # type: ignore
 from User.models import UserObject
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
 from tools.url_auth import *
 from View.forms import VerifyForm
-from django.utils import timezone
+from django.utils import timezone # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, MONGO_ERROR, Task
-from django.views.decorators.csrf import csrf_exempt
+from Dash.views import ReportStructure
+from django.views.decorators.csrf import csrf_exempt # type: ignore
 from tools.token import get_token, hash_token
 from Card.models import Card
 from django.utils import timezone
@@ -33,44 +34,15 @@ DONE:str = "Done"
 NONE:str = "None"
 FAILED:str = "Failed"
 WRITE_TOKEN:str = "write-token"
-ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
+ERROR_JSON:dict[str, str|bool] = {"info":"Unauthenticated Request","status":False}
 
 def auth_view(user: UserObject): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
-def buffered_data(conn: MongoConnection, condition: dict, start: int, limit: int) -> dict[str,str]:
-    conditions, filters = MongoTemplate.merge_everything(MongoTemplate.get_header_query(condition), MongoTemplate.get_buffer_query(condition, start, limit))
-    return conn.find_one(conditions,filters)
-
-class ReportStructure(NamedTuple):
-    profile_img:str
-    personal_info:dict[str,str]
-    sem_data:dict[dict[str,str]]
-
-def report_structure(result:dict[str,Any]) -> ReportStructure:
-    
-    profile_img = r'^Profile_Image$'
-    sem_data = r'.+Sem_(\d+)$'
-    other_data = """ Anything not part above is personal """
-    
-    columns = result.keys()
-    
-    profile_col = [i for i in columns if re.match(profile_img,i)]
-    sem_col = [i for i in columns if re.match(sem_data,i)]
-    personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
-    
-    sem_dict:dict[str,list[str]] = {}
-    
-    profile_col = profile_col[0] if profile_col else None
-
-    for i in sem_col:
-        sem:list[str] = re.findall(sem_data,i)
-        
-        if(sem):
-            sem = sem[0]
-            if(sem not in sem_dict): sem_dict[sem] = list()
-            sem_dict[sem].append(i)
-
-    return ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
+def buffered_data(conn: MongoConnection, conditions: dict, column_index: str, locked: str, status: str, issued: str, value: str, start: int, limit: int) -> Document | None:
+    match_pipeline, search_pipeline, slice_pipeline = MongoTemplate.get_search_buffer_query(conditions, column_index, locked, status, issued, value, start, limit)
+    result = conn.aggregate(match_pipeline, search_pipeline, slice_pipeline,convert=True)
+    if(result): return result[0]
+    return None
 
 @login_needed()
 def default_view(req: HttpRequest, id:str) -> HttpResponse:
@@ -94,47 +66,27 @@ def search_query(pd_data:pd.DataFrame,column:str,value:str,available_column:list
 
     return (pd_data.empty,pd_data)
 
-def get_context(req: HttpRequest, id:str, conn:MongoConnection, column:str = None, value:str = None, issue:str = None, status:str = None, lock:str = None, page:str = '0') -> dict[str,str]:
-    
-    def state_2_convert(val :str) -> bool | None:
-        match(val):
-            case "true": return True
-            case "false": return False
-            case _: return None
+def get_context(req: HttpRequest, id:str, conn:MongoConnection, column_index:str = '', value:str = '', issue:str = '', status:str = '', lock:str = '', page:str = '0') -> dict[str,str|bool|None]:
 
-    def state_2_check(val: bool, cond: bool) -> bool:
-        if(cond is not None):
-            return bool(val==cond) or ((not cond) and val is None)
-        else:
-            return True
-    
-    def state_3_convert(val :str) -> int:
-        match(val):
-            case "true": return 0
-            case "false": return 1
-            case "none": return 2
-            case _: return 3
-
-    def state_3_check(val: bool, cond: int) -> bool:
-        match(cond):
-            case 0: return bool(val==True)
-            case 1: return bool(val==False)
-            case 2: return bool(val==None)
-            case _: return True
-    
-    result:dict[str,dict[str,dict]] = None
-    context = {'id':id}
+    result:Document | None = None
+    context:dict[str, Any] = {'id':id}
     search = False
     conn.connect()
     
     try:
-        page = int(page)
+        _page:int = int(page)
         if(is_manager(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}, page, MAX_RECORD)
+            condition = {"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]}
+            result = buffered_data(conn, condition,column_index,lock,status,issue,value,_page, MAX_RECORD)
             
         elif(is_admin(req.user)):
-            result = buffered_data(conn, {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}, page, MAX_RECORD)
+            condition = {"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]}
+            result = buffered_data(conn, condition,column_index,lock,status,issue,value,_page, MAX_RECORD)
             
+        if(result is None):
+            context['error'] = "Mongo ID %s was not found" % id
+            return context
+        
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
         context['error'] = DEFAULT_ERROR
@@ -143,47 +95,19 @@ def get_context(req: HttpRequest, id:str, conn:MongoConnection, column:str = Non
     finally:
         conn.close()
     
-    if(result is None):
-        context['error'] = "Mongo ID %s was not found" % id
-        return context
-    
     try:
-        columns:list = MongoConnection.getValue(result, list, "data", "header", "columns")
-        image_idx:list = [columns[int(i)] for i in MongoConnection.getValue(result, list, "data", "header", "image_column")]
-        feed_list:list[dict[str,str]] = MongoConnection.getValue(result, list, "data", "feed")
-        data:list[list[str]] = MongoConnection.getValue(result, list, "data", "excel")
-        pd_data = pd.DataFrame(data, columns=columns, index=list(range(page,page+MAX_RECORD)))
+        columns:list = result.data.header.columns
+        image_idx:list = [columns[i] for i in result.data.header.image_columns]
+        feed_list:list[dict[str, str | int | bool | None]] = list(map(lambda x: x.feed.to_dict(), result.data.excel))
+        data:list[list[str|int]] = list(map((lambda x: x.row),result.data.excel))
+        pd_data = pd.DataFrame(data, columns=columns, index=list(map(lambda x: x.feed.index, result.data.excel)))
 
         if(pd_data.empty or (not bool(data))): # no buffer left
             context['empty'] = True
             
-        verify_idx:list[bool | None] = []
-        locked_idx:list[bool | None] = []
-        issued_idx:list[bool | None] = []
-        v_p, i_p, l_p = set(), set(), set()
-        status, issue, lock = state_3_convert(status), state_2_convert(issue), state_2_convert(lock)
-
-        for i,j in enumerate(feed_list):
-            if(state_3_check(j.get('status'),status)):
-                v_p.add(i)
-        
-            if(state_2_check(j.get('issued'),issue)):
-                i_p.add(i)
-        
-            if(state_2_check(j.get('locked'),lock)):
-                l_p.add(i)
-        
-            issued_idx.append(j.get('issued'))
-            locked_idx.append(j.get('locked'))
-            verify_idx.append(j.get('status'))
-        
-        available_column = sorted([i for idx,i in enumerate(columns) if (idx not in image_idx)])
-        uploader = get_user_by_id(MongoConnection.getValue(result, int,"header", "uploader"))
-        manager:list[str] = list(map(lambda x: (get_user_by_id(int(x))), MongoConnection.getValue(result, list, 'header', 'manager')))
-        search, pd_data = search_query(pd_data,column,value,available_column)
-        panda_idx = v_p&i_p&l_p
-
-        pd_data = pd_data.iloc[list(panda_idx)]
+        available_column = sorted([i for idx,i in enumerate(columns) if (idx not in set(image_idx))])
+        uploader = get_user_by_id(result.header.uploader)
+        manager:list[str|None] = list(map(lambda x: get_user_by_id(x), result.header.manager))
 
     except Exception as e:
         APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -193,7 +117,7 @@ def get_context(req: HttpRequest, id:str, conn:MongoConnection, column:str = Non
     if(search):
         context['error'] = "No matching records found"
     else:
-        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'verify':verify_idx,'issued':issued_idx,'available':available_column,'start':page,'max_record':page+MAX_RECORD,'locked':locked_idx})
+        context.update({'column':pd_data.columns,'upload':uploader,'manage':manager,'result':pd_data.iterrows(),'image':image_idx,'feed':feed_list,'available':available_column,'start':_page,'max_record':_page+MAX_RECORD})
 
     return context
 
@@ -210,10 +134,14 @@ def data_view(req: HttpRequest,id) -> HttpResponse:
         
         try:
             result = conn.find_one({"_id":ObjectId(id)},{"data.header.columns":1, "data.header.image_column":1})
-            columns = MongoConnection.getValue(result, list, "data", "header", "columns")
-            image_columns = set(MongoConnection.getValue(result, list, "data", "header", "image_column"))
-            available_column = {idx:val for idx,val in enumerate(columns) if(idx not in image_columns)}
-            context.update({"column":columns, "available":available_column})
+            
+            if(result is None):
+                context['error'] = f"Mongo ID {id} was not found!"
+            else:
+                columns = result.data.header.columns
+                image_columns = set(result.data.header.image_columns)
+                available_column = {idx:val for idx,val in enumerate(columns) if(idx not in image_columns)}
+                context.update({"column":columns, "available":available_column})
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
@@ -231,26 +159,29 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
     if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
-        result:dict[str,dict[str,dict]] = None
-        context = {'id':id}
+        result:Document | None = None
+        context:dict[str|int, dict[str, int | str | None] | str | None | int] = {'id':id}
         
         try:
             conditions, filters = MongoTemplate.get_header_query({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
             result = conn.find_one(conditions,filters)
+            
+            if(result is None):
+                context['error'] = MONGO_ERROR
+                return render(req,'View/HTMX/form.html',context=context)
 
         except Exception as e:            
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = MONGO_ERROR
-            
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/form.html',context=context)
         
         finally:
             conn.close()
 
         try:
-            uploader = get_user_by_id(MongoConnection.getValue(result,int,'header','uploader'))
-            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,list,'header','manager')}
-            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=list(manager.keys())).values()}
+            uploader:str|None = get_user_by_id(result.header.uploader)
+            manager:dict[int, str | None] = {i:get_user_by_id(i) for i in result.header.manager}
+            all_manager:dict[int, str] = {i.user.id:i.user.username for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=list(manager.keys()))}
             context.update({'upload':uploader,'manage':manager,'option':all_manager})
             
         except Exception as e:
@@ -263,11 +194,11 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
     elif((is_hx_put(req) or is_hx_delete(req))):
         
         conn = MongoConnection().connect()
-        result:dict[str,dict[str,dict]] = None
-        file_name:str = None
-        user:str = None
-        context = {'id':id}
 
+        user:str = ''
+        context = {'id':id}
+        result:Document | None = None
+        context:dict[str|int, dict[str, int | str | None] | str | None | int] = {'id':id}
         value:QueryDict = None
         
         if(is_hx_put(req)):
@@ -276,24 +207,29 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             value = req.GET
         
         if(value is not None):
-            user:str = value.get('user',None)            
+            user:str = value.get('user','')            
         
         try:
             conditions, filters = MongoTemplate.get_header_query({"$and":[{"_id":ObjectId(id),"header.post":get_post_id(req.user)}]})
             result = conn.find_one(conditions,filters)
-            manager = {i:get_user_by_id(i) for i in MongoConnection.getValue(result,list,'header','manager')}
-            file_name = MongoConnection.getValue(result,str,"data","header","file_name",)
-            uploader = get_user_by_id(MongoConnection.getValue(result, int,"header","uploader"))
-            all_manager = {i.get('user_id'):get_user_by_id(i.get('user_id')) for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=manager).values()}
+            
+            if(result is None):
+                context['error'] = MONGO_ERROR
+                return render(req,'View/HTMX/form.html',context=context)
+            
+            file_name = result.data.header.file_name
+            uploader = get_user_by_id(result.header.uploader)
+            manager:dict[int, str | None] = {i:get_user_by_id(i) for i in result.header.manager}
+            all_manager:dict[int, str] = {i.user.id:i.user.username for i in Manager.objects.filter(belongs__id=req.user.admin.belongs.id).exclude(user__id__in=list(manager.keys()))}
             _manage = Manager.objects.get(user__id=user)
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = MONGO_ERROR
+            context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/form.html',context=context)
         
         try:
-            updateManagers:dict[str,str] = {}
+            updateManagers:dict[str, str | dict[str, int]] = {}
             
             if(is_hx_put(req)):
                 if(_manage.user.id in manager):
@@ -332,30 +268,6 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
             
         return render(req,'View/HTMX/form.html',context=context)            
 
-@htmx_response
-@auth_needed()
-def table_query(req: HttpRequest, id:str) -> HttpResponse:
-    
-    if(is_hx_get(req)):
-        
-        conn = MongoConnection().connect()
-        
-        context = {}
-        context.update({"admin":is_admin(req.user)})
-        
-        try:
-            result = conn.find_one({"_id":ObjectId(id)},{"data.header.columns":1})
-            columns = MongoConnection.getValue(result, list, "data", "header", "columns")
-            context.update({"column":columns})
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
-        
-        finally:
-            conn.close()
-
-        return render(req,'View/HTMX/table.html',context=context)
-
 
 @htmx_response
 @auth_needed()
@@ -364,11 +276,11 @@ def row_view(req: HttpRequest, id:str) -> HttpResponse:
     if(is_hx_get(req)):
         
         conn = MongoConnection().connect()
-        column = req.GET.get('column',None)
-        value = req.GET.get('search',None)
-        issue = req.GET.get('issue',None)
-        status = req.GET.get('status',None)
-        lock = req.GET.get('lock',None)
+        column = req.GET.get('column','')
+        value = req.GET.get('search','')
+        issue = req.GET.get('issue','')
+        status = req.GET.get('status','')
+        lock = req.GET.get('lock','')
         page = req.GET.get('page','0')
         
         context = get_context(req,id,conn,column,value,issue,status,lock,page)
@@ -385,21 +297,24 @@ def quick_query(req: HttpRequest, id:str):
     if(is_hx_get(req)):
     
         conn = MongoConnection().connect()
-        column = req.GET.get('column',None)
-        search = req.GET.get('search','')
-        context = {'option':[]}
+        column = req.GET.get('column','')
+        value = req.GET.get('search','')
+        context:dict[str, list[str]] = {'option':[]}
         
         try:
-            result:dict[str,dict[str,dict]] = conn.find_one({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]},{"data.excel":1})
-            pd_data = pd.DataFrame(result.get('data',{}).get('excel',{}))
+            _column = int(column)
             
-            if(column in pd_data.columns):
-                pd_data = pd_data[pd_data[column].str.contains(search)][column].to_numpy()
-                context['option'] = [i for i in sorted(set(pd_data))[:5]]    
+            if(column):
+                a, b, c, d, e = MongoTemplate.get_quick_buffer_query({"_id":ObjectId(id),"$or":auth_view(req.user)}, _column, value)
+                
+                options:list[dict] = conn.aggregate(a,b,c,d,e,convert=False)
+
+                if(options): 
+                    option = options[0]
+                    context.update(option)
                 
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,user=req.user,exception=e))
-            context['error'] = DEFAULT_ERROR
             
         return render(req,'View/HTMX/suggests.html',context=context)
     
@@ -428,15 +343,18 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         try:
             conditions, filters = MongoTemplate.merge_everything(MongoTemplate.get_buffer_query({"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]}, idx, 1))
-            result:dict[str,dict[str,dict]] = conn.find_one(conditions, filters)
+            result:Document|None = conn.find_one(conditions, filters)
             
-            columns:list = MongoConnection.getValue(result, list, "data", "header", "columns")
-            data:list[str] = MongoConnection.getValue(result, list, "data", "excel", 0)
-            pd_data = {columns[(idx%len(columns))]:val for idx,val in enumerate(data)}
-            meta_data:dict = MongoConnection.getValue(result, dict, 'data', 'feed', 0)
+            if(result is None):
+                context['error'] = "Mongo ID %s and index %s not found!" % (id,idx)
+                return render(req,'View/HTMX/report.html',context=context)
+            
+            columns:list = result.data.header.columns
+            data = result.data.excel[0]
+            pd_data = {columns[(idx%len(columns))]:val for idx,val in enumerate(data.row)}
+            meta_data:dict = data.feed.to_dict()
             
         except Exception as e:
-            print(e)
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=req.user,exception=e))
             context['error'] = DEFAULT_ERROR
             return render(req,'View/HTMX/report.html',context=context)
@@ -444,15 +362,9 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         finally:
             conn.close()
             
-        if((not bool(pd_data)) or (not meta_data)):
-            context['error'] = "Mongo ID %s and index %s not found!" % (id,idx)
-            return render(req,'View/HTMX/report.html',context=context)
-        
-        else:
-            
-            report = report_structure(pd_data)
+        report = ReportStructure.get_structure(list(pd_data.keys()))
 
-            context.update({'data':pd_data,'personal':report.personal_info,'pic':report.profile_img,'sem_dict':report.sem_data,**get_post(req.user),**meta_data})
+        context.update({'data':pd_data,'personal':report.personal_info,'pic':report.profile_img,'sem_dict':report.sem_data,**get_post(req.user),**meta_data})
             
         return render(req,'View/HTMX/report.html',context=context)
 
@@ -482,8 +394,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 status_col = f"data.feed.{idx}.status"
                 feed_col = f"data.feed.{idx}.feed"
                 success = conn.update_one({"_id":ObjectId(id),"$or":auth_view(req.user),f"data.feed.{idx}":{"$exists":True}},{"$set":{status_col:status,feed_col:feed}})
-                file_name = MongoConnection.getValue(conn.find_one(**MongoTemplate.merge_everything(MongoTemplate.get_header_query({"_id":ObjectId(id)}))),str,"data", "header","file_name")
-
+                
                 if(success):
                     context['msg'] = "Status Updated!"
                     APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.FEED_EDIT,taskID=id,index=idx,user=req.user,fileName=file_name))

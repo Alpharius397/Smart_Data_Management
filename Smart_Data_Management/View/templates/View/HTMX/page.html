@@ -5,7 +5,7 @@
 
     <div class="searchQuery">
         <h2>Search Columns: </h2>
-        <form hx-get="{% url 'View:search' id=id %}" hx-target="#tableView" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();">
+        <form hx-get="{% url 'View:search_row' id=id %}" hx-target="#tableBody" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();">
             
             <label for="column">Column: </label>
             <select name="column" id="column" class="searchSelect">
@@ -61,12 +61,11 @@
                         {% for i in column %}
                             <th><p>{{i}}</p></th>
                         {% endfor %}
-                        <th class="verify-sing"><p>Status</p></th>
                         <th class="next-button"><p>View Data</p></th>
                     </tr>
                 </thead>
                 
-                <tbody>
+                <tbody id="tableBody">
                     <tr id="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="load" hx-target='closest #loading' hx-swap="outerHTML">
                 </tbody>
                 

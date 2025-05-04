@@ -1,7 +1,7 @@
-import openpyxl
-from PIL import Image
-import openpyxl.worksheet
-import openpyxl.worksheet.worksheet
+import openpyxl #type: ignore
+from PIL import Image #type: ignore
+import openpyxl.worksheet #type: ignore
+import openpyxl.worksheet.worksheet #type: ignore
 from base64 import b64decode, b64encode
 from io import BytesIO
 import pandas
@@ -37,26 +37,26 @@ def expand_image(img_data:str, width:int, height:int) -> str:
     temp.save(image_data,format=image.format,quality=95)
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 
-def image_load(data: bytes) -> tuple[list[str], pandas.DataFrame]:
+def image_load(data: bytes) -> tuple[list[int], pandas.DataFrame]:
     
-    pd_data:pandas.DataFrame = None
+    pd_data:pandas.DataFrame = pandas.DataFrame()
     op_data:openpyxl.Workbook = None
-    converted:set[str] = set()
+    converted:set[int] = set()
     
     try:
         pd_data = pandas.read_excel(BytesIO(data))
         op_data = openpyxl.load_workbook(BytesIO(data))
     except:
-        return converted, pd_data
+        return [], pd_data
         
 
     if(op_data and len(op_data.sheetnames)==0):
-        return converted, pd_data
+        return [], pd_data
         
     op_sheet = op_data[op_data.sheetnames[0]]
     image = get_image_data(op_sheet)
     
-    for i, row in pd_data.iterrows():
+    for i, row in enumerate(pd_data.itertuples()):
         for j, _ in enumerate(row):
             
             pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)

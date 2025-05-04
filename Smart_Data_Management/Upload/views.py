@@ -1,15 +1,13 @@
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, QueryDict
+from django.shortcuts import render # type: ignore
+from django.http import HttpRequest, HttpResponse # type: ignore
 from Upload.forms import ExcelForm
 from Main.models import MongoConnection, MongoTemplate
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
-from User.models import is_admin, is_authenticated
-import json
 from bson.objectid import ObjectId
 from tools.get_image import image_load
 from tools.url_auth import htmx_response, is_auth_get, is_hx_delete, is_hx_post, auth_needed, is_hx_put, login_needed
 from User.models import get_post_id
-from django.contrib import messages
+from django.contrib import messages # type: ignore
 
 @login_needed(admin_only=True)
 def upload_screen(req:HttpRequest):
@@ -24,10 +22,11 @@ def edit_screen(req: HttpRequest, id:str) -> HttpResponse:
     
     if(is_auth_get(req)):
         conn = MongoConnection().connect()
-        file_name:str = None
+        file_name:str = ''
         try:
             res = conn.find_one({"_id":ObjectId(id)},{"data.header.file_name":1})
-            file_name = MongoConnection.getValue(res, str, "data", "header", "file_name")
+            
+            if(res is not None): file_name = res.data.header.file_name
         finally:
             conn.close()
             

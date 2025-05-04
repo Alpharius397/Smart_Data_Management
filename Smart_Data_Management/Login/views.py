@@ -1,11 +1,11 @@
-from django.shortcuts import render, redirect
-from Login.forms import LoginForm
-from django.http import HttpRequest, HttpResponse
-from Login.forms import LoginForm
-from django.urls import reverse
-from django.contrib.auth import login, authenticate
+from django.shortcuts import render # type: ignore
+from Login.forms import LoginForm # type: ignore
+from django.http import HttpRequest, HttpResponse # type: ignore
+from Login.forms import LoginForm 
+from django.urls import reverse # type: ignore
+from django.contrib.auth import login, authenticate # type: ignore
 from User.models import is_manager, is_admin
-from django.contrib import messages
+from django.contrib import messages # type: ignore
 from tools.url_auth import is_hx_post
 from Logs.loggers import DEFAULT_ERROR
 

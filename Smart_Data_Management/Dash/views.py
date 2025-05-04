@@ -1,8 +1,9 @@
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render # type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 from Main.models import MongoConnection
-from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
+from django.conf import settings # type: ignore
+from tools.typesCauseWhyNot import *
+from User.models import get_post_id, get_user_by_id, is_admin, is_manager, get_manager_by_name, get_admin_by_name
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 from tools.get_image import expand_image
@@ -11,8 +12,10 @@ import re
 from Main.models import *
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from tools.token import get_token, hash_token
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt # type: ignore
 from tools.encrypt import monthYearHash, jsonHash
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
 
 VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
@@ -20,37 +23,43 @@ LOADING:str = "Loading"
 DONE:str = "Done"
 CARD_DATA:str = "Data"
 
-def get_data(result:list[dict[str,dict[str,dict|str|list]]]) -> tuple[bool,dict[str,str|list]]:
-    data:list[dict[str, str|list]] = []
-    empty = bool(result)
+def get_data(result:list[Document]) -> tuple[bool,list[dict[str, str|list|Any]]]:
+    data:list[dict[str, str|list|None]] = []
+    empty = bool(result is None)
     
     for i in result:
         
         data.append({
-            'id': MongoConnection.getValue(i, str, '_id'), 
-            'uploader': get_user_by_id(MongoConnection.getValue(i, str, 'header', 'uploader')), 
-            'manager': [ get_user_by_id(j) for j in MongoConnection.getValue(i, list, 'header', 'manager') ],
-            'file_name': MongoConnection.getValue(i, str, 'data', 'header', 'file_name')
+            'id': i._id, 
+            'uploader': get_user_by_id(i.header.uploader), 
+            'manager': list(map(get_user_by_id,i.header.manager)) ,
+            'file_name': i.data.header.file_name
         })
 
     return empty, data
 
-def get_query(req: HttpRequest) -> dict[str,str]:
+def get_query(req: HttpRequest) -> dict[str, dict[str, str | list] | str]:
     
     query = req.GET.get('query',None)
     value = req.GET.get('value',None)
-    query_dict = {}
+    query_dict:dict[str, dict[str, str | list] | str] = {}
     
     if(query and value):
         
         if(query=='uploader'):
             query_dict.update({"header.uploader":{"$in":get_admin_by_name(value)}})
+            
         elif(query=='manager'):
             manager_list = get_manager_by_name(value)
-            query_list = manager_list if (manager_list) else [None]
-            query_dict.update({"$or": query_list})
+            query_list:list[int] = manager_list if (manager_list) else [-1]
+            or_dict:dict[str, list[int]] = {"$or": query_list}
+            query_dict.update(or_dict) # type: ignore
+            
         elif(query=='file_name'):
             query_dict.update({"data.header.file_name":{"$regex":f"/{value}/i"}})
+        
+        elif(query=='mongo_id'):
+            query_dict.update({"_id":ObjectId(value)})
             
     return query_dict
 
@@ -74,15 +83,17 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
         
         manage:list[dict[str,str|list]] = []
         conn = MongoConnection().connect()
-        error:str = None
-        queryset=get_query(req)
+        error:str = ''
         
         try:
-            
-            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
+            queryset=get_query(req)
+            result:list[Document] = conn.find_all({**queryset,"header.manager":req.user.id},VIEW_DATA)
             flag , manage = get_data(result)
             if(flag and queryset): error='No matching records found!'
-            
+        
+        except (InvalidId, TypeError):
+            error = "Invalid Mongo ID entered"
+        
         except Exception as e:            
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))
             error = DEFAULT_ERROR
@@ -100,14 +111,17 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse:
         
         admin:list[dict[str,str|list]] = []
         conn = MongoConnection().connect()
-        error:str = None
-        queryset=get_query(req)
+        error:str = ''
         
         try:
-            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':[]},VIEW_DATA)
+            queryset=get_query(req)
+            result:list[Document] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':[]},VIEW_DATA)
             empty, admin = get_data(result)
             if(empty and queryset): error='No matching records found!'
-            
+        
+        except (InvalidId, TypeError):
+            error = "Invalid Mongo ID entered"
+        
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))            
             error = DEFAULT_ERROR
@@ -124,16 +138,19 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
     if(is_hx_get(req)):
         
         admin:list[dict[str,str|list]] = []
-        error:str = None
-        queryset=get_query(req)
+        error:str = ''
         conn = MongoConnection().connect()
         
         try:
-            result:list[dict[str,dict[str,dict|str|list]]] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
+            queryset=get_query(req)
+            result:list[Document] = conn.find_all({**queryset,"header.post":get_post_id(req.user),'header.manager':{"$ne":[]}},VIEW_DATA)
             flag, admin = get_data(result)
 
             if(flag and queryset): error='No matching records found!'
-
+            
+        except (InvalidId, TypeError):
+            error = "Invalid Mongo ID entered"
+        
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,user=req.user,exception=e))
             error = DEFAULT_ERROR
@@ -146,8 +163,32 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
 
 class ReportStructure(typing.NamedTuple):
     profile_img:str
-    personal_info:dict[str,str]
-    sem_data:dict[str,dict[str,str]]
+    personal_info:list[str]
+    sem_data:dict[str,list[str]]
+
+    @staticmethod
+    def get_structure(columns: list[str]) -> 'ReportStructure':
+        
+        profile_img = r'^Profile_Image$'
+        sem_data = r'.+Sem_(\d+)$'
+        
+        _profile_col = [i for i in columns if re.match(profile_img,i)]
+        sem_col = [i for i in columns if re.match(sem_data,i)]
+        personal_col = [i for i in columns if((i not in set(_profile_col)) and (i not in set(sem_col)))]
+        
+        sem_dict:dict[str,list[str]] = {}
+        
+        profile_col = _profile_col[0] if _profile_col else ''
+        
+        for i in sem_col:
+            _sem:list[str] = re.findall(sem_data,i)
+            
+            if(_sem):
+                sem = _sem[0]
+                if(sem not in sem_dict): sem_dict[sem] = list()
+                sem_dict[sem].append(i)
+                
+        return ReportStructure(profile_img=profile_col, personal_info=personal_col, sem_data=sem_dict)
 
 @htmx_response
 @auth_needed(manager_only=True)
@@ -159,39 +200,21 @@ def read_view(req: HttpRequest)-> HttpResponse:
         try:
             session_data:dict[str, str] = req.session.get(CARD_DATA)
             
-            cardData:str = session_data.get("data",None)
-            cardID:str = session_data.get("cardID", None)
+            cardData:str = session_data.get("data","")
+            cardID:str = session_data.get("cardID","")
 
             data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,cardData)
             
-            profile_img = r'^Profile_Image$'
-            sem_data = r'.+Sem_(\d+)$'
-            
             result, header = data.get('data',{}), data.get('header',{})
-            columns = result.keys()
-            
-            profile_col = [i for i in columns if re.match(profile_img,i)]
-            sem_col = [i for i in columns if re.match(sem_data,i)]
-            personal_col = [i for i in columns if((i not in profile_col) and (i not in sem_col))]
-            
-            sem_dict:dict[str,list[str]] = {}
-            
-            profile_col = profile_col[0] if profile_col else None
-            
+            columns = list(result.keys())
             hashedJson = f"{monthYearHash()}{jsonHash(result)}"
             
-            wid, hei, data = result[profile_col].split(":")
+            view = ReportStructure.get_structure(columns)
+            
+            wid, hei, img = result[view.profile_img].split(":")
 
-            result[profile_col] = expand_image(width=int(wid),height=int(hei),img_data=data)
-            for i in sem_col:
-                sem:list[str] = re.findall(sem_data,i)
-                
-                if(sem):
-                    sem = sem[0]
-                    if(sem not in sem_dict): sem_dict[sem] = list()
-                    sem_dict[sem].append(i)
+            result[view.profile_img] = expand_image(width=int(wid),height=int(hei),img_data=img)
 
-            view = ReportStructure(profile_img=profile_col,personal_info=personal_col,sem_data=sem_dict)
             context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,'cardID':cardID,**header})
 
         except Exception as e:

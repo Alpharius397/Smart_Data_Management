@@ -58,7 +58,7 @@ def get_user_by_id(id:int) -> str|None:
     except:
         return None
 
-def get_user_id(name:int) -> str|None:
+def get_user_id(name:int) -> int|None:
     
     try:
         user:UserObject = User.objects.get(username=name)
@@ -66,7 +66,7 @@ def get_user_id(name:int) -> str|None:
     except:
         return None
 
-def get_post(user: UserObject) -> dict[str,str]:
+def get_post(user: UserObject) -> dict[str,str|None]:
     uni = None
     insti = None
     branch = None
@@ -86,21 +86,21 @@ def get_post(user: UserObject) -> dict[str,str]:
     
     return {'university':uni.name,'institute':insti.name,'branch':branch.name}
 
-def get_post_id(user:UserObject) -> dict[str,int]:
+def get_post_id(user:UserObject) -> dict[str,int|None]:
     uni = None
     insti = None
     branch = None
 
     if(is_manager(user)):
-        user:Manager = user.manager
+        _user:Manager = user.manager
     
     elif(is_admin(user)):
-        user:Admin = user.admin
+        _user:Admin = user.admin
         
     else:
         return {'university':uni,'institute':insti,'branch':branch}
     
-    branch = user.belongs
+    branch = _user.belongs
     insti = branch.institute
     uni = insti.university
     
@@ -122,11 +122,11 @@ def get_manager_by_name(username:str) -> list[int]:
     except Exception as e:
         return []
 
-def get_post_by_ID(university: int, institute: int, branch: int) -> dict[str,str]:
+def get_post_by_ID(university: int, institute: int, branch: int) -> dict[str,str|None]:
     
-    uni:str = None
-    insti:str = None 
-    bra:str = None
+    uni:str|None = None
+    insti:str|None = None 
+    bra:str|None = None
 
     try:
         uni = University.objects.filter(id=university)[0].name

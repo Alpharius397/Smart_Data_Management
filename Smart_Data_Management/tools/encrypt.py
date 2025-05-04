@@ -3,10 +3,10 @@ from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
 from datetime import datetime
-from django.utils import timezone
+from django.utils import timezone #type: ignore
 import zlib
 import json
-from django.conf import settings
+from django.conf import settings #type: ignore
 
 IV_LENGTH: int = 12
 
@@ -18,16 +18,16 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
     
     cipher = DES3.new(key, DES3.MODE_CBC)
     encrypted = cipher.encrypt(padded)
-    iv = b64encode(cipher.iv).decode()
+    iv = b64encode(cipher.iv).decode() #type: ignore
     
     encrypted_b64 = b64encode(encrypted).decode()
     
     return f"{iv}{encrypted_b64}"
 
 # Decryption Function
-def decrypt_data(key: bytes, encrypted_data: str) -> str:
-    iv, encrypted_b64 = encrypted_data[:IV_LENGTH], encrypted_data[IV_LENGTH:]
-    iv = b64decode(iv)
+def decrypt_data(key: bytes, encrypted_data: str) -> dict:
+    _iv, encrypted_b64 = encrypted_data[:IV_LENGTH], encrypted_data[IV_LENGTH:]
+    iv = b64decode(_iv)
     encrypted = b64decode(encrypted_b64)
     cipher = DES3.new(key, DES3.MODE_CBC, iv)
     decrypted = cipher.decrypt(encrypted)

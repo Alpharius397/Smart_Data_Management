@@ -1,5 +1,5 @@
-from django.forms import Form
-from django import forms
+from django.forms import Form # type: ignore
+from django import forms # type: ignore
 
 class LoginForm(Form):
     username = forms.CharField(max_length=100, required=True,help_text='Enter the username')

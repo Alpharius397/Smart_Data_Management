@@ -1,19 +1,19 @@
 import datetime
 import json
 import typing
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 import jwt
-from Logs.loggers import DEFAULT_ERROR
-from tools.encrypt import getAuthKey
-from User.models import is_admin, is_authenticated, is_manager
-from django.conf import settings
-from django.shortcuts import redirect
-from django.urls import reverse
+from Logs.loggers import DEFAULT_ERROR # type: ignore
+from tools.encrypt import getAuthKey # type: ignore
+from User.models import is_admin, is_authenticated, is_manager # type: ignore
+from django.conf import settings # type: ignore
+from django.shortcuts import redirect # type: ignore
+from django.urls import reverse # type: ignore
 from User.models import Admin, Manager
-from University.models import Color
-from django.contrib.auth.models import User
-from functools import wraps
-from django.utils import timezone
+from University.models import Color # type: ignore
+from django.contrib.auth.models import User # type: ignore
+from functools import wraps # type: ignore
+from django.utils import timezone # type: ignore
 
 def is_hx_get(req:HttpRequest) -> bool:
     return bool((req.method=="GET") and req.META.get('HTTP_HX_REQUEST'))
@@ -71,16 +71,16 @@ def noneCheck(*args: typing.Any) -> bool:
 
 class PayLoad:
     
-    __type: str = None
+    __type: str = 'Base'
     expire_minutes: int
     
-    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None, **kawrgs):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None, **kawrgs:str|int):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
         self.expire = (expire if(expire is not None) else timezone.now())
     
-    def to_json(self, newToken: bool = False) -> dict[str, str]:
+    def to_json(self, newToken: bool = False) -> dict[str, str | int]:
         return {'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': ((self.expire if (not newToken) else timezone.now()) + datetime.timedelta(seconds=self.expire_minutes)).isoformat()}
     
     def getToken(self) -> str:
@@ -96,20 +96,20 @@ class PayLoad:
         return json.dumps({'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': (self.expire + datetime.timedelta(seconds=self.expire_minutes)).isoformat()})
     
     @staticmethod
-    def from_json(classConstruct: 'PayLoad', userID:int, username:str, type:str, expire:str) -> 'PayLoad':
+    def from_json(classConstruct: type['PayLoad'], userID:int, username:str, type:str, expire:str) -> 'PayLoad':
         user:User = User.objects.get(id=userID, username=username)
         return classConstruct(user=user, type=type, expire=datetime.datetime.fromisoformat(expire))  
     
     @staticmethod
-    def decodeToken(classConstruct: 'PayLoad', token: str) -> 'PayLoad':
+    def decodeToken(classConstruct: type['PayLoad'], token: str) -> 'PayLoad':
         data:dict[str, str] = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-        return classConstruct.from_json(classConstruct, **data)
+        return classConstruct.from_json(classConstruct, **data) # type: ignore
 
 class AccessPayLoad(PayLoad):
     __type: str = 'access'
     expire_minutes = settings.JWT_EXP_DELTA_MINUTES
     
-    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -120,7 +120,7 @@ class RefreshPayLoad(PayLoad):
     __type: str = 'refresh'
     expire_minutes = settings.REFRESH_EXP_DELTA_MINUTES
     
-    def __init__(self, user: User, expire:datetime.datetime = None, type:str = None):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type

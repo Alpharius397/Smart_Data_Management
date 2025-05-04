@@ -1,15 +1,18 @@
+from functools import wraps
 import os
 import json
 import logging
 import traceback
 from pathlib import Path
-from types import FunctionType, MethodType
-from django.utils import timezone
-from django.http import HttpRequest
-from django.contrib.auth.models import User
-from User.models import is_admin, is_manager
-from Logs.models import LogMessage
-from django.conf import settings
+from typing import Callable, ParamSpec
+from django.utils import timezone #type: ignore
+from django.http import HttpRequest #type: ignore
+from django.contrib.auth.models import User #type: ignore
+from User.models import is_admin, is_manager #type: ignore
+from Logs.models import LogMessage 
+from django.conf import settings #type: ignore
+
+P = ParamSpec("P")
 
 DEFAULT_ERROR = "Something Went Wrong! Please try Again"
 MONGO_ERROR = "MongoDB Connection Failed"
@@ -33,13 +36,13 @@ class Task:
     INVALID_ID: int = 14
 
 class Auth:
-    ADMIN:int = "Admin"
-    MANAGER:int = "Manager"
-    ANONYMOUS:int = "Anonymous User"
+    ADMIN:str = "Admin"
+    MANAGER:str = "Manager"
+    ANONYMOUS:str = "Anonymous User"
 
 class BaseLogger:
     
-    def __init__(self, dir_path:str) -> None:
+    def __init__(self, dir_path: Path) -> None:
         self.date_time = timezone.now().strftime("%d.%m.%Y")
         self.__dir_path = dir_path
         self.log = logging.getLogger(self.__class__.__name__)
@@ -65,11 +68,15 @@ class BaseLogger:
             return "Not an exception"
     
     @staticmethod
-    def change_decorator(func:FunctionType) -> MethodType:
-        
-        def wrapper(obj:'BaseLogger', *args, **kwargs,):
-            obj.change_time()
-            return func(obj, *args, **kwargs)
+    def change_decorator(func: Callable[P, None]) -> Callable[P, None]:
+
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:
+            if args:
+                if isinstance(args[0], BaseLogger):
+                    args[0].change_time()
+                    
+            return func(*args, **kwargs)
         
         return wrapper
         
@@ -196,33 +203,35 @@ class LogStructure:
         self.header.update({"urlPath":url,"timestamp":timestamp,"request":self.request})
         return self
     
-    def get_action(self, type:int, taskID:str = None, index:int = None, column:str = None, manager:User = None, user:User = None, exception: Exception = None, fileName:str = None):
+    def get_action(self, type:int, taskID:str|None = None, index:int|None = None, column:str|None = None, manager:User = None, user:User = None, exception: Exception|None = None, fileName:str|None = None):
 
-        def dump_detail(what:str, name:str, id:int): return f"{what} {name} (ID: {id})"
+        def dump_detail(what:str, name:str|None, iD:int|str|None): return f"{what} {name} (ID: {iD})"
 
-        def get_details(user:User) -> dict[str,str]:
-            name, id = None, None
+        def get_details(user:User) -> dict[str, str | int | None]:
+            
+            name:str | None = None
+            iD: int | None = None
             
             try:
                 name = user.username
-                id = user.id
+                iD = user.id
             except Exception as e:
                 pass
             
-            return {"name":name, "id":id}
+            return {"name":name, "id":iD}
 
         match(type):
-            case Task.TASK_UPLOADED: return f"{dump_detail('Admin',**get_details(user))} uploaded a new {dump_detail('Task','\b',taskID)}"
-            case Task.TASK_ASSIGN: return f"{dump_detail('Admin',**get_details(user))} assigned {dump_detail('Manager',**get_details(manager))} to {dump_detail('Task',fileName,taskID)}"
-            case Task.TASK_UNASSIGN: return f"{dump_detail('Admin',**get_details(user))} unassigned {dump_detail('Manager',**get_details(manager))} from {dump_detail('Task',fileName,taskID)}"
-            case Task.TASK_DELETE: return f"{dump_detail('Admin',**get_details(user))} deleted the {dump_detail('Task',fileName,taskID)}"
-            case Task.TASK_EDIT: return f"{dump_detail('Admin',**get_details(user))} re-uploaded the {dump_detail('Task',fileName,taskID)}"
-            case Task.DATA_EDIT: return f"{dump_detail('Admin',**get_details(user))} edited the Row {index}, Column {column} of {dump_detail('Task',fileName,taskID)}"
-            case Task.DATA_UNLOCK: return f"{dump_detail('Manager',**get_details(user))} unlocked the Row {index} of {dump_detail('Task',fileName,taskID)}"
-            case Task.DATA_LOCK: return f"{dump_detail('Manager',**get_details(user))} locked the Row {index} of {dump_detail('Task',fileName,taskID)}"
-            case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
-            case Task.FEED_EDIT: return f"{dump_detail('Manager',**get_details(user))} provided Feedback on Row {index} of {dump_detail('Task',fileName,taskID)}"
-            case Task.CARD_CANCEL: return f"{dump_detail('Manager',**get_details(user))} has cancelled card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}"
+            case Task.TASK_UPLOADED: return f"{dump_detail('Admin',**get_details(user))} uploaded a new {dump_detail('Task','\b',taskID)}" #type: ignore
+            case Task.TASK_ASSIGN: return f"{dump_detail('Admin',**get_details(user))} assigned {dump_detail('Manager',**get_details(manager))} to {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.TASK_UNASSIGN: return f"{dump_detail('Admin',**get_details(user))} unassigned {dump_detail('Manager',**get_details(manager))} from {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.TASK_DELETE: return f"{dump_detail('Admin',**get_details(user))} deleted the {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.TASK_EDIT: return f"{dump_detail('Admin',**get_details(user))} re-uploaded the {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.DATA_EDIT: return f"{dump_detail('Admin',**get_details(user))} edited the Row {index}, Column {column} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.DATA_UNLOCK: return f"{dump_detail('Manager',**get_details(user))} unlocked the Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.DATA_LOCK: return f"{dump_detail('Manager',**get_details(user))} locked the Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.FEED_EDIT: return f"{dump_detail('Manager',**get_details(user))} provided Feedback on Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.CARD_CANCEL: return f"{dump_detail('Manager',**get_details(user))} has cancelled card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.UNAUTH_REQ: return f"Received unauthorized request for Card Issue"
             case Task.CARD_DATA_FETCH: return f"Authenticated Card Data Fetch"
             case Task.INVALID_TOKEN: return f"Token is either expired or completed!"
@@ -231,7 +240,7 @@ class LogStructure:
         
         return None
             
-    def set_description(self, type:int, taskID:str = None, index:int = None, column:str = None, manager:User = None, user:User = None, exception: Exception = None, fileName:str = None):
+    def set_description(self, type:int, taskID:str|None = None, index:int|None = None, column:str|None = None, manager:User = None, user:User = None, exception: Exception|None = None, fileName:str|None = None):
         self.desc.update({"mongoID":taskID, "fileName":fileName, "index":index, "type":type,"action":self.get_action(type,taskID,index,column,manager,user,exception,fileName)})
         return self        
 
