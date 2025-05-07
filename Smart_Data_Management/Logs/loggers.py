@@ -27,7 +27,7 @@ class Task:
     DATA_LOCK:int = 5
     DATA_EDIT:int = 6
     DATA_UNLOCK:int = 7
-    CARD_READ:int = 8
+    CARD_ISSUE:int = 8
     FEED_EDIT:int = 9
     CARD_CANCEL:int = 10
     UNAUTH_REQ:int = 11
@@ -218,7 +218,7 @@ class LogStructure:
             except Exception as e:
                 pass
             
-            return {"name":name, "id":iD}
+            return {"name":name, "iD":iD}
 
         match(type):
             case Task.TASK_UPLOADED: return f"{dump_detail('Admin',**get_details(user))} uploaded a new {dump_detail('Task','\b',taskID)}" #type: ignore
@@ -229,7 +229,7 @@ class LogStructure:
             case Task.DATA_EDIT: return f"{dump_detail('Admin',**get_details(user))} edited the Row {index}, Column {column} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.DATA_UNLOCK: return f"{dump_detail('Manager',**get_details(user))} unlocked the Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.DATA_LOCK: return f"{dump_detail('Manager',**get_details(user))} locked the Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
-            case Task.CARD_READ: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
+            case Task.CARD_ISSUE: return f"{dump_detail('Manager',**get_details(user))} has issued card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.FEED_EDIT: return f"{dump_detail('Manager',**get_details(user))} provided Feedback on Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.CARD_CANCEL: return f"{dump_detail('Manager',**get_details(user))} has cancelled card with data regarding Row {index} of {dump_detail('Task',fileName,taskID)}" #type: ignore
             case Task.UNAUTH_REQ: return f"Received unauthorized request for Card Issue"

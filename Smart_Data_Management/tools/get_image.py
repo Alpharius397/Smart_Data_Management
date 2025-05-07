@@ -26,13 +26,13 @@ def compress_image(img_data:BytesIO) -> str:
     
     image_data = BytesIO()
     
-    compressed.save(image_data,format=image.format,quality=65, optimize=True)
+    compressed.save(image_data,format=image.format,quality=75, optimize=True)
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
 
 def expand_image(img_data:str, width:int, height:int) -> str:
     image = Image.open(BytesIO(b64decode(img_data)))
     
-    temp = image.resize((width,height),Image.Resampling.BICUBIC)
+    temp = image.resize((width,height),Image.Resampling.BILINEAR)
     image_data = BytesIO()
     temp.save(image_data,format=image.format,quality=95)
     return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
@@ -56,7 +56,7 @@ def image_load(data: bytes) -> tuple[list[int], pandas.DataFrame]:
     op_sheet = op_data[op_data.sheetnames[0]]
     image = get_image_data(op_sheet)
     
-    for i, row in enumerate(pd_data.itertuples()):
+    for i, row in enumerate(pd_data.itertuples(index=False)):
         for j, _ in enumerate(row):
             
             pd_data[pd_data.columns[j]] = pd_data[pd_data.columns[j]].astype(str)

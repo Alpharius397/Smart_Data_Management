@@ -1,6 +1,7 @@
-from django.db.models import CharField,Model,IntegerField,QuerySet
+from django.db.models import CharField,Model,IntegerField,ForeignKey,RESTRICT
 from django.core.validators import MinValueValidator, RegexValidator
-from Main.models import MongoConnection
+from User.models import UserObject
+from django.contrib.auth.models import User
 
 MongoID = RegexValidator(r"^[0-9a-f]{24}$", message="Invalid MongoID")
 
@@ -8,19 +9,19 @@ class Card(Model):
     cardID = CharField(max_length=200,null=False,blank=False,verbose_name='Card ID',primary_key=True)
     mongoID = CharField(max_length=24,null=False,blank=False,verbose_name='Mongo ID', validators=[MongoID])
     rowIndex = IntegerField(null=False,blank=False,verbose_name='Location',validators=[MinValueValidator(0,"Row Index cannot be negative")])
+    user:'UserObject' = ForeignKey(to=User,on_delete=RESTRICT,related_name='card',verbose_name="User")
     
     class Meta:
         verbose_name = "Card"
         verbose_name_plural = "Cards"
     
     def __str__(self):
-        return f"{self.cardID} => {self.mongoID}:{self.rowIndex}"
+        return f"{self.cardID} => {self.mongoID}:{self.rowIndex}, Done by: {self.user.username}"
     
     @staticmethod
-    def attemptSave(cardID: str, mongoID: str, rowIndex: int) -> bool:
+    def attemptSave(cardID: str, mongoID: str, rowIndex: int, user:UserObject) -> bool:
         try:
-            x = Card(cardID=cardID, mongoID=mongoID, rowIndex=rowIndex)
-            x.save()
+            Card(cardID=cardID, mongoID=mongoID, rowIndex=rowIndex, user=user).save()
             return True
         except:
             return False

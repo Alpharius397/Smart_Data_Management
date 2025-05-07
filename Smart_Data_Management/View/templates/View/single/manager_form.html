@@ -1,5 +1,18 @@
 {% load template %}
 
+{% if msg or error %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% if msg %}
+            <li class="success">{{msg}}</li>
+        {% elif error %}
+            <li class="error">{{error}}</li>
+        {% else %}
+            <li class="error"> Something went wrong! </li>
+        {% endif %}
+    </ul>
+{% endif %}
+
+{% if not error %}
 <div class="issue_card">
     {% if status %}
 
@@ -8,28 +21,29 @@
                 <a><button class="loading-button">Loading</button></a>
             </div>
             {% else %}
-            <form hx-put="{% url 'View:compress' id=id idx=idx %}" hx-swap="innerHTML" hx-vals='{"to_do":"issue"}' hx-target=".messages" hx-trigger="click from:#issue_button" onsubmit="event.preventDefault()">
+            <form hx-put="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest .issue_card" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
                 {% csrf_token %}
                 <button class="upload-button" id="issue_button">Issue Card</button>
             </form>
         {% endif %}
     
-    
+        
         {% if locked %}
-            <form hx-delete="{% url 'View:compress' id=id idx=idx %}" hx-vals='{"to_do":"cancel"}' hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:#cancel_button" onsubmit="event.preventDefault()">
-                {% csrf_token %}
-                <button type="cancel" class="upload-button" id="cancel_button">Cancel Card</button>
-            </form>
+        <form hx-delete="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest .issue_card" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+            <button type="cancel" class="upload-button" id="cancel_button">Cancel Card</button>
+        </form>
         {% endif %}
-
-    {% endif %}
-
-    {% if issued %}
+        
+        {% endif %}
+        
+        {% if issued %}
         <p><strong> Card issued on {{time_of_issue|timestamp}}. </strong></p>
-    {% endif %}
-    
-    {% if locked %}
+        {% endif %}
+        
+        {% if locked %}
         <p><strong> Card locked on {{time_of_lock|timestamp}}. </strong></p>
-    {% endif %}
+        {% endif %}
     
 </div>
+{% endif %}

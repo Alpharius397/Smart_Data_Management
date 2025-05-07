@@ -3,7 +3,7 @@ from django.db.models import OneToOneField,ForeignKey,Model,RESTRICT
 from University.models import Branch, University, Institute
 
 class Manager(Model):
-    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='manager')
+    user:'UserObject' = OneToOneField(to=User,on_delete=RESTRICT,related_name='manager')
     belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='manager')
     
     def __str__(self):
@@ -27,7 +27,6 @@ class UserObject(User):
     student:Student
     manager:Manager
     admin:Admin
-    
 
 def is_manager(user:UserObject) -> bool:
     try:

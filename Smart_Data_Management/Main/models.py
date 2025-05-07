@@ -69,7 +69,7 @@ class DataHeader:
         self.file_name = file_name
     
     @staticmethod
-    def get(columns: list[str], image_columns: list[int], file_name: str) -> 'DataHeader':        
+    def get(columns: list[str], image_columns: list[int], file_name: str, **kwargs) -> 'DataHeader':        
         return DataHeader(columns, image_columns, file_name)
     
     def to_dict(self) -> dict[str, list[str] | str | list[int]]:
@@ -91,7 +91,7 @@ class Feed:
         self.index = index
         
     @staticmethod
-    def get(locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int) -> 'Feed':
+    def get(locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int, **kwargs) -> 'Feed':
         return Feed(locked, issued, time_of_lock, time_of_issue, status, feed, index)
     
     def to_dict(self) -> dict[str, str | int | bool | None]:
@@ -132,11 +132,9 @@ class DataExcel:
         
         def default_data_row_dict(x: dict[str, str | list], idx:int):
             row = {'row':[], 'feed':Feed(False,False,None,None,None,None,idx).to_dict()}
-            
             for key,val in x.items():
                 if(key in row):
                     row[key] = val
-
             return row
         
         def default_data_header_dict(x: dict[str, str | list]):
@@ -276,7 +274,7 @@ class MongoTemplate:
     """
     def __init__(self) -> None:
         
-        self.header:dict[str, dict[str, str | None] | list | str | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
+        self.header:dict[str, dict[str, str | int | None] | list | str | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
         self.data_header:dict[str, str | list | None] = {'file_name':None,'image_columns':[],'columns':[]}
         self.data_feed:dict[str, str | int | None] = {'index':0,'locked':None,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':None}
         self.data:list[dict[str, str | list | dict]]= []
@@ -287,11 +285,11 @@ class MongoTemplate:
         temp.update({'index':idx})
         return temp
         
-    def add_post(self, university:str,institute:str, branch:str) -> 'MongoTemplate':
+    def add_post(self, university:int,institute:int, branch:int) -> 'MongoTemplate':
         self.header['post'] = {'university':university,'institute':institute,'branch':branch}
         return self
     
-    def add_uploader(self, uploader:str) -> 'MongoTemplate':
+    def add_uploader(self, uploader:int) -> 'MongoTemplate':
         self.header['uploader'] = uploader
         return self
     
@@ -299,7 +297,7 @@ class MongoTemplate:
         self.data_header['file_name'] = file_name
         return self
         
-    def add_image(self, image_col:list[str]) -> 'MongoTemplate':
+    def add_image(self, image_col:list[int]) -> 'MongoTemplate':
         self.data_header['image_columns'] = image_col
         return self
     
@@ -311,8 +309,8 @@ class MongoTemplate:
         
         return self
     
-    def add_manager(self, managers:list[str]) -> 'MongoTemplate':
-        self.header['manager'] = list(managers)
+    def add_manager(self, managers:list[int]) -> 'MongoTemplate':
+        self.header['manager'] = managers
         return self
     
     def get_json(self) -> dict:
@@ -324,7 +322,7 @@ class MongoTemplate:
         filters:Filter = {}
         
         if(limit==-1):
-            filters.update({column_name:{"$slice":[start]}})
+            filters.update({column_name:{"$slice":[start, 1]}})
             
         else:
             filters.update({column_name:{"$slice":[start, limit]}})
@@ -341,13 +339,12 @@ class MongoTemplate:
         return MongoFindQuery(conditions, filters)
     
     @staticmethod
-    def _single_update_query(column_name:str, value: str | dict | list) -> MongoUpdateQuery:
+    def _single_update_query(values:dict[str, str | dict | list]) -> MongoUpdateQuery:
         where:Where = {}
         updates:Update = {}
         
-        where.update({column_name:{"$exists":True}})
-        updates.update({column_name:{"$set":value}})
-        
+        where.update({i:{"$exists":True} for i in values.keys()})
+        updates.update({"$set":{column_name:value for column_name, value in values.items() }})
         return MongoUpdateQuery(where=where, updates=updates)
 
     @staticmethod
@@ -364,7 +361,7 @@ class MongoTemplate:
 
     @staticmethod
     def get_feedback_query(conditions:dict = {}, start:int = 0, limit:int = -1) -> MongoFindQuery:
-        res = MongoTemplate._buffer_find_query_factory("data.excel.feed", start, limit)
+        res = MongoTemplate._buffer_find_query_factory("data.excel", start, limit)
         res.conditions.update(conditions)
         return res
 
@@ -372,8 +369,25 @@ class MongoTemplate:
     def get_buffer_query(conditions:dict = {}, start:int = 0, limit:int = -1) -> MergeQuery:
         data_part =  MongoTemplate._buffer_find_query_factory("data.excel", start, limit)
         column_part =  MongoTemplate._full_find_query_factory("data.header")
+        header_part =  MongoTemplate._full_find_query_factory("header")
         
-        return MongoTemplate.merge_everything(data_part, column_part, initial_a=conditions)
+        return MongoTemplate.merge_everything(data_part, column_part, header_part,initial_a=conditions)
+    
+    @staticmethod
+    def update_query(where:dict[str, str | dict | list] = {}, updates:dict[str, str | dict | list] = {}) -> MongoUpdateQuery:
+        res =  MongoTemplate._single_update_query(updates)
+        
+        res.where.update(where)
+        
+        return res
+
+    @staticmethod
+    def image_data_update_query(where:dict[str, str | dict | list] = {}, updates:dict[str, str | dict | list] = {}) -> MongoUpdateQuery:
+        res =  MongoTemplate._single_update_query(updates)
+        
+        res.where.update(where)
+        
+        return res
     
     @staticmethod
     def get_search_buffer_query(condition:dict, column_index:str, locked: str, status: str, issued: str, value:str, start:int, limit:int) -> MongoPipeline:
@@ -576,12 +590,13 @@ class MongoConnection:
         
         try:
             val = self.collection.find_one(condition,filters)
+            self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
             
             if(val is None):
-                val = dict()
-                
+                return None
+
             res = Document.get(val)
-            self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
+            
         except Exception as e:            
             self.log.write_error(self.log.get_error_info(e))
         
@@ -598,6 +613,7 @@ class MongoConnection:
             vals = self.collection.find(condition,filters).to_list()
             res = list(map(Document.get, vals))
             self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
+            
         except Exception as e:            
             self.log.write_error(self.log.get_error_info(e))
         
@@ -612,7 +628,7 @@ class MongoConnection:
         
         try:
             _ = self.collection.update_one(condition,update)
-            
+            print(_)
             success = bool(_.matched_count==1)
             self.log.write_info(f"Applying updation '{update}' to document '{condition}'")
             
@@ -683,8 +699,8 @@ class MongoConnection:
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
     
-    def aggregate(self, *pipeline:dict[str, Union[dict,str]], convert:bool = True) -> list[Document|dict]:
-        result:list[Document|dict] = []
+    def aggregate(self, *pipeline:dict[str, Union[dict,str]],) -> list[dict[str, Any]]:
+        result:list[dict[str,Any]] = []
         
         if(self.collection is None):
             self.log.write_error("Mongo Connection Failed")
@@ -692,12 +708,7 @@ class MongoConnection:
         
         try: 
             self.log.write_info(f"Aggregating pipeline with {list(pipeline)}")
-            vals = self.collection.aggregate([*pipeline]).to_list()
-            
-            if(convert): 
-                result = list(map(Document.get, vals))
-            else:
-                result = vals
+            result = self.collection.aggregate([*pipeline]).to_list()
             
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))

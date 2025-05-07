@@ -1,4 +1,4 @@
-from Crypto.Cipher import DES3
+from Crypto.Cipher import DES3, AES
 from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode

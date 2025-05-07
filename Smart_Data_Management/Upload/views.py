@@ -1,7 +1,7 @@
 from django.shortcuts import render # type: ignore
 from django.http import HttpRequest, HttpResponse # type: ignore
 from Upload.forms import ExcelForm
-from Main.models import MongoConnection, MongoTemplate
+from Main.models import Document, MongoConnection, MongoTemplate
 from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
 from bson.objectid import ObjectId
 from tools.get_image import image_load
@@ -164,7 +164,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                 try:
                     res = conn.find_one({"data.header.file_name":file_name,"_id":{"$ne":ObjectId(id)}},{"data.header.file_name":1})
                     
-                    if(res):
+                    if(res.data.header.file_name):
                         messages.error(req, "File Name already exists. Please choose a different one!")
                         return render(req,'Upload/HTMX/message.html')
                     
@@ -188,13 +188,12 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                 
                 template = MongoTemplate().add_post(**get_post_id(req.user)).add_image(image_idx).add_excel(pd_data).add_file(file_name).add_uploader(req.user.id)            
                 try:
-                    exists:dict[str,dict[str,dict|list[dict]]] = conn.find_one({"_id":ObjectId(id),"data.feed.locked":{"$ne":True}})
+                    exists:Document|None = conn.find_one({"_id":ObjectId(id),"data.feed.locked":{"$ne":True}},{"header":1})
                     
                     if(exists is None):
                         messages.error(req, "Record was not found or Data is locked!")
                     else:
-                        managers = exists.get('header',{}).get('manager',[])
-                        template = template.add_manager(managers)
+                        template = template.add_manager(exists.header.manager)
                         success = conn.replace_one({"_id":ObjectId(id)},template)
                         
                         if(success):

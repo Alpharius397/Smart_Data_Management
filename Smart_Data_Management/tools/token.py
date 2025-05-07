@@ -2,7 +2,7 @@ from random import choice
 from hashlib import sha256
 
 __TOKEN:str = "qwertyuiopasdfghjklzxcvbnm1234567890"
-__LENGTH:str = 10
+__LENGTH:int = 32
 
 def get_token():
     return ''.join([__upperCase__(choice(__TOKEN)) for _ in range(__LENGTH)])

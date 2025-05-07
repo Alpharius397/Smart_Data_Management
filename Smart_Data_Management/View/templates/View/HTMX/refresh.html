@@ -12,25 +12,26 @@
 {% else %}
     {% for idx,i in result %}
         <tr>
+
             {% for j,k in i.values|enum %}
 
                 {% if column|index:j|in:image %}
+
                     {% with image=k|img %}
 
                         {% if admin is True and feed|index:idx|index_str:'locked' is not True %}
                             <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}" id="img_{{idx}}">
                         
-                            <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
-                            
-                                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                            
-                                {% if error %}
-                                    <ul class="messages">
-                                        <li class="error">{{error}}</li>
-                                    </ul>
-                                {% endif %}
-                            </div>
-                        </td>
+                                <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">                            
+                                    <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                                
+                                    {% if error %}
+                                        <ul class="messages">
+                                            <li class="error">{{error}}</li>
+                                        </ul>
+                                    {% endif %}
+                                </div>
+                            </td>
 
                         {% else %}
                             <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
@@ -64,12 +65,16 @@
             {% endfor %}
 
 
-
             <td class="next-button">
                 <a href="{% url 'View:index' id=id idx=idx %}">
                     <button>View</button>
                 </a>
-                <div hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find button" hx-target="closest tr" hx-swap="outerHTML">
+
+                <div 
+                    hx-get="{% url 'View:refresh' id=id idx=idx %}" 
+                    hx-trigger="click from:find button" 
+                    hx-target="closest tr" 
+                    hx-swap="outerHTML">
                     <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page" id="refresh_{{idx}}">Refresh</button>
                 </div>
 
@@ -84,26 +89,6 @@
                 {% endif %}
             </td>
         </tr>
-
-        {% if forloop.last %}
-            <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-swap="outerHTML">
-                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
-            </div>
-        {% endif %}
-    {% empty %}
-
-        {% if empty %}
-            <div class="loading">
-                <ul class="messages">
-                    <li class="error"><span>End of Search Reached</span></li>
-                </ul>
-            </div>
-        {% else %}
-            <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-swap="outerHTML">
-                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
-            </div>
-            
-        {% endif %}
 
     {% endfor %}
 {% endif %}

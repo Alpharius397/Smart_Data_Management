@@ -133,9 +133,7 @@ CORS_REPLACE_HTTP_REFERE = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 
 USE_I18N = True
 
@@ -172,3 +170,25 @@ JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
 JWT_ALGORITHM = 'HS256'
 JWT_EXP_DELTA_MINUTES = 30
 REFRESH_EXP_DELTA_MINUTES = 360
+
+
+class settingsInterface:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'sample')  
+    MEDIA_URL = 'sample/'
+    APP_LOG = os.path.join(BASE_DIR,'Logs','app_log','')
+    DATA_LOG = os.path.join(BASE_DIR,'Logs','data_log','')
+    LOGIN_URL = 'Login:login'
+    MONGO_URL = "mongodb://127.0.0.1:27017/"
+    MONGO_CRED = MongoDB("smart","excel")
+    KEY = b"123456789123456789123456"
+    WRITE_REGISTRY = "writeExe://"
+    READ_REGISTRY = "readExe://"
+
+    API_KEY = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
+    SECURE_KEY = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
+    REDIS = {'host':'localhost','port':6379}
+
+    JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
+    JWT_ALGORITHM = 'HS256'
+    JWT_EXP_DELTA_MINUTES = 30
+    REFRESH_EXP_DELTA_MINUTES = 360

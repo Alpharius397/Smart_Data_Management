@@ -210,7 +210,6 @@ def read_view(req: HttpRequest)-> HttpResponse:
             hashedJson = f"{monthYearHash()}{jsonHash(result)}"
             
             view = ReportStructure.get_structure(columns)
-            
             wid, hei, img = result[view.profile_img].split(":")
 
             result[view.profile_img] = expand_image(width=int(wid),height=int(hei),img_data=img)

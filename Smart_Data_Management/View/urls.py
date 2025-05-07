@@ -12,6 +12,7 @@ urlpatterns = [
 	path('<str:id>/<int:idx>/data/',card_view,name="data"),
 	path('<str:id>/assign/',assign_form,name="assign"),
 	path('<str:id>/<int:idx>/edit',edit_form,name="edit"),
+	path('<str:id>/<int:idx>/refresh',refresh_row,name="refresh"),
 	path('<str:id>/<int:idx>/edit_image',edit_image_form,name="edit_image"),
 	path('<str:id>/<int:idx>/normal/',normal_view,name="normal"),
 	path('<str:id>/<int:idx>/image/',normal_image,name="image"),

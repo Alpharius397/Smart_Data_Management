@@ -86,11 +86,11 @@
         <div class="feedback"></div>
 
         {% if manage %}
-            <div id="hidden" hidden hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="outerHTML" hx-target="next" hx-trigger="htmx:afterSwap from:next .messages"></div>
-            <div class="issue_card" hx-get="{% url 'View:compress' id=id idx=idx %}" hx-swap="innerHTML" hx-trigger="load" hx-target=".issue_card"></div>
-            <ul class="messages"></ul>
+            <div class="issue_card"></div>
+            <ul class="messages" id="messages"></ul>
         {% endif %}
 
+        {% csrf_token %}
     </div>
 
 </body>

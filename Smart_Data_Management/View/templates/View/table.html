@@ -167,8 +167,17 @@
             height: 30px;
             margin: 0;
             padding: 0;
-            transition: 1s;
         }
+    
+        tr {
+            background-color: white;
+            transition: 500ms;
+        }
+
+        tr.htmx-added{
+            background-color: yellow;
+        }
+
         
         {% if request.session.mainColor and request.session.secColor %}
             header{
