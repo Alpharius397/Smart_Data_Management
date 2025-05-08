@@ -140,6 +140,7 @@
             display: inline-flex;
             padding: 0px;
             margin: auto;
+            transition: 500ms;
         }
 
         td.next-button button{
@@ -149,6 +150,7 @@
 
         img.edit:hover{
             border-bottom: 3px grey solid;
+            transition: 500ms;
         }
         
         .loading{
@@ -161,11 +163,17 @@
             background-color:#0098ff;
             justify-items: center;
             align-items: center;
+            overflow: hidden;
         }
 
         .refresh-text, .view-text{
             margin: 1px;
-            display: inline-block;
+            display: flex;
+            transition: 1s;
+            align-content: center;
+            justify-items: center;
+            text-align: center;
+            margin: auto;
         }
 
         .refresh:hover{
@@ -179,47 +187,66 @@
         }
 
         .view-icon:hover img{
+            margin: 0;
             opacity: 1;
-            width: 30px;
-            height: 30px;
-            transform: rotateZ(180deg);
+            transform: rotateZ(180deg) translateX(-50%);
             transition: 1s;
         }
 
         .view-icon:hover p{
-            transform: rotateZ(180deg);
-            height: 0px;
-            width: 0;
-            transition: transform 1s, height 2s;
-            overflow: hidden;
+            margin: 0;
+            opacity: 0;
+            transform: rotateZ(180deg) translateX(50%);
+            transition: 1s;
+        }
+
+        .view-icon{
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+
+        .view-icon p, .view-icon img{   
+            width: 30px;
+            height: 30px;
+            margin: 0;
+            display: block;
+            position: relative;
         }
 
         .view-icon img{
-            width: 0;
-            height: 0;
+            transform: translateX(50%);
+            position: relative;
             opacity: 0;
-            margin: 0;
             transition: 1s;
+        }
+
+        .view-icon p{
+            position: relative;
+            opacity: 1;
+            transform: translateX(-50%);
         }
 
         .refresh img{
             display: inline;
             width: 30px;
             height: 30px;
-            margin: 0;
             padding: 0;
-            transition: transform 1s;
+            transition: 1s;
         }
 
         p.refresh-text{
             width: 50px;
-            transition: 1s;
             margin: 0;
         }
         
-        .refresh:hover p.refresh-text{
+        .refresh:hover p{
             width: 0px;
-            overflow: hidden;
+            transform: translateX(50px);
+            transition: 1s;
+        }
+
+        .report-status p:hover{
             transition: 1s;
         }
 

@@ -302,6 +302,9 @@ def quick_query(req: HttpRequest, id:str):
         value = req.GET.get('search','')
         context:dict[str, list[str]] = {'option':[]}
         
+        if(not column):
+            return render(req,'View/HTMX/suggests.html',context=context)
+        
         try:
             _column = int(column)
             

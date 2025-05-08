@@ -285,4 +285,3 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
             return JsonResponse(data=json_resp,status=404)
 
     return JsonResponse(data=json_resp,status=403)
-

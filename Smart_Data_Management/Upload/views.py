@@ -164,7 +164,7 @@ def edit(req: HttpRequest, id:str) -> HttpResponse:
                 try:
                     res = conn.find_one({"data.header.file_name":file_name,"_id":{"$ne":ObjectId(id)}},{"data.header.file_name":1})
                     
-                    if(res.data.header.file_name):
+                    if(res and res.data.header.file_name):
                         messages.error(req, "File Name already exists. Please choose a different one!")
                         return render(req,'Upload/HTMX/message.html')
                     

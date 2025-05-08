@@ -276,7 +276,7 @@ class MongoTemplate:
         
         self.header:dict[str, dict[str, str | int | None] | list | str | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
         self.data_header:dict[str, str | list | None] = {'file_name':None,'image_columns':[],'columns':[]}
-        self.data_feed:dict[str, str | int | None] = {'index':0,'locked':None,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':None}
+        self.data_feed:dict[str, str | int | None] = {'index':0,'locked':False,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':False}
         self.data:list[dict[str, str | list | dict]]= []
         self.feed:dict[str, dict[str,str]] = {}
     
