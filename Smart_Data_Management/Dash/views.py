@@ -56,7 +56,7 @@ def get_query(req: HttpRequest) -> dict[str, dict[str, str | list] | str]:
             query_dict.update(or_dict) # type: ignore
             
         elif(query=='file_name'):
-            query_dict.update({"data.header.file_name":{"$regex":f"/{value}/i"}})
+            query_dict.update({"data.header.file_name":{ "$regex": f"{value}", "$options": "i",}})
         
         elif(query=='mongo_id'):
             query_dict.update({"_id":ObjectId(value)})

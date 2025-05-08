@@ -63,25 +63,43 @@
 
             {% endfor %}
 
-
-
             <td class="next-button">
-                <a href="{% url 'View:index' id=id idx=idx %}">
-                    <button>View</button>
-                </a>
-                <div hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find button" hx-target="closest tr" hx-swap="outerHTML">
-                    <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page" id="refresh_{{idx}}">Refresh</button>
+                <div class="grid-layout">
+                    <div class="data-loading">
+                        <button class="view-icon" onclick="window.location.replace('{% url 'View:index' id=id idx=idx %}');">
+                            <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                            <p class="view-text">View</p>
+                        </button>
+
+                        <div class="refresh-button">
+                            <div hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find button" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
+                                <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                <div class="status-report">
+                    <div class="report-status">
+                        <p>Verify Status: </p>
+                            {% if feed|index:idx|index_str:'status' is True %}
+                                <p id="correct">Verified</p>
+                            {% elif feed|index:idx|index_str:'status' is False %}
+                                <p id="wrong">Rejected</p>
+                            {% else %}
+                                <p id="none">Unchecked</p>
+                            {% endif %}
+                    </div>
+
+                    <div class="report-status">                        
+                        <p>Lock Status: </p>
+                        {% if feed|index:idx|index_str:'locked' is True %}<p id="correct">Locked</p>{% else %}<p id="wrong">Unlocked</p>{% endif %}
+                    </div>
+
+                    <div class="report-status">                        
+                        <p>Issue Status: </p> {% if issued|index:idx is True %}<p id="correct">Issued</p>{% else %}<p id="wrong">Not Issued</p>{% endif %}</div>
+                    </div>
                 </div>
-
-                {% if feed|index:idx|index_str:'status' is True %}
-                    <p id="correct">Verified</p>{% if feed|index:idx|index_str:'locked' is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}
-
-                {% elif feed|index:idx|index_str:'status' is False %}
-                    <p id="wrong">Rejected</p>{% if feed|index:idx|index_str:'locked' is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}
-
-                {% else %}
-                    <p id="none">Unchecked</p>{% if feed|index:idx|index_str:'locked' is True %}<p id="correct">Locked</p>{% endif %}{% if issued|index:idx is True %}<p id="correct">Issued</p>{% endif %}
-                {% endif %}
             </td>
         </tr>
 

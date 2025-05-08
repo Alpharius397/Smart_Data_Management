@@ -25,15 +25,6 @@
             margin-bottom: -5px;
         }
 
-        .dont-ask-why-this-either{
-            display: block;
-            width: 10vw;
-            position: sticky;
-            right:0;
-            background-color: white;
-            z-index: 10;
-        }
-
         thead th{
             position:sticky;
             top:0px;
@@ -62,18 +53,6 @@
             display:inline;
         }
 
-        .verify-sing{
-            position:sticky;
-            width: 15vw;
-            right: 5vw;
-            z-index: 10;
-            overflow-x:auto;
-        }
-
-        .verify-sing p{
-            border-radius: 5px;
-        }
-
         #correct{
             display: inline-block;
             padding: 10px;
@@ -96,23 +75,45 @@
             background-color: grey;
         }
 
-        .next-button{
+        th.next-button, td.next-button{
             position: sticky;
             right: 0px;
             z-index: 10;
             overflow-x:auto;
+            padding: 0;
         }
 
-        td.next-button{
+        th.next-button{
+            z-index: 20;
+        }
+
+        .view-icon button, a{
+            background-color: #4CAF50;
+            border-radius: 50px;
+        }
+
+        .grid-layout{
+            display: grid;
+            grid-template-rows: 1fr 2fr;
+            align-items: center;
+            justify-content: center;
+            grid-template-columns: 1fr;
             z-index: 0;
+            border: #555;
+            column-gap: 5px;
+        }
+
+        .data-loading{
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            align-items: center;
+            flex-direction: row;
+            max-height: max-content;
         }
 
         table th{
             width: 500px;
-        }
-
-        td.verify-sing{
-            z-index: 0;
         }
 
         .tab-sub{
@@ -141,6 +142,11 @@
             margin: auto;
         }
 
+        td.next-button button{
+            width: 100px;
+            height: 50px;
+        }
+
         img.edit:hover{
             border-bottom: 3px grey solid;
         }
@@ -151,31 +157,112 @@
         }
 
         .refresh{
-            display: inline-flex;
+            display: flex;
             background-color:#0098ff;
             justify-items: center;
             align-items: center;
         }
 
+        .refresh-text, .view-text{
+            margin: 1px;
+            display: inline-block;
+        }
+
         .refresh:hover{
             background-color: #0098ff;
-            opacity: 0.5;
+        }
+
+        .view-icon{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .view-icon:hover img{
+            opacity: 1;
+            width: 30px;
+            height: 30px;
+            transform: rotateZ(180deg);
+            transition: 1s;
+        }
+
+        .view-icon:hover p{
+            transform: rotateZ(180deg);
+            height: 0px;
+            width: 0;
+            transition: transform 1s, height 2s;
+            overflow: hidden;
+        }
+
+        .view-icon img{
+            width: 0;
+            height: 0;
+            opacity: 0;
+            margin: 0;
+            transition: 1s;
         }
 
         .refresh img{
+            display: inline;
             width: 30px;
             height: 30px;
             margin: 0;
             padding: 0;
-        }
-    
-        tr {
-            background-color: white;
-            transition: 500ms;
+            transition: transform 1s;
         }
 
-        tr.htmx-added{
+        p.refresh-text{
+            width: 50px;
+            transition: 1s;
+            margin: 0;
+        }
+        
+        .refresh:hover p.refresh-text{
+            width: 0px;
+            overflow: hidden;
+            transition: 1s;
+        }
+
+        .refresh:hover img{
+            margin: auto;
+            transform: rotateZ(180deg);
+            transition: 1s;
+        }
+    
+        table tr td {
+            background-color: white;
+            transition: background-color 500ms;
+        }
+
+        table tr.htmx-added td{
             background-color: yellow;
+        }
+
+        div.report-status{
+            font-weight: bold;
+            flex-shrink: 1;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        div.report-status p{
+            display: inline;
+            width: max-content;
+            margin: 4px;
+            border-radius: 50px;
+        }
+
+        .report-text{
+            display: inline;
+        }
+
+        .status-report{
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            margin: 2px;
         }
 
         
