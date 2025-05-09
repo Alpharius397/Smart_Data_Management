@@ -3,6 +3,7 @@ import functools
 from io import BytesIO
 import json
 import re
+import time
 from PIL import Image
 from typing import NamedTuple, Any
 from Main.settings import settingsInterface

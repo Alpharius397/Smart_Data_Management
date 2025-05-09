@@ -11,27 +11,27 @@
     
 {% else %}
     {% for idx,i in result %}
-        <tr>
+        <tr hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
 
             {% for j,k in i.values|enum %}
 
                 {% if column|index:j|in:image %}
-
                     {% with image=k|img %}
 
                         {% if admin is True and feed|index:idx|index_str:'locked' is not True %}
                             <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}" id="img_{{idx}}">
                         
-                                <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">                            
-                                    <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                                
-                                    {% if error %}
-                                        <ul class="messages">
-                                            <li class="error">{{error}}</li>
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </td>
+                            <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
+                            
+                                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                            
+                                {% if error %}
+                                    <ul class="messages">
+                                        <li class="error">{{error}}</li>
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </td>
 
                         {% else %}
                             <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
@@ -64,15 +64,17 @@
 
             {% endfor %}
 
-
             <td class="next-button">
                 <div class="grid-layout">
                     <div class="data-loading">
-                        <button class="view-icon" onclick="window.location.replace("{% url 'View:index' id=id idx=idx %}");">View</button>
+                        <button class="view-icon" onclick="window.location.replace('{% url 'View:index' id=id idx=idx %}');">
+                            <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                            <p class="view-text">View</p>
+                        </button>
 
                         <div class="refresh-button">
-                            <div hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find button" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
-                                <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page" id="refresh_{{idx}}">Refresh</button>
+                            <div >
+                                <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                             </div>
                         </div>
 

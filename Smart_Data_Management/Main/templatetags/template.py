@@ -32,8 +32,15 @@ def check(obj) -> bool:
     return obj is not None
 
 @register.filter(name='enum')
-def enum(obj) -> tuple[list[int], list]:
-    return enumerate(obj)
+def enum(obj) -> list[tuple[int, list]]:
+    return list(enumerate(obj))
+
+@register.filter(name="len")
+def len__(obj) -> int:
+    try:
+        return len(obj)
+    except:
+        return 1
 
 @register.filter(name='img')
 def image(obj) -> Image:

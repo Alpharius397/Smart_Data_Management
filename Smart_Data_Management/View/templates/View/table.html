@@ -189,6 +189,7 @@
         .view-icon:hover img{
             margin: 0;
             opacity: 1;
+            height: 30px;
             transform: rotateZ(180deg) translateX(-50%);
             transition: 1s;
         }
@@ -219,6 +220,10 @@
             position: relative;
             opacity: 0;
             transition: 1s;
+        }
+
+        .view-icon img{
+            height: 0;
         }
 
         .view-icon p{
@@ -253,7 +258,7 @@
         .refresh:hover img{
             margin: auto;
             transform: rotateZ(180deg);
-            transition: 1s;
+            transition: 1.5s;
         }
     
         table tr td {
@@ -290,6 +295,36 @@
             flex-direction: row;
             flex-wrap: wrap;
             margin: 2px;
+        }
+
+        tr.htmx-request td{
+            opacity: 0;
+        }
+
+        tr.htmx-request button.edit{
+            display: none;
+        }
+
+        tr.htmx-request td{
+            opacity: 0.5;
+        }
+        tr.htmx-request td.next-button{
+            opacity: 1;
+        }
+
+
+        @keyframes rotateAboutZ {
+            0%   {transform: rotateZ(0deg);}
+            25%   {transform: rotateZ(90deg);}
+            50%   {transform: rotateZ(180deg);}    
+            75%   {transform: rotateZ(270deg);}
+            100%   {transform: rotateZ(360deg);}
+        }
+
+        tr.htmx-request .refresh img{
+            animation-name: rotateAboutZ;
+            animation-iteration-count: infinite;
+            animation-duration: 2s;
         }
 
         

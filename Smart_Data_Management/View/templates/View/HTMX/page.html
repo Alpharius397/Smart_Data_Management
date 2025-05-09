@@ -5,10 +5,10 @@
 
     <div class="searchQuery">
         <h2>Search Columns: </h2>
-        <form hx-get="{% url 'View:search_row' id=id %}" hx-target="#tableBody" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();">
+        <div hx-get="{% url 'View:search_row' id=id %}" hx-target="#tableBody" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();" onsubmit="event.preventDefault();">
             
             <label for="column">Column: </label>
-            <select name="column" id="column" class="searchSelect">
+            <select name="column" id="column" class>
                 <option value="">----------</option>
                 {% for i,j in available.items %}
                     <option value="{{ i }}"> {{ j }}</option>
@@ -48,7 +48,7 @@
                 <option value="false">Not Issued</option>
             </select>
 
-        </form>
+        </div>
 
     </div>
 

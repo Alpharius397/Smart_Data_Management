@@ -10,8 +10,8 @@
     </div>
     
 {% else %}
-    {% for idx,i in result %}
-        <tr>
+    {% for idx,i in result %} 
+    <tr hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
             {% for j,k in i.values|enum %}
 
                 {% if column|index:j|in:image %}
@@ -72,7 +72,7 @@
                         </button>
 
                         <div class="refresh-button">
-                            <div hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find button" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
+                            <div >
                                 <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                             </div>
                         </div>
