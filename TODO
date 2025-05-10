@@ -1,3 +1,16 @@
+--- DONE List ---
+
+
+
+[X]: Refactoring MongoDB schema
+[X]: Refactoring Data Pipelines
+[X]: Refactoring Dashboard
+[X]: Refactoring Login / Register Page
+[X]: Refactoring Task View Page
+[X]: Refactoring Single Task Page
+[X]: Simple CSS Transitions
+
+--- TODO List ---
 []: CSS Cleanup
 []: Refactoring Certificate
 []: Refactoring Account Settings
