@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, NativeEventEmitter, TouchableHighlight, Alert } from 'react-native';
+import { View, Text, StyleSheet, Button, Image, NativeEventEmitter, TouchableHighlight,  ActivityIndicator, Animated, Easing } from 'react-native';
 import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
 import { NavigationIndependentTree, NavigationContext } from '@react-navigation/native';
 import {decrypt_data} from '../scripts/encryption';
@@ -84,6 +84,7 @@ function HomeScreen({ navigation }) {
   const [nfcSupport, setSupport] = useState(null);
   const [data, setData] = useState(true);
   const [sub, setSub] = useState(false);
+  const [scan, setScan] = useState(false);
 
   const eventType = "onNfcScan";
 
@@ -108,10 +109,10 @@ function HomeScreen({ navigation }) {
       
       try{
         var res=data.replace(/[\u0000-\u001F]/g, '');
-        console.log(res)
         msg = JSON.parse(res).msg;
         setNfcData(msg);
         scanning(msg);
+        setScan(false);
         emitter.removeAllListeners(eventType);
       }
       catch(error){
@@ -124,7 +125,7 @@ function HomeScreen({ navigation }) {
 
   function startNfcScan(){
     try {
-      
+      setScan(true);
       NfcModule.readyState().then(res => {console.log(res)}).catch(err => console.error(err));
       NfcModule.startNfcScan();
       setListener();
@@ -147,6 +148,7 @@ function HomeScreen({ navigation }) {
         setColumn(col);
       }
       catch(e){
+        console.warn(e);
         showAlert("NFC Card", "Data cannot be parsed")
       }
   }
@@ -209,8 +211,12 @@ function HomeScreen({ navigation }) {
   }
 
   const NfcScanButton = () => {
+
+    if(scan){
+      return <WaitingForNFC/>
+    }
     
-    if(nfcSupport && sub){
+    else if(nfcSupport && sub){
       return (<Button onPress={startNfcScan} style={styles.button} title='Scan NFC Card' />)
 
     }
@@ -535,4 +541,61 @@ const styles = StyleSheet.create({
       width:500
     },
     
+});
+
+
+const WaitingForNFC = () => {
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
+
+  return (
+    <View style={styles.container}>
+      <Animated.View style={[styles.circle, { transform: [{ scale: pulseAnim }] }]} />
+      <Text style={styles.text}>Waiting for NFC card...</Text>
+      <ActivityIndicator size="large" color="#4A90E2" />
+    </View>
+  );
+};
+
+const waitStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f4f6f8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  text: {
+    fontSize: 18,
+    marginTop: 20,
+    marginBottom: 10,
+    color: '#333',
+    fontWeight: '500',
+  },
+  circle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#4A90E2',
+    opacity: 0.2,
+    marginBottom: 30,
+  },
 });
