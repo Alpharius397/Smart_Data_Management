@@ -3,10 +3,10 @@ import json
 import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 import jwt
-from Logs.loggers import DEFAULT_ERROR # type: ignore
-from tools.encrypt import getAuthKey # type: ignore
-from User.models import is_admin, is_authenticated, is_manager # type: ignore
-from django.conf import settings # type: ignore
+from constants.constants import DEFAULT_ERROR
+from tools.encrypt import authTokenCheck # type: ignore
+from User.models import UserObject, is_admin, is_authenticated, is_manager # type: ignore
+from Main.settings import settingsInterface as settings # type: ignore
 from django.shortcuts import redirect # type: ignore
 from django.urls import reverse # type: ignore
 from User.models import Admin, Manager
@@ -42,7 +42,7 @@ def is_auth_delete(req: HttpRequest) -> bool:
 def auth_page(req:HttpRequest) -> HttpResponse:
     return redirect(reverse(settings.LOGIN_URL) + f"?next={req.path}&alert=Unauthenticated Request!")
 
-def get_admin_color(req: HttpRequest, user: User):
+def get_admin_color(req: HttpRequest, user: UserObject):
     try:
         admin:Admin = user.admin
         color:Color = admin.belongs.institute.color
@@ -54,7 +54,7 @@ def get_admin_color(req: HttpRequest, user: User):
         pass
     
 
-def get_manager_color(req: HttpRequest, user: User):
+def get_manager_color(req: HttpRequest, user: UserObject):
     try:
         admin:Manager = user.manager
         color:Color = admin.belongs.institute.color
@@ -68,13 +68,12 @@ def get_manager_color(req: HttpRequest, user: User):
 def noneCheck(*args: typing.Any) -> bool:
     return (not all(args))
 
-
 class PayLoad:
     
     __type: str = 'Base'
     expire_minutes: int
     
-    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None, **kawrgs:str|int):
+    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None, **kwargs:str|int):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -93,11 +92,11 @@ class PayLoad:
         return self.type == self.__type
     
     def __str__(self):
-        return json.dumps({'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': (self.expire + datetime.timedelta(seconds=self.expire_minutes)).isoformat()})
+        return json.dumps({'userID':self.userID, 'username':self.username, 'type':self.type, 'expire': (self.expire + datetime.timedelta(minutes=self.expire_minutes)).isoformat()})
     
     @staticmethod
     def from_json(classConstruct: type['PayLoad'], userID:int, username:str, type:str, expire:str) -> 'PayLoad':
-        user:User = User.objects.get(id=userID, username=username)
+        user:UserObject = User.objects.get(id=userID, username=username)
         return classConstruct(user=user, type=type, expire=datetime.datetime.fromisoformat(expire))  
     
     @staticmethod
@@ -109,7 +108,7 @@ class AccessPayLoad(PayLoad):
     __type: str = 'access'
     expire_minutes = settings.JWT_EXP_DELTA_MINUTES
     
-    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
+    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -120,7 +119,7 @@ class RefreshPayLoad(PayLoad):
     __type: str = 'refresh'
     expire_minutes = settings.REFRESH_EXP_DELTA_MINUTES
     
-    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
+    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -251,12 +250,13 @@ def api_key_required(view_func):
                 return JsonResponse({'error': 'Authorization header missing or malformed'}, status=401)
 
             token = auth_header.split(' ')[1]
-            if(token and (token==getAuthKey())):
+            if(token and (authTokenCheck(token))):
                 return view_func(request, *args, **kwargs)
             else:
                 return JsonResponse({'error': 'Authorization Token is invalid'}, status=401)
         
         except Exception as e:
+            print(e)
             return JsonResponse({'error':DEFAULT_ERROR}, status=404)
 
     return _wrapped_view

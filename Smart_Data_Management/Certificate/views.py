@@ -18,13 +18,6 @@ from io import BytesIO
 from User.models import get_post_by_ID
 from tools.encrypt import monthYearHash
 
-VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
-READ_TOKEN:str = "read-token"
-LOADING:str = "Loading"
-DONE:str = "Done"
-CARD_DATA:str = "Data"
-ERROR_JSON:dict[str, str] = {"info":"Unauthenticated Request","status":False}
-
 class ReportStructure(typing.NamedTuple):
     profile_img:str
     personal_info:dict[str,str]

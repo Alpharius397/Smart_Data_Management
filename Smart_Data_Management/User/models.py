@@ -32,7 +32,8 @@ def is_manager(user:UserObject) -> bool:
     try:
         manager = user.manager
         return True
-    except:
+    except Exception as e:
+        print(e)
         return False
 
 def is_student(user:UserObject) -> bool:

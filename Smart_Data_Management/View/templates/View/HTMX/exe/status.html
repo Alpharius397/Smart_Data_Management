@@ -1,5 +1,11 @@
-<script>
-    htmx.trigger("#cancel_write","click");
-    htmx.trigger("#feed_button","click");
-    alert("{{status}}");
-</script>
+<div id="replace-me" hx-swap-oob="true">
+    <script>
+        htmx.trigger("#cancel_write","click");
+    </script>
+</div>
+<div id="clear-me-after-ws" hx-swap-oob="outerHTML">
+    <script>
+        alert("{{status}}");
+    </script>
+</div>
+

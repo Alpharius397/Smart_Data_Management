@@ -2,16 +2,13 @@ from base64 import b64decode, b64encode
 import functools
 from io import BytesIO
 import json
-import re
-import time
 from PIL import Image
-from typing import NamedTuple, Any
-from Main.settings import settingsInterface
+from typing import Any
 from django.shortcuts import render # type: ignore
 from django.urls import reverse # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 from Main.models import *
-from django.conf import settings # type: ignore
+from Main.settings import settingsInterface as settings
 from tools.get_image import compress_image
 from User.models import Manager, get_post_id, is_admin, is_manager, get_post, get_user_by_id, get_post_by_ID
 import pandas as pd
@@ -23,7 +20,7 @@ from Main.templatetags.bad_image import bad_image
 from tools.url_auth import *
 from View.forms import VerifyForm
 from django.utils import timezone # type: ignore
-from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, MONGO_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, Task
 from Dash.views import ReportStructure
 from django.views.decorators.csrf import csrf_exempt # type: ignore
 from tools.token import get_token, hash_token
@@ -31,15 +28,10 @@ from Card.models import Card
 from django.utils import timezone
 from django.http import QueryDict
 from django.db import transaction
-settings:settingsInterface = settings
-
-MAX_RECORD:int = 5
-LOADING:str = "Loading"
-DONE:str = "Done"
-NONE:str = "None"
-FAILED:str = "Failed"
-WRITE_TOKEN:str = "write-token"
-ERROR_JSON:dict[str, str|bool] = {"info":"Unauthenticated Request","status":False}
+from View.sockets import CardExeConsumer
+from asgiref.sync import async_to_sync
+from constants.constants import *
+from channels.layers import get_channel_layer
 
 def auth_view(user: UserObject): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
@@ -331,9 +323,10 @@ def index_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return report_view(req,id,idx)
     
     else:
+        req.session[WRITE_TOKEN] = get_token()   
         get_admin_color(req,req.user)
         get_manager_color(req,req.user)
-        return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user)})
+        return render(req,'View/single.html',{'id':id,'idx':idx,'manage':is_manager(req.user),'token':hash_token(req.session[WRITE_TOKEN], req.user.id)})
 
 @htmx_response
 @auth_needed()
@@ -598,7 +591,6 @@ def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
     
     if(is_hx_get(req)):
         
-        req.session[WRITE_TOKEN] = get_token()     
         hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
         api_endpoint = f"{req.build_absolute_uri(reverse("View:__base__", args=(id,idx,hashToken)))}"
         
@@ -609,7 +601,7 @@ def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         hashToken = hash_token(req.session.get(WRITE_TOKEN), req.user.id)
         Redis.set(hashToken, {"status":LOADING, "user":req.user.id})
         
-        return render(req,"View/HTMX/exe/begin.html",context={"id":id,"idx":idx}) # begin write op
+        return render(req,"View/HTMX/exe/begin.html",context={"id":id,"idx":idx,"token":hashToken}) # begin write op
 
 @htmx_response
 @auth_needed(manager_only=True)
@@ -847,6 +839,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         res = False
         
         try:
+            channel_layer = get_channel_layer()
             
             data:dict[str, str] = Redis.get(token)
             state:bool = data.get('status')
@@ -859,6 +852,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
 
             if(state!=LOADING):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,user=user))
+                async_to_sync(channel_layer.group_send)(token, {"type": "cardRead", "message": NONE})
                 return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
             
             cardObject = Card(cardID=cardID,mongoID=id,rowIndex=idx,user=user)
@@ -882,11 +876,14 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 else:
                     data['status'] = FAILED
                 
-                
-            Redis.set(token,data)
+            
+            async_to_sync(channel_layer.group_send)(token, {"type": "cardRead", "message": data["status"]})
+
+            Redis.unset(token)
         
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
+            async_to_sync(channel_layer.group_send(token, {"type": "cardRead", "message": "You got errored"}))
             error = DEFAULT_ERROR
             
         finally:

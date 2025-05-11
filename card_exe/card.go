@@ -1,8 +1,10 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
+	"crypto/aes"
+	"crypto/rand"
+	"crypto/cipher"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -19,16 +21,79 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-const api_key string = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
-const secret_key string = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
+const aes_key_1 string = "5XpBavCf2rB0g4QD"
+const aes_key_2 string = "dpI56CKiEN8R0Lcx"
+
+func aesEncrypt(ciphertext *[]byte, plaintext []byte, key string, iv *[]byte){
+
+	block, _ := aes.NewCipher([]byte(key))
+	mode := cipher.NewCBCEncrypter(block, *iv)
+	
+	mode.CryptBlocks(*ciphertext, plaintext)
+}
+
+func aesDecrypt(plaintext *[]byte, ciphertext []byte, key string, iv *[]byte){
+	
+	block, _ := aes.NewCipher([]byte(key))
+	mode := cipher.NewCBCDecrypter(block, *iv)
+
+	mode.CryptBlocks(*plaintext, ciphertext)
+
+}
+
+func pad(data *[]byte){
+
+	alreadySize := bool((len(*data)%aes.BlockSize)==0)
+
+	if alreadySize {
+		lastSlice := make([]byte, aes.BlockSize)
+		lastSlice[15] = byte(16)
+		*data = append(*data, lastSlice...)
+	} else {
+		lastIndex := aes.BlockSize - (len(*data)%aes.BlockSize)
+		lastSlice := make([]byte, lastIndex)
+		lastSlice[lastIndex-1] = byte(lastIndex)
+		*data = append(*data, lastSlice...)
+	}
+
+}
+
+func unpad(data *[]byte) {
+	padLength := int((*data)[len(*data)-1])
+	*data = (*data)[:(len(*data)-padLength)]
+}
 
 func getAuthKey() string {
-	date := time.Now().Format("15:02:01:2006")
-	h := sha256.New()
-	h.Write([]byte(date))
-	h.Write([]byte(api_key))
-	h.Write([]byte(secret_key))
-	return hex.EncodeToString(h.Sum(nil))
+	date := []byte(time.Now().Format("15:04:02:01:2006"))
+	iv := make([]byte, aes.BlockSize)
+	_, _ = io.ReadFull(rand.Reader, iv)
+	pad(&date)
+	token := make([]byte, len(date))
+	aesEncrypt(&token, date, aes_key_1, &iv)
+	aesEncrypt(&token, token, aes_key_2, &iv)
+
+	var finalToken strings.Builder
+
+	finalToken.WriteString(base64.StdEncoding.EncodeToString(iv))
+	finalToken.WriteString(base64.StdEncoding.EncodeToString(token))
+
+	return finalToken.String()
+}
+
+func getDateTime(data string) string {
+
+	_iv := data[:24]
+	_ciphertext := data[24:]
+
+	iv, _ := base64.StdEncoding.DecodeString(_iv)
+	ciphertext, _ := base64.StdEncoding.DecodeString(_ciphertext)
+	token := make([]byte, len(ciphertext))
+
+	aesDecrypt(&token, ciphertext, aes_key_2, &iv)
+	aesDecrypt(&token, token, aes_key_1, &iv)
+	unpad(&token)
+
+	return string(token)
 }
 
 func extractMsg(s string) (string, bool) {
@@ -150,18 +215,8 @@ func (c CardArgs) LoadCreds(what string, data string) CardArgs {
 	return c
 }
 
-func CREDS() url.Values {
-	f:=url.Values{}
-
-	f.Set("api_key",getAuthKey())
-	
-	return f
-}
-
 func Response(memo map[string] string) url.Values {
 	f:=url.Values{}
-
-	f.Set("api_key",getAuthKey())
 
 	for key,val := range(memo){
 		f.Set(key, val)
@@ -170,10 +225,10 @@ func Response(memo map[string] string) url.Values {
 	return f
 }
 
-func makeFetchPOST(request_url string, f url.Values) (FetchJson, error){
+func makeFetchPOST(request_url string) (FetchJson, error){
 	data := FetchJson{}
 
-	resp, err := __Request("POST", request_url, f)
+	resp, err := __Request("POST", request_url, url.Values{})
 
 	if err != nil {
 		return data, err
@@ -228,7 +283,7 @@ func makeResponsePOST(response_url string, f url.Values) (error){
 
 func FetchUrl(request_url string, log Logger) (FetchJson) {
 	
-	data, err := makeFetchPOST(request_url, CREDS())
+	data, err := makeFetchPOST(request_url)
 
 	if err != nil {
 		log.WriteError("HTTP", err)
@@ -515,6 +570,15 @@ func main(){
 	Log := log.New(logFile,"",log.Lmsgprefix)
 	logger := Logger{logger: Log}.SetPrefix()
 
+	defer func() {
+		
+		r := recover()
+
+		if r != nil {
+			error_string := fmt.Sprintf("%+v\n", r)
+			logger.WriteError("Panic occurred", errors.New(error_string)) 
+		}
+	}()
 
 	if *read && *write && *create {
 		logger.WriteWarning("APPLICATION", "Please choose at most 1 flag (-r {read}, -w {write}, -c {createCard})")

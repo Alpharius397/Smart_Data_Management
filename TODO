@@ -1,7 +1,8 @@
 --- DONE List ---
-
-
-
+[X]: Excel Upload with images
+[X]: Simple Query Interface
+[X]: Log-Record for actions
+[X]: Client Side Card Reader Exe
 [X]: Refactoring MongoDB schema
 [X]: Refactoring Data Pipelines
 [X]: Refactoring Dashboard
@@ -9,8 +10,16 @@
 [X]: Refactoring Task View Page
 [X]: Refactoring Single Task Page
 [X]: Simple CSS Transitions
+[X]: Better time-restrained API Tokens
+
+--- Partial List ---
+[X]: Use websockets instead of multiple HTTP requests (Write Op done, Read Op Left)
+[X]: Add types and wrappers
 
 --- TODO List ---
-[]: CSS Cleanup
 []: Refactoring Certificate
 []: Refactoring Account Settings
+[]: CSS Cleanup
+
+--- Maybe List ---
+[]: Add Test Cases, cause why not :)

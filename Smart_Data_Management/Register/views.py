@@ -2,14 +2,14 @@ from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
 from Register.forms import RegisterForm
 from django.contrib.auth.models import User, Group
-from tools.url_auth import is_hx_post, is_hx_get
+from tools.url_auth import htmx_response, is_hx_post, is_hx_get
 from User.models import Manager, Admin
 from University.models import Institute, Branch
-from Logs.loggers import DEFAULT_ERROR
+from constants.constants import DEFAULT_ERROR
 from django.db.models import Q
 from django.contrib import messages
 
-# Create your views here.
+@htmx_response
 def register_view(req:HttpRequest) -> HttpResponse:
     
     if(req.method=="GET"):
@@ -74,6 +74,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
             return render(req,'Register/HTMX/message.html',context=context)
                 
 
+@htmx_response
 def insti_change(req: HttpRequest) -> HttpResponse:
     
     if(is_hx_get(req)):
@@ -89,7 +90,7 @@ def insti_change(req: HttpRequest) -> HttpResponse:
     return HttpResponse(status=403)
     
 
-
+@htmx_response
 def branch_change(req: HttpRequest) -> HttpResponse:
 
     if(is_hx_get(req)):

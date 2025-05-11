@@ -4,7 +4,7 @@ import pymongo
 import pymongo.collection
 from typing import NamedTuple, ParamSpec, Union, Iterator, TypedDict
 from tools.typesCauseWhyNot import *
-from django.conf import settings # type: ignore
+from Main.settings import settingsInterface as settings # type: ignore
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
@@ -19,6 +19,11 @@ P = ParamSpec("P")
 
 class UniversityHeader:
     
+    class UniversityDict(TypedDict):
+        university:int
+        institute:int
+        branch:int
+    
     def __init__(self, university:int, institute:int, branch:int) -> None:
         self.university: int = university
         self.institute: int = institute
@@ -32,14 +37,19 @@ class UniversityHeader:
         
         return UniversityHeader(university, institute, branch)
     
-    def to_dict(self) -> dict[str, int]:
-        return {
+    def to_dict(self) -> UniversityDict:
+        return UniversityHeader.UniversityDict(**{
             "university": self.university,
             "institute": self.institute,
             "branch": self.branch,
-        }
+        })
 
 class Header:
+    
+    class HeaderDict(TypedDict):
+        post: UniversityHeader.UniversityDict
+        uploader: int
+        manager: list[int]
     
     def __init__(self, post: UniversityHeader, uploader:int, manager:list[int]) -> None:
         self.post = post
@@ -54,14 +64,19 @@ class Header:
 
         return Header(post,uploader,manager)
     
-    def to_dict(self) -> dict[str, dict[str, int] | int | list[int]]:
-        return {
+    def to_dict(self) -> HeaderDict:
+        return Header.HeaderDict(**{
             "post": self.post.to_dict(),
             "uploader": self.uploader,
             "manager": self.manager
-        }
+        })
     
 class DataHeader:
+    
+    class DataHeaderDict(TypedDict):
+        columns: list[str]
+        image_columns: list[int]
+        file_name: str
     
     def __init__(self, columns: list[str], image_columns: list[int], file_name: str) -> None:
         self.columns = columns
@@ -72,14 +87,23 @@ class DataHeader:
     def get(columns: list[str], image_columns: list[int], file_name: str, **kwargs) -> 'DataHeader':        
         return DataHeader(columns, image_columns, file_name)
     
-    def to_dict(self) -> dict[str, list[str] | str | list[int]]:
-        return {
+    def to_dict(self) -> DataHeaderDict:
+        return DataHeader.DataHeaderDict(**{
             "columns": self.columns,
             "image_columns": self.image_columns,
             "file_name": self.file_name
-        }
+        })
 
 class Feed:
+    
+    class FeedDict(TypedDict):
+        locked:bool
+        issued:bool
+        time_of_lock:str|None
+        time_of_issue:str|None
+        status:bool|None
+        feed:str|None
+        index:int
     
     def __init__(self, locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int) -> None:
         self.locked = locked
@@ -94,8 +118,8 @@ class Feed:
     def get(locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int, **kwargs) -> 'Feed':
         return Feed(locked, issued, time_of_lock, time_of_issue, status, feed, index)
     
-    def to_dict(self) -> dict[str, str | int | bool | None]:
-        return {
+    def to_dict(self) -> FeedDict:
+        return Feed.FeedDict(**{
             "locked": self.locked,
             "time_of_lock": self.time_of_lock,
             "issued": self.issued,
@@ -103,10 +127,14 @@ class Feed:
             "status": self.status,
             "feed": self.feed,
             "index": self.index
-        }
+        })
 
 class RowData:
     
+    class RowDataDict(TypedDict):
+        row: list[str | int]
+        feed: Feed.FeedDict
+        
     def __init__(self, row: list[str | int], feed: Feed) -> None:
         self.row = row
         self.feed = feed
@@ -115,14 +143,18 @@ class RowData:
     def get(row: list[str | int], feed: dict[str, str] | dict[str, int] | dict[str, None]):
         return RowData(row, Feed.get(**feed))
     
-    def to_dict(self) -> dict[str, list[str | int] | dict[str, str | int | bool | None]]:
-        return {
+    def to_dict(self) -> RowDataDict:
+        return RowData.RowDataDict(**{
             "row": self.row,
             "feed": self.feed.to_dict()
-        }
+        })
     
 class DataExcel:
     
+    class DataExcelDict(TypedDict):
+        excel: list[RowData]
+        header: DataHeader.DataHeaderDict
+        
     def __init__(self, excel: list[RowData], header: DataHeader):
         self.excel = excel
         self.header = header
@@ -151,14 +183,19 @@ class DataExcel:
         header = DataHeader.get(**default_data_header_dict(data_header))
         return DataExcel(excel, header)
     
-    def to_dict(self) -> dict[str, list[dict[str, list[str | int] | dict[str, str | int | bool | None]]] | dict[str, list[str] | str | list[int]]]:
-        return {
+    def to_dict(self) -> DataExcelDict:
+        return DataExcel.DataExcelDict(**{
             "excel": list(map(lambda x: x.to_dict(), self.excel)),
             "header": self.header.to_dict()
-        }
+        })
 
 class Document:
     
+    class DocumentDict(TypedDict):
+        _id:str
+        header: Header.HeaderDict
+        data: DataExcel.DataExcelDict
+        
     def __init__(self, _id:str, header: Header, data: DataExcel) -> None:
         self.header = header
         self.data = data
@@ -172,12 +209,12 @@ class Document:
         
         return Document(_id, header, data)
     
-    def to_dict(self) -> dict[str, str | dict[str, list[dict[str, list[str | int] | dict[str, str | int | bool | None]]] | dict[str, list[str] | str | list[int]]] | dict[str, dict[str, int] | int | list[int]]]:
-        return {
+    def to_dict(self) -> DocumentDict:
+        return Document.DocumentDict(**{
             "_id": self._id,
             "data": self.data.to_dict(),
             "header": self.header.to_dict()
-        }
+        })
 
 class MongoFindQuery(NamedTuple):
     conditions:Condition
@@ -234,7 +271,7 @@ class MergeQuery(NamedTuple):
     def __iter__(self) -> Iterator[First | Second]:
         yield self.first
         yield self.second
-        
+
 class MongoTemplate:
     """
         Data structure:

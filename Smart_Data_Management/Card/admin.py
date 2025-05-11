@@ -1,6 +1,5 @@
 from django.contrib import admin
-from User.models import Manager, Admin
-from University.models import Branch
+from User.models import Admin
 from django.db.models import Q
 from User.models import is_admin
 from .models import *

@@ -10,18 +10,14 @@ from tools.get_image import expand_image
 import typing
 import re
 from Main.models import *
-from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt # type: ignore
 from tools.encrypt import monthYearHash, jsonHash
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-
-VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
-READ_TOKEN:str = "read-token"
-LOADING:str = "Loading"
-DONE:str = "Done"
-CARD_DATA:str = "Data"
+from constants.constants import *
+from channels.layers import get_channel_layer
 
 def get_data(result:list[Document]) -> tuple[bool,list[dict[str, str|list|Any]]]:
     data:list[dict[str, str|list|None]] = []
@@ -159,36 +155,6 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
             conn.close()
             
         return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
-
-
-class ReportStructure(typing.NamedTuple):
-    profile_img:str
-    personal_info:list[str]
-    sem_data:dict[str,list[str]]
-
-    @staticmethod
-    def get_structure(columns: list[str]) -> 'ReportStructure':
-        
-        profile_img = r'^Profile_Image$'
-        sem_data = r'.+Sem_(\d+)$'
-        
-        _profile_col = [i for i in columns if re.match(profile_img,i)]
-        sem_col = [i for i in columns if re.match(sem_data,i)]
-        personal_col = [i for i in columns if((i not in set(_profile_col)) and (i not in set(sem_col)))]
-        
-        sem_dict:dict[str,list[str]] = {}
-        
-        profile_col = _profile_col[0] if _profile_col else ''
-        
-        for i in sem_col:
-            _sem:list[str] = re.findall(sem_data,i)
-            
-            if(_sem):
-                sem = _sem[0]
-                if(sem not in sem_dict): sem_dict[sem] = list()
-                sem_dict[sem].append(i)
-                
-        return ReportStructure(profile_img=profile_col, personal_info=personal_col, sem_data=sem_dict)
 
 @htmx_response
 @auth_needed(manager_only=True)

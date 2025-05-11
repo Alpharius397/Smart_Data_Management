@@ -7,7 +7,7 @@ from django.contrib.auth import login, authenticate # type: ignore
 from User.models import is_manager, is_admin
 from django.contrib import messages # type: ignore
 from tools.url_auth import is_hx_post
-from Logs.loggers import DEFAULT_ERROR
+from constants.constants import DEFAULT_ERROR
 
 def login_view(req:HttpRequest) -> HttpResponse:
     

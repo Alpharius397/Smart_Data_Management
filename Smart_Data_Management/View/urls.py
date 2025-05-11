@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import *
+from .sockets import CardWriteExeConsumer
 
 app_name = 'View'
 urlpatterns = [
@@ -22,5 +23,8 @@ urlpatterns = [
 	path('token/write/',check_write,name='ping_write')
 ]
 
+websocket_urlpatterns = [
+	path("view/<str:id>/<int:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
+]
 
 

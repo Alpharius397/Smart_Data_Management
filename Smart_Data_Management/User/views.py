@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
-from Logs.loggers import DEFAULT_ERROR
+from constants.constants import *
 from User.models import is_authenticated
 from django.db.models.expressions import Q
 from tools.url_auth import is_auth_get, is_hx_get, is_hx_post, auth_needed, is_auth_post, is_auth_put, is_hx_put, jwt_required, noneCheck

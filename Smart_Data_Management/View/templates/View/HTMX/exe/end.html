@@ -2,10 +2,6 @@
     <button class="loading-button">Some error Occured!</button>
 
 {% else %}
-
-    {% if status %}
-        <script>alert("{{status}}");</script>
-    {% endif %}
     
     <form hidden style="display: none;" hx-post="{% url 'View:data' id=id idx=idx %}" hx-params="csrfmiddlewaretoken" hx-trigger="click from:next .upload-button" hx-swap="innerHTML" hx-target="closest .write-card" onsubmit="event.preventDefault();">
         {% csrf_token %}

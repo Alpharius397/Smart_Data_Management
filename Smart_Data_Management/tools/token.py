@@ -1,5 +1,5 @@
-from random import choice
 from hashlib import sha256
+from Crypto.Random.random import choice
 
 __TOKEN:str = "qwertyuiopasdfghjklzxcvbnm1234567890"
 __LENGTH:int = 32

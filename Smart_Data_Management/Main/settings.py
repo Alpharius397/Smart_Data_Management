@@ -31,12 +31,13 @@ SECRET_KEY = 'django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -89,6 +90,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Main.wsgi.application'
+ASGI_APPLICATION = "Main.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
@@ -128,7 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_REPLACE_HTTP_REFERE = True
+CORS_REPLACE_HTTP_REFERER = True
 
 
 # Internationalization
@@ -162,8 +173,8 @@ KEY = b"123456789123456789123456"
 WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
 
-API_KEY = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
-SECURE_KEY = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
+AES_KEY_1 = "5XpBavCf2rB0g4QD"
+AES_KEY_2 = "dpI56CKiEN8R0Lcx"
 REDIS = {'host':'localhost','port':6379}
 
 JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
@@ -171,24 +182,23 @@ JWT_ALGORITHM = 'HS256'
 JWT_EXP_DELTA_MINUTES = 30
 REFRESH_EXP_DELTA_MINUTES = 360
 
-
 class settingsInterface:
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'sample')  
-    MEDIA_URL = 'sample/'
-    APP_LOG = os.path.join(BASE_DIR,'Logs','app_log','')
-    DATA_LOG = os.path.join(BASE_DIR,'Logs','data_log','')
-    LOGIN_URL = 'Login:login'
-    MONGO_URL = "mongodb://127.0.0.1:27017/"
-    MONGO_CRED = MongoDB("smart","excel")
-    KEY = b"123456789123456789123456"
-    WRITE_REGISTRY = "writeExe://"
-    READ_REGISTRY = "readExe://"
+    MEDIA_ROOT = MEDIA_ROOT  
+    MEDIA_URL = MEDIA_URL
+    APP_LOG = APP_LOG
+    DATA_LOG = DATA_LOG
+    LOGIN_URL = LOGIN_URL
+    MONGO_URL = MONGO_URL
+    MONGO_CRED = MONGO_CRED
+    KEY = KEY
+    WRITE_REGISTRY = WRITE_REGISTRY
+    READ_REGISTRY = READ_REGISTRY
 
-    API_KEY = "LbtWDu5C3yKNOEWxUNFHe5tK3viGbQJleahRHgBti9N959U5pHTH741fiaotTJaN"
-    SECURE_KEY = "FIkRh0D4vc7JRMgRfO2KRdauzTuYHCM98H8MlM9VKNa58hepKIgKKcIZOyALpvdB"
-    REDIS = {'host':'localhost','port':6379}
+    AES_KEY_1 = AES_KEY_1
+    AES_KEY_2 = AES_KEY_2
+    REDIS = REDIS
 
-    JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
-    JWT_ALGORITHM = 'HS256'
-    JWT_EXP_DELTA_MINUTES = 30
-    REFRESH_EXP_DELTA_MINUTES = 360
+    JWT_SECRET = JWT_SECRET
+    JWT_ALGORITHM = JWT_ALGORITHM
+    JWT_EXP_DELTA_MINUTES = JWT_EXP_DELTA_MINUTES
+    REFRESH_EXP_DELTA_MINUTES = REFRESH_EXP_DELTA_MINUTES

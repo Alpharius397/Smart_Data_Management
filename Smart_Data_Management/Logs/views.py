@@ -1,25 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
-from Main.models import MongoConnection
 from django.db.models import Q
-from django.urls import reverse
-from django.conf import settings
-from User.models import get_post_id, get_user_by_id, is_authenticated, is_admin, is_manager, get_manager_by_name, get_admin_by_name
+from User.models import get_post_id, is_authenticated
 from tools.url_auth import *
-from tools.encrypt import decrypt_data
-import typing
-from PIL import Image
-import re
 from Main.models import *
-from django.contrib.auth.models import User
-from Logs.loggers import AppLogger, DEFAULT_ERROR
+from constants.constants import * 
 from Logs.models import LogMessage
 from datetime import datetime
 from User.models import Manager, Admin
 from Logs.forms import DateForm, LogQuery
-
-
-MAX_RECORD:int = 5
 
 def log_board(req: HttpRequest) -> HttpResponse:
     if(not (is_authenticated(req.user))):

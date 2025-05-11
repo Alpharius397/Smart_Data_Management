@@ -1,9 +1,7 @@
-from django.contrib.auth.models import User
-from django.db.models import CharField,RESTRICT,OneToOneField,ForeignKey,Model,SET_NULL,IntegerField,RESTRICT
+from django.db.models import CharField,RESTRICT,OneToOneField,ForeignKey,Model,IntegerField,RESTRICT
 from django.core.validators import MinValueValidator, RegexValidator
 
 ColorRegex = RegexValidator(r"^#[a-fA-F0-9]{6}$", message="Invalid Hex color")
-
 
 class University(Model):
     name = CharField(max_length=200,null=False,blank=False,verbose_name='University Name')
@@ -19,6 +17,7 @@ class Institute(Model):
     name = CharField(max_length=200,null=False,blank=False,verbose_name='Institute Name')
     university = ForeignKey(to=University,null=False,blank=False,related_name='insti',on_delete=RESTRICT)
     location = CharField(max_length=200,null=False,blank=False,verbose_name='Location')
+    color: 'Color'
     
     class Meta:
         verbose_name = "Institute"

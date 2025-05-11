@@ -2,7 +2,8 @@ from django.shortcuts import render # type: ignore
 from django.http import HttpRequest, HttpResponse # type: ignore
 from Upload.forms import ExcelForm
 from Main.models import Document, MongoConnection, MongoTemplate
-from Logs.loggers import APP_LOG, LogStructure, DEFAULT_ERROR, Task
+from Logs.loggers import APP_LOG, LogStructure, Task
+from constants.constants import *
 from bson.objectid import ObjectId
 from tools.get_image import image_load
 from tools.url_auth import htmx_response, is_auth_get, is_hx_delete, is_hx_post, auth_needed, is_hx_put, login_needed

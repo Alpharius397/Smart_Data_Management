@@ -3,6 +3,7 @@ from django.urls import path, re_path
 from django.conf.urls.static import static
 from django.conf import settings
 from Dash.views import *
+from .sockets import CardReadExeConsumer
 
 app_name = 'Dash'
 urlpatterns = [
@@ -17,5 +18,8 @@ urlpatterns = [
 	path('<str:token>/',(lambda : HttpResponse(status=404)),name='__base__')
 ]
 
+websocket_urlpatterns = [
+	path("dash/<str:token>/", CardReadExeConsumer.as_asgi())
+]
 
 
