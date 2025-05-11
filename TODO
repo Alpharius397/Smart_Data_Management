@@ -1,0 +1,12 @@
+--- DONE List ---
+[X]: NFC Operation ok
+[X]: JWT Authentication
+
+--- Partial List ---
+
+--- TODO List ---
+[]: Generate certificate URL
+[]: Integrate Time Based Token (make Django getAuthToken implementation in js)
+
+--- Maybe List ---
+[]: Add Test Cases, cause why not :)

@@ -35,11 +35,10 @@ function decrypt_data(data,encryptionKey){
     try{
         const decrypt = CryptoJS.TripleDES.decrypt(encryptData,CryptoJS.enc.Utf8.parse(encryptionKey),{iv:iv,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7}).toString(CryptoJS.enc.Base64); // bytes (Crypto)-> utf-8 {for js} | Base64 {for python} (to get encrypted data which is of form base64)
         const decompress = pako.inflate(Buffer.from(decrypt,'base64'),{raw:false,to:"string"}); // base64 (buffer) -> byte (pako) -> string
-        console.log(decompress)
         return JSON.parse(decompress);
     }
     catch(error){
-        console.log(error);
+        console.error(error);
         return null;
     }
 }
