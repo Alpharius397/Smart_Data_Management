@@ -32,6 +32,7 @@ class Task:
     CARD_DATA_FETCH:int = 12
     INVALID_TOKEN:int = 13
     INVALID_ID: int = 14
+    WEBSOCKET_FAILED: int
 
 class Auth:
     ADMIN:str = "Admin"
@@ -234,6 +235,7 @@ class LogStructure:
             case Task.CARD_DATA_FETCH: return f"Authenticated Card Data Fetch"
             case Task.INVALID_TOKEN: return f"Token is either expired or completed!"
             case Task.INVALID_ID: return f"Card ID was not found!"
+            case Task.WEBSOCKET_FAILED: return f"Web Socket Failed"
             case _: self.exception = exception
         
         return None

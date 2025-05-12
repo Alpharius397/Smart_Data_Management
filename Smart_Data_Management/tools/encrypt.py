@@ -1,15 +1,22 @@
 from Crypto.Cipher import DES3, AES
 from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
-from base64 import b64encode, b64decode
+from base64 import b64encode as a64encode, b64decode as a64decode
 from datetime import datetime, timedelta
 from django.utils import timezone #type: ignore
 import zlib
 import json
 from Main.settings import settingsInterface as settings #type: ignore
+from tools.token import get_token #type: ignore
 
-IV_LENGTH: int = 12
-MAX_DURATION: int = 300
+def b64encode(s: bytes):
+    return a64encode(s, b'-_')
+
+def b64decode(s: str):
+    return a64decode(s, b'-_')
+
+DES_3_IV_LENGTH: int = 12
+AES_IV_LENGTH_BASE_64: int = 24
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:
@@ -27,7 +34,7 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
 
 # Decryption Function
 def decrypt_data(key: bytes, encrypted_data: str) -> dict:
-    _iv, encrypted_b64 = encrypted_data[:IV_LENGTH], encrypted_data[IV_LENGTH:]
+    _iv, encrypted_b64 = encrypted_data[:DES_3_IV_LENGTH], encrypted_data[DES_3_IV_LENGTH:]
     iv = b64decode(_iv)
     encrypted = b64decode(encrypted_b64)
     cipher = DES3.new(key, DES3.MODE_CBC, iv)
@@ -37,7 +44,20 @@ def decrypt_data(key: bytes, encrypted_data: str) -> dict:
 
 def monthYearHash():
     nowTime = datetime.now(timezone.get_current_timezone())
-    return SHA256.new(f"{nowTime.month}/{nowTime.year}".encode()).hexdigest()
+    nowTime += timedelta(days=settings.CERTIFICATE_EXPIRE_DAYS)
+    
+    nowTime = nowTime.strftime("%H:%M:%d:%m:%Y").encode()
+    
+    iv = AES.new(get_token(AES.block_size).encode(), mode=AES.MODE_CBC).iv
+    cipherA = AES.new(settings.AES_KEY_1.encode(), mode=AES.MODE_CBC, iv=iv)
+    cipherB = AES.new(settings.AES_KEY_2.encode(), mode=AES.MODE_CBC, iv=iv)
+    
+    padded = pad(nowTime, AES.block_size)
+    
+    encrypt_1 = cipherA.encrypt(padded)
+    encryptFinal = cipherB.encrypt(encrypt_1)
+    
+    return f"{b64encode(iv).decode()}{b64encode(encryptFinal).decode()}"
 
 def jsonHash(jsons: dict):
     return SHA256.new(json.dumps(jsons).encode()).hexdigest()
@@ -45,12 +65,12 @@ def jsonHash(jsons: dict):
 """
 Basic Auth Flow =>
     1) Get Date Time as: hour:minute:day:month:year (16 bytes)
-    2) Perform AES twice with aes_key1 and thne aes_key2
-    3) Encode as hex string
+    2) Perform AES twice with aes_key1 and then aes_key2
+    3) Encode as base64 string
 """
-def authTokenCheck(token: str):
+def authTokenCheck(token: str, fromGolang: bool = True):
     
-    _iv, _encrypted = token[:24], token[24:]
+    _iv, _encrypted = token[:AES_IV_LENGTH_BASE_64], token[AES_IV_LENGTH_BASE_64:]
     iv = b64decode(_iv)
     encrypted = b64decode(_encrypted)
     
@@ -58,9 +78,14 @@ def authTokenCheck(token: str):
     cipherB = AES.new(settings.AES_KEY_1.encode(), mode=AES.MODE_CBC, iv=iv)
     
     data = cipherB.decrypt(cipherA.decrypt(encrypted))
-    padLength = data[-1]
     
-    mainData = data[:-padLength].decode()
+    if(fromGolang):
+        padLength = data[-1]
+        
+        mainData = data[:-padLength].decode()
+        
+    else:
+        mainData = unpad(data, AES.block_size).decode()
     
     hour, minute, day, month, year = map(int,mainData.split(":"))
 
@@ -68,9 +93,7 @@ def authTokenCheck(token: str):
     
     current_time = datetime.now(timezone.get_current_timezone())
 
-    difference: timedelta = current_time - start_time
-    
-    if(difference.seconds>MAX_DURATION):
+    if(current_time>start_time):
         return False
     else:
         return True

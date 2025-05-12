@@ -97,7 +97,7 @@
                     </div>
 
                     <div class="report-status">                        
-                        <p>Issue Status: </p> {% if issued|index:idx is True %}<p id="correct">Issued</p>{% else %}<p id="wrong">Not Issued</p>{% endif %}</div>
+                        <p>Issue Status: </p> {% if feed|index:idx|index_str:'issued' is True %}<p id="correct">Issued</p>{% else %}<p id="wrong">Not Issued</p>{% endif %}</div>
                     </div>
                 </div>
             </td>

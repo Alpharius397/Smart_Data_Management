@@ -4,15 +4,15 @@
 
     <ul class="messages">
         <li class="error">{{error}}</li>
-        
     </ul>
+
     <div class="retry">
         <button onclick="location.reload();">Retry?</button>
     </div>
 
 {% else %}
 
-    <div class="tableView" hx-get="{% url 'Dash:read' %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+    <div class="tableView" hx-ext="ws" ws-connect="/dash/{{token}}/" ws-send id="clear-me-after-ws">
         <img src="{% static 'img/spinner.gif' %}" alt="Loading">
         <h2> Attempting to Read....</h2>
     </div>

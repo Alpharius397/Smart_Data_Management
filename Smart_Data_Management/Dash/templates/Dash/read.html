@@ -35,6 +35,12 @@
             grid-column: 2/3;
         }
 
+        .retry-read{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         {% if request.session.mainColor and request.session.secColor %}
         header{
             background-color: {{request.session.mainColor}};
@@ -82,20 +88,35 @@
     </header>
 
     <div class="container">
-        <div class="tableView" hx-get="{% url 'Dash:ping_read' %}" hx-trigger="every 2s" hx-target="this" hx-swap="outerHTML">
+        <div class="tableView" hx-ext="ws" ws-connect="/dash/{{token}}/" id="clear-me-after-ws">
+
             <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
             <h2> Attempting to Read....</h2>
         </div>
+
+        <div class="retry-read">
+            <button class="begin-read">Begin Read</button>
+        </div>
+
+
+
 
     </div>
 
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
+<script src="{% static 'js/socket.js' %}"></script>
 <script>
 
+    function runCardExe(){
+        console.log("Firing exe"); 
+        let answer = confirm("Begin card operation");
+    
+        if(answer==true) window.location.href="{{path}}{{url}}";
+    }
+
+    }
     document.addEventListener("DOMContentLoaded", function(event) {
-        console.log("Firing exe"); window.location.href="{{path}}{{url}}";
-    });
 </script>
 
 </html>

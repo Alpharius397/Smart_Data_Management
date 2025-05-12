@@ -28,10 +28,9 @@ from Card.models import Card
 from django.utils import timezone
 from django.http import QueryDict
 from django.db import transaction
-from View.sockets import CardExeConsumer
 from asgiref.sync import async_to_sync
 from constants.constants import *
-from channels.layers import get_channel_layer
+from .sockets import cardWriteWebSocket
 
 def auth_view(user: UserObject): return [{"header.uploader":user.id},{"header.manager":user.id},{'header.post':get_post_id(user)}]
 
@@ -348,7 +347,7 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
             columns:list = result.data.header.columns
             data = result.data.excel[0]
             pd_data = {columns[(idx%len(columns))]:val for idx,val in enumerate(data.row)}
-            meta_data:dict = data.feed.to_dict()
+            meta_data:Feed.FeedDict = data.feed.to_dict()
             
             report = ReportStructure.get_structure(list(pd_data.keys()))
 
@@ -399,7 +398,7 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 if(result is None):
                     context['error'] = MONGO_ERROR
                 else:            
-                    meta_data:dict = result.data.excel[0].feed.to_dict()
+                    meta_data:Feed.FeedDict = result.data.excel[0].feed.to_dict()
                     manager:list[str | None] = list(map(get_user_by_id,result.header.manager))
                     context.update({'form':VerifyForm(data=meta_data)})
                     context.update({**meta_data,'manager':manager})
@@ -427,13 +426,13 @@ def feed_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
         
         try:
             conditions, filters = MongoTemplate.merge_everything(MongoTemplate.get_buffer_query(start=idx),initial_a={"$and":[{"_id":ObjectId(id),"header.manager":req.user.id,"header.post":get_post_id(req.user)}]})
-            result:Document|None = conn.find_one(conditions, filters)
+            result = conn.find_one(conditions, filters)
             
             if(result is None):
                 context['error'] = MONGO_ERROR
             else:            
-                meta_data:dict = result.data.excel[0].feed.to_dict()
-                manager:list[str | None] = list(map(get_user_by_id,result.header.manager))
+                meta_data = result.data.excel[0].feed.to_dict()
+                manager = list(map(get_user_by_id,result.header.manager))
                 context.update({**meta_data,'manager':manager})
 
         except Exception as e:
@@ -486,7 +485,7 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
             if(result is None):
                 context['error'] = MONGO_ERROR
             else:
-                meta_data:dict = result.data.excel[0].feed.to_dict()
+                meta_data:Feed.FeedDict = result.data.excel[0].feed.to_dict()
                 context.update(meta_data)
                 
         except Exception as e:
@@ -531,12 +530,12 @@ def compress_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
                 context['error'] = "Data operation failed"
             
             conditions, filters = (MongoTemplate.merge_everything(MongoTemplate.get_header_query(),MongoTemplate.get_feedback_query(start=idx,limit=1),initial_a={"$and":[{"_id":ObjectId(id),"$or":auth_view(req.user)}]}))
-            result:Document|None = conn.find_one(conditions, filters)
+            result = conn.find_one(conditions, filters)
 
             if(result is None):
                 context['error'] = MONGO_ERROR
             else:
-                meta_data:dict = result.data.excel[0].feed.to_dict()
+                meta_data = result.data.excel[0].feed.to_dict()
                 context.update(meta_data)
             
         except Exception as e:
@@ -604,24 +603,6 @@ def card_view(req: HttpRequest, id:str, idx:int) -> HttpResponse:
         return render(req,"View/HTMX/exe/begin.html",context={"id":id,"idx":idx,"token":hashToken}) # begin write op
 
 @htmx_response
-@auth_needed(manager_only=True)
-def check_write(req: HttpRequest) -> HttpResponse:
-    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
-        
-        token = req.session.get(WRITE_TOKEN)
-        Redis = RedisConnection().connect()
-        
-        status:str = Redis.get(hash_token(token,req.user.id)).get("status",None)
-        if(status==LOADING): # continue to ping as confirmation has not been received
-            return HttpResponse(status=404)
-        elif(status==DONE):
-            return render(req,'View/HTMX/exe/status.html',context={"status":"Data written to card successfully"})
-        elif(status==FAILED):
-            return render(req,'View/HTMX/exe/status.html',context={"status":"Data write was unsuccessfully"})
-        else:   
-            return render(req,'View/HTMX/exe/status.html',context={"status":"Write Token Expired! Please Try Again"})
-        
-@htmx_response
 @auth_needed()
 def refresh_row(req: HttpRequest, id: str, idx: int) -> HttpResponse:
     if(is_hx_get(req)):
@@ -654,7 +635,7 @@ def refresh_row(req: HttpRequest, id: str, idx: int) -> HttpResponse:
                 value:Document = result[0]
             
                 columns:list = value.data.header.columns
-                feed_list:list[dict[str, str | int | bool | None]] = list(map(lambda x: x.feed.to_dict(), value.data.excel))
+                feed_list:list[Feed.FeedDict] = list(map(lambda x: x.feed.to_dict(), value.data.excel))
                 image_idx:list = [columns[i] for i in value.data.header.image_columns]
                 data:list[list[str|int]] = list(map((lambda x: x.row),value.data.excel))
                 pd_data = pd.DataFrame(data, columns=columns, index=list(map(lambda x: x.feed.index, value.data.excel)))
@@ -839,8 +820,6 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         res = False
         
         try:
-            channel_layer = get_channel_layer()
-            
             data:dict[str, str] = Redis.get(token)
             state:bool = data.get('status')
             
@@ -852,7 +831,7 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
 
             if(state!=LOADING):
                 APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,taskID=id,index=idx,user=user))
-                async_to_sync(channel_layer.group_send)(token, {"type": "cardRead", "message": NONE})
+                cardWriteWebSocket(token, NONE)
                 return JsonResponse(data={"error_occurred":"Invalid Token", "update_occurred":False}, status=404)
             
             cardObject = Card(cardID=cardID,mongoID=id,rowIndex=idx,user=user)
@@ -876,14 +855,12 @@ def issued_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
                 else:
                     data['status'] = FAILED
                 
-            
-            async_to_sync(channel_layer.group_send)(token, {"type": "cardRead", "message": data["status"]})
-
+            cardWriteWebSocket(token, data["status"])
             Redis.unset(token)
         
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,exception=e))
-            async_to_sync(channel_layer.group_send(token, {"type": "cardRead", "message": "You got errored"}))
+            cardWriteWebSocket(token, DEFAULT_ERROR)
             error = DEFAULT_ERROR
             
         finally:
@@ -952,6 +929,7 @@ def fetch_view(req:HttpRequest, id:str, idx: int, token:str) -> JsonResponse:
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.EXCEPTION,taskID=id,index=idx,user=user,exception=e))
             jsonResponse.update({"data":{"error":"Some error occurred!"},"status":500})
+            
         finally:
             conn.close()
             Redis.close()

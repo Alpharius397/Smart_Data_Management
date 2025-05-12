@@ -16,7 +16,7 @@ DEFAULT_ERROR:str = "Something Went Wrong! Please try Again"
 MONGO_ERROR:str = "MongoDB Connection Failed"
 
 class ReportStructure(typing.NamedTuple):
-    profile_img:str
+    profile_img:list[str]
     personal_info:list[str]
     sem_data:dict[str,list[str]]
 
@@ -26,13 +26,11 @@ class ReportStructure(typing.NamedTuple):
         profile_img = r'^Profile_Image$'
         sem_data = r'.+Sem_(\d+)$'
         
-        _profile_col = [i for i in columns if re.match(profile_img,i)]
+        profile_col = [i for i in columns if re.match(profile_img,i)]
         sem_col = [i for i in columns if re.match(sem_data,i)]
-        personal_col = [i for i in columns if((i not in set(_profile_col)) and (i not in set(sem_col)))]
+        personal_col = [i for i in columns if((i not in set(profile_col)) and (i not in set(sem_col)))]
         
         sem_dict:dict[str,list[str]] = {}
-        
-        profile_col = _profile_col[0] if _profile_col else ''
         
         for i in sem_col:
             _sem:list[str] = re.findall(sem_data,i)

@@ -7,8 +7,6 @@ from User.models import get_post_id, get_user_by_id, is_admin, is_manager, get_m
 from tools.url_auth import *
 from tools.encrypt import decrypt_data
 from tools.get_image import expand_image
-import typing
-import re
 from Main.models import *
 from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.token import get_token, hash_token
@@ -17,7 +15,7 @@ from tools.encrypt import monthYearHash, jsonHash
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from constants.constants import *
-from channels.layers import get_channel_layer
+from .sockets import cardReadWebSocket
 
 def get_data(result:list[Document]) -> tuple[bool,list[dict[str, str|list|Any]]]:
     data:list[dict[str, str|list|None]] = []
@@ -170,12 +168,11 @@ def read_view(req: HttpRequest)-> HttpResponse:
             cardID:str = session_data.get("cardID","")
 
             data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,cardData)
-            
             result, header = data.get('data',{}), data.get('header',{})
             columns = list(result.keys())
-            hashedJson = f"{monthYearHash()}{jsonHash(result)}"
-            
+            hashedJson = f"{monthYearHash()}{jsonHash(data)}"
             view = ReportStructure.get_structure(columns)
+            
             wid, hei, img = result[view.profile_img].split(":")
 
             result[view.profile_img] = expand_image(width=int(wid),height=int(hei),img_data=img)
@@ -193,31 +190,10 @@ def read_screen(req: HttpRequest) -> HttpResponse:
     Redis = RedisConnection().connect()
     token = get_token()
     req.session[READ_TOKEN] = token
-    Redis.set(hash_token(token,req.user.id),{'status':LOADING})
+    Redis.set(hash_token(token,req.user.id),{'status':LOADING,"data":None, "cardID":None})
     get_manager_color(req,req.user)
     
-    return render(req,'Dash/read.html',context={"path":settings.READ_REGISTRY,"url":req.build_absolute_uri(reverse("Dash:__base__",args=(hash_token(token,req.user.id),)))})
-
-@htmx_response
-@auth_needed(manager_only=True)
-def check_read(req: HttpRequest) -> HttpResponse:
-    if(is_auth_get(req) and is_hx_get(req) and is_manager(req.user)):
-        
-        token = req.session.get(READ_TOKEN)
-        Redis = RedisConnection().connect()
-        value = Redis.get(hash_token(token,req.user.id))
-        status = value.get('status',None)
-        
-        if(status==LOADING): # continue to ping as confirmation has not been received
-            return HttpResponse(status=404)
-        
-        elif(status): # Data found. Redirect to Read Screen
-            req.session[CARD_DATA] = value
-            Redis.unset(hash_token(token,req.user.id))
-            return redirect(reverse("Dash:card_read"))
-        
-        else:            
-            return render(req,'Dash/HTMX/read.status.html',context={"error":"Read Token Expired! Please Try Again"})
+    return render(req,'Dash/read.html',context={"token":hash_token(token,req.user.id),"path":settings.READ_REGISTRY,"url":req.build_absolute_uri(reverse("Dash:__base__",args=(hash_token(token,req.user.id),)))})
 
 @csrf_exempt
 @api_key_required
@@ -233,11 +209,15 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
         if(data and cardID):
             Redis = RedisConnection().connect()
             redis_data = Redis.get(token)
+            status = redis_data.get('status', None)
             
-            if(redis_data.get('status',None)!=LOADING):
-                APP_LOG.write_info(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
+            if((status is None) or (status!=LOADING)):
+                APP_LOG.write_error(LogStructure().set_request(req).set_description(type=Task.INVALID_TOKEN,))
                 json_resp['info'] = "Invalid Token"
+                cardReadWebSocket(token, status="Invalid", cardID=cardID, data=data)
                 return JsonResponse(data=json_resp, status=403, safe=False)
+            
+            cardReadWebSocket(token, status=DONE, cardID=cardID, data=data)
             
             Redis.set(token,{'status':DONE,"data":data, "cardID":cardID})
             Redis.close()
@@ -248,6 +228,8 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
         
         else:
             json_resp['info'] = "Incorrect Credentials / Data not Found"
+            cardReadWebSocket(token, status="Failed", cardID=cardID, data=data)
+            
             return JsonResponse(data=json_resp,status=404)
 
     return JsonResponse(data=json_resp,status=403)

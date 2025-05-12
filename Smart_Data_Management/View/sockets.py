@@ -2,9 +2,19 @@ import json
 from User.models import is_authenticated, is_manager, UserObject
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection
 from tools.token import hash_token
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string
 from constants.constants import WRITE_TOKEN
+from channels.layers import get_channel_layer
+from Logs.loggers import APP_LOG, LogStructure, Task
+
+def cardWriteWebSocket(token: str, message: str):
+    
+    try:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(token, {"type": "cardWrite", "message": message})
+    except Exception as e:
+        APP_LOG.write_error(LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e))
 
 class CardWriteExeConsumer(AsyncWebsocketConsumer):
     

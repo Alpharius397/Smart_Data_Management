@@ -64,7 +64,9 @@ func unpad(data *[]byte) {
 }
 
 func getAuthKey() string {
-	date := []byte(time.Now().Format("15:04:02:01:2006"))
+	adding5minutes := time.Duration(5)*time.Minute
+	date := []byte(time.Now().Add(adding5minutes).Format("15:04:02:01:2006"))
+	
 	iv := make([]byte, aes.BlockSize)
 	_, _ = io.ReadFull(rand.Reader, iv)
 	pad(&date)
@@ -97,7 +99,7 @@ func getDateTime(data string) string {
 }
 
 func extractMsg(s string) (string, bool) {
-	re := regexp.MustCompile(`:(\s*)(?<data>([a-zA-Z0-9\s:=+/]+))(\s*)$`)
+	re := regexp.MustCompile(`:(\s*)(?<data>([[:graph:]\s]+))(\s*)$`)
 
 	matches := re.FindStringSubmatch(s)
 

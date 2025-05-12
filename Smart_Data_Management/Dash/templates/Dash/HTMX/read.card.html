@@ -1,63 +1,60 @@
 {% load template %}
 
-
-{% if error %}
-    <div class="tableView">
-
+<div class="tableView" id="clear-me-after-ws" hx-swap-oob="innerHTML">
+    {% if error %}
         <ul class="messages">
             <li class="error">{{error}}</li>
         </ul>
 
-        <button onclick="location.reload();">Retry</button>
-    </div>
-
-{% else %}
-    <div class="tableView">
-
-        <div class="header-box">
-            {{university}} - {{institute}} - {{branch}}
+        <div class="retry">
+            <button onclick="location.reload();">Retry?</button>
         </div>
-        <div class="container-box">
-            <div class="image-box">
-                {% if pic %}
-                    {% with image=data|index_str:pic|img %}
-                        <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-                    {% endwith %}
-                {% endif %}
+
+    {% else %}
+
+            <div class="header-box">
+                {{university}} - {{institute}} - {{branch}}
             </div>
-        </div>
+            <div class="container-box">
+                <div class="image-box">
+                    {% for pics in pic %}
+                        {% with image=data|index_str:pics|img %}
+                            <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+                        {% endwith %}
+                    {% endif %}
+                </div>
+            </div>
 
-        <div class="personal-info">
+            <div class="personal-info">
 
-            {% for i in personal %}
-                <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
-            {% endfor %}
-
-        </div>
-
-        <div class="semester-info">
-            <div class="semester-row">
-
-                {% for sem,subs in sem_dict.items %}
-                    <div class="semester">
-                        <h3>Semester {{sem}}</h3>
-
-                        {% for sub in subs %}
-                            <p><strong>{{sub|clean}}:</strong>{{data|index_str:sub}}</p>
-                        {% endfor %}
-
-                    </div>
-                    
+                {% for i in personal %}
+                    <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
                 {% endfor %}
 
             </div>
-        </div>
 
-    </div>
+            <div class="semester-info">
+                <div class="semester-row">
 
-    {% if time %}
-        <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
+                    {% for sem,subs in sem_dict.items %}
+                        <div class="semester">
+                            <h3>Semester {{sem}}</h3>
+
+                            {% for sub in subs %}
+                                <p><strong>{{sub|clean}}:</strong>{{data|index_str:sub}}</p>
+                            {% endfor %}
+
+                        </div>
+                        
+                    {% endfor %}
+
+                </div>
+            </div>
+
+        {% if time %}
+            <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
+        {% endif %}
+
     {% endif %}
-
-    <a href="{% url 'Certificate:certi' certificate=link cardID=cardID %}">Click to Auth</a>
-{% endif %}
+</div>
+<a href="{% url 'Certificate:certi' certificate=link cardID=cardID %}">Click to Auth</a>

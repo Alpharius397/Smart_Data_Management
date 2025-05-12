@@ -20,7 +20,6 @@ urlpatterns = [
 	path('<str:id>/<int:idx>/<str:token>/fetch/',fetch_view,name="fetch"),
 	path('<str:id>/<int:idx>/<str:token>/confirm/',issued_view,name="confirm"),
 	path('<str:id>/<int:idx>/<str:token>/',(lambda x: HttpResponse(status=404)),name="__base__"),
-	path('token/write/',check_write,name='ping_write')
 ]
 
 websocket_urlpatterns = [

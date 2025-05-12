@@ -4,8 +4,8 @@ from Crypto.Random.random import choice
 __TOKEN:str = "qwertyuiopasdfghjklzxcvbnm1234567890"
 __LENGTH:int = 32
 
-def get_token():
-    return ''.join([__upperCase__(choice(__TOKEN)) for _ in range(__LENGTH)])
+def get_token(size: int = __LENGTH):
+    return ''.join([__upperCase__(choice(__TOKEN)) for _ in range(size)])
 
 def hash_token(token: str, id:int) -> str:
     return sha256(f"{token}{str(id)}".encode()).hexdigest()
