@@ -1,0 +1,15 @@
+
+footer {
+    background-color: yellow;
+    color: gray;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+footer img{
+    width: 100px;
+    height: 100px;
+}
+

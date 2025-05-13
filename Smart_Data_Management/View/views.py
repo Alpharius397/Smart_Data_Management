@@ -28,7 +28,6 @@ from Card.models import Card
 from django.utils import timezone
 from django.http import QueryDict
 from django.db import transaction
-from asgiref.sync import async_to_sync
 from constants.constants import *
 from .sockets import cardWriteWebSocket
 
@@ -345,11 +344,12 @@ def report_view(req: HttpRequest, id:str, idx:int) ->HttpResponse:
                 return render(req,'View/HTMX/report.html',context=context)
             
             columns:list = result.data.header.columns
+            images:list = [columns[i] for i in result.data.header.image_columns]
             data = result.data.excel[0]
             pd_data = {columns[(idx%len(columns))]:val for idx,val in enumerate(data.row)}
             meta_data:Feed.FeedDict = data.feed.to_dict()
             
-            report = ReportStructure.get_structure(list(pd_data.keys()))
+            report = ReportStructure.get_structure(list(pd_data.keys()), images)
 
             context.update({'data':pd_data,'personal':report.personal_info,'pic':report.profile_img,'sem_dict':report.sem_data,**get_post(req.user),**meta_data})
         

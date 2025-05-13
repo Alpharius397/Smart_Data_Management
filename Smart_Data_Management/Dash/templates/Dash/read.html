@@ -39,7 +39,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            margin: auto;
+            margin-top: auto;
         }
+
+        .cancel-read{
+            display: block;
+            margin: auto;
+            background-color: red;
+        }
+
 
         {% if request.session.mainColor and request.session.secColor %}
         header{
@@ -87,19 +96,11 @@
         <h1>Card View</h1>
     </header>
 
-    <div class="container">
-        <div class="tableView" hx-ext="ws" ws-connect="/dash/{{token}}/" id="clear-me-after-ws">
+    <div class="tableView" hx-get="{% url 'Dash:card_read' %}" hx-trigger="click from:find .begin-read" hx-swap="outerHTML">
 
-            <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
-            <h2> Attempting to Read....</h2>
-        </div>
-
-        <div class="retry-read">
+        <div class="retry-read" >
             <button class="begin-read">Begin Read</button>
         </div>
-
-
-
 
     </div>
 
@@ -113,10 +114,11 @@
         let answer = confirm("Begin card operation");
     
         if(answer==true) window.location.href="{{path}}{{url}}";
+        else{
+            htmx.trigger(".cancel-read","click")
+        }
     }
 
-    }
-    document.addEventListener("DOMContentLoaded", function(event) {
 </script>
 
 </html>

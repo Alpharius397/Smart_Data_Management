@@ -12,7 +12,7 @@ urlpatterns = [
  	path('admin/manager/',admin_manage_fetch,name='admin_manage'),
  	path('manager/',manager_fetch,name='manage'),
  	path('read/',read_screen,name='read'),
- 	path('card_read/',read_view,name='card_read'),
+ 	path('read/operation/',read_view,name='card_read'),
 	path('<str:token>/read/',get_read_data,name='read_url'),
 	path('<str:token>/',(lambda : HttpResponse(status=404)),name='__base__')
 ]

@@ -8,29 +8,57 @@
     margin: 20px;
     background-color: #5256ba;
     color: white;
+    margin: 0px 0px 20px 0px;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 .container-box {
     text-align: center;
+    display: flex;
     margin-top: 20px;
+    justify-content: space-evenly;
 }
+
 .image-box {
-    display: inline-flex;
+    display: inline-block;
     border: 1px solid #0B132B;
     background-color: white;
+    padding: 10px;
 }
-.personal-info {
-    margin-top: 20px;
+
+.image-box h3 {
+    margin: 0;
+}
+
+.sub-header-box {
+    display: block;
+    padding: 20px;
     text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 20px;
+    background-color: #5256ba;
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
+.personal-info {
+    margin: 20px;
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    border-collapse: collapse;
+    
+}
+
 .personal-info p {
-    margin: 5px 0;
+    padding: 15px;
+    margin: 0px;
+    border-collapse: collapse;
+    border: 1px solid gray;
 }
 .semester-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     margin-top: 20px;
 }
 .semester-row {
@@ -49,8 +77,6 @@
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #5255ba77; 
-    max-height: 300px; 
-    overflow-y: auto; 
 }
 .semester h3 {
     margin-top: 0;

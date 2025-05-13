@@ -21,12 +21,11 @@ class ReportStructure(typing.NamedTuple):
     sem_data:dict[str,list[str]]
 
     @staticmethod
-    def get_structure(columns: list[str]) -> 'ReportStructure':
+    def get_structure(columns: list[str], image_columns: list[str]) -> 'ReportStructure':
         
-        profile_img = r'^Profile_Image$'
         sem_data = r'.+Sem_(\d+)$'
         
-        profile_col = [i for i in columns if re.match(profile_img,i)]
+        profile_col = image_columns
         sem_col = [i for i in columns if re.match(sem_data,i)]
         personal_col = [i for i in columns if((i not in set(profile_col)) and (i not in set(sem_col)))]
         

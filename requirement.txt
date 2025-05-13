@@ -1,5 +1,5 @@
 pymongo==4.10.1
-django==5.0.7
+django==5.2
 Pillow==10.4.0
 psycopg2==2.9.10
 django[argon2]
@@ -7,4 +7,7 @@ django-cors-headers==4.6.0
 pycryptodome==3.21.0
 openpyxl==3.1.5
 pandas==2.2.3
+weasyprint==65.1
+channels==4.2.2
+daphne==4.1.2
 Faker==33.3.1

@@ -13,7 +13,6 @@ from constants.constants import DEFAULT_ERROR, READ_TOKEN, ReportStructure
 from channels.layers import get_channel_layer
 
 def cardReadWebSocket(token: str, cardID: str, data: str, status: str):
-    
     try:
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(token, {"type": "cardRead", "status": status, "cardID": cardID, "data": data})
@@ -78,7 +77,7 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
         cardData = event["data"]
         
         context:dict[str, list[str] | dict[str, str] | dict[str, list[str]] | str] = {}
-        
+
         match(status):
             case "Invalid":
                 context['error'] = "Read Token Expired! Please Try Again"
@@ -96,11 +95,15 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
                     hashedJson = f"{timeHash}{hashedJsonText}"
                     
                     view = ReportStructure.get_structure(columns)
-                    wid, hei, img = result[view.profile_img].split(":")
-                    result[view.profile_img] = expand_image(width=int(wid),height=int(hei),img_data=img)
+                    
+                    for img in view.profile_img:
+                        wid, hei, img = result[img].split(":")
+                        result[img] = expand_image(width=int(wid),height=int(hei),img_data=img)
+                        
                     context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,'cardID':cardID,**header})
 
                 except Exception as e:
+                    print(e)
                     context['error'] = "Data cannot be parsed"
                 
                 await self.send(text_data=render_to_string('Dash/HTMX/read.card.html',context=context), close=True)

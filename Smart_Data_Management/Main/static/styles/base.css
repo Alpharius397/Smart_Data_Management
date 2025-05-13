@@ -108,14 +108,16 @@ header .user-log:hover {
 }
 
 .task-info{
-    display: none;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
+    padding: 0px;
     border: 1px solid #666;
     border-top: 0px;
     margin-bottom: 10px;
     background: #fff;
+    transition: 1s;
+    height: 0px;
+    overflow: hidden;
 }
 
 button.drop-down {
@@ -262,13 +264,10 @@ select{
 
 .tableView{
     margin: 20px;
-    padding: 0px 0px 20px 20px;
+    padding: 20px 0px 20px 0px;
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow-y: scroll;
-    overflow-x: scroll;
-    max-height: 600px;
     background-color: white;
 }
 

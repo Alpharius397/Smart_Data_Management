@@ -11,19 +11,21 @@
 [X]: Refactoring Single Task Page
 [X]: Simple CSS Transitions
 [X]: Better time-restrained API Tokens
+[X]: Use websockets instead of multiple HTTP requests
+[X]: Refactoring Certificate
+[X]: Multiple Images in excel handled
 
 --- Partial List ---
-[X]: Use websockets instead of multiple HTTP requests (Write Op done, Read Op Left)
 [X]: Add types and wrappers
+[X]: CSS Cleanup
 
 --- TODO List ---
-[]: Refactoring Certificate
 []: Refactoring Account Settings
-[]: CSS Cleanup
 []: Customized Header (Title and Icons)
 []: PDF (Certificate) Generation and Digital Signature
 []: Better GUI
 []: Header of Company, cause why not 
+[]: Options to enter Semester Subjects and later parse that to group subjects into semester
 
 --- Maybe List ---
 []: Add Test Cases, cause why not :)

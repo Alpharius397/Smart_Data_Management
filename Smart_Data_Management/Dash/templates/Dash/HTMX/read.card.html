@@ -21,7 +21,7 @@
                         {% with image=data|index_str:pics|img %}
                             <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
                         {% endwith %}
-                    {% endif %}
+                    {% endfor %}
                 </div>
             </div>
 
@@ -55,6 +55,6 @@
             <p><strong> Card Issued on {{time|timestamp}}. </strong></p>
         {% endif %}
 
+        <a href="{% url 'Certificate:certi' certificate=link cardID=cardID %}">Click to Auth</a>
     {% endif %}
 </div>
-<a href="{% url 'Certificate:certi' certificate=link cardID=cardID %}">Click to Auth</a>

@@ -1,1 +1,43 @@
-<h1>ASD</h1>
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/header.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/footer.css' %}">
+    {% block styleSheet %}{% endblock %}
+    <title>{% block title %}{% endblock %}</title>
+
+    <style>
+        {% block cssStyle %}{% endblock %}
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-left">
+        {% block headerLeft %}{% endblock %}
+    </div>
+    <div class="header-center">
+        {% block headerCenter %}{% endblock %}
+    </div>
+    <div class="header-right">
+        {% block headerRight %}{% endblock %}
+    </div>
+</header>
+
+    {% block mainContent %}{% endblock %}
+
+    <footer>
+        <img src="{% static 'images/logo.png' %}" alt="TinkerTechLogix logo">
+        <p class="footer-text">	&copy; 2025 Smart Data Management System</p>
+    </footer>
+
+</body>
+<script src="{% static 'js/htmx.js' %}"></script>
+<script src="{% static 'js/socket.js' %}"></script>
+<script src="{% static 'js/script.js' %}"></script>
+{% block script %}{% endblock %}
+</html>

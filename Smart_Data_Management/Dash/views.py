@@ -154,35 +154,18 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse:
             
         return render(req,'Dash/HTMX/admin.manager.html',context={'manage':admin,'error':error})
 
+@csrf_exempt
 @htmx_response
 @auth_needed(manager_only=True)
 def read_view(req: HttpRequest)-> HttpResponse:
     
     if(is_hx_get(req)):
-        context = {}
-            
-        try:
-            session_data:dict[str, str] = req.session.get(CARD_DATA)
-            
-            cardData:str = session_data.get("data","")
-            cardID:str = session_data.get("cardID","")
+        _token = req.session.get(READ_TOKEN, '')
+        token = hash_token(_token,req.user.id)
+        return render(req,'Dash/HTMX/read/begin.html', context={"token":token})
 
-            data:dict[str,dict[str,str]] = decrypt_data(settings.KEY,cardData)
-            result, header = data.get('data',{}), data.get('header',{})
-            columns = list(result.keys())
-            hashedJson = f"{monthYearHash()}{jsonHash(data)}"
-            view = ReportStructure.get_structure(columns)
-            
-            wid, hei, img = result[view.profile_img].split(":")
-
-            result[view.profile_img] = expand_image(width=int(wid),height=int(hei),img_data=img)
-
-            context.update({'data':result,'personal':view.personal_info,'pic':view.profile_img,'sem_dict':view.sem_data,'link':hashedJson,'cardID':cardID,**header})
-
-        except Exception as e:
-            context['error'] = DEFAULT_ERROR
-            
-        return render(req,'Dash/HTMX/read.card.html',context=context)
+    elif(is_hx_delete(req)):
+        return render(req,'Dash/HTMX/read/end.html')
 
 @login_needed(manager_only=True)
 def read_screen(req: HttpRequest) -> HttpResponse:

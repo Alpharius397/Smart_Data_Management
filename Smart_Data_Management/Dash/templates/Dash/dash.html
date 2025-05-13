@@ -1,16 +1,16 @@
+{% extends 'Main/index.html' %}
 {% load template %}
 {% load static %}
 
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block styleSheet %}
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <title>User Task Dashboard</title>
-    <style>
+    
+    {% endblock %}
+
+    {% block title %} User Task Dashboard {% endblock %}
+
+    {% block cssStyle %}
         a{
             text-decoration: none;
         }
@@ -52,17 +52,20 @@
 
         {% endif %}
 
+    {% endblock %}
 
-    </style>
-</head>
+        {% block headerLeft %}
+            <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
+        {% endblock %}
 
-<body>
-    <header>
-        <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
-        <h1>Task Dashboard</h1>
-        {% block manager_button%}{% endblock %}
-        {% block uploader_button%}{% endblock %}
-    </header>
+        {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
+
+        {% block headerRight %}
+            {% block manager_button%}{% endblock %}
+            {% block uploader_button%}{% endblock %}
+        {% endblock %}
+
+        {% block mainContent %}
 
         {% block uploader %} {% endblock %}
         {% block manager %} {% endblock %}
@@ -84,36 +87,36 @@
             </a>
             </div>
         </div>
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
 
-<script src="{% static 'js/script.js' %}"></script>
-<script>
 
-    function attach_event(){
-        const elements = document.querySelectorAll(".drop-down");
+        {% endblock %}
 
-        elements.forEach((element) => {
-            const id = element.id;
+        {% block script %}
+        <script defer>
 
-            element.addEventListener('click', ()=>{
-                
-                if (element.classList.contains('up')) {
-                    element.classList.replace('up','down');
-                    document.querySelector(`.task-info#${id}`).style.display = 'none';
-                } else {
-                    element.classList.replace('down','up');
-                    document.querySelector(`.task-info#${id}`).style.display = 'block';
-                }
+            function attach_event(){
+                const elements = document.querySelectorAll(".drop-down");
+        
+                elements.forEach((element) => {
+                    const id = element.id;
+        
+                    element.addEventListener('click', ()=>{
+                        
+                        if (element.classList.contains('up')) {
+                            element.classList.replace('up','down');
+                            document.querySelector(`.task-info#${id}`).style.height = '0px';
+                        } else {
+                            element.classList.replace('down','up');
+                            document.querySelector(`.task-info#${id}`).style.height = '150px';
+                        }
+                    })
+                })
+            }
+        
+        
+            htmx.on(".task-list","htmx:afterSettle", function(event){
+                attach_event();
             })
-        })
-    }
-
-
-    htmx.on(".task-list","htmx:afterSettle", function(event){
-        attach_event();
-    })
-
-</script>
-
-</html>
+        
+        </script>
+        {% endblock %}

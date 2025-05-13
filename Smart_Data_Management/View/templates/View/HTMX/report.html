@@ -12,22 +12,28 @@
         {{university}} - {{institute}} - {{branch}}
     </div>
     <div class="container-box">
-        <div class="image-box">
-            {% if pic %}
-                {% with image=data|index_str:pic|img %}
-                    <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-                {% endwith %}
-            {% endif %}
-        </div>
+        {% for pics in pic %}
+            <div class="image-box">
+                    {% with image=data|index_str:pics|img %}
+                        <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
+                    {% endwith %}
+                    <h3>{{pics}}</h3>
+                </div>
+        {% endfor %}
+    </div>
+    <div class="sub-header-box">
+        personal-info
     </div>
     <div class="personal-info">
-
         {% for i in personal %}
             <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
         {% endfor %}
 
     </div>
     <div class="semester-info">
+        <div class="sub-header-box">
+            semester-info
+        </div>
         <div class="semester-row">
 
             {% for sem,subs in sem_dict.items %}

@@ -27,7 +27,6 @@ function formValue(formID){
     const NODE = document.getElementById(formID);
     let children = NODE.childNodes;
     let memo = {};
-    console.log(children);
     
     for(let i of children){
         if(i.name!="" && i.name!=undefined){
@@ -35,7 +34,5 @@ function formValue(formID){
         }
     }
 
-    console.log(memo);
-    
     return memo;
 }
