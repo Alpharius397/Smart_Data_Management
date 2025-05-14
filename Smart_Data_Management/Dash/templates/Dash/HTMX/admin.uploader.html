@@ -10,23 +10,30 @@
 
     {% for i in upload %}
         <div class="task-item">
-            <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
-            <button class="drop-down down" id="down_{{forloop.counter}}">&#11206;</button>
+            <h3>Upload {{ i.idx }}: {{i.uploader}} - {{i.file_name}}</h3>
+            <button class="drop-down down" id="down_{{i.idx}}" onclick="addClass('.task-info#down_{{i.idx}}','open','close')">&#11206;</button>
         </div>
-        <div class="task-info" id="down_{{forloop.counter}}">
-            Assigned To: 
-            {% for j in i.manager %}
-                <li>
-                    {{ j  }}
-                </li>
-            {% empty %}
-                <h4>No one Assigned Yet</h4>
-            {% endfor %}
+        <div class="task-info close" id="down_{{i.idx}}">
+            <div class="assigned">
+                <h4>
+                    Assignment Status: 
+                    {% for j in i.manager %} 
+                        {{ j }}
+
+                        {% if not forloop.last %}, {% else %} . {% endif %}
+
+                    {% empty %}
+                        No one Assigned Yet.
+                    {% endfor %}
+                </h4>
+            </div>
             <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
         </div>
 
-    {% empty %}
-        <h3 class="title-tag">No Sheets Unassigned</h3>
+        {% if forloop.last %}
+            <div hx-get="{% url 'Dash:admin_upload' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"query": "{{request.GET.query}}", "start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
+        {% endif %}
+
     {% endfor %}
 
 {% endif %}

@@ -1,15 +1,7 @@
 {
-	"folders": [
-		{
-			"path": "../.."
-		},
-		{
-			"path": "../../../../../Go (Go follow Michigan)"
-		}
-	],
-	"settings": {
-		"cSpell.words": [
-			"Logix"
-		]
-	}
+    "folders": [
+        {
+            "path": "../.."
+        }
+    ]
 }

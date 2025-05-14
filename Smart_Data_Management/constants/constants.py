@@ -1,16 +1,15 @@
 import typing
 import re
 
-MAX_RECORD:int = 5
+MAX_RECORD:int = 1
 LOADING:str = "Loading"
 DONE:str = "Done"
 NONE:str = "None"
 FAILED:str = "Failed"
 WRITE_TOKEN:str = "write-token"
 ERROR_JSON:dict[str, str|bool] = {"info":"Unauthenticated Request","status":False}
-VIEW_DATA = {"_id":1,"header.manager":1,"header.uploader":1,"data.header.file_name":1}
+VIEW_DATA = {"_id":1,"header":1,"data.header.file_name":1}
 READ_TOKEN:str = "read-token"
-LOADING:str = "Loading"
 CARD_DATA:str = "Data"
 DEFAULT_ERROR:str = "Something Went Wrong! Please try Again"
 MONGO_ERROR:str = "MongoDB Connection Failed"

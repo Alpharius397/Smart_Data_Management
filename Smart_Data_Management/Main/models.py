@@ -152,7 +152,7 @@ class RowData:
 class DataExcel:
     
     class DataExcelDict(TypedDict):
-        excel: list[RowData]
+        excel: list[RowData.RowDataDict]
         header: DataHeader.DataHeaderDict
         
     def __init__(self, excel: list[RowData], header: DataHeader):
@@ -250,7 +250,7 @@ class MongoPipeline(NamedTuple):
         yield self.search_pipeline
         yield self.slice_pipeline
 
-class MegaBFG9000Launcher(NamedTuple):
+class MegaBFG5000Launcher(NamedTuple):
     match_pipeline: dict
     extract_pipeline: dict
     sort_pipeline: dict
@@ -263,6 +263,18 @@ class MegaBFG9000Launcher(NamedTuple):
         yield self.sort_pipeline
         yield self.search_pipeline
         yield self.slice_pipeline
+
+class MegaBFG4000Launcher(NamedTuple):
+    project_pipeline: dict
+    match_pipeline: dict
+    skip_pipeline: dict
+    limit_pipeline: dict
+
+    def __iter__(self) -> Iterator[dict]:
+        yield self.project_pipeline
+        yield self.match_pipeline
+        yield self.skip_pipeline
+        yield self.limit_pipeline
 
 class MergeQuery(NamedTuple):
     first: First
@@ -311,7 +323,7 @@ class MongoTemplate:
     """
     def __init__(self) -> None:
         
-        self.header:dict[str, dict[str, str | int | None] | list | str | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
+        self.header:dict[str, dict[str, str | int | None] | list | str | int | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
         self.data_header:dict[str, str | list | None] = {'file_name':None,'image_columns':[],'columns':[]}
         self.data_feed:dict[str, str | int | None] = {'index':0,'locked':False,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':False}
         self.data:list[dict[str, str | list | dict]]= []
@@ -427,6 +439,18 @@ class MongoTemplate:
         return res
     
     @staticmethod
+    def get_dash_search_buffer_query(conditions:dict, project: dict, start:int, limit: int) -> MegaBFG4000Launcher:
+        match_pipeline = {"$match":conditions}
+        
+        skip_pipeline = {"$skip": start}
+        
+        limit_pipeline = {"$limit": limit}
+        
+        project_pipeline = {"$project":project}
+        
+        return MegaBFG4000Launcher(project_pipeline, match_pipeline, skip_pipeline, limit_pipeline)
+
+    @staticmethod
     def get_search_buffer_query(condition:dict, column_index:str, locked: str, status: str, issued: str, value:str, start:int, limit:int) -> MongoPipeline:
         
         MAPPING: dict[str, bool | None] = {'true':True, 'false': False, 'none': None}
@@ -521,7 +545,7 @@ class MongoTemplate:
         return MongoPipeline(match_pipeline,search_pipeline,slice_pipeline)
     
     @staticmethod
-    def get_quick_buffer_query(condition: dict, column_index: int, value: str) -> MegaBFG9000Launcher:
+    def get_quick_buffer_query(condition: dict, column_index: int, value: str) -> MegaBFG5000Launcher:
         match_pipeline = {
             "$match": {**condition}
         }
@@ -577,7 +601,7 @@ class MongoTemplate:
                 "_id": 0
             }
         }
-        return MegaBFG9000Launcher(match_pipeline,extract_pipeline,sort_pipeline,search_pipeline,slice_pipeline)
+        return MegaBFG5000Launcher(match_pipeline,extract_pipeline,sort_pipeline,search_pipeline,slice_pipeline)
     
     @staticmethod
     def merge_everything(*query:MongoFindQuery|MongoDeleteQuery|MongoUpdateQuery|MergeQuery, initial_a:dict = {}, initial_b:dict = {}) -> MergeQuery:

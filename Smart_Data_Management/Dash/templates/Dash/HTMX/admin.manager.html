@@ -10,10 +10,10 @@
 
     {% for i in manage %}
         <div class="task-item">
-            <h3>Upload {{ forloop.counter }}: {{i.uploader}} - {{i.file_name}}</h3>
-            <button class="drop-down down" id="up_{{forloop.counter}}">&#11206;</button>
+            <h3>Upload {{ i.idx }}: {{i.uploader}} - {{i.file_name}}</h3>
+            <button class="drop-down down" id="up_{{i.idx}}">&#11206;</button>
         </div>
-        <div class="task-info" id="up_{{forloop.counter}}">
+        <div class="task-info" id="up_{{i.idx}}">
             Assigned To: 
             {% for j in i.manager %}
                 <li>
@@ -26,8 +26,11 @@
             <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
         </div>
 
-    {% empty %}
-        <h3 class="title-tag">No Sheets Assigned</h3>
+        
+        {% if forloop.last %}
+            <div hx-get="{% url 'Dash:admin_manage' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"query": "{{request.GET.query}}", "start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
+        {% endif %}
+
     {% endfor %}
 
 {% endif %}

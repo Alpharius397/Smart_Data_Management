@@ -3,120 +3,116 @@
 {% load static %}
 
 
-    {% block styleSheet %}
+{% block styleSheet %}
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    
-    {% endblock %}
+{% endblock %}
 
-    {% block title %} User Task Dashboard {% endblock %}
+{% block title %} User Task Dashboard {% endblock %}
 
-    {% block cssStyle %}
-        a{
-            text-decoration: none;
-        }
+{% block cssStyle %}
+    a{
+        text-decoration: none;
+    }
         
-        .arrow {
-            margin-left: auto;
-            font-size: 18px;
-            color: #6c757d;
-            display: inline;
-        }
+    .arrow {
+        margin-left: auto;
+        font-size: 18px;
+        color: #6c757d;
+        display: inline;
+    }
         
-        .log-view{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+    .log-view{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    {% if request.session.mainColor and request.session.secColor %}
+        header{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
         }
 
-        {% if request.session.mainColor and request.session.secColor %}
-            header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
+        body{
+            color: {{request.session.mainColor}};
+        }
 
-            body{
-                color: {{request.session.mainColor}};
-            }
+        header .user-log, header .add-task{
+            color: {{request.session.mainColor}};
+        }
 
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
+        .task-item h3{
+            color: {{request.session.mainColor}};
+        }
 
-            .task-item h3{
-                color: {{request.session.mainColor}};
-            }
+        .container{
+            background-color: {{request.session.secColor}};
+        }
 
-            .container{
-                background-color: {{request.session.secColor}};
-            }
+    {% endif %}
 
-        {% endif %}
+{% endblock %}
 
-    {% endblock %}
+{% block headerLeft %}
+    <button class="user-log" onclick="confirmPrompt(`{% url 'Logout:logout' %}`)">Logout</button>
+{% endblock %}
 
-        {% block headerLeft %}
-            <a href="{% url 'Logout:logout' %}"><button class="user-log">Logout</button></a>
-        {% endblock %}
+{% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
 
-        {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
+{% block headerRight %}
+    {% block manager_button%}{% endblock %}
+    {% block uploader_button%}{% endblock %}
+{% endblock %}
 
-        {% block headerRight %}
-            {% block manager_button%}{% endblock %}
-            {% block uploader_button%}{% endblock %}
-        {% endblock %}
+{% block mainContent %}
+    {% block uploader %} {% endblock %}
+    {% block manager %} {% endblock %}
 
-        {% block mainContent %}
-
-        {% block uploader %} {% endblock %}
-        {% block manager %} {% endblock %}
-
-        <div class="container">
-            <div class="log-view">
+    <div class="tab">
+        <div class="log-view">
             <h2><span>View Logs</span></h2>
             <a href="{% url 'Logs:logs' %}" class="log-item">
                 <span class="arrow">&#9654;</span>
             </a>
-            </div>
         </div>
+    </div>
 
-        <div class="container">
-            <div class="log-view">
+    <div class="tab">
+        <div class="log-view">
             <h2><span>Account Settings</span></h2>
             <a href="{% url 'User:index' %}" class="log-item">
                 <span class="arrow">&#9654;</span>
             </a>
-            </div>
         </div>
+    </div>
+{% endblock %}
 
+{% block script %}
+    <script>
 
-        {% endblock %}
-
-        {% block script %}
-        <script defer>
-
-            function attach_event(){
-                const elements = document.querySelectorAll(".drop-down");
-        
-                elements.forEach((element) => {
-                    const id = element.id;
-        
-                    element.addEventListener('click', ()=>{
-                        
-                        if (element.classList.contains('up')) {
-                            element.classList.replace('up','down');
-                            document.querySelector(`.task-info#${id}`).style.height = '0px';
-                        } else {
-                            element.classList.replace('down','up');
-                            document.querySelector(`.task-info#${id}`).style.height = '150px';
-                        }
-                    })
+        function attach_event(){
+            const elements = document.querySelectorAll(".drop-down");
+    
+            elements.forEach((element) => {
+                const id = element.id;
+                console.log(element.className, element.id)
+                element.addEventListener('click', ()=>{
+                    
+                    if (element.classList.contains('up')) {
+                        element.classList.replace('up','down');
+                        document.querySelector(`.task-info#${id}`).style.height = '0px';
+                    } else {
+                        element.classList.replace('down','up');
+                        document.querySelector(`.task-info#${id}`).style.height = '150px';
+                    }
                 })
-            }
-        
-        
-            htmx.on(".task-list","htmx:afterSettle", function(event){
-                attach_event();
             })
-        
-        </script>
-        {% endblock %}
+        }
+    
+    
+        htmx.on(".task-list","htmx:afterSettle", function(event){
+            {% comment %} attach_event(); {% endcomment %}
+        })
+    
+    </script>
+{% endblock %}

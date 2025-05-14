@@ -32,7 +32,7 @@ class Task:
     CARD_DATA_FETCH:int = 12
     INVALID_TOKEN:int = 13
     INVALID_ID: int = 14
-    WEBSOCKET_FAILED: int
+    WEBSOCKET_FAILED: int = 15
 
 class Auth:
     ADMIN:str = "Admin"
