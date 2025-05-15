@@ -26,6 +26,29 @@
 []: Better GUI
 []: Header of Company, cause why not 
 []: Options to enter Semester Subjects and later parse that to group subjects into semester
+[]: Added image compression. (Mongo docs has a max size of 16mB)
 
 --- Maybe List ---
 []: Add Test Cases, cause why not :)
+[]: Switch to postgresSQL (Defcon 3 Alert)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Imaginary Postgres Layout ---
+
+Main Table
+
+File Table: _id (primary), uploader_id, ARRAY(manager_id),
+Data Table: _id (primary), file_id_foreign, ARRAY(excel data),
+Feed Table: _id (primary), data_id_foreign, locked, issue, time_of_issue, time_of_lock

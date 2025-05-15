@@ -1,7 +1,7 @@
 import typing
 import re
 
-MAX_RECORD:int = 1
+MAX_RECORD:int = 5
 LOADING:str = "Loading"
 DONE:str = "Done"
 NONE:str = "None"

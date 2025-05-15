@@ -16,4 +16,3 @@ class LogMessage(Model):
     
     def __str__(self):
         return f"{self.timestamp}-{self.username}-{self.userID}-{self.authLevel}"
-    

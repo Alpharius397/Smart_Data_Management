@@ -134,7 +134,7 @@ function dialogBoxOpen() {
     dialogBox.addEventListener("click", dialogBoxClose);
     dialogBox.addEventListener("mousedown", dialogBoxDragStart);
     document.addEventListener("mousemove", dialogBoxDragGoing);
-    document.addEventListener("mouseup", dialogBoxDragEnd);
+    dialogBox.addEventListener("mouseup", dialogBoxDragEnd);
 }
 
 function __closeBox() {
@@ -142,7 +142,7 @@ function __closeBox() {
     dialogBox.removeEventListener("click", dialogBoxClose);
     dialogBox.removeEventListener("mousedown", dialogBoxDragStart);
     document.removeEventListener("mousemove", dialogBoxDragGoing);
-    document.removeEventListener("mouseup", dialogBoxDragEnd);
+    dialogBox.removeEventListener("mouseup", dialogBoxDragEnd);
 }
 
 /**
