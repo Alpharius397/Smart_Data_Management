@@ -3,11 +3,17 @@ import pandas as pd
 import pymongo
 import pymongo.collection
 from typing import NamedTuple, ParamSpec, Union, Iterator, TypedDict
+from User.models import UserObject, is_manager
 from tools.typesCauseWhyNot import *
 from Main.settings import settingsInterface as settings # type: ignore
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
+from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, OneToOneField
+from django.contrib.auth.models import User
+from .validators import AdminValidator, ManagerValidator, MinValueValidator
+from django.contrib.postgres.fields import ArrayField
+from django.forms.forms import ValidationError
 
 type Condition = dict[str, list | str | int | dict]
 type Filter = dict[str, dict[str, list | str | bool | dict] | str | int | bool | list]
@@ -856,3 +862,42 @@ class RedisConnection:
     @staticmethod        
     def get_secs_from_minutes(minutes:int) -> int: 
         return minutes*60
+
+class FileTable(Model):
+    _id = AutoField(verbose_name="FileID", primary_key=True)
+    fileName = CharField(max_length=255, verbose_name="File Name", null=False, blank=False, unique=True)
+    uploader = ForeignKey(to=User, on_delete=RESTRICT,null=False,blank=False,related_name='uploader',verbose_name="File Uploader")
+    manager = ArrayField(IntegerField(null=True, blank=True, unique=True), verbose_name="Assigned Manager", null=True, blank=True)
+    
+    def clean_managers(self):
+        all_manager:set[int] = set()
+        
+        for manager in self.manager:
+            user:UserObject = User.objects.get(id=manager)
+            
+            if(not is_manager(user)):
+                raise ValidationError("User must be a manager", code="invalid", params={"value": user})
+            
+            if(manager in all_manager):
+                raise ValidationError("Duplicate Manager found!", code="invalid", params={"value": user})
+            
+            all_manager.add(manager)
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
+class DataTable(Model):
+    _id = AutoField(verbose_name="DataID", primary_key=True)
+    fileID = ForeignKey(to=FileTable, verbose_name="FileID", related_name="data", on_delete=RESTRICT)
+    rowIndex = IntegerField(verbose_name="Row Index", null=False, blank=False, validators=[MinValueValidator(0,"Row Index cannot be negative")])
+    excel = ArrayField(CharField(max_length=10000, verbose_name="Row Data", null=True, blank=True), null=False, blank=False)
+    
+    locked = BooleanField(verbose_name="Lock Status", null=True, blank=True, default=None)
+    issued = BooleanField(verbose_name="Issue Status", null=True, blank=True, default=False)
+    time_of_issue = DateTimeField(verbose_name="Time of Issue", null=True, blank=True)
+    time_of_lock = DateTimeField(verbose_name="Time of Lock", null=True, blank=True)
+    status = BooleanField(verbose_name="Feedback Status", null=True, blank=True, default=None)
+    feed = CharField(max_length=255, verbose_name="Feed Back")
+    
+    

@@ -1,36 +1,18 @@
+{% extends 'Main/index.html' %}
 {% load template %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/View/styles.css' %}">
     <link rel="stylesheet" href="{% static 'styles/read.css' %}">
-    <title>User Task Dashboard</title>
-    <style>
+    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+{% endblock %}
 
+{% block title %} Single View {% endblock %}
 
-        form{
-            display: inline-block;
-            margin-top: 0px;
-        }
-
-        .loading-button{
-            background-color: grey;
-        }
-
-        .error-button{
-            background-color: red;
-        }
-        
-        .write-card{
-            display: inline-block;
-        }
-        
-        {% if request.session.mainColor and request.session.secColor %}
+{% block cssStyle %}
+    {% if request.session.mainColor and request.session.secColor %}
             header{
                 background-color: {{request.session.mainColor}};
                 color: {{request.session.secColor}};
@@ -66,24 +48,26 @@
                 color: {{request.session.mainColor}};
             }
         {% endif %}
+    {% endblock %}
 
-    </style>
-</head>
+{% block headerLeft %}
+    <button class="user-log" onclick="redirect(`{% url 'View:table' id=id %}`)">Back To Table View</button>
+{% endblock %}
 
-<body>
-    <header>
-        <a href="{% url 'View:table' id=id %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Row View</h1>
-    </header>
+{% block headerCenter %}
+    <h1>Row View</h1>
+{% endblock %}
+
+{% block mainContent %}
 
     <div class="container" hx-get="{% url 'View:index' id=id idx=idx %}" hx-vals='{"id":"{{id}}","idx":"{{idx}}"}' hx-trigger="load" hx-target=".tableView">
 
-        <div class="tableView" hx-get="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".feedback" hx-trigger="load">
+        <div class="tableView tab" hx-get="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".sub-tab" hx-trigger="load">
         
         </div>
 
 
-        <div class="feedback"></div>
+        <div class="sub-tab"></div>
 
         {% if manage %}
             <div class="issue_card"></div>
@@ -95,12 +79,12 @@
 
 
     <p id="replace-me"></p>
+{% endblock %}
 
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
-<script src="{% static 'js/socket.js' %}"></script>
+{% block script %}
+
 <script>
     add_csrf();
 </script>
-</html>
+
+{% endblock %}

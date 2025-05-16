@@ -7,7 +7,7 @@
     </ul>
 
 {% else %}
-    <div class="feedback">
+    <div class="tab">
         <h3>Assigned To:</h3>
         
         <h4 class="user">User: {% for i in manager %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %} </h4>
@@ -24,13 +24,13 @@
             <h4 class="user">Feedback: <p id='feed-text'>{{feed}}</p></h4>
         {% endif %}    
 
+        {% if issued %}
+            <p><strong> Card issued on {{time_of_issue|timestamp}}. </strong></p>
+        {% endif %}
+        {% if locked %}
+            <p><strong> Card locked on {{time_of_lock|timestamp}}. </strong></p>
+        {% endif %}
     </div>
     
-    {% if issued %}
-        <p><strong> Card issued on {{time_of_issue|timestamp}}. </strong></p>
-    {% endif %}
-    {% if locked %}
-        <p><strong> Card locked on {{time_of_lock|timestamp}}. </strong></p>
-    {% endif %}
 
 {% endif %}

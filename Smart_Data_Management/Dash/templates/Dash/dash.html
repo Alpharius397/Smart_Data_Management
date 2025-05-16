@@ -4,7 +4,7 @@
 
 
 {% block styleSheet %}
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
 {% endblock %}
 
 {% block title %} User Task Dashboard {% endblock %}
@@ -54,7 +54,7 @@
 {% endblock %}
 
 {% block headerLeft %}
-    <button class="user-log" onclick="confirmPrompt(`{% url 'Logout:logout' %}`)">Logout</button>
+    <a class="next-button logout" onclick="confirmPrompt(`{% url 'Logout:logout' %}`)">Logout</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
@@ -88,31 +88,5 @@
 {% endblock %}
 
 {% block script %}
-    <script>
 
-        function attach_event(){
-            const elements = document.querySelectorAll(".drop-down");
-    
-            elements.forEach((element) => {
-                const id = element.id;
-                console.log(element.className, element.id)
-                element.addEventListener('click', ()=>{
-                    
-                    if (element.classList.contains('up')) {
-                        element.classList.replace('up','down');
-                        document.querySelector(`.task-info#${id}`).style.height = '0px';
-                    } else {
-                        element.classList.replace('down','up');
-                        document.querySelector(`.task-info#${id}`).style.height = '150px';
-                    }
-                })
-            })
-        }
-    
-    
-        htmx.on(".task-list","htmx:afterSettle", function(event){
-            {% comment %} attach_event(); {% endcomment %}
-        })
-    
-    </script>
 {% endblock %}

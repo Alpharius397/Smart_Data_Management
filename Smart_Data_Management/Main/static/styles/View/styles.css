@@ -1,0 +1,11 @@
+.loading-button{
+    background-color: grey;
+}
+
+.error-button{
+    background-color: red;
+}
+
+.write-card{
+    display: inline-block;
+}

@@ -55,28 +55,31 @@
 .personal-info p {
     padding: 15px;
     margin: 0px;
-    border-collapse: collapse;
     border: 1px solid gray;
+    border-collapse: collapse;
 }
 .semester-info {
     margin-top: 20px;
 }
 .semester-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
     margin-bottom: 20px;
 }
+
 .semester {
     border: 1px solid #0B132B;
     padding: 20px;
     margin: 10px;
-    width: 45%;
     box-sizing: border-box;
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #5255ba77; 
+    margin: 0;
+    width: auto;
 }
 .semester h3 {
     margin-top: 0;

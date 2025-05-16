@@ -1,18 +1,19 @@
 {% extends 'Dash/dash.html' %}
 
 {% load template %}
+{% load static %}
 
 {% block uploader_button %}
-    <a href="{% url 'Upload:view' %}"><button class="add-task">Add New Task</button></a>
+    <a class="next-button add-new-task" href="{% url 'Upload:view' %}">Add New Task</a>
 {% endblock %}
 
 {% block uploader %}
     <div class="tab">
-        <h2>To Assign Tasks</h2>
+        <h2>Unassigned Tasks</h2>
 
         <div class="sub-tab">
             <h3>Search Records: </h3>
-            <form hx-get="{% url 'Dash:admin_upload' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,input from:#column1" hx-vals="js:{query: get_select('column1')}">
+            <form hx-get="{% url 'Dash:admin_upload' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input[type='search'], input from:find select" hx-vals="js:{query: get_select('#unassign_column')}" onsubmit="event.preventDefault()">
                 
                 <div class="form-field">
                     <label for="search">Search Keyword: </label>
@@ -21,7 +22,7 @@
 
                 <div class="form-field">
                     <label for="query">in Field: </label>
-                    <select name="query" id="column1">
+                    <select name="query" id="unassign_column">
                         <option value="" disabled selected>Choose a Field here</option>
                         <option value="uploader">Uploader</option>
                         <option value="file_name">File Name</option>
@@ -30,8 +31,11 @@
                 </div>
 
             </form>
-            <div class="task-list" hx-get="{% url 'Dash:admin_upload' %}" hx-target="closest div" hx-swap="innerHTML" hx-trigger="load" hx-vals="js:{query: get_select('column1'), start: '0', value: '{{request.GET.value}}'}">
-
+            <div class="task-list" hx-get="{% url 'Dash:admin_upload' %}" hx-target="closest div" hx-swap="innerHTML" hx-trigger="load" hx-vals="js:{query: get_select('#unassign_column'), start: '0', value: '{{request.GET.value}}'}">
+                <div class="loading">
+                    <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                    <h2>Loading...</h2>
+                </div>
             </div>
         </div>
     </div>
@@ -42,7 +46,7 @@
         <h2>Assigned Tasks</h2>
         <div class="sub-tab">
             <h3>Search Records: </h3>
-            <form hx-get="{% url 'Dash:admin_manage' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find #search,input from:#column1" hx-vals="js:{query: get_select('column1')}">
+            <form hx-get="{% url 'Dash:admin_manage' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input[type='search'], input from:find select" hx-vals="js:{query: get_select('#assign_column')}">
                 
                 <div class="form-field">
                     <label for="search">Search Keyword: </label>
@@ -51,7 +55,7 @@
 
                 <div class="form-field">
                     <label for="query">in Field: </label>
-                    <select name="query" id="column1">
+                    <select name="query" id="assign_column">
                         <option value="" disabled selected>Choose a Field here</option>
                         <option value="uploader">Uploader</option>
                         <option value="file_name">File Name</option>
@@ -60,7 +64,7 @@
                 </div>
 
             </form>
-            <div class="task-list" id="down" hx-get="{% url 'Dash:admin_manage' %}" hx-target="closest div" hx-swap="innerHTML" hx-trigger="load" hx-vals="js:{query: get_select('column1'), start: '0', value: '{{request.GET.value}}'}">
+            <div class="task-list" id="down" hx-get="{% url 'Dash:admin_manage' %}" hx-target="closest div" hx-swap="innerHTML" hx-trigger="load" hx-vals="js:{query: get_select('#assign_column'), start: '0', value: '{{request.GET.value}}'}">
             </div>
         </div>
     </div>

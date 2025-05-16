@@ -2,7 +2,5 @@
 {% load template %}
 
 {% block upload_button %}
-
-    <a href="{% url 'Upload:view_edit' id=id %}"><button class="add-task">Edit Data</button></a>
-
+    <button class="add-task" onclick="redirect(`{% url 'Upload:view_edit' id=id %}`)">Edit Data</button>
 {% endblock %}

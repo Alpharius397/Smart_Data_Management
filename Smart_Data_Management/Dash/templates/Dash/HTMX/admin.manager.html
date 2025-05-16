@@ -10,20 +10,31 @@
 
     {% for i in manage %}
         <div class="task-item">
-            <h3>Upload {{ i.idx }}: {{i.uploader}} - {{i.file_name}}</h3>
-            <button class="drop-down down" id="up_{{i.idx}}">&#11206;</button>
+            <h3>Filename: {{i.file_name}}</h3>
+            <button class="drop-down down" id="up_{{i.idx}}" onclick="addClass('.task-info#up_{{i.idx}}','open','close')&&addClass('.drop-down#up_{{i.idx}}','up','down')">&#11206;</button>
         </div>
-        <div class="task-info" id="up_{{i.idx}}">
-            Assigned To: 
-            {% for j in i.manager %}
-                <li>
-                    {{ j  }}
-                </li>
-            {% empty %}
-                <h4>No one Assigned Yet</h4>
-            {% endfor %}
+        <div class="task-info close" id="up_{{i.idx}}">
+            <div class="assigned">
+                <h4>
+                    Uploader Name: {{i.uploader}} <br><br>
+                    Assignment Status: 
+                    {% for j in i.manager %}
+                    
+                        {% if j is not None %}
+                            {{ j }}
+                        {% else %}
+                            <p class="error-message">User was not found</p>
+                        {% endif %}
 
-            <a href="{% url 'View:table' id=i.id %}" class="view-button">View Data</a>
+                        {% if not forloop.last %} , {% else %} . {% endif %}
+
+                    {% empty %}
+                        No one Assigned Yet.
+                    {% endfor %}
+                </h4>
+            </div>
+
+            <a href="{% url 'View:table' id=i.id %}" class="next-button view-button">View Data</a>
         </div>
 
         

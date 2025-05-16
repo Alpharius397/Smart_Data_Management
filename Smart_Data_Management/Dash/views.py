@@ -98,6 +98,7 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             flag , manage = get_data(result, start)
 
             if(flag and queryset and start==0): error='No matching records found!'
+            elif(flag and start==0): error="No Sheets are assigned"
             
             next_ = start + MAX_RECORD
         

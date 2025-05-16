@@ -1,6 +1,13 @@
-function get_select(value="column"){
-    let column = document.getElementById(value);
-    return column?column.value:column;
+/**
+ * 
+ * @param {String} value 
+ * @returns {String | null}
+ */
+
+function get_select(value){
+    let column = document.querySelector(value);
+    if(column !== null) return column.value;
+    return null;
 }
 
 function dontAskWhy(){
@@ -187,7 +194,7 @@ function dialogBoxDragEnd() {
 function addClass(selector, classOne, classTwo){
     const elem = document.querySelector(selector);
 
-    if(elem==null) return;
+    if(elem==null) return false;
 
     if(elem.classList.contains(classOne)){
         elem.classList.replace(classOne, classTwo);
@@ -195,4 +202,5 @@ function addClass(selector, classOne, classTwo){
         elem.classList.replace(classTwo, classOne);
     }
 
+    return true;
 }

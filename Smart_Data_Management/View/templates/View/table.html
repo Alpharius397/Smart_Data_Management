@@ -1,16 +1,17 @@
+{% extends 'Main/index.html' %}
 {% load template %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Task Dashboard</title>
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/View/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/read.css' %}">
     <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <style>
-        
+{% endblock %}
+
+{% block title %} Table View {% endblock %}
+
+{% block cssStyle %}
+
         img{
             width: 200px;
             display: block;
@@ -341,22 +342,24 @@
             header .user-log, header .add-task{
                 color: {{request.session.mainColor}};
             }
-
-
         {% endif %}
+{% endblock %}
 
-    </style>
-</head>
+{% block headerLeft %}
+    <button class="user-log" onclick="redirect(`{% url 'Dash:dash' %}`)">Back To DashBoard</button>
+{% endblock %}
+    
+{% block headerCenter %}
+    <h1>Table View</h1>
+{% endblock %}
 
-<body>
-    <header>
-        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To DashBoard</button></a>
-        <h1>Table View</h1>
+{% block headerRight %}
+    {% block upload_button %}{% endblock %}
+{% endblock %}
 
-        {% block upload_button %}{% endblock %}
-    </header>
+{% block mainContent %}
 
-    <div class="container" hx-get="{% url 'View:table' id=id %}" hx-target="this" hx-swap="outerHTML" hx-trigger="load">
+    <div class="tab" hx-get="{% url 'View:table' id=id %}" hx-target="this" hx-swap="outerHTML" hx-trigger="load">
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
@@ -403,9 +406,5 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
-<script src="{% static 'js/socket.js' %}"></script>
-</html>

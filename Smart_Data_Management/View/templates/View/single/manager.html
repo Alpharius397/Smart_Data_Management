@@ -12,14 +12,14 @@
     </ul>
 {% endif %}
 {% if not error %}
-    <div class="feedback">
+    <div class="sub-tab">
         
         <h2>Feedback:</h2>
         <h3>Assigned To:</h3>
         <h4 class="user">User: {% for i in manager %} {{i}} {% if not forloop.last %}, {% endif %} {% endfor %} </h4>
 
 
-        <form hx-post="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest .feedback" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+        <form hx-post="{% url 'View:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest .sub-tab" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
             {% csrf_token %}
             
             {% for field in form %}

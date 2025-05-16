@@ -9,7 +9,6 @@ from constants.constants import DEFAULT_ERROR
 from django.db.models import Q
 from django.contrib import messages
 
-@htmx_response
 def register_view(req:HttpRequest) -> HttpResponse:
     
     if(req.method=="GET"):
@@ -43,7 +42,6 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 return render(req,'Register/HTMX/message.html',context=context)
                 
             try:
-                group = Group.objects.get(name='Admin')
                 user = User.objects.create_user(user,email,passwrd)
                 user.is_active = False
                 user.save()
@@ -54,6 +52,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                     manager.save()
                     
                 elif(level=='Admin'):
+                    group = Group.objects.get(name='Admin')
                     admin = Admin(user=user)
                     admin.belongs = _branch
                     admin.user.groups.add(group)
@@ -63,6 +62,7 @@ def register_view(req:HttpRequest) -> HttpResponse:
                 context['msg'] = "Registered Successfully"
                 
             except Exception as e:
+                print(e)
                 messages.error(req,DEFAULT_ERROR)
             
             return render(req,'Register/HTMX/message.html',context=context)
