@@ -9,9 +9,45 @@ body {
 header {
     display: flex;
     text-align: center;
-    padding: 0px 15px 0px 15px;
     background-color: #5256ba;
     color: white;
+}
+
+header .hamburger {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.header-option {
+    background-color: grey;
+    padding: 5px;
+    height: 100px;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: stretch;
+    transition: 700ms height;
+}
+
+.header-option a {
+    display: block;
+}
+
+.header-option.close {
+    height: 0px;
+    padding: 0px;
+    transition: 700ms height, 1s opacity;
+}
+
+.hamburger:hover {
+    background-color: grey;
+}
+
+svg path {
+    fill: #f5f5f5;
 }
 
 header .header-left, header .header-right {
@@ -23,10 +59,12 @@ header .header-left, header .header-right {
 
 header .header-left {
     justify-content: flex-start;
+    padding-left: 15px;
 }
 
 header .header-right {
     justify-content: flex-end;
+    padding-right: 15px;
 }
 
 header .header-center {
@@ -180,8 +218,34 @@ dialog .dialog-button {
     margin: 5px;
 }
 
+@media screen and (max-width: 600px) {
+    header .hamburger, .header-option {
+        display: flex;
+    }
 
+    header .header-center {
+        text-align: left;
+        margin-left: 15px;
+    }
 
+    header .header-left, header .header-right {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 600px) {
+    header .hamburger, .header-option {
+        display: none;
+    }
+
+    header .header-left, header .header-right {
+        display: flex;
+    }
+
+    header .header-center {
+        text-align: center;
+    }
+}
 
 
 

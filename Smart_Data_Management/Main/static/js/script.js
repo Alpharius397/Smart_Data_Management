@@ -10,6 +10,27 @@ function get_select(value){
     return null;
 }
 
+function get_header(){
+    const hamBurger = document.querySelector(".hamburger");
+    const headerLeft = document.querySelector(".header-left a")?.cloneNode(true);
+    const headerRight = document.querySelector(".header-right a")?.cloneNode(true);
+    const hamBurgerOption = document.querySelector(".header-option");
+
+    hamBurgerOption.appendChild(headerLeft);
+    hamBurgerOption.appendChild(headerRight);
+
+    hamBurger.addEventListener("click", function(){
+
+        if(hamBurgerOption.classList.contains("close")){
+            hamBurgerOption.classList.remove("close");
+        } else {
+            hamBurgerOption.classList.add("close");
+        }
+    });
+}
+
+get_header();
+
 function dontAskWhy(){
 
     const dont = document.querySelector(".dont-ask-why-this");

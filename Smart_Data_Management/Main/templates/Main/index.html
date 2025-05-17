@@ -16,16 +16,27 @@
 </head>
 <body>
     <header>
+        <div class="hamburger">
+            <svg width="50px" height="50px" viewBox="0 0 24 24">
+                <path d="M4 18L20 18" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 12L20 12" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 6L20 6" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
         <div class="header-left">
+
             {% block headerLeft %}{% endblock %}
         </div>
+
         <div class="header-center">
             {% block headerCenter %}{% endblock %}
         </div>
         <div class="header-right">
             {% block headerRight %}{% endblock %}
         </div>
+        
     </header>
+    <div class="header-option close"></div>
 
     <dialog draggable="true">
         <div class="my-dialog">
