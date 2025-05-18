@@ -1,3 +1,82 @@
+.tab {
+    margin: 20px auto;
+    max-width: 1200px;
+    padding: 20px;
+    padding-top: 0px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgb(216, 218, 220);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sub-tab {
+    margin-left: 20px;
+}
+
+form {
+    margin: 0px;
+    padding: 0;
+    margin-left: 10px;
+}
+
+.form-field {
+    margin: 5px;
+    display: inline;
+}
+
+.form-field label {
+    font-weight: 400;
+}
+
+.form-field input::placeholder {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-field input {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-field select {
+    width: 150px;
+    font-style: italic;
+}
+
+li{
+    margin-bottom: 5px;
+    margin-left: 5px;
+}
+
+.searchQuery{
+    display: block;
+    margin-bottom: 20px;
+}
+
+select{
+    background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+    background-position: 95% center;
+    -moz-appearance:none;
+    -webkit-appearance: none; 
+    appearance: none;
+    border-radius: 20px;
+    padding:5px;
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+}
+
+input {
+    border-radius: 20px;
+    padding:5px;
+    padding-left: 0.75rem;
+    border: 2px solid lightgray;
+}
+
+input::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
 .loading-button{
     background-color: grey;
 }
@@ -9,3 +88,303 @@
 .write-card{
     display: inline-block;
 }
+
+.edit-task:hover {
+    background-color: #367b39;
+    transform: translateY(-2px);
+}
+
+.back-dash:hover {
+    background-color: #367b39;
+    transform: translateY(-2px);
+}
+
+.table-view {
+    width: auto;
+    overflow: scroll;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    max-height: 500px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-collapse: collapse;
+}
+
+.column-heading {
+    font-weight: 700;
+    border: 1px solid gray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    text-align: center;
+    background-color: white;
+    padding: 5px;
+    border-collapse: collapse;
+
+}
+
+.row-data {
+    border: 1px solid lightgray;
+    margin: 0;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-collapse: collapse;
+}
+
+.image {
+    flex-direction: column;
+}
+
+.first {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.view-area {
+    position: sticky;
+    right: -10px; /* what a hack. [Ain't nobody reading this] */
+    background-color: white;
+    border: 1px solid gray;
+}
+
+.report-status {
+    font-weight: bold;
+    flex-shrink: 1;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-status p{
+    display: inline;
+    width: max-content;
+    margin: 4px;
+    border-radius: 50px;
+}
+
+.report-text{
+    display: inline;
+}
+
+.status-report {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 2px;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading {
+    position: sticky;
+    left: 4px;
+    border: none;
+}
+
+button {
+    height: 50px;
+    margin: 10px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 700;
+    border: none;
+}
+
+.submit {
+    background-color: #367b39;
+}
+
+.cancel {
+    background-color: red;
+}
+
+.submit:hover {
+    background-color: darkgreen;
+}
+
+.cancel:hover {
+    background-color: darkred;
+}
+
+.view-icon {
+    width: 70px;
+    background-color: #367b39;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.refresh {
+    width: 100px;
+    display: flex;
+    background-color:#0098ff;
+    justify-items: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.refresh-text, .view-text{
+    margin: 1px;
+    display: flex;
+    transition: 1s;
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    margin: auto;
+}
+
+.refresh:hover p{
+    width: 0px;
+    transform: translateX(50px);
+    transition: 1s;
+    margin-right: 0px;
+}
+
+.refresh:hover img{
+    margin: auto;
+    transform: rotateZ(180deg);
+    transition: 1.5s;
+}
+
+.data-loading{
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    flex-direction: row;
+    max-height: max-content;
+}
+
+.grid-layout{
+    display: grid;
+    grid-template-rows: 1fr 2fr;
+    align-items: center;
+    justify-content: center;
+    grid-template-columns: 1fr;
+    z-index: 0;
+    border: #555;
+    column-gap: 5px;
+}
+
+.edit {
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    display: inline-flex;
+    padding: 0px;
+    margin: auto;
+    transition: 300ms;
+}
+
+.edit:hover {
+    border-bottom: 3px solid gray;
+    transition: 500ms;
+}
+
+.view-icon:hover img{
+    margin: 0;
+    opacity: 1;
+    height: 30px;
+    transform: rotateZ(180deg) translateX(-50%);
+    transition: 1s;
+}
+
+.view-icon:hover p{
+    margin: 0;
+    opacity: 0;
+    transform: rotateZ(180deg) translateX(50%);
+    transition: 1s;
+}
+
+.view-icon img {
+    transform: translateX(50%);
+    position: relative;
+    opacity: 0;
+    transition: 1s;
+    height: 0;
+}
+
+.view-icon p {
+    position: relative;
+    opacity: 1;
+    transform: translateX(-50%);
+}
+
+.refresh img {
+    display: inline;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    transition: 1s;
+}
+
+p.refresh-text{
+    width: 50px;
+    margin: 0;
+}
+
+div.report-status {
+    font-weight: bold;
+    flex-shrink: 1;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+div.report-status p {
+    display: inline;
+    width: max-content;
+    margin: 4px;
+    border-radius: 50px;
+}
+
+.report-text {
+    display: inline;
+}
+
+.status-report {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 2px;
+}
+
+.edit-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.edit-form input {
+    max-width: 200px;
+}
+
+/* HTMX CSS below */
+
+.rows.htmx-request .refresh img {
+    animation-name: rotateAboutZ;
+    animation-iteration-count: infinite;
+    animation-duration: 1s;
+}
+
+.rows.htmx-added .row-data {
+    background-color: yellow;
+}
+
+.rows.htmx-request .row-data {
+    opacity: 0.5;
+}
+
+.rows.htmx-request .view-area {
+    opacity: 1;
+}
+
+
+

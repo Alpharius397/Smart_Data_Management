@@ -51,7 +51,7 @@
     {% endblock %}
 
 {% block headerLeft %}
-    <button class="user-log" onclick="redirect(`{% url 'View:table' id=id %}`)">Back To Table View</button>
+    <a class="user-log" onclick="redirect(`{% url 'View:table' id=id %}`)">Back To Table View</a>
 {% endblock %}
 
 {% block headerCenter %}

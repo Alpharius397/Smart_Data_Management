@@ -10,74 +10,76 @@
     </div>
     
 {% else %}
+
     {% for idx,i in result %} 
-    <tr hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest tr" hx-swap="outerHTML settle:500ms">
+
+        <div class="rows" hx-get="{% url 'View:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
             {% for j,k in i.values|enum %}
 
                 {% if column|index:j|in:image %}
                     {% with image=k|img %}
-
                         {% if admin is True and feed|index:idx|index_str:'locked' is not True %}
-                            <td class="img"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}" id="img_{{idx}}">
+                            <div class="row-data image"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}" id="img_{{idx}}">
                         
-                            <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
+                                <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
                             
-                                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                            
-                                {% if error %}
-                                    <ul class="messages">
-                                        <li class="error">{{error}}</li>
-                                    </ul>
-                                {% endif %}
+                                    <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                                
+                                    {% if error %}
+                                        <ul class="messages">
+                                            <li class="error">{{error}}</li>
+                                        </ul>
+                                    {% endif %}
+                                </div>
                             </div>
-                        </td>
 
                         {% else %}
-                            <td><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></td>
+
+                            <div class="row-data"><img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}"></div>
+
                         {% endif %}
 
                     {% endwith %}
 
                 {% else %}
-                    <td>
-                        {% if admin is True and feed|index:idx|index_str:'status' is not True %}
-                            <div hx-get="{% url 'View:edit' id=id idx=idx %}" hx-vals='{"column":"{{j}}","value":"{{k}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
-                                {{k|str}}
-                                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                
-                                {% if error %}
-                                    <ul class="messages">
-                                        <li class="error">{{error}}</li>
-                                    </ul>
-                                {% endif %}
-                            </div>
+                    <div class="row-data">
 
-                        {% else %}
-                            <div>
-                                {{k|str}}
-                            </div>
-                        {% endif %}
-                    </td>
+                    {% if admin is True and feed|index:idx|index_str:'status' is not True %}
+                        <div hx-get="{% url 'View:edit' id=id idx=idx %}" 
+                            hx-vals='{"column":"{{j}}","value":"{{k}}"}' 
+                            hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find button">
 
-                {% endif %}
+                            {{k|str}}
+                            <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
 
-            {% endfor %}
-
-            <td class="next-button">
-                <div class="grid-layout">
-                    <div class="data-loading">
-                        <button class="view-icon" onclick="window.location.replace('{% url 'View:index' id=id idx=idx %}');">
-                            <img src="{% static 'img/view.png' %}" alt="Refresh Page">
-                            <p class="view-text">View</p>
-                        </button>
-
-                        <div class="refresh-button">
-                            <div >
-                                <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
-                            </div>
                         </div>
 
+                    {% else %}
+                        <div>
+                            {{k|str}}
+                        </div>
+                    {% endif %}
+                </div>
+
+            {% endif %}
+
+        {% endfor %}
+
+        <div class="row-data view-area">
+            <div class="grid-layout">
+                <div class="data-loading">
+                    <button class="view-icon" onclick="window.location.replace(`{% url 'View:index' id=id idx=idx %}`);">
+                        <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                        <p class="view-text">View</p>
+                    </button>
+
+                    <div class="refresh-button">
+                        <div >
+                            <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                        </div>
                     </div>
+
+                </div>
 
                 <div class="status-report">
                     <div class="report-status">
@@ -100,28 +102,17 @@
                         <p>Issue Status: </p> {% if feed|index:idx|index_str:'issued' is True %}<p id="correct">Issued</p>{% else %}<p id="wrong">Not Issued</p>{% endif %}</div>
                     </div>
                 </div>
-            </td>
-        </tr>
+            </div>
+        </div>
 
         {% if forloop.last %}
             <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-swap="outerHTML">
-                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
-            </div>
-        {% endif %}
-    {% empty %}
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Loading...</h2>
 
-        {% if empty %}
-            <div class="loading">
-                <ul class="messages">
-                    <li class="error"><span>End of Search Reached</span></li>
-                </ul>
             </div>
-        {% else %}
-            <div class="loading" hx-get="{% url 'View:search_row' id=id %}" hx-vals= '{"page": "{{ max_record }}", "column": "{{ request.GET.column }}", "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' hx-trigger="intersect once" hx-swap="outerHTML">
-                <img src="{% static 'img/spinner.gif' %}" alt="Loading">
-            </div>
-            
         {% endif %}
 
     {% endfor %}
+
 {% endif %}

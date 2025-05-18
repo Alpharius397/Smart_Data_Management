@@ -165,6 +165,7 @@ dialog .dialog-button {
 }
 
 .messages li {
+    display: block;
     padding: 10px 15px;
     margin-bottom: 10px;
     border-radius: 8px;
@@ -247,6 +248,20 @@ dialog .dialog-button {
     }
 }
 
-
+.next-button {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-family: Arial, sans-serif;
+    color: #ffffff;
+    background-color: #4caf50;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
 
 

@@ -8,7 +8,7 @@
     <h4>Uploader: {{upload}}</h4>
     <h4>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h4>
 
-    <form hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:#assign" hx-target="closest .assign" hx-swap="outerHTML">
+    <form hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML">
         {% csrf_token %}
         Add a user
 
@@ -21,10 +21,10 @@
 
         </select>
 
-        <button id="assign">Assign User</button>
+        <button class="submit">Assign User</button>
     </form>
 
-    <form hx-delete="{% url 'View:assign' id=id %}" id="unassign-form" hx-trigger="click from:#delete" hx-target="closest .assign" hx-swap="outerHTML">
+    <form hx-delete="{% url 'View:assign' id=id %}" id="unassign-form" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML">
         {% csrf_token %}
 
         Delete a user
@@ -36,7 +36,7 @@
             {% endfor %}
         </select>
 
-        <button type='cancel' id="delete">Unassign User</button>
+        <button type='cancel' class="cancel">Unassign User</button>
     </form>
 </div>
 

@@ -1,11 +1,18 @@
 {% load template %}
 {% load static %}
 
+<style>
+    .rows {
+        display: grid;
+        grid-template-columns: repeat({{column|len|add:1}}, 250px);
+    }
+
+</style>
 <div class="tab">
 
     <div class="searchQuery">
         <h2>Search Columns: </h2>
-        <form hx-get="{% url 'View:search_row' id=id %}" hx-target="#tableBody" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();" onsubmit="event.preventDefault();">
+        <form hx-get="{% url 'View:search_row' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" hx-on::after-request="dontAskWhy();" onsubmit="event.preventDefault();">
             
             <div class="form-field">
                 <label for="search">Search For: </label>
@@ -24,58 +31,60 @@
                 </select>
             </div>
 
-        <h3> Additional Search: </h3>
-            
-            <label for="status">Status: </label>
-            <select name="status" id="status" class="searchSelect">
-                <option value="">----------</option>
-                <option value="none">Unchecked</option>
-                <option value="true">Verified</option>
-                <option value="false">Rejected</option>
-            </select>
+            <h3> Additional Search: </h3>
+                
+            <div class="form-field">
 
-            <label for="lock">Locked: </label>
-            <select name="lock" id="lock" class="searchSelect">
-                <option value="">----------</option>
-                <option value="true">Locked</option>
-                <option value="false">Not Locked</option>
-            </select>
+                <label for="status">Status: </label>
+                <select name="status" id="status" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="none">Unchecked</option>
+                    <option value="true">Verified</option>
+                    <option value="false">Rejected</option>
+                </select>
+            </div>
 
-            <label for="issue">Issued: </label>
-            <select name="issue" id="issue" class="searchSelect">
-                <option value="">----------</option>
-                <option value="true">Issued</option>
-                <option value="false">Not Issued</option>
-            </select>
+            <div class="form-field">
 
+                <label for="lock">Locked: </label>
+                <select name="lock" id="lock" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="true">Locked</option>
+                    <option value="false">Not Locked</option>
+                </select>
+            </div>
+
+            <div class="form-field">
+
+                <label for="issue">Issued: </label>
+                <select name="issue" id="issue" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="true">Issued</option>
+                    <option value="false">Not Issued</option>
+                </select>
+
+            </div>
+        </form>
+    </div>
+
+
+    <div class="table-view">
+        <div class="rows first">
+            {% for i in column %}
+                <p class="column-heading">{{i}}</p>
+            {% endfor %}
+            <p class="column-heading view-area">View Data</p>
         </div>
-
-
-    <div class="tableView" id="tableView">
-        <div class="dont-ask-why-this"></div>
-        <div class="table-box">
-            <table id="display-table">
-                <thead>
-                    <tr>
-                        {% for i in column %}
-                            <th><p>{{i}}</p></th>
-                        {% endfor %}
-                        <th class="next-button"><p>View Data</p></th>
-                    </tr>
-                </thead>
-                
-                <tbody id="tableBody">
-                    <tr id="loading" 
-                        hx-get="{% url 'View:search_row' id=id %}" 
-                        hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", 
-                                   "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", 
-                                   "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' 
-                        hx-trigger="load" hx-target='this' hx-swap="outerHTML settle:500ms">
-                </tbody>
-                
-            </table>
+        <div class="change-me">
+            <div class="rows first"
+                hx-get="{% url 'View:search_row' id=id %}" 
+                hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", 
+                            "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", 
+                            "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' 
+                hx-trigger="load" hx-target='this' hx-swap="outerHTML settle:500ms">
         </div>
     </div>
+</div>
 
     {% if admin is True %}
         <div class="assign" id="outerDIV" hx-get="{% url 'View:assign' id=id %}" hx-trigger="load" hx-swap="outerHTML"></div>

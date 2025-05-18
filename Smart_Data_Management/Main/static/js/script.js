@@ -12,8 +12,8 @@ function get_select(value){
 
 function get_header(){
     const hamBurger = document.querySelector(".hamburger");
-    const headerLeft = document.querySelector(".header-left a")?.cloneNode(true);
-    const headerRight = document.querySelector(".header-right a")?.cloneNode(true);
+    const headerLeft = document.querySelector(".header-left")?.cloneNode(true);
+    const headerRight = document.querySelector(".header-right")?.cloneNode(true);
     const hamBurgerOption = document.querySelector(".header-option");
 
     hamBurgerOption.appendChild(headerLeft);

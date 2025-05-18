@@ -9,7 +9,7 @@ from Main.settings import settingsInterface as settings # type: ignore
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
-from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, OneToOneField
+from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, TextField
 from django.contrib.auth.models import User
 from .validators import AdminValidator, ManagerValidator, MinValueValidator
 from django.contrib.postgres.fields import ArrayField
@@ -891,7 +891,7 @@ class DataTable(Model):
     _id = AutoField(verbose_name="DataID", primary_key=True)
     fileID = ForeignKey(to=FileTable, verbose_name="FileID", related_name="data", on_delete=RESTRICT)
     rowIndex = IntegerField(verbose_name="Row Index", null=False, blank=False, validators=[MinValueValidator(0,"Row Index cannot be negative")])
-    excel = ArrayField(CharField(max_length=10000, verbose_name="Row Data", null=True, blank=True), null=False, blank=False)
+    excel = ArrayField(TextField(verbose_name="Row Data", null=True, blank=True), null=False, blank=False)
     
     locked = BooleanField(verbose_name="Lock Status", null=True, blank=True, default=None)
     issued = BooleanField(verbose_name="Issue Status", null=True, blank=True, default=False)

@@ -2,5 +2,5 @@
 {% load template %}
 
 {% block upload_button %}
-    <button class="add-task" onclick="redirect(`{% url 'Upload:view_edit' id=id %}`)">Edit Data</button>
+    <a class="next-button edit-task" onclick="redirect(`{% url 'Upload:view_edit' id=id %}`)">Edit Data</a>
 {% endblock %}

@@ -1,7 +1,7 @@
-<form hx-post="{% url 'View:edit' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}","old":"{{value}}"}' hx-target="this" hx-trigger="click from:find #submit" onsubmit="event.preventDefault()" id="form">
+<form class="edit-form" hx-post="{% url 'View:edit' id=id idx=idx %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}","old":"{{value}}"}' hx-target="closest form" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
     {% csrf_token %}
     <input type="text" name="value" value="{{value}}">
-    <button type="submit" value="Change" id="submit">Change</button>
-    <button type="cancel" value="Discard" id="cancel" hx-trigger="click from:closest #cancel" hx-get="{% url 'View:normal' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest #form" hx-vals='{"column":"{{column}}","value":"{{value}}"}'>Cancel</button>
+    <button type="submit" value="Change" class="submit">Change</button>
+    <button type="cancel" value="Discard" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'View:normal' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest form" hx-vals='{"column":"{{column}}","value":"{{value}}"}'>Cancel</button>
 
 </form>
