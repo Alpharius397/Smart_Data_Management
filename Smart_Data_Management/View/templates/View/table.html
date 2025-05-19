@@ -12,11 +12,6 @@
 
 {% block cssStyle %}
 
-        img{
-            width: 200px;
-            display: block;
-            margin: 10px auto;
-        }
 
         #verify{
             color:#4CAF50;
@@ -121,46 +116,62 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form onsubmit="event.preventDefault()">
+            <form onsubmit="event.preventDefault();">
                 
-                <label for="column">Column: </label>
-                <select name="column" id="column">
-                    <option value>-----------</option>
-                </select>
-
-                <label for="search">Containing: </label>
-
-                <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword">
+                <div class="form-field">
+                    <label for="search">Search For: </label>
+                    <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}">
+                    <datalist id="suggests" autocomplete="false">
+                    </datalist>
+                </div>
+    
+                <div class="form-field">
+                    <label for="column">in Column: </label>
+                    <select name="column" id="column" class>
+                        <option value="">----------</option>
+                    </select>
+                </div>
+    
                 <h3> Additional Search: </h3>
-            
-                <label for="status">Status: </label>
-                <select name="status" id="status" class="searchSelect">
-                    <option value="">----------</option>
-                    <option value="none">Unchecked</option>
-                    <option value="true">Verified</option>
-                    <option value="false">Rejected</option>
-                </select>
+                    
+                <div class="form-field">
     
-                <label for="lock">Locked: </label>
-                <select name="lock" id="lock" class="searchSelect">
-                    <option value="">----------</option>
-                    <option value="true">Locked</option>
-                    <option value="false">Not Locked</option>
-                </select>
+                    <label for="status">Status: </label>
+                    <select name="status" id="status" class="searchSelect">
+                        <option value="">----------</option>
+                        <option value="none">Unchecked</option>
+                        <option value="true">Verified</option>
+                        <option value="false">Rejected</option>
+                    </select>
+                </div>
     
-                <label for="issue">Issued: </label>
-                <select name="issue" id="issue" class="searchSelect">
-                    <option value="">----------</option>
-                    <option value="true">Issued</option>
-                    <option value="false">Not Issued</option>
-                </select>
+                <div class="form-field">
+    
+                    <label for="lock">Locked: </label>
+                    <select name="lock" id="lock" class="searchSelect">
+                        <option value="">----------</option>
+                        <option value="true">Locked</option>
+                        <option value="false">Not Locked</option>
+                    </select>
+                </div>
+    
+                <div class="form-field">
+    
+                    <label for="issue">Issued: </label>
+                    <select name="issue" id="issue" class="searchSelect">
+                        <option value="">----------</option>
+                        <option value="true">Issued</option>
+                        <option value="false">Not Issued</option>
+                    </select>
+    
+                </div>
             </form>
-
         </div>
 
 
-        <div class="tableView">
-            <img src="{% static 'img/spinner.gif' %}" alt="Loading">
+        <div class="loading">
+            <img src="{% static 'images/spinner.png' %}" alt="Loading">
+            <h2>Fetching data...</h2>
         </div>
     </div>
 </div>

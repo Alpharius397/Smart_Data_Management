@@ -23,8 +23,10 @@
                         
                                 <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
                             
-                                    <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-                                
+                                    <button class="edit-button">
+                                        <img src="{% static 'img/edit.svg' %}">
+                                        <span class="popup">Edit this</span>
+                                    </button>
                                     {% if error %}
                                         <ul class="messages">
                                             <li class="error">{{error}}</li>
@@ -50,7 +52,10 @@
                             hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find button">
 
                             {{k|str}}
-                            <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+                            <button class="edit-button">
+                                <img src="{% static 'img/edit.svg' %}">
+                                <span class="popup">Edit this</span>
+                            </button>
 
                         </div>
 
@@ -74,9 +79,7 @@
                     </button>
 
                     <div class="refresh-button">
-                        <div >
-                            <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
-                        </div>
+                        <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                     </div>
 
                 </div>
@@ -104,5 +107,7 @@
                 </div>
             </div>
         </div>
+
     {% endfor %}
+
 {% endif %}

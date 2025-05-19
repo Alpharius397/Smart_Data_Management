@@ -21,7 +21,7 @@ form {
 
 .form-field {
     margin: 5px;
-    display: inline;
+    display: inline-block;
 }
 
 .form-field label {
@@ -103,10 +103,8 @@ input::placeholder {
     width: auto;
     overflow: scroll;
     border: 1px solid lightgray;
-    border-radius: 8px;
     max-height: 500px;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding: 0px 10px 0px 0px;
     border-collapse: collapse;
 }
 
@@ -132,10 +130,17 @@ input::placeholder {
     align-items: center;
     justify-content: center;
     border-collapse: collapse;
+    transition: 1s;
 }
 
 .image {
     flex-direction: column;
+}
+
+.image img {
+    width: 210px;
+    display: block;
+    margin: 10px auto;
 }
 
 .first {
@@ -149,6 +154,10 @@ input::placeholder {
     right: -10px; /* what a hack. [Ain't nobody reading this] */
     background-color: white;
     border: 1px solid gray;
+}
+
+.full-row {
+    grid-column: 1/-1;
 }
 
 .report-status {
@@ -182,8 +191,15 @@ input::placeholder {
 
 .loading {
     position: sticky;
-    left: 4px;
+    right: 4px;
     border: none;
+    display: flex;
+}
+
+.full-flex-row {
+    display: flex;
+    overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 button {
@@ -211,25 +227,32 @@ button {
     background-color: darkred;
 }
 
+.change-me {
+    display: flex;
+    flex-direction: column;
+}
+
 .view-icon {
-    width: 70px;
+    width: 75px;
     background-color: #367b39;
     display: flex;
     justify-content: center;
     align-items: center;
+    align-content: center;
+    padding: 0px 5px 0px 5px;
 }
 
 .refresh {
     width: 100px;
     display: flex;
     background-color:#0098ff;
-    justify-items: center;
+    justify-content: space-evenly;
     align-items: center;
+    align-content: center;
     overflow: hidden;
 }
 
-.refresh-text, .view-text{
-    margin: 1px;
+.refresh-text, .view-text {
     display: flex;
     transition: 1s;
     align-content: center;
@@ -238,14 +261,26 @@ button {
     margin: auto;
 }
 
-.refresh:hover p{
+.refresh-text {
+    width: 50px;
+    margin: 0;
+    padding: 0;
+}
+
+.view-text {
+    width: 30px;
+    margin: 0;
+    padding: 0;
+}
+
+.refresh:hover p, .rows.htmx-request .refresh p{
     width: 0px;
     transform: translateX(50px);
     transition: 1s;
     margin-right: 0px;
 }
 
-.refresh:hover img{
+.refresh:hover img, .rows.htmx-request .refresh img{
     margin: auto;
     transform: rotateZ(180deg);
     transition: 1.5s;
@@ -271,33 +306,74 @@ button {
     column-gap: 5px;
 }
 
-.edit {
+.edit-button {
     width: 20px;
     height: 20px;
     background-color: white;
     display: inline-flex;
     padding: 0px;
     margin: auto;
-    transition: 300ms;
 }
 
-.edit:hover {
-    border-bottom: 3px solid gray;
-    transition: 500ms;
+.edit-button img {
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    display: inline-flex;
+    padding: 0px;
+    margin: auto;
+}
+
+.popup {
+    visibility: hidden;
+    background-color: #555;
+    color: #fff;
+    border-radius: 6px;
+    padding: 8px 0;
+    position: relative;
+    z-index: 0;
+    bottom: 50px;
+    left: 30px;
+    margin-left: -80px;
+    height: fit-content;
+    width: fit-content;
+    animation: fadeOut 1s;
+}
+
+.popup::after {
+    content: "";
+    position: relative;
+    top: 28px;
+    right: 12px;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+@keyframes fadeOut {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
+.edit-button:hover .popup {
+    visibility: visible;
+    animation: fadeIn 1s;
 }
 
 .view-icon:hover img{
-    margin: 0;
     opacity: 1;
     height: 30px;
-    transform: rotateZ(180deg) translateX(-50%);
     transition: 1s;
 }
 
 .view-icon:hover p{
-    margin: 0;
     opacity: 0;
-    transform: rotateZ(180deg) translateX(50%);
     transition: 1s;
 }
 
@@ -307,6 +383,7 @@ button {
     opacity: 0;
     transition: 1s;
     height: 0;
+    width: 30px
 }
 
 .view-icon p {
@@ -323,7 +400,7 @@ button {
     transition: 1s;
 }
 
-p.refresh-text{
+.refresh-text {
     width: 50px;
     margin: 0;
 }
@@ -366,6 +443,10 @@ div.report-status p {
     max-width: 200px;
 }
 
+.assign-form {
+    margin-left: 10px;
+}
+
 /* HTMX CSS below */
 
 .rows.htmx-request .refresh img {
@@ -376,6 +457,7 @@ div.report-status p {
 
 .rows.htmx-added .row-data {
     background-color: yellow;
+    transition: 1s;
 }
 
 .rows.htmx-request .row-data {
@@ -386,5 +468,12 @@ div.report-status p {
     opacity: 1;
 }
 
+/* Media Query */
 
 
+@media screen and (max-width: 600px) {
+    .view-area {
+        position: relative;
+        right: 0px;
+    }
+}

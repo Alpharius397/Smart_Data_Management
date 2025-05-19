@@ -3,41 +3,50 @@
 
 <div class="assign">
 
-    <h3> Assign Task </h3>
+    <h2> Assign Task </h2>
 
-    <h4>Uploader: {{upload}}</h4>
-    <h4>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h4>
+    <div class="assign-form">
+        <h3>Uploader: {{upload}}</h3>
+        <h3>Manager: {% for _,i in manage.items %} {{i}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h3>
 
-    <form hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML">
-        {% csrf_token %}
-        Add a user
+        <form style="margin-left:0px;" hx-put="{% url 'View:assign' id=id %}" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="assign-user">Add a user: </label>
+                <select name="user" id="assign-user" required>
+                    <option value>--------</option>
 
-        <select name="user" required>
-            <option value>--------</option>
+                    {% for i,j in option.items %}
+                        <option value="{{i}}">{{j}}</option>
+                    {% endfor %}
 
-            {% for i,j in option.items %}
-                <option value="{{i}}">{{j}}</option>
-            {% endfor %}
+                </select>
+            </div>
 
-        </select>
 
-        <button class="submit">Assign User</button>
-    </form>
+            <button class="submit">Assign User</button>
+        </form>
 
-    <form hx-delete="{% url 'View:assign' id=id %}" id="unassign-form" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML">
-        {% csrf_token %}
+        <form style="margin-left:0px;" hx-delete="{% url 'View:assign' id=id %}" hx-trigger="click from:find button" hx-target="closest .assign" hx-swap="outerHTML" onsubmit="event.preventDefault()">
+            {% csrf_token %}
 
-        Delete a user
-        <select name="user" required>
-            <option value>--------</option>
+            <div class="form-field">
 
-            {% for i,j in manage.items %}
-                <option value="{{i}}">{{j}}</option>
-            {% endfor %}
-        </select>
+                <label for="unassign-user">Delete a user: </label>
+                
+                <select name="user" id="unassign-user" required>
+                    <option value>--------</option>
 
-        <button type='cancel' class="cancel">Unassign User</button>
-    </form>
+                    {% for i,j in manage.items %}
+                        <option value="{{i}}">{{j}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+            <button type='cancel' class="cancel">Unassign User</button>
+        </form>
+    </div>
 </div>
 
 {% if msg or error %}

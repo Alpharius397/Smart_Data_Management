@@ -7,6 +7,11 @@
         grid-template-columns: repeat({{column|len|add:1}}, 250px);
     }
 
+    
+    .full-flex-row {
+        width: calc({{column|len|add:1}}*250px);
+    }
+
 </style>
 <div class="tab">
 
@@ -73,24 +78,47 @@
             {% for i in column %}
                 <p class="column-heading">{{i}}</p>
             {% endfor %}
-            <p class="column-heading view-area">View Data</p>
+
+            {% if column %}
+                <p class="column-heading view-area">View Data</p>
+            {% endif %}
         </div>
         <div class="change-me">
-            <div class="rows first"
+            <div class="full-flex-row"
                 hx-get="{% url 'View:search_row' id=id %}" 
                 hx-vals= '{"page": "0", "column": "{{ request.GET.column }}", 
                             "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}", 
                             "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}' 
                 hx-trigger="load" hx-target='this' hx-swap="outerHTML settle:500ms">
+                    <div class="loading">
+                        <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                        <h2>Fetching data...</h2>
+                    </div>
+            </div>
         </div>
     </div>
 </div>
+<script>
+    const a = document.querySelector(".table-view");
+    const b = document.querySelector(".loading");
+    b.style.left = a.scrollLeft+ ((a.offsetWidth-b.offsetWidth)/2) + 'px'; // Initial Load
+
+
+    a.addEventListener("scroll", ()=>{
+        const b = document.querySelector(".loading");
+
+        if(b==null) return;
+
+        b.style.left = a.scrollLeft+ ((a.offsetWidth-b.offsetWidth)/2) + 'px';
+    });
+
+</script>
+<div class="tab">
 
     {% if admin is True %}
         <div class="assign" id="outerDIV" hx-get="{% url 'View:assign' id=id %}" hx-trigger="load" hx-swap="outerHTML"></div>
         <ul class="messages" id="messages"></ul>
         
     {% endif %}
-</div>
 </div>
 

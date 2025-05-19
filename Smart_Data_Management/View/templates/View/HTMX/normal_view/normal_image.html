@@ -1,19 +1,20 @@
 {% load template %}
 {% load static %}
 
+{% if error %}
+    <script>alert("{{error}}");</script>
+{% endif %}
 
 {% if not locked %}
 
-        <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{column}}"}' hx-swap="outerHTML" hx-target="closest div" hx-trigger="click from:find #edit">
+    <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{column}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
         
-            <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+        <button class="edit-button">
+            <img src="{% static 'img/edit.svg' %}">
+            <span class="popup">Edit this</span>
+        </button>
 
-        </div>
-
-        {% if error %}
-            <script>alert("{{error}}");</script>
-        {% endif %}
-
+    </div>
 
 {% endif %}
 

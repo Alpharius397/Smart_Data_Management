@@ -229,7 +229,7 @@ def assign_form(req:HttpRequest, id:str) -> HttpResponse:
                 else:
                     manager.update({_manage.user.id:all_manager.pop(_manage.user.id, None)})
                     updateManagers.update({"$push":{"header.manager":_manage.user.id}})
-                    context['msg'] = "Add Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
+                    context['msg'] = "Added Manager %(manage)s to task ID %(id)s" % {'manage':_manage.user.username,'id':id}
                 
             else:
                 
