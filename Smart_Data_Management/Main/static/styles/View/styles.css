@@ -312,7 +312,7 @@ button {
     background-color: white;
     display: inline-flex;
     padding: 0px;
-    margin: auto;
+    margin: 0px;
 }
 
 .edit-button img {
@@ -321,7 +321,7 @@ button {
     background-color: white;
     display: inline-flex;
     padding: 0px;
-    margin: auto;
+    margin: 0px;
 }
 
 .popup {
@@ -329,11 +329,11 @@ button {
     background-color: #555;
     color: #fff;
     border-radius: 6px;
-    padding: 8px 0;
+    padding: 8px 0px 8px 5px;
     position: relative;
     z-index: 0;
-    bottom: 50px;
-    left: 30px;
+    bottom: 35px;
+    left: 37px;
     margin-left: -80px;
     height: fit-content;
     width: fit-content;
@@ -344,7 +344,7 @@ button {
     content: "";
     position: relative;
     top: 28px;
-    right: 12px;
+    right: 25px;
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
