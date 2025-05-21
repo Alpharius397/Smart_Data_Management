@@ -26,7 +26,12 @@ const aes_key_2 string = "dpI56CKiEN8R0Lcx"
 
 func aesEncrypt(ciphertext *[]byte, plaintext []byte, key string, iv *[]byte){
 
-	block, _ := aes.NewCipher([]byte(key))
+	block, err := aes.NewCipher([]byte(key))
+
+	if err != nil {
+		panic(err)
+	}
+
 	mode := cipher.NewCBCEncrypter(block, *iv)
 	
 	mode.CryptBlocks(*ciphertext, plaintext)
@@ -34,8 +39,12 @@ func aesEncrypt(ciphertext *[]byte, plaintext []byte, key string, iv *[]byte){
 
 func aesDecrypt(plaintext *[]byte, ciphertext []byte, key string, iv *[]byte){
 	
-	block, _ := aes.NewCipher([]byte(key))
+	block, err := aes.NewCipher([]byte(key))
 	mode := cipher.NewCBCDecrypter(block, *iv)
+
+	if err != nil {
+		panic(err)
+	}
 
 	mode.CryptBlocks(*plaintext, ciphertext)
 
@@ -68,27 +77,41 @@ func getAuthKey() string {
 	date := []byte(time.Now().Add(adding5minutes).Format("15:04:02:01:2006"))
 	
 	iv := make([]byte, aes.BlockSize)
-	_, _ = io.ReadFull(rand.Reader, iv)
+	paddingIV := make([]byte, 2)
+	_, err := rand.Read(iv)
+	_, err = rand.Read(paddingIV)
+
+	if err != nil {
+		panic(err)
+	}
+
 	pad(&date)
 	token := make([]byte, len(date))
+
 	aesEncrypt(&token, date, aes_key_1, &iv)
 	aesEncrypt(&token, token, aes_key_2, &iv)
 
-	var finalToken strings.Builder
+	iv = append(iv, paddingIV...)
+	iv = append(iv, token...)
 
-	finalToken.WriteString(base64.StdEncoding.EncodeToString(iv))
-	finalToken.WriteString(base64.StdEncoding.EncodeToString(token))
-
-	return finalToken.String()
+	return base64.StdEncoding.EncodeToString(iv)
 }
 
+// Sample function to decode data
 func getDateTime(data string) string {
 
 	_iv := data[:24]
 	_ciphertext := data[24:]
 
-	iv, _ := base64.StdEncoding.DecodeString(_iv)
-	ciphertext, _ := base64.StdEncoding.DecodeString(_ciphertext)
+	iv, err := base64.StdEncoding.DecodeString(_iv)
+	ciphertext, err := base64.StdEncoding.DecodeString(_ciphertext)
+
+	if err != nil {
+		panic(err)
+	}
+
+	iv = iv[:len(iv)-2] // remove padded bytes
+
 	token := make([]byte, len(ciphertext))
 
 	aesDecrypt(&token, ciphertext, aes_key_2, &iv)
@@ -112,7 +135,7 @@ func extractMsg(s string) (string, bool) {
 
 // Get the url from the args
 func get_url(s string) (string, error) {
-	re := regexp.MustCompile("(?P<proto>https|http)//(?P<url>[a-zA-Z0-9.:/]+)$")
+	re := regexp.MustCompile("(?P<proto>https|http)//(?P<url>[a-zA-Z0-9+-_.:/]+)$")
 	matches := re.FindStringSubmatch(s)
 
 	if(matches==nil || s==""){
@@ -528,21 +551,38 @@ func main(){
 	if len(os.Args[1:]) == 0 {
 
 		fileName, err := os.Executable()
+		logFile, err := os.OpenFile(windows_url_join(get_last_windows(fileName),"app.log"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 
 		if err != nil {
 			log.Fatalf("Error: %s", err)
 		}
 
+		Log := log.New(logFile,"",log.Lmsgprefix)
+		logger := Logger{logger: Log}.SetPrefix()
+
+		defer logFile.Close()
+		
+		defer func() {
+		
+			r := recover()
+	
+			if r != nil {
+				error_string := fmt.Sprintf("%+v\n", r)
+				logger.WriteError("PANIC", errors.New(error_string))
+			}
+		}()
+
 		err = readProtocol(fileName)
 		if err != nil {
-			log.Fatalf("Failed to set readExe protocol: %v", err)
+			logger.WriteError("ReadExe", err)
 		}
 
 		err = writeProtocol(fileName)
 		if err != nil {
-			log.Fatalf("Failed to writeExe protocol: %v", err)
+			logger.WriteError("WriteExe", err)
 		}
-		fmt.Printf("Registry Updated!")
+
+		logger.WriteInfo("Registry","Registry Updated!")
 		return
 	}
 	
