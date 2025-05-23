@@ -50,25 +50,34 @@ func aesDecrypt(plaintext *[]byte, ciphertext []byte, key string, iv *[]byte){
 
 }
 
-func pad(data *[]byte){
+func pad(data *[]byte, blockSize int){
 
-	alreadySize := bool((len(*data)%aes.BlockSize)==0)
+	paddingLength := blockSize - (len(*data)%(blockSize))
 
-	if alreadySize {
-		lastSlice := make([]byte, aes.BlockSize)
-		lastSlice[15] = byte(16)
-		*data = append(*data, lastSlice...)
-	} else {
-		lastIndex := aes.BlockSize - (len(*data)%aes.BlockSize)
-		lastSlice := make([]byte, lastIndex)
-		lastSlice[lastIndex-1] = byte(lastIndex)
-		*data = append(*data, lastSlice...)
+	lastSlice := make([]byte, 0)
+	for i:=0; i<paddingLength ; i++ {
+		lastSlice = append(lastSlice, byte(paddingLength))
 	}
 
+	*data = append(*data, lastSlice...)
 }
 
-func unpad(data *[]byte) {
+func unpad(data *[]byte, blockSize int) {
 	padLength := int((*data)[len(*data)-1])
+
+	if((padLength<1) || (padLength>min(blockSize, padLength))){
+		panic(errors.New("Incorrect padding length"))
+	}
+
+	lastSlice := make([]byte, 0)
+	for i:=0; i<padLength ; i++ {
+		lastSlice = append(lastSlice, byte(padLength))
+	}
+
+	if(string((*data)[(len(*data)-padLength):len(*data)]) != string(lastSlice)) {
+		panic(errors.New("Incorrect padding found"))
+	}
+
 	*data = (*data)[:(len(*data)-padLength)]
 }
 
@@ -85,7 +94,7 @@ func getAuthKey() string {
 		panic(err)
 	}
 
-	pad(&date)
+	pad(&date, aes.BlockSize)
 	token := make([]byte, len(date))
 
 	aesEncrypt(&token, date, aes_key_1, &iv)
@@ -116,7 +125,7 @@ func getDateTime(data string) string {
 
 	aesDecrypt(&token, ciphertext, aes_key_2, &iv)
 	aesDecrypt(&token, token, aes_key_1, &iv)
-	unpad(&token)
+	unpad(&token, aes.BlockSize)
 
 	return string(token)
 }
