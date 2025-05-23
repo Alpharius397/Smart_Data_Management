@@ -10,6 +10,5 @@ bash_script
 .venv
 .vscode
 *facade_exe*
-*go.mod*
-*go.sum*
-*.vscode*
+*go.*
+.*
