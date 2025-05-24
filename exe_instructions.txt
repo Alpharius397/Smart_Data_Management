@@ -1,0 +1,9 @@
+to run go file:
+    install go
+    go run {--file name--}.go
+
+to build for windows:
+    GOOS=windows GOARCH=amd64 go build
+
+to check different platforms:
+    go tool dist list
