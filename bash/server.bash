@@ -12,7 +12,7 @@ activate_django_venv(){
 }
 
 go_to_project(){
-    cd "$SMART/../"
+    cd "$SMART"
 }
 
 start_server(){
