@@ -2,13 +2,10 @@ tempCodeRunnerFile.*
 *migrations*
 *__pycache__*
 *Zone*
-bash_script
 *~$*
 *.log
 *app_log*
 *data_log*
 .venv
 .vscode
-*facade_exe*
-*go.*
 .*
