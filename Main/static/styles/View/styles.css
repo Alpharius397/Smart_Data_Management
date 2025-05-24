@@ -104,7 +104,7 @@ input::placeholder {
     overflow: scroll;
     border: 1px solid lightgray;
     max-height: 500px;
-    padding: 0px 10px 0px 0px;
+    padding: 0px 9.5px 0px 0px;
     border-collapse: collapse;
 }
 
@@ -240,6 +240,7 @@ button {
     align-items: center;
     align-content: center;
     padding: 0px 5px 0px 5px;
+    cursor: pointer;
 }
 
 .refresh {
@@ -250,6 +251,7 @@ button {
     align-items: center;
     align-content: center;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .refresh-text, .view-text {
@@ -284,6 +286,10 @@ button {
     margin: auto;
     transform: rotateZ(180deg);
     transition: 1.5s;
+}
+
+.rows.htmx-request .refresh, .rows.htmx-request .view-icon {
+    cursor:not-allowed;
 }
 
 .data-loading{

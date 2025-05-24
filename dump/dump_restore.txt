@@ -1,5 +1,0 @@
-for restoring (from Smart_Data_Management):
-    mongorestore --host="127.0.0.1:27017" --db="smart" --collection="excel" dump/smart/excel.bson
-
-for dumping (from Smart_Data_Management):
-    mongodump --host="127.0.0.1:27017" --db="smart" --collection="excel" --out="dump"

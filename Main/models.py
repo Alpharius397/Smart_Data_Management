@@ -9,7 +9,7 @@ from Main.settings import settingsInterface as settings # type: ignore
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
-from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, TextField
+from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, TextField, JSONField
 from django.contrib.auth.models import User
 from .validators import AdminValidator, ManagerValidator, MinValueValidator
 from django.contrib.postgres.fields import ArrayField
@@ -900,4 +900,5 @@ class DataTable(Model):
     status = BooleanField(verbose_name="Feedback Status", null=True, blank=True, default=None)
     feed = CharField(max_length=255, verbose_name="Feed Back")
     
-    
+class Sample(Model):
+    data = JSONField(verbose_name="data")

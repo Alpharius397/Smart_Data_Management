@@ -2,17 +2,20 @@
 
 
 {% if error %}
+
     <ul class="messages">
         <li class="error">{{error}}</li>
     </ul>
-
+    
 {% else %}
 
     {% for i in manage %}
         <div class="task-item">
-            <h3>Filename: {{i.file_name}}</h3>
+            <div class="task-title"><h3>Filename: {{i.file_name}}</h3></div>
+
             <button class="drop-down down" id="up_{{i.idx}}" onclick="addClass('.task-info#up_{{i.idx}}','open','close')&&addClass('.drop-down#up_{{i.idx}}','up','down')">&#11206;</button>
         </div>
+
         <div class="task-info close" id="up_{{i.idx}}">
             <div class="assigned">
                 <h4>
@@ -26,20 +29,18 @@
                             <p class="error-message">User was not found</p>
                         {% endif %}
 
-                        {% if not forloop.last %} , {% else %} . {% endif %}
+                        {% if not forloop.last %} , {% else %}.{% endif %}
 
                     {% empty %}
-                        No one Assigned Yet.
+                        <p class="error-message">No one Assigned Yet.</p>
                     {% endfor %}
                 </h4>
             </div>
-
             <a href="{% url 'View:table' id=i.id %}" class="next-button view-button">View Data</a>
         </div>
 
-        
         {% if forloop.last %}
-            <div hx-get="{% url 'Dash:admin_manage' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"query": "{{request.GET.query}}", "start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
+            <div hx-get="{% url 'Dash:manage' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"query": "{{request.GET.query}}", "start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
         {% endif %}
 
     {% endfor %}

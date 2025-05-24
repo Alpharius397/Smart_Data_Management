@@ -36,7 +36,7 @@ def getMongoID(cardID: str) -> tuple[str, int] | tuple[None, None]:
 def getCertificateData(certificate: str) -> Certificate | None:
     try:
         time, certiHash = certificate[:-64], certificate[-64:]
-        timeValid = authTokenCheck(time, False)
+        timeValid = authTokenCheck(time)
             
         return Certificate(certificateHash=certiHash, valid=timeValid)
 
