@@ -1,5 +1,4 @@
 from django.contrib import admin
-from User.models import Admin, UserObject
 from django.db.models import Q
 from User.models import is_admin
 from .models import FileTable

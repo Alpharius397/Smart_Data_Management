@@ -1,179 +1,124 @@
-from django.contrib.auth.models import User
-from django.db.models import OneToOneField,ForeignKey,Model,RESTRICT
+from django.contrib.auth.models import User # type: ignore
+from django.db.models import OneToOneField, ForeignKey, Model, RESTRICT, CASCADE, CharField # type: ignore
 from University.models import Branch, University, Institute
+from tools.typesCauseWhyNot import NullStr, NullInt
+from typing import Iterator, TypedDict
 
-class Manager(Model):
-    user:'UserObject' = OneToOneField(to=User,on_delete=RESTRICT,related_name='manager')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='manager')
+class RoleType:
+    UNKNOWN:str = 'Unknown'
+    STUDENT:str = 'Student'
+    MANAGER:str = 'Manager'
+    ADMIN:str = 'Admin'
+
+    @staticmethod
+    def getRole() -> Iterator[str]:
+        yield RoleType.STUDENT
+        yield RoleType.MANAGER
+        yield RoleType.ADMIN
     
-    def __str__(self):
-        return f"{self.user.username}:{self.belongs}"
+    @staticmethod
+    def isStudent(roleID: str) -> bool:
+        return RoleType.STUDENT==roleID
 
-class Admin(Model):
-    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='admin')
-    belongs = ForeignKey(to=Branch,null=True,blank=False,on_delete=RESTRICT,related_name='admin')
+    @staticmethod
+    def isManager(roleID: str) -> bool:
+        return RoleType.MANAGER==roleID
+    
+    @staticmethod
+    def isAdmin(roleID: str) -> bool:
+        return RoleType.ADMIN==roleID
 
-    def __str__(self):
-        return f"{self.user.username}:{self.belongs}"
+class PostNameDict(TypedDict):
+    university: str
+    institute: str
+    branch: str
+    
+class PostIdDict(TypedDict):
+    university: int
+    institute: int
+    branch: int
+    
+class Role(Model):
+    user:'User' = OneToOneField(to=User,on_delete=RESTRICT,related_name='role')
+    role = CharField(verbose_name="Role ID", max_length=10, choices=list(RoleType.getRole()), default=RoleType.UNKNOWN)
+    belongs = ForeignKey(to=Branch,null=False,blank=False,on_delete=RESTRICT)
 
-class Student(Model):
-    user = OneToOneField(to=User,on_delete=RESTRICT,related_name='student')
-
-    def __str__(self):
-        return f"{self.user.username}"
-
-class UserObject(User):
+class _User(User):
     id:int
-    student:Student
-    manager:Manager
-    admin:Admin
+    role:Role
+    
+    class Meta:
+        proxy = True
 
-def is_manager(user:UserObject) -> bool:
-    try:
-        manager = user.manager
-        return True
-    except Exception as e:
-        print(e)
-        return False
 
-def is_student(user:UserObject) -> bool:
-    try:
-        student = user.student
-        return True
-    except:
-        return False
+def is_manager(user: _User) -> bool:
+    return RoleType.isManager(user.role.role)
 
-def is_admin(user:UserObject) -> bool:
-    try:
-        admin = user.admin
-        return True
-    except:
-        return False
+def is_student(user: _User) -> bool:
+    return RoleType.isStudent(user.role.role)
 
-def get_user_by_id(id:int) -> str|None:
+def is_admin(user: _User) -> bool:
+    return RoleType.isAdmin(user.role.role)
+
+def get_user_by_id(id: int) -> NullStr:
     
     try:
-        user = User.objects.get(id=id)
+        user = _User.objects.get(id=id)
         return user.username        
     except:
         return None
 
-def get_user_id(name:int) -> int|None:
+def get_user_id(name: str) -> NullInt:
     
     try:
-        user:UserObject = User.objects.get(username=name)
+        user:_User = _User.objects.get(username=name)
         return user.id        
     except:
         return None
 
-def get_post(user: UserObject) -> dict[str,str|None]:
-    uni = None
-    insti = None
-    branch = None
-    
-    if(is_manager(user)):
-        user:Manager = user.manager
+def get_post(user: _User) -> PostNameDict:
 
-    elif(is_admin(user)):
-        user:Admin = user.admin
-        
-    else:
-        return {'university':uni,'institute':insti,'branch':branch}
+    role:Role = user.role
     
-    branch = user.belongs
+    branch = role.belongs
     insti = branch.institute
     uni = insti.university
     
-    return {'university':uni.name,'institute':insti.name,'branch':branch.name}
+    return PostNameDict(**{'university':uni.name,'institute':insti.name,'branch':branch.name})
 
-def get_post_id(user:UserObject) -> dict[str,int|None]:
-    uni = None
-    insti = None
-    branch = None
+def get_post_id(user: _User) -> PostIdDict:
 
-    if(is_manager(user)):
-        _user:Manager = user.manager
+    role:Role = user.role
     
-    elif(is_admin(user)):
-        _user:Admin = user.admin
-        
-    else:
-        return {'university':uni,'institute':insti,'branch':branch}
-    
-    branch = _user.belongs
+    branch = role.belongs
     insti = branch.institute
     uni = insti.university
     
-    return {'university':uni.id,'institute':insti.id,'branch':branch.id}
+    return PostIdDict(**{'university':uni.id,'institute':insti.id,'branch':branch.id})
 
-def is_authenticated(user:UserObject) -> bool:
-    
+def is_authenticated(user: _User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
-def get_admin_by_name(username:str) -> list[int]:
-    try:
-        return list(map(lambda x: x.user.id,Admin.objects.filter(user__username__icontains=username)))
-    except Exception as e:
-        return []
+def getID(user: _User): return user.id
 
-def get_manager_by_name(username:str) -> list[int]:
-    try:
-        return list(map(lambda x: x.user.id, Manager.objects.filter(user__username__icontains=username)))
-    except Exception as e:
-        return []
+def get_admin_by_name(username: str) -> list[int]:
+    return list(map(getID, _User.objects.filter(username__icontains=username, role__role=RoleType.ADMIN).order_by("username").only("id")))
 
-def get_post_by_ID(university: int, institute: int, branch: int) -> dict[str,str|None]:
+def get_manager_by_name(username: str) -> list[int]:
+    return list(map(getID, _User.objects.filter(username__icontains=username, role__role=RoleType.ADMIN).order_by("username").only("id")))
+
+
+def get_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict:
     
-    uni:str|None = None
-    insti:str|None = None 
-    bra:str|None = None
+    uni:str = ""
+    insti:str = "" 
+    bra:str = ""
 
     try:
-        uni = University.objects.filter(id=university)[0].name
-        insti = Institute.objects.filter(id=institute)[0].name
-        bra = Branch.objects.filter(id=branch)[0].name
+        uni = University.objects.get(id=university).name
+        insti = Institute.objects.get(id=institute).name
+        bra = Branch.objects.get(id=branch).name
     except:
         pass
     
-    return {"university": uni, "institute": insti, "branch": bra}
-
-
-
-"""
-class _UserManager(BaseUserManager):
-    
-    @classmethod
-    def create_user(self, username, email, password=None):        
-        if not email:
-            raise ValueError('User must have an email address')
-        if not username:
-            raise ValueError('User must have a username')
-        
-        user = self.model(email=self.normalize_email(email),username=username)
-
-        user.set_password(password)
-        user.save()
-        return user
-    
-    @classmethod
-    def create_superuser(self, email, username, password):
-        user = self.create_user(email=self.normalize_email(email),password=password,username=username)
-        user.is_admin = True
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
-        return user
-    
-class _User(AbstractUser):
-    username = CharField(max_length=225,validators=[UnicodeUsernameValidator],unique=True,null=False,blank=False)
-    email = EmailField(max_length=100, unique=True,null=False,blank=False)
-    full_name = CharField(max_length=200,null=False,blank=False,validators=[RegexValidator(r'^[a-zA-z]+\Z')])
-    is_active = BooleanField(default=True)
-    is_admin = BooleanField(default=False)
-    is_manager = BooleanField(default=False)
-    objects = _UserManager
-    
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'full_name']
-"""
-    
+    return PostNameDict(**{"university":uni, "institute":insti, "branch":bra})

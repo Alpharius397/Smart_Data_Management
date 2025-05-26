@@ -1,14 +1,16 @@
+{% extends 'Main/index.html' %}
+{% load template %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <title>Upload Form</title>
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Upload/styles.css' %}">
+{% endblock %}
+
+{% block title %} Delete Form {% endblock %}
+
+{% block cssStyle %}
     <style>
-        
         .upload-container {
             background: #fff;
             padding: 20px 30px;
@@ -45,67 +47,65 @@
             display:none;
             height: 20px;
         }
-
-        {% if request.session.mainColor and request.session.secColor %}
-            header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
-
-            body{
-                color: {{request.session.mainColor}};
-            }
-
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
-        {% endif %}
-
     </style>
-</head>
-<body>
-    <header>
-        <a href="{% url 'View:table' id=id %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Delete Form</h1>
-    </header>
+{% endblock %}
 
-    <div id="message" class="message"></div>
-
-    <div class="upload-container">
-        <h2>Delete Uploaded Excel</h2>
-        <form id="form" hx-delete="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
-            {% csrf_token %}
-
-            <button class="upload-button">Delete Record</button>
-
-            <div class="form-footer">
-                <p>Wrong Excel Uploaded? <a href="{% url 'Upload:view_edit' id=id %}">Edit Upload</a></p>
-            </div>
-
-
-        </form>
-
-    </div>
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
-<script>
-
-    htmx.on("#form","htmx:beforeSend", function(event){
-
-        htmx.find('#progress').setAttribute('value', 0);
-        htmx.find('#progress').setAttribute('style', "display:block;");
-    });
-
-    htmx.on('#form', 'htmx:xhr:progress', function(event) {
-        htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
-
-        if(event.detail.loaded==event.detail.total){
-            htmx.find('#progress').setAttribute('style', "display:none;");
+{% block customStyle %}
+    <style>
+        header{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
         }
-    });
 
-    add_csrf();
+        body{
+            color: {{request.session.mainColor}};
+        }
 
-</script>
-</html>
+        header .user-log, header .add-task{
+            color: {{request.session.mainColor}};
+        }
+    </style>
+{% endblock %}
+
+{% block headerLeft %}
+    <a class="next-button" href="{% url 'View:table' id=id %}">Back To Table View</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Delete Form</h1>{% endblock %}
+
+{% block mainContent %}
+
+    <div id="message" class="message">
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    {% if not messages %}
+
+        <div class="upload-container">
+            <h2>Delete Uploaded Excel</h2>
+            <form id="form" hx-delete="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+                {% csrf_token %}
+
+                <button class="upload-button">Delete Record</button>
+
+                <div class="form-footer">
+                    <p>Wrong Excel Uploaded? <a href="{% url 'Upload:view_edit' id=id %}">Edit Upload</a></p>
+                </div>
+            </form>
+        </div>
+
+    {% endif %}
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        add_csrf();
+    </script>
+{% endblock %}

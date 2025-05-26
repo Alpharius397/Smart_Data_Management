@@ -4,6 +4,7 @@ from typing import Any, Union
 type AllType = str | int | bool | dict | list
 type NullStr = str | None
 type NullBool = bool | None
+type NullInt = int | None
 type NullType = AllType | NullBool
 
 class Utils:
@@ -55,3 +56,5 @@ class Utils:
         val: Union[Any] = Utils.__getValue(dictionary,*keyString)
         
         return dict() if (val is None) else dict(val) # type: ignore
+
+

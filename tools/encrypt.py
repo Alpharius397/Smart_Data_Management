@@ -10,7 +10,7 @@ import json
 from Main.settings import settingsInterface as settings #type: ignore
 from tools.token import get_token #type: ignore
 from Crypto.Random.random import randint
-
+settings.KEY
 def b64encode(s: bytes):
     return a64encode(s, b'-_')
 
@@ -23,10 +23,8 @@ def padIV(iv: bytes, padLength: int):
 def unpadIV(iv: bytes, padLength: int):
     return iv[:-padLength]
 
-DES_IV_PAD:int = 1 # iv length := 8, base64 needs len%3==0
-AES_IV_PAD:int = 2 # iv length := 16, base64 needs len%3==0
-DES_3_IV_LENGTH: int = 12
-AES_IV_LENGTH_BASE_64: int = 24
+DES_3_IV_LENGTH: int = 8
+AES_IV_LENGTH: int = 16
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:
@@ -36,17 +34,18 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
     
     cipher = DES3.new(key, DES3.MODE_CBC)
     encrypted = cipher.encrypt(padded)
-    iv = b64encode(padIV(cipher.iv, DES_IV_PAD)).decode() #type: ignore
+    iv = bytes(cipher.iv) #type: ignore
+
+    iv += encrypted
     
-    encrypted_b64 = b64encode(encrypted).decode()
-    
-    return f"{iv}{encrypted_b64}"
+    return b64encode(iv).decode()
 
 # Decryption Function
 def decrypt_data(key: bytes, encrypted_data: str) -> dict:
-    _iv, encrypted_b64 = encrypted_data[:DES_3_IV_LENGTH], encrypted_data[DES_3_IV_LENGTH:]
-    iv = b64decode(_iv)[:-DES_IV_PAD]
-    encrypted = b64decode(encrypted_b64)
+    _encrypted = b64decode(encrypted_data)
+
+    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
+    
     cipher = DES3.new(key, DES3.MODE_CBC, iv)
     decrypted = cipher.decrypt(encrypted)
     decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
@@ -63,12 +62,13 @@ def monthYearHash():
     cipherB = AES.new(settings.AES_KEY_2.encode(), mode=AES.MODE_CBC, iv=iv)
     
     padded = pad(nowTime, AES.block_size)
-    iv = padIV(iv, AES_IV_PAD)
     
     encrypt_1 = cipherA.encrypt(padded)
     encryptFinal = cipherB.encrypt(encrypt_1)
     
-    return f"{b64encode(iv).decode()}{b64encode(encryptFinal).decode()}"
+    iv += encryptFinal
+    
+    return {b64encode(iv).decode()}
 
 def jsonHash(jsons: dict):
     return SHA256.new(json.dumps(jsons).encode()).hexdigest()
@@ -81,11 +81,10 @@ Basic Auth Flow =>
 """
 def authTokenCheck(token: str):
     
-    _iv, _encrypted = token[:AES_IV_LENGTH_BASE_64], token[AES_IV_LENGTH_BASE_64:]
     
     try:
-        iv = b64decode(_iv)[:-AES_IV_PAD]
-        encrypted = b64decode(_encrypted)
+        _encrypted = b64decode(token)
+        iv, encrypted = _encrypted[:AES_IV_LENGTH], _encrypted[AES_IV_LENGTH:]
         
         cipherA = AES.new(settings.AES_KEY_2.encode(), mode=AES.MODE_CBC, iv=iv)
         cipherB = AES.new(settings.AES_KEY_1.encode(), mode=AES.MODE_CBC, iv=iv)

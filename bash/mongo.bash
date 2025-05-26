@@ -39,6 +39,10 @@ start_mongo(){
     sudo systemctl start mongod
 }
 
+start_mongod(){
+    mongosh
+}
+
 status_mongo(){
     sudo systemctl status mongod
 }
@@ -76,7 +80,8 @@ while true; do
     echo "4. Get DB dump"
     echo "5. Restore DB from dump"
     echo "6. Get MongoDB status"
-    echo "7. Exit"
+    echo "7. Start Mongo Shell"
+    echo "8. Exit"
     echo -n "Enter your choice: "
     read CHOICE
 
@@ -99,7 +104,8 @@ while true; do
             restore_from_dump "$DB" "$COLL"
             ;;
         6) status_mongo ;;
-        7) echo "Exiting..."; break ;;
+        7) start_mongod ;;
+        8) echo "Exiting..."; break ;;
         *) echo "Incorrect choice. Please try again." ;;
     esac
 done

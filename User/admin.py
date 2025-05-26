@@ -1,27 +1,24 @@
-from django.contrib import admin
-from User.models import Admin, Manager, is_admin, get_post_id, Student
-from django.db.models import Q
+from django.contrib import admin # type: ignore
+from User.models import is_admin, get_post_id, _User as User, Role 
+from django.db.models import Q, QuerySet # type: ignore
 from University.models import Branch
-from django.contrib.auth.models import User
-from django.utils.translation import gettext, gettext_lazy as _
-from django.conf import settings
-from django.contrib import admin, messages
-from django.contrib.admin.options import IS_POPUP_VAR
-from django.contrib.admin.utils import unquote
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.forms import (AdminPasswordChangeForm,UserChangeForm,UserCreationForm,)
-from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
-from django.db import router, transaction
-from django.http import Http404, HttpResponseRedirect
-from django.template.response import TemplateResponse
-from django.urls import path, reverse
-from django.utils.html import escape
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy as _
-from django.views.decorators.debug import sensitive_post_parameters
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.models import User as __User # type: ignore
+from django.utils.translation import gettext, gettext_lazy as _ # type: ignore
+from django.conf import settings # type: ignore
+from django.contrib import admin, messages # type: ignore
+from django.contrib.admin.options import IS_POPUP_VAR # type: ignore
+from django.contrib.admin.utils import unquote # type: ignore
+from django.contrib.auth import update_session_auth_hash # type: ignore
+from django.contrib.auth.forms import (AdminPasswordChangeForm,UserChangeForm,UserCreationForm,) # type: ignore
+from django.core.exceptions import PermissionDenied # type: ignore
+from django.db import router, transaction # type: ignore
+from django.http import Http404, HttpResponseRedirect # type: ignore
+from django.template.response import TemplateResponse # type: ignore
+from django.urls import path, reverse # type: ignore
+from django.utils.html import escape # type: ignore
+from django.views.decorators.debug import sensitive_post_parameters # type: ignore
+from django.utils.decorators import method_decorator # type: ignore
+from django.views.decorators.csrf import csrf_protect # type: ignore
 
 csrf_protect_m = method_decorator(csrf_protect)
 sensitive_post_parameters_m = method_decorator(sensitive_post_parameters())
@@ -32,10 +29,12 @@ class UniversityFilter(admin.SimpleListFilter):
     parameter_name = "uni"
     
     def lookups(self, request, model_admin: admin.ModelAdmin):
-        assign_user:set[tuple[str,str]] = set()
+        assign_user:set[tuple[int, str]] = set()
 
-        for i in model_admin.get_queryset(request).all():
-            assign_user.add((i.belongs.institute.university.id,i.belongs.institute.university.name))
+        universityList:QuerySet[Role] = model_admin.get_queryset(request).all()
+
+        for i in universityList:
+            assign_user.add((i.belongs.institute.university.id, i.belongs.institute.university.name))
         
         return list(assign_user)
         
@@ -52,82 +51,39 @@ class UniversityFilter(admin.SimpleListFilter):
         
         return queryset.filter(query)
 
-@admin.register(Manager)
+@admin.register(Role)
 class ManagerAdmin(admin.ModelAdmin):
     list_filter = (UniversityFilter,)
-    search_fields = ('user__username',)
-    search_help_text = "Search by username"
+    list_display = ("user", "role", "belongs")
+    search_fields = ('user__username', 'role')
+    search_help_text = "Search by username or role"
     
     def get_queryset(self, request):
+        user:User = request.user
         
-        if(is_admin(request.user)):
-            return Manager.objects.filter(Q(belongs__id=request.user.admin.belongs.id))
+        if(is_admin(user)):
+            return Role.objects.filter(Q(belongs__id=user.role.belongs.id))
         
         return super().get_queryset(request)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         
+        user:User = request.user
+        
         if (db_field.name=="user"):
             
-            if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(Q(admin__isnull=False)))&(Q(manager__belongs__id=user))
+            if(is_admin(user)):
+                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(Q(role__belongs__id=user.role.belongs.id)))
         
         elif(db_field.name=="belongs"):
 
             if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = Branch.objects.filter(id=request.user.admin.belongs.id)
-                            
+                kwargs["queryset"] = Branch.objects.filter(id=user.role.belongs.id)
+        
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-@admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
-    search_fields = ('user__username',)
-    search_help_text = "Search by username"
-    
-    def get_queryset(self, request):
-        
-        if(request.user.is_authenticated and request.user.is_superuser):
-            return User.objects.all()
-        
-        return User.objects.none()
-
-
-@admin.register(Admin)
-class AdminAdmin(admin.ModelAdmin):
-    list_filter = (UniversityFilter,)
-    search_fields = ('user__username',)
-    search_help_text = "Search by username"
-    
-    def get_queryset(self, request):
-        
-        if(is_admin(request.user)):
-            return Admin.objects.filter(Q(belongs__id=request.user.admin.belongs.id))
-        
-        return super().get_queryset(request)
-    
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        
-        if (db_field.name=="user"):
-            
-            if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                
-                kwargs["queryset"] = User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(~(Q(manager__isnull=False)))&(Q(admin__belongs__id=user)))
-        
-        elif(db_field.name=="belongs"):
-            if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = Branch.objects.filter(id=request.user.admin.belongs.id)
-                            
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-admin.site.unregister(User)
-
-
-@admin.register(User)
+admin.site.unregister(__User)
+@admin.register(__User)
 class UserAdmin(admin.ModelAdmin):
     add_form_template = "admin/auth/user/add_form.html"
     change_user_password_template = None
@@ -154,12 +110,11 @@ class UserAdmin(admin.ModelAdmin):
     )
     
     def get_queryset(self, request):
+        user:User = request.user
         
-        if(not request.user.is_superuser):
-            branch = get_post_id(request.user).get('branch',None)
+        if(not user.is_superuser):
             
-            
-            return User.objects.filter((Q(manager__isnull=False)|Q(admin__isnull=False))&(Q(admin__belongs__id=branch)|Q(manager__belongs__id=branch)))
+            return __User.objects.filter((Q(is_staff=False)|Q(is_superuser=False))&(Q(role__belongs__id=user.role.belongs.id)))
         
         return super().get_queryset(request)
 

@@ -10,24 +10,28 @@
 {% block title %} User Task Dashboard {% endblock %}
 
 {% block cssStyle %}
-    a{
-        text-decoration: none;
-    }
-        
-    .arrow {
-        margin-left: auto;
-        font-size: 18px;
-        color: #6c757d;
-        display: inline;
-    }
-        
-    .log-view{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    <style>
+        a{
+            text-decoration: none;
+        }
+            
+        .arrow {
+            margin-left: auto;
+            font-size: 18px;
+            color: #6c757d;
+            display: inline;
+        }
+            
+        .log-view{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+{% endblock %}
 
-    {% if request.session.mainColor and request.session.secColor %}
+{% block customStyle %}
+    <style>
         header{
             background-color: {{request.session.mainColor}};
             color: {{request.session.secColor}};
@@ -49,8 +53,7 @@
             background-color: {{request.session.secColor}};
         }
 
-    {% endif %}
-
+    </style>
 {% endblock %}
 
 {% block headerLeft %}

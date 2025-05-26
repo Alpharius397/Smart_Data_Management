@@ -42,9 +42,8 @@ def image_load(data: bytes) -> tuple[list[int], pandas.DataFrame]:
     pd_data:pandas.DataFrame = pandas.DataFrame()
     op_data:openpyxl.Workbook = None
     converted:set[int] = set()
-    
+
     try:
-        pd_data = pandas.read_excel(BytesIO(data))
         op_data = openpyxl.load_workbook(BytesIO(data))
     except:
         return [], pd_data
@@ -55,6 +54,7 @@ def image_load(data: bytes) -> tuple[list[int], pandas.DataFrame]:
         
     op_sheet = op_data[op_data.sheetnames[0]]
     image = get_image_data(op_sheet)
+    pd_data = pandas.read_excel(op_data)
     
     for i, row in enumerate(pd_data.itertuples(index=False)):
         for j, _ in enumerate(row):

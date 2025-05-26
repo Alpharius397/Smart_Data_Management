@@ -1,5 +1,5 @@
 from django.contrib import admin
-from User.models import Admin
+from User.models import _User as User
 from django.db.models import Q
 from User.models import is_admin
 from .models import *
@@ -12,7 +12,8 @@ class CardAdmin(admin.ModelAdmin):
     
     
     def get_queryset(self, request):
-        print(Card.objects.filter(Q(user__manager__belongs__id=request.user.admin.belongs.id)))
+        user:User = request.user
+        
         if(is_admin(request.user)):
             return Card.objects.filter(Q(user__manager__belongs__id=request.user.admin.belongs.id))
         
@@ -23,7 +24,7 @@ class CardAdmin(admin.ModelAdmin):
         if (db_field.name=="user"):
             
             if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = User.objects.filter(Q(manager__belongs__id=user))
+                user:User = request.user
+                kwargs["queryset"] = User.objects.filter(Q(role__belongs__id=user.role.belongs.id))
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

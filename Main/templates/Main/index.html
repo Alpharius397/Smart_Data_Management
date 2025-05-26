@@ -10,9 +10,12 @@
     {% block styleSheet %}{% endblock %}
     <title>{% block title %}{% endblock %}</title>
 
-    <style>
-        {% block cssStyle %}{% endblock %}
-    </style>
+    {% block cssStyle %}{% endblock %}
+
+    {% if request.session.mainColor and request.session.secColor %}
+        {% block customStyle %}{% endblock %} 
+    {% endif %}
+
 </head>
 <body>
     <header>
@@ -38,7 +41,7 @@
     </header>
     <div class="header-option close"></div>
 
-    <dialog draggable="true">
+    <dialog>
         <div class="my-dialog">
             <div class="dialog-header">
                 <div class="dialog-title">Heading</div>

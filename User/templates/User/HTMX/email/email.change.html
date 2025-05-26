@@ -1,8 +1,9 @@
 {% load static %}
 
-<form hx-post="{% url 'User:mailChange' %}" hx-target="this" hx-swap="outerHTML">
+<form hx-post="{% url 'User:mailChange' %}" hx-target="this" hx-swap="outerHTML" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault();">
+
     {% csrf_token %}
-    <input type="email" value="{{request.user.email}}" name="user">
-    <button class="upload-button">Change Email</button>
-    <button type="cancel" id="cancel" class="upload-button" hx-put="{% url 'User:mailChange' %}" hx-swap="outerHTML">Cancel</button>
+    <input type="email" value="{{email}}" name="email">
+    <button class="upload-button" type="submit">Change Email</button>
+    <button type="cancel" class="cancel-button" hx-get="{% url 'User:username' %}" hx-swap="outerHTML" hx-trigger="click">Cancel</button>
 </form>

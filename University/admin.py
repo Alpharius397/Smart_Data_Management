@@ -1,8 +1,8 @@
-from django.contrib import admin
+from django.contrib import admin # type: ignore
 from User.models import is_admin
 from .models import *
 from .forms import ColorPickerForm
-from django.db.models import Q
+from django.db.models import Q # type: ignore
 
 admin.site.register(University)
 admin.site.register(Institute)
@@ -16,12 +16,12 @@ class ColorAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         
+        user:UserObject
         if(is_admin(request.user)):
-            return Color.objects.filter(Q(institute__id=request.user.admin.belongs.institute.id))
+            return Color.objects.filter(Q(institute__id=request.user.role.belongs.institute.id))
         
-        if(request.user.is_superadmin):
+        if(request.user.is_superuser()):
             return Color.objects.all()
-
         
         return Color.objects.none()
     
@@ -29,6 +29,6 @@ class ColorAdmin(admin.ModelAdmin):
         
         if (db_field.name=="institute"):
             
-            kwargs["queryset"] = Institute.objects.filter(id=request.user.admin.belongs.institute.id)
+            kwargs["queryset"] = Institute.objects.filter(id=request.user.role.belongs.institute.id)
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

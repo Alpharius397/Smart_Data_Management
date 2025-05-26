@@ -5,13 +5,11 @@ from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
 import jwt
 from constants.constants import DEFAULT_ERROR
 from tools.encrypt import authTokenCheck # type: ignore
-from User.models import UserObject, is_admin, is_authenticated, is_manager # type: ignore
+from User.models import Role, _User as User, is_admin, is_authenticated, is_manager # type: ignore
 from Main.settings import settingsInterface as settings # type: ignore
 from django.shortcuts import redirect # type: ignore
 from django.urls import reverse # type: ignore
-from User.models import Admin, Manager
 from University.models import Color # type: ignore
-from django.contrib.auth.models import User # type: ignore
 from functools import wraps # type: ignore
 from django.utils import timezone # type: ignore
 
@@ -42,10 +40,10 @@ def is_auth_delete(req: HttpRequest) -> bool:
 def auth_page(req:HttpRequest) -> HttpResponse:
     return redirect(reverse(settings.LOGIN_URL) + f"?next={req.path}&alert=Unauthenticated Request!")
 
-def get_admin_color(req: HttpRequest, user: UserObject):
+def get_color(req: HttpRequest, user: User):
     try:
-        admin:Admin = user.admin
-        color:Color = admin.belongs.institute.color
+        role:Role = user.role
+        color:Color = role.belongs.institute.color
         main_color = color.main_color
         sec_color = color.sec_color
         req.session['mainColor'] = main_color
@@ -53,17 +51,6 @@ def get_admin_color(req: HttpRequest, user: UserObject):
     except:
         pass
     
-
-def get_manager_color(req: HttpRequest, user: UserObject):
-    try:
-        admin:Manager = user.manager
-        color:Color = admin.belongs.institute.color
-        main_color = color.main_color
-        sec_color = color.sec_color
-        req.session['mainColor'] = main_color
-        req.session['secColor'] = sec_color
-    except:
-        pass
 
 def noneCheck(*args: typing.Any) -> bool:
     return (not all(args))
@@ -73,7 +60,7 @@ class PayLoad:
     __type: str = 'Base'
     expire_minutes: int
     
-    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None, **kwargs:str|int):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None, **kwargs:str|int):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -96,7 +83,7 @@ class PayLoad:
     
     @staticmethod
     def from_json(classConstruct: type['PayLoad'], userID:int, username:str, type:str, expire:str) -> 'PayLoad':
-        user:UserObject = User.objects.get(id=userID, username=username)
+        user:User = User.objects.get(id=userID, username=username)
         return classConstruct(user=user, type=type, expire=datetime.datetime.fromisoformat(expire))  
     
     @staticmethod
@@ -108,7 +95,7 @@ class AccessPayLoad(PayLoad):
     __type: str = 'access'
     expire_minutes = settings.JWT_EXP_DELTA_MINUTES
     
-    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -119,7 +106,7 @@ class RefreshPayLoad(PayLoad):
     __type: str = 'refresh'
     expire_minutes = settings.REFRESH_EXP_DELTA_MINUTES
     
-    def __init__(self, user: UserObject, expire:datetime.datetime|None = None, type:str|None = None):
+    def __init__(self, user: User, expire:datetime.datetime|None = None, type:str|None = None):
         self.username:str = user.username
         self.userID:int = user.id
         self.type = type if(type is not None) else self.__type
@@ -136,10 +123,10 @@ def login_needed(manager_only=False, admin_only=False):
         def _wrapped_view(request:HttpRequest, *args, **kwargs):
             if(is_authenticated(request.user)):
                 
-                if((not manager_only) and (not admin_only)):
+                if((not (manager_only or admin_only))): # both false
                     return view_func(request, *args, **kwargs) or HttpResponse(status=403)
                 
-                if((manager_only and is_manager(request.user)) or (admin_only and is_admin(request.user))):
+                if((manager_only and is_manager(request.user)) or (admin_only and is_admin(request.user))): # one of them is true
                     return view_func(request, *args, **kwargs) or HttpResponse(status=403)
             
             return auth_page(request)

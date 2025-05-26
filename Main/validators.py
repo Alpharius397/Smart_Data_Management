@@ -1,4 +1,4 @@
-from User.models import Admin, Manager, UserObject, is_admin, is_manager, User
+from User.models import is_admin, is_manager, User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 
@@ -6,7 +6,7 @@ class AdminValidator():
     message = "User must be a admin"
     code = "invalid"
     
-    def __call__(self, user:UserObject) -> None:
+    def __call__(self, user:User) -> None:
         
         if(not is_admin(user)):
             raise ValidationError(self.message, code=self.code, params={"value": user})
@@ -19,7 +19,7 @@ class ManagerValidator():
     def __call__(self, userID: int) -> None:
         
         try:
-            user:UserObject = User.objects.get(id=userID)
+            user:User = User.objects.get(id=userID)
             
             if(not is_manager(user)):
                 raise ValidationError(self.message, code=self.code, params={"value": user})
