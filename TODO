@@ -28,6 +28,13 @@
 []: Options to enter Semester Subjects and later parse that to group subjects into semester
 []: Added image compression. (Mongo docs has a max size of 16mB)
 
+
+--- Migration Log ---
+[X]: Database Switch
+[X]: Data Upload Done
+[]: Data Display
+[]: Data Updation
+
 --- Maybe List ---
 []: Add Test Cases, cause why not :)
 []: Switch to postgresSQL (Defcon 3 Alert)
