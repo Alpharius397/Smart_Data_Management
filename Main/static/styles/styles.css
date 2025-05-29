@@ -1,10 +1,14 @@
 body {
-    display: block;
+    display: flex;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: #f5f5f5;
-}
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
 
 header {
     display: flex;
@@ -23,8 +27,8 @@ header .hamburger {
 
 .header-option {
     background-color: grey;
-    padding: 5px;
-    height: 100px;
+    padding: 10px 5px 10px 5px;
+    height: fit-content;
     overflow: hidden;
     flex-direction: column;
     justify-content: space-around;
@@ -75,7 +79,8 @@ header .header-center {
     padding: 5px 10px 5px 10px;
     margin: 0px;
     background-color: #f5f5f5;
-}
+    flex-grow: 1;
+  }
 
 footer {
     background-color: yellow;

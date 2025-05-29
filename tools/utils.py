@@ -60,5 +60,5 @@ def processSubjects(
     for key, value in mapping.items():
         if key == value:
             mapping[key] = personalAnnotate(value)
-
+    print(mapping)
     return mapping

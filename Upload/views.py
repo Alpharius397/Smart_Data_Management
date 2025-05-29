@@ -1,4 +1,6 @@
 import typing
+import json
+import time
 import asyncio
 from django.core.files.uploadedfile import UploadedFile
 from django.shortcuts import render  # type: ignore
@@ -152,9 +154,10 @@ def upload(req: HttpRequest):
                 raise SubjectsNotDefined(post["branch"])
 
             pd_data.rename(
-                processSubjects(
+                columns=processSubjects(
                     branchSubjects.iterator(), list(pd_data.columns), image_idx
-                )
+                ),
+                inplace=True,
             )
 
             fields = pd_data.columns
@@ -162,7 +165,7 @@ def upload(req: HttpRequest):
 
             rows: list[DataTable] = []
             for row in pd_data.itertuples(index=False):
-                rowJson = {fields[idx]: row[idx] for idx in range(len(row))}
+                rowJson = {fields[idx]: str(row[idx]) for idx in range(len(row))}
                 rows.append(DataTable(fileID=fileObj, data=rowJson))
 
             DataTable.objects.bulk_create(rows)
@@ -174,15 +177,18 @@ def upload(req: HttpRequest):
             messages.error(req, FileProcessFailed().get_error())
 
         except InvalidForm:
-            for _, errors in form.errors:
+            for errors in form.errors.values():
                 for error in errors:
-                    messages.error(req, error)
+                    messages.error(req, str(error))
 
         except FileNameExists as f:
             messages.error(req, f.get_error())
 
         except SubjectsNotDefined as g:
             messages.error(req, g.get_error())
+
+        except Exception:
+            messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Upload/HTMX/message.html")
 
@@ -205,12 +211,12 @@ def edit(req: HttpRequest, idx: int):
 
             assert isinstance(excel_file, UploadedFile), "Incompatible File Type!"
 
-            fileObj = UploadTable.objects.filter(id=idx, data__locked=True).only("id")
+            fileObjs = UploadTable.objects.filter(id=idx, data__locked=True).only("id")
 
-            if not fileObj.exists():
+            if not fileObjs.exists():
                 raise FileLocked(idx)
 
-            if fileObj.filter(fileName=file_name).exclude(id=idx).exists():
+            if fileObjs.filter(fileName=file_name).exclude(id=idx).exists():
                 raise FileNameExists()
 
             with excel_file.open() as file:
@@ -233,7 +239,7 @@ def edit(req: HttpRequest, idx: int):
             )
 
             fields: list[str] = list(pd_data.columns)
-            fileObj = fileObj[0]
+            fileObj = fileObjs[0]
             fileObj.fileName = file_name
 
             rows: QuerySet[DataTable] = DataTable.objects.filter(fileID=fileObj)
@@ -243,8 +249,8 @@ def edit(req: HttpRequest, idx: int):
             updateRow: list[DataTable] = []
 
             for row in pd_data.itertuples(index=False):
-                rowJson: dict[str, typing.Any] = {
-                    fields[i]: row[i] for i in range(len(row))
+                rowJson: dict[str, str] = {
+                    fields[i]: str(row[i]) for i in range(len(row))
                 }
 
                 if count < rowLimit:
@@ -264,9 +270,9 @@ def edit(req: HttpRequest, idx: int):
             messages.error(req, FileDoesNotExists(idx).get_error())
 
         except InvalidForm:
-            for _, errors in form.errors:
+            for errors in form.errors.values():
                 for error in errors:
-                    messages.error(req, error)
+                    messages.error(req, str(error))
 
         except FileProcessFailed as e:
             messages.error(req, e.get_error())
