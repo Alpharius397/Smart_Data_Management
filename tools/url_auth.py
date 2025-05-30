@@ -52,15 +52,16 @@ def auth_page(req: HttpRequest) -> HttpResponse:
     )
 
 
-def get_color(req: HttpRequest, user: User):
+def get_color(req: HttpRequest):
     try:
+        user: User = req.user
         role: Role = user.role
         color: Color = role.belongs.institute.color
         main_color = color.main_color
         sec_color = color.sec_color
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
-    except:
+    except Exception:
         pass
 
 

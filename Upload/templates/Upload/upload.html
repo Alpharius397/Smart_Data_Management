@@ -8,45 +8,34 @@
 {% endblock %}
 
 {% block title %} Upload Form {% endblock %}
-
-{% block cssStyle %}
-    <style>
-        #progress{
-            margin-top: 10px;
-            width: 100%;
-            display:none;
-            height: 20px;
-        }
-    </style>
-{% endblock %}
             
 {% block customStyle %}
-    <style>
-      header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
+  <style>
+    header{
+      background-color: {{request.session.mainColor}};
+        color: {{request.session.secColor}};
+      }
 
-            body{
-                color: {{request.session.mainColor}};
-            }
+      body{
+        color: {{request.session.mainColor}};
+      }
 
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
+      header .user-log, header .add-task{
+        color: {{request.session.mainColor}};
+      }
 
-    </style>
+  </style>
 {% endblock %}
 
 {% block headerLeft %}
-    <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
+  <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Upload Form</h1>{% endblock %}
 
 {% block mainContent %}
 
-    <div class="messages"></div>
+  <div class="messages"></div>
 
     <div class="upload-container">
         <h2>Upload Excel</h2>

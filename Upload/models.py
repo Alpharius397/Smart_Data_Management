@@ -13,20 +13,6 @@ from User.models import u_ser as User, is_admin, is_manager, RoleType
 from django.core.exceptions import ValidationError  # type: ignore
 import typing
 
-# def null_and_blank_setter(null:bool = False, blank: bool = False) -> typing.Callable[[Field], typing.Callable[[Field], typing.Callable[[list[typing.Any], dict[str, typing.Any]], Field]]]:
-
-#     def _wrapper(field: Field) -> typing.Callable[[Field], typing.Callable[[list[typing.Any], dict[str, typing.Any]], Field]]:
-
-#         def inner(*args:typing.Any, **kwargs: typing.Any) -> Field:
-#             kwargs['null'] = null
-#             kwargs['blank'] = blank
-
-#             return field(*args, **kwargs)
-
-#         return inner
-
-#     return _wrapper
-
 
 class UploadTable(Model):
     id = AutoField(verbose_name="FileID", primary_key=True, null=False, blank=False)

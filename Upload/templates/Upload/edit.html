@@ -1,110 +1,69 @@
+{% extends 'Main/index.html' %}
+{% load template %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <title>Upload Form</title>
-    <style>
-        
-        .upload-container {
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            margin: 50px auto;
-        }
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Upload/styles.css' %}">
+{% endblock %}
 
-        .upload-container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
+{% block title %} Edit Form {% endblock %}
+            
+{% block customStyle %}
+  <style>
+    header{
+      background-color: {{request.session.mainColor}};
+        color: {{request.session.secColor}};
+      }
 
-        .upload-button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
+      body{
+        color: {{request.session.mainColor}};
+      }
 
-        .upload-button:hover {
-            background-color: #218838;
-        }
+      header .user-log, header .add-task{
+        color: {{request.session.mainColor}};
+      }
 
-        #progress{
-            margin-top: 10px;
-            width: 100%;
-            display:none;
-            height: 20px;
-        }
+  </style>
+{% endblock %}
 
-        {% if request.session.mainColor and request.session.secColor %}
-            header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
+{% block headerLeft %}
+ 
+<a class="next-button" href="{% url 'View:table' id=id %}">Back To Table View</a>
+{% endblock %}
 
-            body{
-                color: {{request.session.mainColor}};
-            }
+{% block headerCenter %}<h1>Edit Form</h1>{% endblock %}
 
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
-        {% endif %}
+{% block mainContent %}
 
-    </style>
-</head>
-<body>
-    <header>
-        <a href="{% url 'View:table' id=id %}"><button class="user-log">Back To Table View</button></a>
-        <h1>Edit Form</h1>
-    </header>
-
-    <div id="message" class="message"></div>
+  <div class="messages"></div>
 
     <div class="upload-container">
-        <h2>Edit Uploaded Excel</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:edit' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:.upload-button" onsubmit="event.preventDefault()">
+        <h2>Edit Excel</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Upload:edit' id=id %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}
-                <div class="form-group">
+                <div class="form-field">
                     <label for='{{ field.name }}'>{{ field.label }}: </label>
                     {{ field }}
 
+                </div>
                     {% if field.errors %}
                         {{ field.errors }}
 
-                    {% else %}
-                        <p class="help_text">{{ field.help_text }} </p>
-                    
                     {% endif %}
                     
-                </div>
             {% endfor %}
             <button class="upload-button">Upload</button>
             <progress id='progress' value='0' max='100'></progress>
-
-            <div class="form-footer">
-                <p>Incorrect Excel Uploaded? <a href="{% url 'Upload:view_delete' id=id %}">Delete Upload</a></p>
-            </div>
-
         </form>
-
+      <div class="form-footer">
+<p>Incorrect Excel Uploaded? <a href="{% url 'Upload:view_delete' id=id %}">Delete Upload</a></p>
+      </div>
     </div>
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
+{% endblock %}
 
-
+{% block script %}
 <script>
 
     htmx.on("#form","htmx:beforeSend", function(event){
@@ -121,5 +80,5 @@
         }
     });
 
-</script>
-</html>
+  </script>
+{% endblock %}

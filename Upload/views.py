@@ -96,14 +96,17 @@ def delete_screen(req: HttpRequest, id: int):
 def delete(req: HttpRequest, id: int):
     if is_hx_delete(req):
         try:
-            file = UploadTable.objects.filter(id=id, data__locked=True).only("id")
+            files = UploadTable.objects.filter(id=id, data__locked=True).only("id")
 
-            if not file.exists():
+            if files.exists():
                 raise FileLocked(id)
 
-            else:
-                file[0].delete()
-                messages.success(req, "File was deleted successfully")
+            file = UploadTable.objects.get(id=id)
+            file.delete()
+            messages.success(req, "File was deleted successfully")
+
+        except UploadTable.DoesNotExist:
+            messages.error(req, FileDoesNotExists(id).get_error())
 
         except FileLocked as e:
             messages.error(req, e.get_error())

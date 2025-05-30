@@ -9,47 +9,6 @@
 
 {% block title %} Delete Form {% endblock %}
 
-{% block cssStyle %}
-    <style>
-        .upload-container {
-            background: #fff;
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            margin: 50px auto;
-        }
-
-        .upload-container h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .upload-button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .upload-button:hover {
-            background-color: #218838;
-        }
-
-        #progress{
-            margin-top: 10px;
-            width: 100%;
-            display:none;
-            height: 20px;
-        }
-    </style>
-{% endblock %}
-
 {% block customStyle %}
     <style>
         header{
@@ -89,10 +48,9 @@
 
         <div class="upload-container">
             <h2>Delete Uploaded Excel</h2>
-            <form id="form" hx-delete="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target="#message" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
                 {% csrf_token %}
 
-                <button class="upload-button">Delete Record</button>
+                <button class="upload-button" hx-delete="{% url 'Upload:delete' id=id %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click" >Delete Record</button>
 
                 <div class="form-footer">
                     <p>Wrong Excel Uploaded? <a href="{% url 'Upload:view_edit' id=id %}">Edit Upload</a></p>

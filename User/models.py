@@ -1,4 +1,5 @@
-from django.contrib.auth.models import User  # type: ignore
+import abc
+from django.contrib.auth.models import User as _User  # type: ignore
 from django.db.models import (
     OneToOneField,
     ForeignKey,
@@ -13,6 +14,14 @@ from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
 
 
+class User(_User):
+    id: int
+    role: "Role"
+
+    class Meta:
+        proxy = True
+
+
 class Admin(Model):
     pass
 
@@ -25,7 +34,7 @@ class Student(Model):
     pass
 
 
-class UserObject(User):
+class UserObject(_User):
     pass
 
 
@@ -74,51 +83,40 @@ class Role(Model):
         choices=list(RoleType.getRole()),
         default=RoleType.UNKNOWN,
     )
-    belongs: "Branch" = ForeignKey(
+    belongs: "Branch" = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
-    )  # type: ignore
+    )
 
 
-class u_ser(User):
-    id: int
-    role: Role
-
-    class Meta:
-        proxy = True
-
-
-type _User = u_ser
-
-
-def is_manager(user: _User) -> bool:
+def is_manager(user: User) -> bool:
     return RoleType.isManager(user.role.role)
 
 
-def is_student(user: _User) -> bool:
+def is_student(user: User) -> bool:
     return RoleType.isStudent(user.role.role)
 
 
-def is_admin(user: _User) -> bool:
+def is_admin(user: User) -> bool:
     return RoleType.isAdmin(user.role.role)
 
 
 def get_user_by_id(id: int) -> NullStr:
     try:
-        user = _User.objects.get(id=id)
+        user = User.objects.get(id=id)
         return user.username
-    except _User.DoesNotExist:
+    except User.DoesNotExist:
         return None
 
 
 def get_user_id(name: str) -> NullInt:
     try:
-        user: _User = _User.objects.get(username=name)
+        user: User = User.objects.get(username=name)
         return user.id
     except:
         return None
 
 
-def get_post(user: _User) -> PostNameDict:
+def get_post(user: User) -> PostNameDict:
     role: Role = user.role
 
     branch = role.belongs
@@ -130,7 +128,7 @@ def get_post(user: _User) -> PostNameDict:
     )
 
 
-def get_post_id(user: _User) -> PostIdDict:
+def get_post_id(user: User) -> PostIdDict:
     role: Role = user.role
 
     branch = role.belongs
@@ -142,11 +140,11 @@ def get_post_id(user: _User) -> PostIdDict:
     )
 
 
-def is_authenticated(user: _User) -> bool:
+def is_authenticated(user: User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
 
-def getID(user: _User):
+def getID(user: User):
     return user.id
 
 
@@ -154,9 +152,7 @@ def get_admin_by_name(username: str) -> list[int]:
     return list(
         map(
             getID,
-            _User.objects.filter(
-                username__icontains=username, role__role=RoleType.ADMIN
-            )
+            User.objects.filter(username__icontains=username, role__role=RoleType.ADMIN)
             .order_by("username")
             .only("id"),
         )
@@ -167,9 +163,7 @@ def get_manager_by_name(username: str) -> list[int]:
     return list(
         map(
             getID,
-            _User.objects.filter(
-                username__icontains=username, role__role=RoleType.ADMIN
-            )
+            User.objects.filter(username__icontains=username, role__role=RoleType.ADMIN)
             .order_by("username")
             .only("id"),
         )
