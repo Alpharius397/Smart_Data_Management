@@ -1,3 +1,5 @@
+from typing import TypedDict
+from django.db.models import QuerySet
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
@@ -6,6 +8,7 @@ from django.conf import settings  # type: ignore
 from tools.typesCauseWhyNot import *
 from User.models import (
     get_post_id,
+    get_user,
     get_user_by_id,
     is_admin,
     is_manager,
@@ -22,13 +25,14 @@ from tools.url_auth import (
     is_auth_get,
     api_key_required,
 )
+from Dash.errors import ReadFailed, ReadTokenExpired
 from Upload.models import UploadTable, DataTable, AssignTable
 from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
-from constants.constants import DEFAULT_ERROR, READ_TOKEN, LOADING
+from constants.constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
 from .sockets import cardReadWebSocket
 
 ############ UTILS ############
@@ -37,59 +41,88 @@ from .sockets import cardReadWebSocket
 ############ HTTP Request ############
 @login_needed()
 def dash_board(req: HttpRequest) -> HttpResponse | None:
+    user = get_user(req)
     if is_auth_get(req):
-        if is_admin(req.user):
+        if is_admin(user):
             return render(req, "Dash/dash/admin.html")
-        elif is_manager(req.user):
+        elif is_manager(user):
             return render(req, "Dash/dash/manager.html")
 
 
 @login_needed(manager_only=True)
-def read_screen(req: HttpRequest) -> HttpResponse:
-    Redis = RedisConnection().connect()
-    token = get_token()
+def read_screen(req: HttpRequest) -> HttpResponse | None:
+    if is_auth_get(req):
+        Redis = RedisConnection().connect()
+        token = get_token()
+        user = get_user(req)
+        user_read_token = hash_token(token, user.id)
 
-    user_read_token = hash_token(token, req.user.id)
+        req.session[READ_TOKEN] = token
+        Redis.set(
+            user_read_token,
+            {"status": LOADING, "data": "", "cardID": ""},
+        )
 
-    req.session[READ_TOKEN] = token
-    Redis.set(
-        user_read_token,
-        {"status": LOADING, "data": None, "cardID": None},
-    )
+        get_color(req)
 
-    get_color(req)
-
-    return render(
-        req,
-        "Dash/read.html",
-        context={
-            "token": user_read_token,
-            "path": settings.READ_REGISTRY,
-            "url": req.build_absolute_uri(
-                reverse("Dash:__base__", args=(user_read_token,))
-            ),
-        },
-    )
+        return render(
+            req,
+            "Dash/read.html",
+            context={
+                "token": user_read_token,
+                "path": settings.READ_REGISTRY,
+                "url": req.build_absolute_uri(
+                    reverse("Dash:__base__", args=(user_read_token,))
+                ),
+            },
+        )
 
 
 ############ API Request ############
+class JsonData(TypedDict):
+    info: str
+    status: bool
+
+
+class JsonText(TypedDict):
+    data: JsonData
+    status: int
 
 
 @csrf_exempt
 @api_key_required
-def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
-    json_resp = {"info": "Unauthenticated Request", "status": False}
+def get_read_data(req: HttpRequest, token: str) -> JsonResponse | None:
+    json_resp = JsonText(
+        data=JsonData(info="Unauthenticated Request", status=False), status=403
+    )
 
     if req.method == "POST":
         cardID = req.POST.get("cardID", "")
         data = req.POST.get("data", "")
 
-        if data and cardID:
-            Redis = RedisConnection().connect()
-            redis_data = Redis.get(token)
-            status = redis_data.get("status", None)
+        Redis = RedisConnection().connect()
+        redis_data = Redis.get(token)
 
-            if (status is None) or (status != LOADING):
+        status = redis_data.get("status", "")
+        cardStatus = "Invalid"
+
+        try:
+            if status != LOADING:
+                raise ReadTokenExpired()
+
+            if not (data and cardID):
+                raise ReadFailed()
+
+            cardStatus = DONE
+
+            Redis.set(token, {"status": DONE, "data": data, "cardID": cardID})
+            Redis.close()
+
+            json_resp["data"]["info"] = "Data received successfully"
+            json_resp["status"] = True
+
+        except Exception as e:
+            if isinstance(e, ReadTokenExpired):
                 APP_LOG.write_error(
                     LogStructure()
                     .set_request(req)
@@ -97,31 +130,29 @@ def get_read_data(req: HttpRequest, token: str) -> JsonResponse:
                         type=Task.INVALID_TOKEN,
                     )
                 )
-                json_resp["info"] = "Invalid Token"
-                cardReadWebSocket(token, status="Invalid", cardID=cardID, data=data)
-                return JsonResponse(data=json_resp, status=403, safe=False)
+                json_resp["data"]["info"] = e.get_error()
+                json_resp["status"] = 403
 
-            cardReadWebSocket(token, status=DONE, cardID=cardID, data=data)
+            elif isinstance(e, ReadFailed):
+                json_resp["data"]["info"] = e.get_error()
+                json_resp["status"] = 400
+                cardStatus = "Failed"
 
-            Redis.set(token, {"status": DONE, "data": data, "cardID": cardID})
-            Redis.close()
+            else:
+                json_resp["data"]["info"] = DEFAULT_ERROR
+                json_resp["status"] = 500
+                cardStatus = "Failed"
 
-            json_resp["info"] = "Data received"
-            json_resp["status"] = True
-            return JsonResponse(data=json_resp, status=200)
+        cardReadWebSocket(token, cardID, data, cardStatus)
 
-        else:
-            json_resp["info"] = "Incorrect Credentials / Data not Found"
-            cardReadWebSocket(token, status="Failed", cardID=cardID, data=data)
+        return JsonResponse(**json_resp, safe=False)
 
-            return JsonResponse(data=json_resp, status=404)
-
-    return JsonResponse(data=json_resp, status=403)
+    return None
 
 
 ############ HTMX Request ############
 def get_data(
-    result: list[Document], index: int = 0
+    result: QuerySet[UploadTable],
 ) -> tuple[bool, list[dict[str, str | list | Any]]]:
     data: list[dict[str, str | list | Any]] = []
     empty = not bool(result)
@@ -129,15 +160,18 @@ def get_data(
     for i in result:
         data.append(
             {
-                "idx": index + 1,
-                "id": i._id,
-                "uploader": get_user_by_id(i.header.uploader),
-                "manager": list(map(get_user_by_id, i.header.manager)),
-                "file_name": i.data.header.file_name,
+                "id": i.id,
+                "uploader": i.uploader.username,
+                "manager": [
+                    manager[0]
+                    for manager in i.assigned.distinct("manager").values_list(
+                        "manager__username"
+                    )
+                    if (manager and len(manager) > 0)
+                ],
+                "file_name": i.fileName,
             }
         )
-
-        index += 1
 
     return empty, data
 
@@ -170,33 +204,29 @@ def buffered_data(
     return None
 
 
-def get_query(req: HttpRequest) -> dict[str, dict[str, str | list] | str | ObjectId]:
+def get_query(req: HttpRequest) -> dict[str, str]:
     query = req.GET.get("query", None)
     value = req.GET.get("value", None)
-    query_dict: dict[str, dict[str, str | list] | str | ObjectId] = {}
+    query_dict: dict[str, str] = {}
 
     if query and value:
         if query == "uploader":
-            query_dict.update({"header.uploader": {"$in": get_admin_by_name(value)}})
-
-        elif query == "manager":
-            manager_list = get_manager_by_name(value)
-            query_list: list[int] = manager_list if (manager_list) else [-1]
-            or_dict: dict[str, list[int]] = {"$or": query_list}
-            query_dict.update(or_dict)  # type: ignore
-
-        elif query == "file_name":
             query_dict.update(
                 {
-                    "data.header.file_name": {
-                        "$regex": f"{value}",
-                        "$options": "i",
-                    }
+                    "uploader__username__icontains": value,
+                    "uploader__id__icontains": value,
                 }
             )
+        elif query == "manager":
+            query_dict.update(
+                {
+                    "assigned__manager__username__icontains": value,
+                    "assigned__manager__id__icontains": value,
+                }
+            )  # type: ignore
 
-        elif query == "mongo_id":
-            query_dict.update({"_id": ObjectId(value)})
+        elif query == "file_name":
+            query_dict.update({"fileName__icontains": value, "id__icontains": value})
 
     return query_dict
 
@@ -204,9 +234,9 @@ def get_query(req: HttpRequest) -> dict[str, dict[str, str | list] | str | Objec
 @htmx_response
 @auth_needed(manager_only=True)
 def manager_fetch(req: HttpRequest) -> HttpResponse:
+    user = get_user(req)
+
     if is_hx_get(req):
-        manage: list[dict[str, str | list]] = []
-        conn = MongoConnection().connect()
         error: str = ""
 
         start = req.GET.get("start", "0")
@@ -215,15 +245,7 @@ def manager_fetch(req: HttpRequest) -> HttpResponse:
             queryset = get_query(req)
             start = int(start)
 
-            project, match_p, skip, limit = MongoTemplate.get_dash_search_buffer_query(
-                {**queryset, "header.manager": req.user.id},
-                VIEW_DATA,
-                start,
-                MAX_RECORD,
-            )
-            result: list[Document] = list(
-                map(Document.get, conn.aggregate(project, match_p, skip, limit))
-            )
+            result = UploadTable.objects.filter(**queryset)[start : start + MAX_RECORD]
 
             flag, manage = get_data(result, start)
 

@@ -91,10 +91,10 @@ class ManagerAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-admin.site.unregister(User)
+admin.site.unregister(__User)
 
 
-@admin.register(User)
+@admin.register(__User)
 class UserAdmin(admin.ModelAdmin):
     add_form_template = "admin/auth/user/add_form.html"
     change_user_password_template = None

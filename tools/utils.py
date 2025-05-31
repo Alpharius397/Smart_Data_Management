@@ -6,8 +6,6 @@ SEM_RE = r"(\w+)S(\d+)$"
 PERSONAL_RE = r"(\w+)P$"
 IMAGE_RE = r"(\w+)I$"
 
-Subject.semester
-
 
 def personalAnnotate(column: str) -> str:
     return f"{column}P"

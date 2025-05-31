@@ -5,7 +5,14 @@ from django.http import HttpRequest, HttpResponse, JsonResponse
 import jwt
 from constants.constants import DEFAULT_ERROR
 from tools.encrypt import authTokenCheck  # type: ignore
-from User.models import Role, _User as User, is_admin, is_authenticated, is_manager  # type: ignore
+from User.models import (  # type: ignore
+    Role,
+    User,
+    get_user,
+    is_admin,
+    is_authenticated,
+    is_manager,
+)
 from Main.settings import settingsInterface as settings  # type: ignore
 from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
@@ -54,7 +61,7 @@ def auth_page(req: HttpRequest) -> HttpResponse:
 
 def get_color(req: HttpRequest):
     try:
-        user: User = req.user
+        user: User = get_user(req)
         role: Role = user.role
         color: Color = role.belongs.institute.color
         main_color = color.main_color
@@ -185,6 +192,7 @@ def login_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
+            request.user = get_user(request)
             if is_authenticated(request.user):
                 if not (manager_only or admin_only):  # both false
                     return view_func(request, *args, **kwargs) or HttpResponse(
@@ -215,6 +223,8 @@ def auth_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
+            request.user = get_user(request)
+
             if is_authenticated(request.user):
                 if (not manager_only) and (not admin_only):
                     return view_func(request, *args, **kwargs) or HttpResponse(
@@ -243,6 +253,7 @@ def htmx_response(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         if request.META.get("HTTP_HX_REQUEST"):
+            request.user = get_user(request)
             return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
@@ -330,7 +341,9 @@ def api_key_required(view_func):
 
             token = auth_header.split(" ")[1]
             if token and (authTokenCheck(token)):
-                return view_func(request, *args, **kwargs)
+                return view_func(request, *args, **kwargs) or JsonResponse(
+                    {"error": "Invalid Request"}, status=403
+                )
             else:
                 return JsonResponse(
                     {"error": "Authorization Token is invalid"}, status=401

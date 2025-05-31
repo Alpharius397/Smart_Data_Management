@@ -1,43 +1,31 @@
-import abc
 from django.contrib.auth.models import User as _User  # type: ignore
-from django.db.models import (
+from django.db.models import (  # type: ignore
     OneToOneField,
     ForeignKey,
     Model,
     RESTRICT,
-    CASCADE,
     CharField,
-    Choices,
-)  # type: ignore
+)
+from django.http import HttpRequest
 from University.models import Branch, University, Institute
 from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
 
 
-class User(_User):
-    id: int
-    role: "Role"
-
-    class Meta:
-        proxy = True
-
-
-class Admin(Model):
-    pass
+############ TYPES ############
+class PostNameDict(TypedDict):
+    university: str
+    institute: str
+    branch: str
 
 
-class Manager(Model):
-    pass
+class PostIdDict(TypedDict):
+    university: int
+    institute: int
+    branch: int
 
 
-class Student(Model):
-    pass
-
-
-class UserObject(_User):
-    pass
-
-
+############ UTILS ############
 class RoleType:
     UNKNOWN: str = "Unknown"
     STUDENT: str = "Student"
@@ -63,20 +51,35 @@ class RoleType:
         return RoleType.ADMIN == roleID
 
 
-class PostNameDict(TypedDict):
-    university: str
-    institute: str
-    branch: str
+############ MODEL ############
+class User(_User):
+    id: int
+    role: "Role"
+    email: str  # type: ignore
+    username: str  # type: ignore
+
+    class Meta:
+        proxy = True
 
 
-class PostIdDict(TypedDict):
-    university: int
-    institute: int
-    branch: int
+class Admin(Model):
+    pass
+
+
+class Manager(Model):
+    pass
+
+
+class Student(Model):
+    pass
+
+
+class UserObject(_User):
+    pass
 
 
 class Role(Model):
-    user: "User" = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")
+    user: "User" = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
     role: "str" = CharField(  # type: ignore
         verbose_name="Role ID",
         max_length=10,
@@ -88,6 +91,7 @@ class Role(Model):
     )
 
 
+############ TOOLS ############
 def is_manager(user: User) -> bool:
     return RoleType.isManager(user.role.role)
 
@@ -112,7 +116,7 @@ def get_user_id(name: str) -> NullInt:
     try:
         user: User = User.objects.get(username=name)
         return user.id
-    except:
+    except User.DoesNotExist:
         return None
 
 
@@ -126,6 +130,10 @@ def get_post(user: User) -> PostNameDict:
     return PostNameDict(
         **{"university": uni.name, "institute": insti.name, "branch": branch.name}
     )
+
+
+def get_user(req: HttpRequest) -> User:
+    return req.user  # type: ignore
 
 
 def get_post_id(user: User) -> PostIdDict:
@@ -163,7 +171,9 @@ def get_manager_by_name(username: str) -> list[int]:
     return list(
         map(
             getID,
-            User.objects.filter(username__icontains=username, role__role=RoleType.ADMIN)
+            User.objects.filter(
+                username__icontains=username, role__role=RoleType.MANAGER
+            )
             .order_by("username")
             .only("id"),
         )
@@ -179,7 +189,7 @@ def get_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict
         uni = University.objects.get(id=university).name
         insti = Institute.objects.get(id=institute).name
         bra = Branch.objects.get(id=branch).name
-    except:
+    except Exception:
         pass
 
     return PostNameDict(**{"university": uni, "institute": insti, "branch": bra})

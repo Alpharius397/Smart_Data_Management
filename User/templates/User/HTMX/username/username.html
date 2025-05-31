@@ -1,19 +1,21 @@
 {% load static %}
 
-{% if msg or error %}
-    <ul class="messages" hx-swap-oob="true" id="messages">
-        {% if msg %}
-            <li class="success">{{msg}}</li>
-        {% elif error %}
-            <li class="error">{{error}}</li>
-        {% else %}
-            <li class="error"> Something went wrong! </li>
-        {% endif %}
+<div class="messages" id="messages" hx-swap-oob="true">
+  {% if messages %}
+    <ul>
+      {% for message in messages %}
+          <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+      {% endfor %}
     </ul>
-{% endif %}
+  {% endif %}
+</div>
 
-<div hx-get="{% url 'User:userChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
+<div hx-get="{% url 'User:userChange' %}" 
+     hx-swap="outerHTML" 
+     hx-target="this" 
+     hx-target="click from:find button" 
+     class="username">
+
     {{username}} 
     <button class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
-</div>
 </div>

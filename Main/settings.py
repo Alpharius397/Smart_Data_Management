@@ -14,9 +14,11 @@ from pathlib import Path
 import os
 import typing
 
+
 class MongoDB(typing.NamedTuple):
-    database:str
-    collection:str
+    database: str
+    collection: str
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,73 +28,71 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0'
+SECRET_KEY = "django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.postgres',
-    'corsheaders',
-    'Main',
-    'Login',
-    'Register',
-    'Logout',
-    'University',
-    'User',
-    'Dash',
-    'Upload',
-    'View',
-    'Logs',
-    'Card',
-    'Certificate',
-    'Mobile'
+    "daphne",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.postgres",
+    "corsheaders",
+    "Main",
+    "Login",
+    "Register",
+    "Logout",
+    "University",
+    "User",
+    "Dash",
+    "Upload",
+    "View",
+    "Logs",
+    "Card",
+    "Certificate",
+    "Mobile",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'Main.urls'
+ROOT_URLCONF = "Main.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            "Main/static/html"
-            ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": ["Main/static/html"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'Main.wsgi.application'
+WSGI_APPLICATION = "Main.wsgi.application"
 ASGI_APPLICATION = "Main.asgi.application"
 
 CHANNEL_LAYERS = {
@@ -116,13 +116,13 @@ PASSWORD_HASHERS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-    'ENGINE': 'django.db.backends.postgresql',
-    'NAME': 'smart',
-    'USER': 'postgres',
-    'PASSWORD': '1234',
-    'HOST': 'localhost',
-    'PORT': '5432'
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "smart",
+        "USER": "postgres",
+        "PASSWORD": "1234",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -132,16 +132,19 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 9,
+        },
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -151,49 +154,50 @@ CORS_REPLACE_HTTP_REFERER = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 USE_I18N = True
 
 USE_TZ = False
-TIME_ZONE = 'Asia/Kolkata'
+TIME_ZONE = "Asia/Kolkata"
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-STATIC_URL = 'static/' 
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-    
-MEDIA_ROOT = os.path.join(BASE_DIR, 'sample')  # Directory for storing media files
-MEDIA_URL = 'sample/'  # URL prefix for accessing media files
-APP_LOG = os.path.join(BASE_DIR,'Logs','app_log','')
-DATA_LOG = os.path.join(BASE_DIR,'Logs','data_log','')
-LOGIN_URL = 'Login:login'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "sample")  # Directory for storing media files
+MEDIA_URL = "sample/"  # URL prefix for accessing media files
+APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
+DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")
+LOGIN_URL = "Login:login"
 MONGO_URL = "mongodb://127.0.0.1:27017/"
-MONGO_CRED = MongoDB("smart","excel")
+MONGO_CRED = MongoDB("smart", "excel")
 KEY = b"123456789123456789123456"
 WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
 
 AES_KEY_1 = "5XpBavCf2rB0g4QD"
 AES_KEY_2 = "dpI56CKiEN8R0Lcx"
-REDIS = {'host':'localhost','port':6379}
+REDIS = {"host": "localhost", "port": 6379}
 
-JWT_SECRET = 'manvtv88gtmc2yg87ticeyvm4e2f1viu'
-JWT_ALGORITHM = 'HS256'
+JWT_SECRET = "manvtv88gtmc2yg87ticeyvm4e2f1viu"
+JWT_ALGORITHM = "HS256"
 JWT_EXP_DELTA_MINUTES = 30
 REFRESH_EXP_DELTA_MINUTES = 360
 
 CERTIFICATE_EXPIRE_DAYS = 30
 CARD_TOKEN_EXPIRE_MINUTES = 30
 
+
 class settingsInterface:
-    MEDIA_ROOT = MEDIA_ROOT  
+    MEDIA_ROOT = MEDIA_ROOT
     MEDIA_URL = MEDIA_URL
     APP_LOG = APP_LOG
     DATA_LOG = DATA_LOG
@@ -212,6 +216,6 @@ class settingsInterface:
     JWT_ALGORITHM = JWT_ALGORITHM
     JWT_EXP_DELTA_MINUTES = JWT_EXP_DELTA_MINUTES
     REFRESH_EXP_DELTA_MINUTES = REFRESH_EXP_DELTA_MINUTES
-    
+
     CERTIFICATE_EXPIRE_DAYS = CERTIFICATE_EXPIRE_DAYS
     CARD_TOKEN_EXPIRE_MINUTES = CARD_TOKEN_EXPIRE_MINUTES

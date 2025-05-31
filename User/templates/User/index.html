@@ -1,15 +1,15 @@
+{% extends 'Main/index.html' %}
 {% load template %}
 {% load static %}
 
 
-<!DOCTYPE html>
-<html lang="en">
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Upload/styles.css' %}">
+{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <title>User Task Dashboard</title>
+{% block title %} User Account Settings {% endblock %}
+
+ {% block cssStyle %}
     <style>
         a{
             text-decoration: none;
@@ -45,9 +45,9 @@
         .username{
             display: inline;
         }
-
-        {% if request.session.mainColor and request.session.secColor %}
-            header{
+            {% endblock %}
+ {% block customStyle %}
+           header{
                 background-color: {{request.session.mainColor}};
                 color: {{request.session.secColor}};
             }
@@ -68,29 +68,34 @@
                 background-color: {{request.session.secColor}};
             }
 
+            {% endblock %}
+{% block headerLeft %}
+  <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>User Account</h1>{% endblock %}
+
+{% block mainContent %}
+
+    <div class="messages" id="messages">
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+                {% endfor %}
+            </ul>
         {% endif %}
-
-    </style>
-</head>
-
-<body>
-    <header>
-        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back To Dashboard</button></a>
-        <h1>User Account</h1>
-    </header>
-
-    <ul class="messages" id="messages">
-    </ul>
+    </div>
     
     <div class="container">
         <h2>User Details</h2>
         <div class="user-tab">
             Username: 
-            <div hx-get="{% url 'User:userChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
+            <div hx-get="{% url 'User:userChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
                 {% if request.user.username %}
                     {{request.user.username}} 
                 {% else %}
-                    None Username
+                    No Username 
                 {% endif %}
                 
                 <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
@@ -99,7 +104,7 @@
 
         <div class="user-tab">
             Email: 
-            <div hx-get="{% url 'User:mailChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
+            <div hx-get="{% url 'User:mailChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
                 {% if request.user.email %}
                     {{request.user.email}} 
                 {% else %}
@@ -111,19 +116,12 @@
 
         <div class="user-tab">
             Password: 
-            <div hx-get="{% url 'User:passChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:#edit" class="username">
-                {% csrf_token %}
+            <div hx-get="{% url 'User:passChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
                 ********************************
                 <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
             </div>
         </div>
 
     </div>
+    {% endblock %}
 
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
-<script>
-    add_csrf();
-</script>
-</html>
