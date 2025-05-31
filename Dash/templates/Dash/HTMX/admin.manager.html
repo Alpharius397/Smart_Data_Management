@@ -11,15 +11,15 @@
     {% for i in manage %}
         <div class="task-item">
             <div class="task-title"><h3>Filename: {{i.file_name}}</h3></div>
-            <button class="drop-down down" id="up_{{i.idx}}" onclick="addClass('.task-info#up_{{i.idx}}','open','close')&&addClass('.drop-down#up_{{i.idx}}','up','down')">&#11206;</button>
+            <button class="drop-down down" id="up_{{i.id}}" onclick="addClass('.task-info#up_{{i.id}}','open','close')&&addClass('.drop-down#up_{{i.id}}','up','down')">&#11206;</button>
         </div>
-        <div class="task-info close" id="up_{{i.idx}}">
+        <div class="task-info close" id="up_{{i.id}}">
             <div class="assigned">
                 <h4>
                     Uploader Name: {{i.uploader}} <br><br>
-                    Assignment Status: 
+                    Assignment Status:
                     {% for j in i.manager %}
-                    
+
                         {% if j is not None %}
                             {{ j }}
                         {% else %}
@@ -37,7 +37,7 @@
             <a href="{% url 'View:table' id=i.id %}" class="next-button view-button">View Data</a>
         </div>
 
-        
+
         {% if forloop.last %}
             <div hx-get="{% url 'Dash:admin_manage' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"query": "{{request.GET.query}}", "start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
         {% endif %}

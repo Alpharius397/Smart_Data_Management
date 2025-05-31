@@ -3,24 +3,24 @@
 
 {% if error %}
 
-<ul class="messages">
-    <li class="error">{{error}}</li>
-</ul>
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
 {% else %}
 
     {% for i in upload %}
         <div class="task-item">
             <div class="task-title"><h3>Filename: {{i.file_name}}</h3></div>
 
-            <button class="drop-down down" id="down_{{i.idx}}" onclick="addClass('.task-info#down_{{i.idx}}','open','close')&&addClass('.drop-down#down_{{i.idx}}','up','down')">&#11206;</button>
+            <button class="drop-down down" id="down_{{i.id}}" onclick="addClass('.task-info#down_{{i.id}}','open','close')&&addClass('.drop-down#down_{{i.id}}','up','down')">&#11206;</button>
         </div>
-        <div class="task-info close" id="down_{{i.idx}}">
+        <div class="task-info close" id="down_{{i.id}}">
             <div class="assigned">
                 <h4>
                     Uploader Name: {{i.uploader}} <br><br>
-                    Assignment Status: 
+                    Assignment Status:
                     {% for j in i.manager %}
-                    
+
                         {% if j is not None %}
                             {{ j }}
                         {% else %}
