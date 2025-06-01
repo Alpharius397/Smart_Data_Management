@@ -4,7 +4,7 @@
 {% load static %}
 
 {% block manager_button %}
-    <a href="{% url 'Dash:read' %}"><button class="add-task">Read Card</button></a>
+    <a class="next-button add-new-task" href="{% url 'Dash:read' %}">Read Card</a>
 {% endblock %}
 
 {% block manager %}
@@ -14,10 +14,10 @@
         <div class="sub-tab">
             <h3>Search Records: </h3>
             <form hx-get="{% url 'Dash:manage' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input[type='search'], input from:find select" hx-vals="js:{query: get_select('#assign_column')}" onsubmit="event.preventDefault()">
-                
+
                 <div class="form-field">
                     <label for="search">Search Keyword: </label>
-                    <input type="search" placeholder="Search Here" name="value" id="search">    
+                    <input type="search" placeholder="Search Here" name="value" id="search">
                 </div>
 
                 <div class="form-field">
@@ -40,5 +40,4 @@
         </div>
     </div>
 {% endblock %}
-
 

@@ -9,4 +9,5 @@ tempCodeRunnerFile.*
 .venv
 .vscode
 .*
+*media/*
 dump

@@ -2,18 +2,19 @@ import json
 from Main.settings import settingsInterface as settings
 from Logs.loggers import LogStructure, APP_LOG, Task
 from tools.get_image import expand_image
-from tools.encrypt import decrypt_data, jsonHash, monthYearHash
+from tools.encrypt import decrypt_data, certificateHash
 from User.models import is_authenticated, is_manager, User
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  # type: ignore
 from tools.token import hash_token
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string
 from typing import TypedDict
-from constants.constants import DEFAULT_ERROR, READ_TOKEN, ReportStructure
+from constants.constants import DEFAULT_ERROR, READ_TOKEN
 from channels.layers import get_channel_layer  # type: ignore
+from tools.utils import ReportStructure, deconstructSubjects, processSubjects
 
 
-def cardReadWebSocket(token: str, cardID: str, data: str, status: str):
+def cardReadWebSocket(token: str, cardID: str, data: str, status: str):  # type: ignore
     try:
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(  # type: ignore
@@ -81,7 +82,7 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
         cardID = event["cardID"]
         cardData = event["data"]
 
-        context: dict[str, list[str] | dict[str, str] | dict[str, list[str]] | str] = {}
+        context: dict = {}
 
         match status:
             case "Invalid":
@@ -94,26 +95,16 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
                     )
 
                     result, header = data.get("data", {}), data.get("header", {})
+                    hashedJson = certificateHash(result)
 
-                    timeHash = monthYearHash()
-                    hashedJsonText = jsonHash(data)
-
-                    hashedJson = f"{timeHash}{hashedJsonText}"
-
-                    view = ReportStructure.get_structure(columns)
-
-                    for img in view.profile_img:
-                        wid, hei, img = result[img].split(":")
-                        result[img] = expand_image(
-                            width=int(wid), height=int(hei), img_data=img
-                        )
+                    view = deconstructSubjects(result, True)
 
                     context.update(
                         {
                             "data": result,
                             "personal": view.personal_info,
-                            "pic": view.profile_img,
-                            "sem_dict": view.sem_data,
+                            "pic": view.image_info,
+                            "sem_dict": view.semester_info,
                             "link": hashedJson,
                             "cardID": cardID,
                             **header,

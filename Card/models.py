@@ -1,11 +1,8 @@
 from django.db.models import (
-    F,
     SET_NULL,
     CharField,
     Model,
-    IntegerField,
     ForeignKey,
-    RESTRICT,
     OneToOneField,
 )  # type: ignore
 from django.core.validators import MinValueValidator, RegexValidator  # type: ignore

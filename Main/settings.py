@@ -172,8 +172,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "sample")  # Directory for storing media files
-MEDIA_URL = "sample/"  # URL prefix for accessing media files
+MEDIA_ROOT = os.path.join(
+    BASE_DIR,
+    "media",
+)  # Directory for storing media files
+MEDIA_URL = "media/"  # URL prefix for accessing media files
 APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
 DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")
 LOGIN_URL = "Login:login"
@@ -183,8 +186,9 @@ KEY = b"123456789123456789123456"
 WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
 
-AES_KEY_1 = "5XpBavCf2rB0g4QD"
-AES_KEY_2 = "dpI56CKiEN8R0Lcx"
+AES_KEY_1 = b"5XpBavCf2rB0g4QD"
+AES_KEY_2 = b"dpI56CKiEN8R0Lcx"
+CERTIFICATE_KEY = b"123456789123456789123456"
 REDIS = {"host": "localhost", "port": 6379}
 
 JWT_SECRET = "manvtv88gtmc2yg87ticeyvm4e2f1viu"
@@ -210,6 +214,7 @@ class settingsInterface:
 
     AES_KEY_1 = AES_KEY_1
     AES_KEY_2 = AES_KEY_2
+    CERTIFICATE_KEY = CERTIFICATE_KEY
     REDIS = REDIS
 
     JWT_SECRET = JWT_SECRET

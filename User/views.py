@@ -1,4 +1,3 @@
-import random
 from django.core.exceptions import ValidationError
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse  # type: ignore
@@ -16,13 +15,28 @@ from User.models import User, get_user  # type: ignore
 from django.contrib.auth.hashers import check_password  # type: ignore
 from django.contrib import messages
 from User.errors import PasswordMismatch, UserNameAlreadyExists, EmailAlreadyExists
+from Crypto.Random.random import randint
+from tools.token import get_token
 
 
 ############ HTTP Request ############
 @login_needed()
 def account_view(req: HttpRequest) -> HttpResponse | None:
     if is_auth_get(req):
-        return render(req, "User/index.html")
+        user = get_user(req)
+        context = {
+            "username": user.username or "No Username",
+            "email": user.email or "No email",
+            "password": "*" * (randint(8, 20)),
+            "branch": user.role.belongs.name,
+            "institute": user.role.belongs.institute.name,
+            "university": user.role.belongs.institute.university.name,
+            "role": user.role.role,
+            "profile": user.role.profile.url,
+        }
+
+        return render(req, "User/index.html", context=context)
+    return None
 
 
 ############ HTMX Request ############
@@ -34,6 +48,7 @@ def get_username(req: HttpRequest):
         return render(
             req, "User/HTMX/username/username.html", context={"username": username}
         )
+    return None
 
 
 @htmx_response
@@ -79,19 +94,21 @@ def change_username(req: HttpRequest) -> HttpResponse | None:
             print(e)
 
         return render(req, "User/HTMX/username/username.html", context=context)
+    return None
 
 
 @htmx_response
 @auth_needed()
-def get_email(req: HttpRequest):
+def get_email(req: HttpRequest) -> HttpResponse | None:
     user = get_user(req)
     if is_hx_get(req):
         return render(req, "User/HTMX/email/email.html", context={"email": user.email})
+    return None
 
 
 @htmx_response
 @auth_needed()
-def change_email(req: HttpRequest) -> HttpResponse:
+def change_email(req: HttpRequest) -> HttpResponse | None:
     user = get_user(req)
     if is_hx_get(req):
         return render(
@@ -126,23 +143,26 @@ def change_email(req: HttpRequest) -> HttpResponse:
             print(e)
 
         return render(req, "User/HTMX/email/email.html", context=context)
+    return None
 
 
 @htmx_response
 @auth_needed()
-def get_password(req: HttpRequest):
+def get_password(req: HttpRequest) -> HttpResponse | None:
     if is_hx_get(req):
-        defaultPassword = "*" * random.randint(8, 20)
+        defaultPassword = "*" * randint(8, 20)
         return render(
             req,
             "User/HTMX/password/password.html",
             context={"password": defaultPassword},
         )
 
+    return None
+
 
 @htmx_response
 @auth_needed()
-def change_password(req: HttpRequest) -> HttpResponse:
+def change_password(req: HttpRequest) -> HttpResponse | None:
     user = get_user(req)
 
     if is_hx_get(req):
@@ -173,3 +193,34 @@ def change_password(req: HttpRequest) -> HttpResponse:
             print(e)
 
         return render(req, "User/HTMX/password/password.html")
+    return None
+
+
+@htmx_response
+@auth_needed()
+def get_profile(req: HttpRequest) -> HttpResponse | None:
+    if is_hx_get(req):
+        return render(req, "User/profile/profile.html")
+    return None
+
+
+@htmx_response
+@auth_needed()
+def change_image(req: HttpRequest) -> HttpResponse | None:
+    if is_hx_post(req):
+        user = get_user(req)
+        # context = {"image": ""}
+        try:
+            role = user.role
+            image = req.FILES["image"]
+            # filename = req.POST["image"]
+
+            role.profile = image
+
+            role.save()
+
+        except Exception as e:
+            print(e)
+
+        return render(req, "User/HTMX/image/image.html")
+    return None

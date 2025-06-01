@@ -1,6 +1,3 @@
-import typing
-import json
-import time
 import asyncio
 from django.core.files.uploadedfile import UploadedFile
 from django.shortcuts import render  # type: ignore
@@ -23,7 +20,8 @@ from .models import UploadTable, DataTable
 from University.models import Subject
 from django.contrib import messages  # type: ignore
 import pandas as pd  # type: ignore
-from tools.utils import processSubjects, SubjectsNotDefined
+from tools.utils import processSubjects
+from University.errors import SubjectsNotDefined
 from .errors import (
     FileDoesNotExists,
     FileLocked,

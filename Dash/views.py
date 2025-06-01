@@ -6,6 +6,7 @@ from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
 from Main.models import RedisConnection
 from django.conf import settings  # type: ignore
 from User.models import (
+    RoleType,
     get_user,
     is_admin,
     is_manager,
@@ -72,7 +73,7 @@ def get_data(
             )
         )
 
-    return result.exists(), data
+    return (not result.exists()), data
 
 
 def get_query(req: HttpRequest) -> dict[str, str]:
@@ -267,9 +268,10 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse | None:
         try:
             queryset = get_query(req)
             start = int(req.GET.get("start", "0"))
-
             result = UploadTable.objects.filter(
-                **queryset, assigned__isnull=False
+                **queryset,
+                assigned__isnull=False,
+                assigned__manager__role__role=RoleType.ADMIN,
             ).distinct("id")[start : start + MAX_RECORD]
 
             flag, uploaders = get_data(result)
@@ -314,7 +316,9 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse | None:
             start = int(req.GET.get("start", "0"))
 
             result = UploadTable.objects.filter(
-                **queryset, assigned__isnull=False
+                **queryset,
+                assigned__isnull=False,
+                assigned__manager__role__role=RoleType.MANAGER,
             ).distinct("id")[start : start + MAX_RECORD]
 
             flag, managers = get_data(result)

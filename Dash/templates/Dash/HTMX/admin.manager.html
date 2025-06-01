@@ -8,7 +8,7 @@
 
 {% else %}
 
-    {% for i in manage %}
+    {% for i in manager %}
         <div class="task-item">
             <div class="task-title"><h3>Filename: {{i.file_name}}</h3></div>
             <button class="drop-down down" id="up_{{i.id}}" onclick="addClass('.task-info#up_{{i.id}}','open','close')&&addClass('.drop-down#up_{{i.id}}','up','down')">&#11206;</button>

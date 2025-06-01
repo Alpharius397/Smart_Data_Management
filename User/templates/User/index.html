@@ -2,75 +2,38 @@
 {% load template %}
 {% load static %}
 
-
 {% block styleSheet %}
-    <link rel="stylesheet" href="{% static 'styles/Upload/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/User/styles.css' %}">
 {% endblock %}
 
 {% block title %} User Account Settings {% endblock %}
 
- {% block cssStyle %}
+{% block customStyle %}
     <style>
-        a{
-            text-decoration: none;
+        header{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
         }
 
-        
-        .arrow {
-            margin-left: auto;
-            font-size: 18px;
-            color: #6c757d;
-            display: inline;
-        }
-        
-        .log-view{
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        body{
+            color: {{request.session.mainColor}};
         }
 
-        .edit{
-            width: 20px;
-            height: 20px;
-            background-color: white;
-            display: inline-flex;
-            padding: 0px;
-            margin: auto;
+        header .user-log, header .add-task{
+            color: {{request.session.mainColor}};
         }
 
-        img.edit:hover{
-            border-bottom: 3px grey solid;
+        .task-item h3{
+            color: {{request.session.mainColor}};
         }
 
-        .username{
-            display: inline;
+        .container{
+            background-color: {{request.session.secColor}};
         }
-            {% endblock %}
- {% block customStyle %}
-           header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
-
-            body{
-                color: {{request.session.mainColor}};
-            }
-
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
-
-            .task-item h3{
-                color: {{request.session.mainColor}};
-            }
-
-            .container{
-                background-color: {{request.session.secColor}};
-            }
-
-            {% endblock %}
+    </style>
+{% endblock %}
 {% block headerLeft %}
-  <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
+    <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>User Account</h1>{% endblock %}
@@ -86,42 +49,116 @@
             </ul>
         {% endif %}
     </div>
-    
-    <div class="container">
-        <h2>User Details</h2>
-        <div class="user-tab">
-            Username: 
-            <div hx-get="{% url 'User:userChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
-                {% if request.user.username %}
-                    {{request.user.username}} 
-                {% else %}
-                    No Username 
-                {% endif %}
-                
-                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+
+    <div class="tab">
+        <div class="profile-image-tab">
+            <div class="profile-image">
+                <img src="{{profile}}" height="50px" id="profile-image">
+                <div class="profile-image-edit"><img src="{% static 'img/edit.svg' %}" ></div>
+                <form class="image-change"
+                      hx-encoding='multipart/form-data'
+                      hx-post="{% url 'User:imageChange' %}"
+                      hx-swap="innerHTML" hx-target=".messages"
+                      hx-trigger="click from:find button"
+                      onsubmit="event.preventDefault()">
+                    {% csrf_token %}
+                    <input type="file" name="image" />
+                    <button class="submit">Click Me</button>
+                </form>
             </div>
         </div>
 
-        <div class="user-tab">
-            Email: 
-            <div hx-get="{% url 'User:mailChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
-                {% if request.user.email %}
-                    {{request.user.email}} 
-                {% else %}
-                    No Email
-                {% endif %}
-                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+        <div class="personal-details">
+            <div class="heading"> Personal Details </div>
+
+            <div class="info">
+                Username:
+                <div hx-get="{% url 'User:userChange' %}"
+                     hx-swap="outerHTML"
+                     hx-target="this"
+                     hx-target="click from:find button"
+                     class="edit-form">
+
+                    {{username}}
+
+                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                </div>
+
+            </div>
+            <div class="info">
+                Email:
+                <div hx-get="{% url 'User:mailChange' %}"
+                     hx-swap="outerHTML"
+                     hx-target="this"
+                     hx-target="click from:find button"
+                     class="edit-form">
+
+                    {{email}}
+
+                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                </div>
+
+            </div>
+            <div class="info">
+                Password:
+                <div hx-get="{% url 'User:passChange' %}"
+                     hx-swap="outerHTML"
+                     hx-target="this"
+                     hx-target="click from:find button"
+                     class="edit-form">
+
+                    {{password}}
+
+                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                </div>
+
+            </div>
+            <div class="info">
+                Role: {{role}}
+
             </div>
         </div>
+        <div class="institute-details">
+            <div class="heading"> Institute Details </div>
 
-        <div class="user-tab">
-            Password: 
-            <div hx-get="{% url 'User:passChange' %}" hx-swap="outerHTML" hx-target="this" hx-target="click from:find button" class="username">
-                ********************************
-                <button id="edit" class="edit"><img src="{% static 'img/edit.svg' %}" class="edit"></button>
+            <div class="info">
+                University: {{university}}
             </div>
-        </div>
 
+            <div class="info">
+                Institute: {{institute}}
+            </div>
+            <div class="info">
+                Branch: {{branch}}
+
+            </div>
+
+        </div>
     </div>
-    {% endblock %}
 
+
+{% endblock %}
+
+{% block script %}
+    <script>
+        const edit_image = document.querySelector(".profile-image-edit");
+        const file_input = document.querySelector(".image-change input[type='file']");
+        const edit_form = document.querySelector(".image-change button");
+
+        edit_image.addEventListener("click", function(event){
+            let confirmThis = confirm("Are you sure you want to change your profile image?");
+
+            event.stopPropagation();
+            if(confirmThis==true){
+                file_input.click();
+            }
+        });
+
+        file_input.addEventListener("change", function(event){
+            if(this.files.length==1){
+                edit_form.click();
+            }
+        })
+    </script>
+
+{% endblock %}
