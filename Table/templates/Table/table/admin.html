@@ -1,0 +1,11 @@
+{% extends 'Table/table.html' %}
+{% load template %}
+
+{% block upload_button %}
+    <a class="next-button edit-task" onclick="redirect(`{% url 'Upload:view_edit' id=id %}`)">Edit Data</a>
+{% endblock %}
+{% block assignForm %}
+
+    <div hx-get="{% url 'Table:assign' id=id %}" hx-swap="outerHTML" hx-trigger="load" hx-target="this"></div>
+
+{% endblock %}

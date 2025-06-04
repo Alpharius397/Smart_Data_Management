@@ -35,7 +35,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,7 +55,8 @@ INSTALLED_APPS = [
     "User",
     "Dash",
     "Upload",
-    "View",
+    "Table",
+    "Report",
     "Logs",
     "Card",
     "Certificate",
@@ -164,6 +164,7 @@ TIME_ZONE = "Asia/Kolkata"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = "static/"
 
 # Default primary key field type
@@ -176,6 +177,7 @@ MEDIA_ROOT = os.path.join(
     BASE_DIR,
     "media",
 )  # Directory for storing media files
+
 MEDIA_URL = "media/"  # URL prefix for accessing media files
 APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
 DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")

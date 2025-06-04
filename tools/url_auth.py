@@ -3,6 +3,7 @@ import json
 import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse
 import jwt
+from Upload.models import UploadTable
 from constants.constants import DEFAULT_ERROR
 from tools.encrypt import authTokenCheck  # type: ignore
 from User.models import (  # type: ignore
@@ -13,6 +14,7 @@ from User.models import (  # type: ignore
     is_authenticated,
     is_manager,
 )
+from django.db.models import Q
 from Main.settings import settingsInterface as settings  # type: ignore
 from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
@@ -66,12 +68,22 @@ def get_color(req: HttpRequest):
         color: Color = role.belongs.institute.color
         main_color = color.main_color
         sec_color = color.sec_color
+        icon = color.icon.url
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
+        req.session["image"] = icon
     except Exception:
         pass
 
-
+def ownerCheck(user: User, id: int):
+    try:
+        UploadTable.objects.get(
+            Q(id = id) & (Q(uploader__role__belongs__id = user.role.belongs.id) | Q(assigned__manager__id = user.id))
+        )
+        return True
+    except Exception:
+        return False
+    
 def noneCheck(*args: typing.Any) -> bool:
     return not all(args)
 
@@ -259,6 +271,23 @@ def htmx_response(
         return HttpResponse(status=403)
 
     return _wrapped_view
+
+def file_permission_check(
+    view_func: typing.Callable[..., HttpResponse | None],
+):
+    """Wrapper for views that access tasks"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
+        user = get_user(request)
+        
+        if ownerCheck(user, id):
+            return view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
+
+        return HttpResponse(status=403)
+
+    return _wrapped_view
+
 
 
 def jwt_required(

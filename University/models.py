@@ -7,8 +7,9 @@ from django.db.models import (
     Model,
     IntegerField,
     AutoField,
+    ImageField
 )  # type: ignore
-from django.core.validators import MinValueValidator, RegexValidator  # type: ignore
+from django.core.validators import MinValueValidator, RegexValidator
 
 ColorRegex = RegexValidator(r"^#[a-fA-F0-9]{6}$", message="Invalid Hex color")
 
@@ -86,6 +87,7 @@ class Subject(Model):
     marks: int = IntegerField(
         verbose_name="Max Marks",
         validators=[MinValueValidator(1, "Semester cannot be negative or zero")],
+        null=False,
     )  # type: ignore
 
     class Meta:
@@ -115,7 +117,7 @@ class Color(Model):
         verbose_name="Secondary Color",
         validators=[ColorRegex],
     )  # type: ignore
-
+    icon = ImageField(verbose_name="Institute Icon", upload_to="icon", null=True)
     class Meta:
         verbose_name = "Color Theme"
         verbose_name_plural = "Color Themes"

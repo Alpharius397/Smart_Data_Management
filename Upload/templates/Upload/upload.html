@@ -8,34 +8,34 @@
 {% endblock %}
 
 {% block title %} Upload Form {% endblock %}
-            
+
 {% block customStyle %}
-  <style>
-    header{
-      background-color: {{request.session.mainColor}};
-        color: {{request.session.secColor}};
-      }
+    <style>
+        header{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
+        }
 
-      body{
-        color: {{request.session.mainColor}};
-      }
+        body{
+            color: {{request.session.mainColor}};
+        }
 
-      header .user-log, header .add-task{
-        color: {{request.session.mainColor}};
-      }
+        header .user-log, header .add-task{
+            color: {{request.session.mainColor}};
+        }
 
-  </style>
+    </style>
 {% endblock %}
 
 {% block headerLeft %}
-  <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
+    <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Upload Form</h1>{% endblock %}
 
 {% block mainContent %}
 
-  <div class="messages"></div>
+    <div class="messages"></div>
 
     <div class="upload-container">
         <h2>Upload Excel</h2>
@@ -48,11 +48,11 @@
                     {{ field }}
 
                 </div>
-                    {% if field.errors %}
-                        {{ field.errors }}
+                {% if field.errors %}
+                    {{ field.errors }}
 
-                    {% endif %}
-                    
+                {% endif %}
+
             {% endfor %}
             <button class="upload-button">Upload</button>
             <progress id='progress' value='0' max='100'></progress>
@@ -63,21 +63,21 @@
 {% endblock %}
 
 {% block script %}
-<script>
+    <script>
 
-    htmx.on("#form","htmx:beforeSend", function(event){
+        htmx.on("#form","htmx:beforeSend", function(event){
 
-        htmx.find('#progress').setAttribute('value', 0);
-        htmx.find('#progress').setAttribute('style', "display:block;");
-    });
+            htmx.find('#progress').setAttribute('value', 0);
+            htmx.find('#progress').setAttribute('style', "display:block;");
+        });
 
-    htmx.on('#form', 'htmx:xhr:progress', function(event) {
-        htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
+        htmx.on('#form', 'htmx:xhr:progress', function(event) {
+            htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
 
-        if(event.detail.loaded==event.detail.total){
-            htmx.find('#progress').setAttribute('style', "display:none;");
-        }
-    });
+            if(event.detail.loaded==event.detail.total){
+                htmx.find('#progress').setAttribute('style', "display:none;");
+            }
+        });
 
-  </script>
+    </script>
 {% endblock %}

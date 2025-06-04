@@ -7,12 +7,11 @@ from django.db.models import (  # type: ignore
     CharField,
     ImageField,
 )
-from django.core.files import File
+from django.core.files.storage import Storage
 from django.http import HttpRequest
 from University.models import Branch, University, Institute
 from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
-from Main.templatetags.default_profile import profile_image  # type: ignore
 
 
 ############ TYPES ############
@@ -83,17 +82,17 @@ class UserObject(_User):
 
 class Role(Model):
     id: int
-    user: "User" = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
-    role: "str" = CharField(  # type: ignore
+    user = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
+    role = CharField(  # type: ignore
         verbose_name="Role ID",
         max_length=10,
         choices=list(RoleType.getRole()),
         default=RoleType.UNKNOWN,
     )
-    profile: File = ImageField(
+    profile = ImageField(
         verbose_name="Profile Image", upload_to="profile", null=True
     )  # type: ignore
-    belongs: "Branch" = ForeignKey(  # type: ignore
+    belongs = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
 
@@ -102,7 +101,7 @@ class Role(Model):
             this = Role.objects.get(id=self.id)
 
             if this.profile != self.profile:
-                this.profile.delete(save=False)
+                this.profile.delete(save=False)  # type: ignore
 
         except Exception as e:
             print(e)

@@ -1,0 +1,109 @@
+{% load template %}
+{% load static %}
+
+{% if error %}
+    <div class="full-flex-row">
+        <div class="loading">
+            <ul class="messages">
+                <li class="error"><span>{{error}}</span></li>
+            </ul>
+        </div>
+    </div>
+{% else %}
+{% for idx,row in result.items %}
+
+        <div class="rows" id="{{idx}}" hx-get="{% url 'Table:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
+            {% for image in images %}
+
+                {% with IMAGE=row.data|index_str:image|img %}
+                    {% if admin is True and row.locked is not True %}
+                        <div class="row-data image column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{idx}}_{{image|encode|hex}}">
+
+                            <div hx-put="{% url 'Table:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
+
+                                    <img class="edit-button" src="{% static 'img/edit.svg' %}" title="Edit This Field">
+                            </div>
+                        </div>
+
+                    {% else %}
+
+                        <div class="row-data column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
+
+                    {% endif %}
+
+                {% endwith %}
+            {% endfor %}
+
+            {% for column in columns %}
+                <div class="row-data column-{{ column|encode|hex }}">
+
+                    {% if admin is True and row.locked is not True %}
+                        <div hx-put="{% url 'Table:edit_text' id=id idx=idx %}"
+                             hx-vals='{"column":"{{column|encode|hex}}","value":"{{ row.data|index_str:column }}"}'
+                             hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
+
+                            {{ row.data|index_str:column|str }}
+                            <img class="edit-button" src="{% static 'img/edit.svg' %}" title="Edit This Field">
+
+                        </div>
+
+                    {% else %}
+                        <div>
+                            {{row.data|index_str:column|str}}
+                        </div>
+                    {% endif %}
+                </div>
+
+            {% endfor %}
+
+
+            <div class="row-data view-area">
+                <div class="grid-layout">
+                    <div class="data-loading">
+                        <button class="view-icon" onclick="window.location.replace(`{% url 'Report:index' id=id idx=idx %}`);">
+                            <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                            <p class="view-text">View</p>
+                        </button>
+
+                        <div class="refresh-button">
+                            <button class="refresh" id="refresh-{{idx}}"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                        </div>
+
+                    </div>
+
+                    <div class="status-report">
+                        <div class="report-status">
+                            <p>Verify Status: </p>
+                            {% if row.status is True %}
+                                <p class="correct">Verified</p>
+                            {% elif row.status is False %}
+                                <p class="wrong">Rejected</p>
+                            {% else %}
+                                <p class="none">Unchecked</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="report-status">
+                            <p>Lock Status: </p>
+                            {% if row.locked is True %}
+                                <p class="correct">Locked</p>
+                            {% else %}
+                                <p class="wrong">Unlocked</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="report-status">
+                            <p>Issue Status: </p>
+                            {% if row.issued is True %}
+                                <p class="correct">Issued</p>
+                            {% else %}
+                                <p class="wrong">Not Issued</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% endfor %}
+{% endif %}

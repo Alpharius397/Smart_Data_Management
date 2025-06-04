@@ -1,0 +1,29 @@
+{% load template %}
+{% load static %}
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% if messages %}
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+{% endif %}
+
+{% with IMAGE=value|img %}
+{% if locked is not True %}
+    <div class="row-data image column-{{ column }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{idx}}_{{column}}">
+
+        <div hx-put="{% url 'Table:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{ column }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
+
+                <img class="edit-button" src="{% static 'img/edit.svg' %}" title="Edit This Field">
+        </div>
+    </div>
+
+{% else %}
+
+    <div class="row-data column-{{ column }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
+
+{% endif %}
+{% endwith %}

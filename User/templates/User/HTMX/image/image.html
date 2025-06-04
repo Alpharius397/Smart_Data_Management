@@ -1,0 +1,15 @@
+{% load static %}
+
+<img src="{{profile}}" height="50px" id="profile-image" hx-swap-oob="true" />
+
+<div class="messages" id="messages">
+  {% if messages %}
+  <ul>
+    {% for message in messages %}
+    <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>
+      {{ message }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

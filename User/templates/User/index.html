@@ -58,7 +58,7 @@
                 <form class="image-change"
                       hx-encoding='multipart/form-data'
                       hx-post="{% url 'User:imageChange' %}"
-                      hx-swap="innerHTML" hx-target=".messages"
+                      hx-swap="outerHTML" hx-target=".messages"
                       hx-trigger="click from:find button"
                       onsubmit="event.preventDefault()">
                     {% csrf_token %}

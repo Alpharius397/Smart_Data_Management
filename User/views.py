@@ -1,4 +1,6 @@
+from PIL import Image
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse  # type: ignore
 from constants.constants import DEFAULT_ERROR  # type: ignore
@@ -16,7 +18,7 @@ from django.contrib.auth.hashers import check_password  # type: ignore
 from django.contrib import messages
 from User.errors import PasswordMismatch, UserNameAlreadyExists, EmailAlreadyExists
 from Crypto.Random.random import randint
-from tools.token import get_token
+from Main.templatetags.bad_image import bad_image
 
 
 ############ HTTP Request ############
@@ -24,6 +26,7 @@ from tools.token import get_token
 def account_view(req: HttpRequest) -> HttpResponse | None:
     if is_auth_get(req):
         user = get_user(req)
+
         context = {
             "username": user.username or "No Username",
             "email": user.email or "No email",
@@ -35,7 +38,18 @@ def account_view(req: HttpRequest) -> HttpResponse | None:
             "profile": user.role.profile.url,
         }
 
+        try:
+            with user.role.profile.open() as f:
+                Image.open(f)
+
+            context["profile"] = user.role.profile.url
+
+        except Exception as e:
+            print(e)
+            messages.error(req, "Invalid Image")
+            context["profile"] = f"data:image/jpeg;base64,{bad_image}"
         return render(req, "User/index.html", context=context)
+
     return None
 
 
@@ -209,18 +223,22 @@ def get_profile(req: HttpRequest) -> HttpResponse | None:
 def change_image(req: HttpRequest) -> HttpResponse | None:
     if is_hx_post(req):
         user = get_user(req)
-        # context = {"image": ""}
+        context = {"profile": f"data:image/jpeg;base64,{bad_image}"}
+
         try:
             role = user.role
-            image = req.FILES["image"]
-            # filename = req.POST["image"]
+            image: UploadedFile = req.FILES["image"]  # type: ignore
 
-            role.profile = image
-
+            with image.open() as f:
+                Image.open(f)
+                role.profile.save(f.name, f)  # type: ignore
             role.save()
 
+            context["profile"] = role.profile.url  # type: ignore
+            messages.success(req, "Image Change was successful")
         except Exception as e:
+            messages.error(req, DEFAULT_ERROR)
             print(e)
 
-        return render(req, "User/HTMX/image/image.html")
+        return render(req, "User/HTMX/image/image.html", context=context)
     return None

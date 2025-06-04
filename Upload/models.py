@@ -16,13 +16,13 @@ import typing
 
 
 class UploadTable(Model):
-    id: int = AutoField(
+    id = AutoField(
         verbose_name="FileID", primary_key=True, null=False, blank=False
     )  # type: ignore
-    fileName: str = CharField(
+    fileName = CharField(
         max_length=255, verbose_name="File Name", null=False, blank=False, unique=True
     )  # type: ignore
-    uploader: User = ForeignKey(
+    uploader = ForeignKey(
         to=User,
         on_delete=RESTRICT,
         null=False,
@@ -48,10 +48,10 @@ class UploadTable(Model):
 
 
 class AssignTable(Model):
-    id: int = AutoField(
+    id = AutoField(
         verbose_name="AssignID", primary_key=True, null=False, blank=False
     )  # type: ignore
-    fileID: UploadTable = ForeignKey(
+    fileID = ForeignKey(
         to=UploadTable,
         verbose_name="FileID",
         related_name="assigned",
@@ -59,7 +59,7 @@ class AssignTable(Model):
         null=False,
         blank=False,
     )  # type: ignore
-    manager: User = ForeignKey(
+    manager = ForeignKey(
         to=User,
         on_delete=RESTRICT,
         null=False,
@@ -83,10 +83,10 @@ class AssignTable(Model):
 
 
 class DataTable(Model):
-    id: int = AutoField(
+    id = AutoField(
         verbose_name="DataID", primary_key=True, null=False, blank=False
     )  # type: ignore
-    fileID: UploadTable = ForeignKey(
+    fileID = ForeignKey(
         to=UploadTable,
         verbose_name="FileID",
         related_name="data",
@@ -95,26 +95,26 @@ class DataTable(Model):
         blank=False,
     )  # type: ignore
     # semester = IntegerField(verbose_name="Semester", validators=[MinValueValidator(1, "Semester cannot be negative or zero")],null=False,blank=False)
-    locked: bool = BooleanField(
+    locked = BooleanField(
         verbose_name="Lock Status", default=False, null=False, blank=False
     )  # type: ignore
 
-    issued: bool = BooleanField(
+    issued = BooleanField(
         verbose_name="Issue Status", default=False, null=True, blank=False
     )  # type: ignore
-    time_of_lock: datetime | None = DateTimeField(
+    time_of_lock = DateTimeField(
         verbose_name="Time of Lock", null=True, blank=False, default=None
     )  # type: ignore
-    time_of_issue: datetime | None = DateTimeField(
+    time_of_issue = DateTimeField(
         verbose_name="Time of Issue", null=True, blank=False, default=None
     )  # type: ignore
-    status: bool | None = BooleanField(
+    status = BooleanField(
         verbose_name="Feedback Status", default=None, null=True, blank=False
     )  # type: ignore
-    feed: str | None = CharField(
+    feed = CharField(
         max_length=255, verbose_name="Feedback", null=True, blank=False, default=None
     )  # type: ignore
-    data: dict[str, str] = JSONField(verbose_name="rowData", null=False, blank=False)  # type: ignore
+    data = JSONField(verbose_name="rowData", null=False, blank=False)  # type: ignore
 
     def update_data(self, jsonText: dict[str, typing.Any]) -> "DataTable":
         self.data = jsonText

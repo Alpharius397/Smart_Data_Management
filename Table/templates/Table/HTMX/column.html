@@ -1,0 +1,46 @@
+{% load template %}
+
+<div class="rows first" id="row-first" hx-swap-oob="true">
+  {% for i in column %}
+    <p class="column-heading">{{ i|rstrip:2 }}</p>
+  {% endfor %}
+
+  {% if column %}
+    <p class="column-heading view-area">View Data</p>
+  {% endif %}
+
+</div>
+
+  <option value="">----------</option>
+  {% for i in search %}
+    <option value="{{ i }}">{{ i|rstrip:2 }}</option>
+  {% endfor %}
+
+<style>
+  :root {
+    --column-size: {{count|add:1}};
+
+    {% for i in column %}
+      --column-{{i|encode|hex}}: {{forloop.counter}};
+    {% endfor %}
+  }
+
+  .rows {
+    display: grid;
+
+    grid-template-columns: repeat(var(--column-size),250px);
+  }
+
+  .full-flex-row {
+    width: calc(var(--column-size)* 250px);
+  }
+
+  {% for i in column %}
+    .column-{{i|encode|hex}} {
+      grid-column-start: var(--column-{{i|encode|hex}});
+      grid-row-start: 1;
+    }
+
+  {% endfor %}
+
+</style>

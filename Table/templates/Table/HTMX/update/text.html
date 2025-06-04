@@ -1,0 +1,21 @@
+{% load static %}
+{% load template %}
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% if messages %}
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+        {% endif %}
+    </ul>
+{% endif %}
+
+<div class="row-data column-{{ column }}">
+
+    <div hx-get="{% url 'Table:edit_text' id=id idx=idx %}"
+        hx-vals='{"column":"{{column}}"}'
+        hx-target="closest div.row-data" hx-swap="outerHTML" hx-trigger="load">
+            <b>Loading...</b>
+        </div>
+</div>

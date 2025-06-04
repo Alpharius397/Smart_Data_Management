@@ -1,6 +1,0 @@
-{% extends 'View/table.html' %}
-{% load template %}
-
-{% block upload_button %}
-    <a class="next-button edit-task" onclick="redirect(`{% url 'Upload:view_edit' id=id %}`)">Edit Data</a>
-{% endblock %}

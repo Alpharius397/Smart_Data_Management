@@ -77,8 +77,8 @@ def get_data(
 
 
 def get_query(req: HttpRequest) -> dict[str, str]:
-    query = req.GET.get("query", None)
-    value = req.GET.get("value", None)
+    query = req.GET.get("query", "")
+    value = req.GET.get("value", "")
     query_dict: dict[str, str] = {}
 
     if query and value:
@@ -107,6 +107,7 @@ def get_query(req: HttpRequest) -> dict[str, str]:
 @login_needed()
 def dash_board(req: HttpRequest) -> HttpResponse | None:
     user = get_user(req)
+    get_color(req)
     if is_auth_get(req):
         if is_admin(user):
             return render(req, "Dash/dash/admin.html")
@@ -270,8 +271,8 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse | None:
             start = int(req.GET.get("start", "0"))
             result = UploadTable.objects.filter(
                 **queryset,
-                assigned__isnull=False,
-                assigned__manager__role__role=RoleType.ADMIN,
+                assigned__isnull=True,
+                uploader__role__role=RoleType.ADMIN,
             ).distinct("id")[start : start + MAX_RECORD]
 
             flag, uploaders = get_data(result)
@@ -280,7 +281,7 @@ def admin_upload_fetch(req: HttpRequest) -> HttpResponse | None:
                 error = "No matching records found!"
 
             elif flag and start == 0:
-                error = "No Sheets are assigned"
+                error = "All Sheets are assigned"
 
             next_ = start + MAX_RECORD
 
@@ -318,7 +319,7 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse | None:
             result = UploadTable.objects.filter(
                 **queryset,
                 assigned__isnull=False,
-                assigned__manager__role__role=RoleType.MANAGER,
+                uploader__role__role=RoleType.ADMIN,
             ).distinct("id")[start : start + MAX_RECORD]
 
             flag, managers = get_data(result)
@@ -327,7 +328,7 @@ def admin_manage_fetch(req: HttpRequest) -> HttpResponse | None:
                 error = "No matching records found!"
 
             elif flag and start == 0:
-                error = "No Sheets are assigned"
+                error = "No Tasks left to assign"
 
             next_ = start + MAX_RECORD
 
