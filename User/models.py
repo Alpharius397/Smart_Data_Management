@@ -6,9 +6,9 @@ from django.db.models import (  # type: ignore
     RESTRICT,
     CharField,
     ImageField,
+    AutoField
 )
-from django.core.files.storage import Storage
-from django.http import HttpRequest
+from django.http import HttpRequest # type: ignore
 from University.models import Branch, University, Institute
 from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
@@ -81,17 +81,22 @@ class UserObject(_User):
 
 
 class Role(Model):
-    id: int
+    id = AutoField(verbose_name="roleID", primary_key=True, null=False, blank=False)
+    
     user = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
+    
     role = CharField(  # type: ignore
         verbose_name="Role ID",
         max_length=10,
         choices=list(RoleType.getRole()),
         default=RoleType.UNKNOWN,
+        blank=False
     )
+    
     profile = ImageField(
-        verbose_name="Profile Image", upload_to="profile", null=True
+        verbose_name="Profile Image", upload_to="profile", null=False, default="1_BAmBc8T.jpg"
     )  # type: ignore
+    
     belongs = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
@@ -103,24 +108,34 @@ class Role(Model):
             if this.profile != self.profile:
                 this.profile.delete(save=False)  # type: ignore
 
+        except Role.DoesNotExist:
+            pass
+
         except Exception as e:
-            print(e)
+            print("Error saving user: ", e)
 
         super().save(*args, **kwargs)
 
 
 ############ TOOLS ############
 def is_manager(user: User) -> bool:
-    return RoleType.isManager(user.role.role)
-
+    try:
+        return RoleType.isManager(user.role.role)
+    except:
+        return False
 
 def is_student(user: User) -> bool:
-    return RoleType.isStudent(user.role.role)
+    try:
+        return RoleType.isStudent(user.role.role)
+    except:
+        return False
 
 
 def is_admin(user: User) -> bool:
-    return RoleType.isAdmin(user.role.role)
-
+    try:
+        return RoleType.isAdmin(user.role.role)
+    except:
+        return False
 
 def get_user_by_id(id: int) -> NullStr:
     try:
@@ -170,7 +185,7 @@ def is_authenticated(user: User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
 
-def getID(user: User):
+def getID(user: User) -> int:
     return user.id
 
 

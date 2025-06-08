@@ -1,10 +1,9 @@
 from django.urls import path
-from .views import *
+from Report.views import *
 from .sockets import CardWriteExeConsumer
 
 app_name = "Report"
 urlpatterns = [
-
     path("<str:id>/<int:idx>/", index_view, name="index"),
     path("<str:id>/<int:idx>/feed/", feed_view, name="feed"),
     path("<str:id>/<int:idx>/compress/", compress_view, name="compress"),
@@ -19,5 +18,5 @@ urlpatterns = [
 ]
 
 websocket_urlpatterns = [
-    path("view/<str:id>/<int:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
+    path("report/<str:id>/<int:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
 ]

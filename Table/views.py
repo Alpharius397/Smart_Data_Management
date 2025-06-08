@@ -1,11 +1,11 @@
 from io import BytesIO
 from typing import Any
-from django.contrib import messages
-from django.db.models import Q
-from PIL import Image, UnidentifiedImageError
+from django.contrib import messages # type: ignore
+from django.db.models import Q # type: ignore
+from PIL import Image, UnidentifiedImageError # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse  # type: ignore
-from Upload.models import DataTable, AssignTable, UploadTable
+from Task.models import DataTable, AssignTable, UploadTable
 from User.models import (
     RoleType,
     get_user,
@@ -30,10 +30,10 @@ from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.utils import ColumnType, segregateColumns
 from django.http import QueryDict
 from constants.constants import DEFAULT_ERROR, MAX_RECORD
-from Main.models import *
-from psycopg2.sql import SQL, Identifier, Literal
-from django.db import connection
-from tools.get_image import b64encode
+from Main.models import * 
+from psycopg2.sql import SQL, Identifier, Literal # type: ignore
+from tools.get_image import b64encode 
+from django.db import connection # type: ignore
 
 ############ TYPES ############
 class ManagerList(NamedTuple):
@@ -109,7 +109,7 @@ def get_context(
     context: dict[str, Any] = {"id": id}
     search = False
     user = get_user(req)
-    column_list: ColumnType = ColumnType([], [], [])
+    column_list: ColumnType = ColumnType([], [])
 
     try:
         _page: int = int(page)
@@ -143,7 +143,7 @@ def get_context(
 
         _, column_list = get_columns(id)
 
-        columns: list = column_list.semester + column_list.personal
+        columns: list = column_list.text
         image_idx: list = column_list.images
 
         pd_data = {
@@ -247,15 +247,14 @@ def column_view(req: HttpRequest, id: int) -> HttpResponse | None:
         context = {"search": [], "column": [], "count": 0}
 
         try:
-            count, (images, personal, semester) = get_columns(id)
+            count, (images, text) = get_columns(id)
 
-            personal.extend(semester)
 
-            context["search"] = personal.copy()
+            context["search"] = text
 
-            personal.extend(images)
+            text.extend(images)
 
-            context["column"] = personal
+            context["column"] = text
             context["count"] = count
 
         except Exception as e:
@@ -447,7 +446,7 @@ def refresh_row(req: HttpRequest, id: int, idx: int) -> HttpResponse:
 
             _, column_list = get_columns(id)
 
-            columns: list = column_list.semester + column_list.personal
+            columns: list = column_list.text
             image_idx: list = column_list.images
 
             pd_data = {
@@ -575,13 +574,13 @@ def edit_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         try:
             _column = bytes.fromhex(column).decode()
             
-            if _column[-2:] == 'II':
-                raise OnlyTextAllowed(_column[:-2])
+            if _column[-1:] == 'I':
+                raise OnlyTextAllowed(_column[:-1])
             
             locked, exists, value = getColumnValue(id,idx,_column)
             
             if(not exists):
-                raise ColumnDoesNotExist(idx,_column[:-2])
+                raise ColumnDoesNotExist(idx,_column[:-1])
             
             context["locked"] = locked
             context["value"] = value
@@ -614,13 +613,13 @@ def edit_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
 
         try:
             _column = bytes.fromhex(column).decode()
-            if _column[-2:] == 'II':
-                raise OnlyTextAllowed(_column[:-2])
+            if _column[-1] == 'I':
+                raise OnlyTextAllowed(_column[:-1])
             
             locked, exists, value = getColumnValue(id,idx,_column)
             
             if(not exists):
-                raise ColumnDoesNotExist(idx,_column[:-2])
+                raise ColumnDoesNotExist(idx,_column[:-1])
             
             context["locked"] = locked
             context["value"] = value
@@ -647,8 +646,8 @@ def edit_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         try:
             _column = bytes.fromhex(column).decode()
             
-            if _column[-2:] == 'II':
-                raise OnlyTextAllowed(_column[:-2])
+            if _column[-1:] == 'I':
+                raise OnlyTextAllowed(_column[:-1])
             
             updated = setColumnValue(id, idx, _column, json.dumps({_column: value}))
     
@@ -656,9 +655,9 @@ def edit_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
             context["updated"] = updated
             
             if (updated):
-                messages.success(req, f"Column '{_column[:-2]}' of Row ID: '{idx}' was successfully updated")
+                messages.success(req, f"Column '{_column[:-1]}' of Row ID: '{idx}' was successfully updated")
             else:
-                messages.error(req, f"Updating Column '{_column[:-2]}' of Row ID: '{idx}' failed!")
+                messages.error(req, f"Updating Column '{_column[:-1]}' of Row ID: '{idx}' failed!")
         
         except OnlyTextAllowed as g:
             messages.error(req, g.get_error())
@@ -684,13 +683,13 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         try:
             _column = bytes.fromhex(column).decode()
             
-            if _column[-2:] != 'II':
-                raise OnlyImageAllowed(_column[:-2])
+            if _column[-1:] != 'I':
+                raise OnlyImageAllowed(_column[:-1])
             
             locked, exists, value = getColumnValue(id,idx,_column)
             
             if(not exists):
-                raise ColumnDoesNotExist(idx,_column[:-2])
+                raise ColumnDoesNotExist(idx,_column[:-1])
             
             context["locked"] = locked
             
@@ -723,13 +722,13 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         try:
             _column = bytes.fromhex(column).decode()
             
-            if _column[-2:] != 'II':
-                raise OnlyImageAllowed(_column[:-2])
+            if _column[-1:] != 'I':
+                raise OnlyImageAllowed(_column[:-1])
             
             locked, exists, value = getColumnValue(id,idx,_column)
             
             if(not exists):
-                raise ColumnDoesNotExist(idx,_column[:-2])
+                raise ColumnDoesNotExist(idx,_column[:-1])
             
             context["locked"] = locked
             context["value"] = value
@@ -756,8 +755,8 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
             image = req.FILES["file"]
             _column = bytes.fromhex(column).decode()
             
-            if _column[-2:] != 'II':
-                raise OnlyImageAllowed(_column[:-2])
+            if _column[-1:] != 'I':
+                raise OnlyImageAllowed(_column[:-1])
             
             
             with image.open() as img, BytesIO() as b:
@@ -772,9 +771,9 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
                 context["updated"] = updated
             
             if (updated):
-                messages.success(req, f"Column '{_column[:-2]}' of Row ID: '{idx}' was successfully updated")
+                messages.success(req, f"Column '{_column[:-1]}' of Row ID: '{idx}' was successfully updated")
             else:
-                messages.error(req, f"Updating Column '{_column[:-2]}' of Row ID: '{idx}' failed!")
+                messages.error(req, f"Updating Column '{_column[:-1]}' of Row ID: '{idx}' failed!")
         
         except OnlyImageAllowed as g:
             messages.error(req, g.get_error())

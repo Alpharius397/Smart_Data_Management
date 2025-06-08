@@ -1,4 +1,4 @@
-{% extends 'Main/index.html' %}
+{% extends 'HTML/index.html' %}
 {% load template %}
 {% load static %}
 
@@ -54,7 +54,7 @@
         <div class="profile-image-tab">
             <div class="profile-image">
                 <img src="{{profile}}" height="50px" id="profile-image">
-                <div class="profile-image-edit"><img src="{% static 'img/edit.svg' %}" ></div>
+                <div class="profile-image-edit"><img src="{% static 'images/edit.svg' %}" ></div>
                 <form class="image-change"
                       hx-encoding='multipart/form-data'
                       hx-post="{% url 'User:imageChange' %}"
@@ -81,7 +81,7 @@
 
                     {{username}}
 
-                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
                 </div>
 
             </div>
@@ -95,7 +95,7 @@
 
                     {{email}}
 
-                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
                 </div>
 
             </div>
@@ -109,7 +109,7 @@
 
                     {{password}}
 
-                    <img src="{% static 'img/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
                 </div>
 
             </div>

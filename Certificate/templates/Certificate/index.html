@@ -85,7 +85,7 @@
 
     <div class="container">
         <div class="tableView" hx-get="{% url 'Certificate:__check' certificate=certificate cardID=cardID %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
-            <img src="{% static 'img/spinner.gif' %}" alt="Loading" class="spinner">
+            <img src="{% static 'images/spinner.gif' %}" alt="Loading" class="spinner">
             <h2> Attempting Authentication....</h2>
         </div>
 

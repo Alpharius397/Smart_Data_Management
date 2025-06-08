@@ -1,0 +1,45 @@
+{% load template %}
+
+
+{% if error %}
+
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+
+{% else %}
+
+    {% for i in managers %}
+        <div class="task-item">
+            <div class="task-title"><h3>Task ID: {{i.id}} - {{i.file_name}}</h3>
+
+            <button class="drop-down down" id="up_{{i.id}}" onclick="addClass('.task-info#up_{{i.id}}','close') && addClass('.drop-down#up_{{i.id}}','down')">&#11206;</button>
+        </div>
+
+        <div class="task-info close" id="up_{{i.id}}">
+            <div class="assigned">
+                <p class="info">
+                    User Assigned: <b>{{i.managerCount}}</b>,
+                    Semester Limit: <b>{{i.semesterCount}}</b>,
+                    Created By: {% if i.createdBy %}<b>{{i.createdBy}}</b> {% else %}<b class="error">User Not Found</b>.{% endif %}
+                </p><br>
+            </div>
+        <div class="view-task">
+            <a href="{% url 'Table:index' id=i.id %}" class="next-button view-button">View Data</a>
+        </div>
+        </div>
+        </div>
+
+
+
+        {% if forloop.last %}
+            <div hx-get="{% url 'Dash:taskFetch' %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"start": "{{next}}", "value": "{{request.GET.value}}"}'></div>
+        {% endif %}
+
+    {% endfor %}
+
+{% endif %}
+
+<script>
+    getTaskHeight();
+</script>

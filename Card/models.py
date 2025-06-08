@@ -7,7 +7,7 @@ from django.db.models import (
 )  # type: ignore
 from django.core.validators import MinValueValidator, RegexValidator  # type: ignore
 from User.models import User, RoleType
-from Upload.models import UploadTable, DataTable
+from Task.models import UploadTable, DataTable
 
 MongoID = RegexValidator(r"^[0-9a-f]{24}$", message="Invalid MongoID")
 

@@ -1,0 +1,9 @@
+{% extends 'Dash/HTML/dash.html' %}
+
+{% load template %}
+{% load static %}
+
+{% block manager_button %}
+    <a class="next-button add-new-task" href="{% url 'Dash:read' %}">Read Card</a>
+{% endblock %}
+

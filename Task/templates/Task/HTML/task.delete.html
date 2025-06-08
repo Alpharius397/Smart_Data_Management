@@ -1,0 +1,75 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Task/styles.css' %}">
+{% endblock %}
+
+{% block title %} Task Edit Form {% endblock %}
+            
+{% block customStyle %}
+  <style>
+    header{
+      background-color: {{request.session.mainColor}};
+        color: {{request.session.secColor}};
+      }
+
+      body{
+        color: {{request.session.mainColor}};
+      }
+
+      header .user-log, header .add-task{
+        color: {{request.session.mainColor}};
+      }
+
+  </style>
+{% endblock %}
+
+{% block headerLeft %}
+ 
+<a class="next-button" href="{% url 'Table:index' id=id %}">Back To Table View</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Task Delete</h1>{% endblock %}
+
+{% block mainContent %}
+
+<ul class="messages"></ul>
+
+    <div class="upload-container">
+        <h2>Delete Task</h2>
+        <form id="form" hx-post="{% url 'Task:htmxDelete' id=id %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-field">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+                </div>
+                    
+            {% endfor %}
+            <button class="upload-button" onclick="confirmThis(event)">Delete Task</button>
+        </form>
+        <div class="form-footer">
+          <p>Edit this Task? <a href="{% url 'Task:delete' id=id %}">Edit Task</a></p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+
+  /**
+  * @param {Event} event
+  */
+  function confirmThis(event){
+      const a = confirm("This action cannot be undone. Are you sure you want to delete this Task?");
+
+      if(a==false){
+        event.stopImmediatePropagation();
+      }
+    }
+
+  </script>
+{% endblock %}

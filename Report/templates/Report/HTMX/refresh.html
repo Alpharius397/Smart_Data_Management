@@ -24,7 +24,7 @@
                                 <div hx-get="{% url 'View:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{j}}"}' hx-swap="outerHTML" hx-trigger="click from:find button">
                             
                                     <button class="edit-button">
-                                        <img src="{% static 'img/edit.svg' %}">
+                                        <img src="{% static 'images/edit.svg' %}">
                                         <span class="popup">Edit this</span>
                                     </button>
                                     {% if error %}
@@ -53,7 +53,7 @@
 
                             {{k|str}}
                             <button class="edit-button">
-                                <img src="{% static 'img/edit.svg' %}">
+                                <img src="{% static 'images/edit.svg' %}">
                                 <span class="popup">Edit this</span>
                             </button>
 
@@ -74,12 +74,12 @@
             <div class="grid-layout">
                 <div class="data-loading">
                     <button class="view-icon" onclick="window.location.replace(`{% url 'View:index' id=id idx=idx %}`);">
-                        <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                        <img src="{% static 'images/view.png' %}" alt="Refresh Page">
                         <p class="view-text">View</p>
                     </button>
 
                     <div class="refresh-button">
-                        <button class="refresh"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                        <button class="refresh"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                     </div>
 
                 </div>

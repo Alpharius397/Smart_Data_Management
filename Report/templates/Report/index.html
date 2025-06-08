@@ -1,0 +1,79 @@
+{% extends 'Main/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Report/styles.css' %}">
+{% endblock %}
+
+{% block title %} Single View {% endblock %}
+
+{% block cssStyle %}
+    <style>
+
+        .semester{
+            background-color: {{request.session.mainColor|rgb:0.7 }};
+        }
+
+        .header-box{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester h3 {
+            border-color: {{request.session.secColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester p {
+            color: {{request.session.secColor}};
+        }
+
+        header .user-log{
+            color: {{request.session.mainColor}};
+        }
+
+        .personal-info p{
+            color: {{request.session.mainColor}};
+        }
+    </style>
+{% endblock %}
+
+{% block headerLeft %}
+    <a class="user-log" onclick="redirect(`{% url 'Table:index' id=id %}`)">Back To Table View</a>
+{% endblock %}
+
+{% block headerCenter %}
+    <h1>Row View</h1>
+{% endblock %}
+
+{% block mainContent %}
+
+    <div class="container" hx-get="{% url 'Report:index' id=id idx=idx %}" hx-trigger="click" hx-target=".tableView">
+
+        <div class="tableView tab" hx-get="{% url 'Report:feed' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".sub-tab" hx-trigger="click">
+        
+        </div>
+
+
+        <div class="sub-tab"></div>
+
+        {% if manage %}
+            <div class="issue_card"></div>
+            <ul class="messages" id="messages"></ul>
+        {% endif %}
+
+        {% csrf_token %}
+    </div>
+
+
+    <p id="replace-me"></p>
+{% endblock %}
+
+{% block script %}
+
+<script>
+    add_csrf();
+</script>
+
+{% endblock %}

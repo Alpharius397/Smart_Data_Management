@@ -18,30 +18,22 @@ class branchSubjects(TypedDict):
 
 class ColumnType(NamedTuple):
     images: list[str]
-    personal: list[str]
-    semester: list[str]
+    text: list[str]
 
     def __iter__(self) -> Iterator[list[str]]:
         yield self.images
-        yield self.personal
-        yield self.semester
+        yield self.text
 
 
 ############ UTILS ############
-def personalAnnotate(column: str) -> str:
-    return f"{column}PP"
+def textAnnotate(column: str) -> str:
+    return f"{column}T"
 
 
 def imageAnnotate(column: str):
-    return f"{column}II"
-
-
-def semesterAnnotate(column: str, index: int):  # you have 15 semester max {1, 15}
-    return f"{column}S{index.to_bytes().hex().lstrip('0')}"
-
+    return f"{column}I"
 
 def processSubjects(
-    branchSubs: Iterator[branchSubjects | dict[str, Any]],
     columns: list[str],
     image_idx: list[int],
 ) -> dict[str, str]:
@@ -50,24 +42,16 @@ def processSubjects(
     for idx in image_idx:  # add I to identify column containing image
         mapping[columns[idx]] = imageAnnotate(columns[idx])
 
-    for sub in branchSubs:  # add S and sem number (hex) to identify Semester Info
-        name: str = sub["name"]
-        sem: int = sub["semester"]
-
-        if not (name and sem):
-            continue
-
-        if name in mapping:
-            mapping[name] = semesterAnnotate(name, sem)
-
     for key, value in mapping.items():
         if key == value:
-            mapping[key] = personalAnnotate(value)
+            mapping[key] = textAnnotate(value)
 
     return mapping
 
 
 def deconstructSubjects(data: dict[str, str | list[str]], expand_images: bool = False):
+    """ Get subjects details from card """
+    
     personal_info: dict[str, str] = {}
     image_info: dict[str, str] = {}
     semester_info: dict[int, dict[str, tuple[str, ...]]] = {}
@@ -115,24 +99,18 @@ def deconstructSubjects(data: dict[str, str | list[str]], expand_images: bool = 
 
 def segregateColumns(columns: list[str]) -> ColumnType:
     image: list[str] = []
-    personal: list[str] = []
-    sem: list[str] = []
+    text: list[str] = []
 
     for column in columns:
-        _column = column
 
-        if (column[-2:]) == "PP":
-            personal.append(_column)
+        if (column[-1:]) == "T":
+            text.append(column)
 
-        elif (column[-2:]) == "II":
-            image.append(_column)
-
-        elif (column[-2]) == "S":
-            _ = column[-1].encode().hex()  # hex check
-            sem.append(_column)
+        elif (column[-1:]) == "I":
+            image.append(column)
 
         else:
             print(column)
             raise IncorrectDataFormat()
 
-    return ColumnType(image, personal, sem)
+    return ColumnType(image, text)

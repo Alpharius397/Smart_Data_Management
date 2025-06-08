@@ -1,0 +1,78 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Task/styles.css' %}">
+{% endblock %}
+
+{% block title %} Task Edit Form {% endblock %}
+            
+{% block customStyle %}
+  <style>
+    header{
+      background-color: {{request.session.mainColor}};
+        color: {{request.session.secColor}};
+      }
+
+      body{
+        color: {{request.session.mainColor}};
+      }
+
+      header .user-log, header .add-task{
+        color: {{request.session.mainColor}};
+      }
+
+  </style>
+{% endblock %}
+
+{% block headerLeft %}
+
+<a class="next-button" href="{% url 'Table:index' id=id %}">Back To Table View</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Task Edit</h1>{% endblock %}
+
+{% block mainContent %}
+
+<ul class="messages"></ul>
+
+    <div class="upload-container">
+        <h2>Edit Task</h2>
+        <form id="form" hx-post="{% url 'Task:htmxEdit' id=id %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-field">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+                </div>
+                    
+            {% endfor %}
+            <button class="upload-button">Delete Task</button>
+        </form>
+        <div class="form-footer">
+            <p>Incorrect Task Uploaded? <a href="{% url 'Task:delete' id=id %}">Delete Task</a></p>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+
+    htmx.on("#form","htmx:beforeSend", function(event){
+
+        htmx.find('#progress').setAttribute('value', 0);
+        htmx.find('#progress').setAttribute('style', "display:block;");
+    });
+
+    htmx.on('#form', 'htmx:xhr:progress', function(event) {
+        htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
+
+        if(event.detail.loaded==event.detail.total){
+            htmx.find('#progress').setAttribute('style', "display:none;");
+        }
+    });
+
+  </script>
+{% endblock %}

@@ -1,4 +1,6 @@
 from base64 import b64decode, b64encode
+from collections import defaultdict
+from bisect import bisect_right, insort_left
 import functools
 from io import BytesIO
 import json
@@ -10,7 +12,8 @@ from django.db.models import Q
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
-from Upload.models import DataTable, AssignTable, UploadTable
+from University.models import Grade, Subject
+from Task.models import DataTable, AssignTable, UploadTable
 from Main.settings import settingsInterface as settings
 from tools.get_image import compress_image
 from User.models import (
@@ -28,6 +31,7 @@ import pandas as pd
 from tools.encrypt import encrypt_data, decrypt_data
 from Main.templatetags.bad_image import bad_image
 from tools.url_auth import (
+    file_permission_check,
     get_color,
     htmx_response,
     is_auth_get,
@@ -50,7 +54,7 @@ from tools.token import get_token, hash_token
 from Card.models import Card
 from django.http import QueryDict
 from django.db import transaction
-from constants.constants import DEFAULT_ERROR, DONE, FAILED, MAX_RECORD
+from constants.constants import DEFAULT_ERROR, DONE, FAILED, MAX_RECORD, WRITE_TOKEN
 from .sockets import cardWriteWebSocket
 from Main.models import *
 from psycopg2.sql import SQL, Identifier, Literal
@@ -210,328 +214,80 @@ def get_context(
 
 
 ########### HTTP Request #############
-@auth_needed()
-def default_view(req: HttpRequest, id: int) -> HttpResponse | None:
-    user = get_user(req)
-
-    if is_auth_get(req):
-        if is_admin(user):
-            return render(req, "View/table/admin.html", {"id": id})
-
-        elif is_manager(user):
-            return render(req, "View/table/manager.html", {"id": id})
-
-    return None
-
-
-############ HTMX Request ############
-@htmx_response
-@auth_needed()
-def column_view(req: HttpRequest, id: int) -> HttpResponse | None:
-    if is_hx_get:
-        context = {"search": [], "column": [], "count": 0}
-
-        try:
-            count, (images, personal, semester) = get_columns(id)
-
-            personal.extend(semester)
-
-            context["search"] = personal.copy()
-
-            personal.extend(images)
-
-            context["column"] = personal
-            context["count"] = count
-
-        except Exception as e:
-            print(e)
-
-            messages.error(req, DEFAULT_ERROR)
-        return render(req, "View/HTMX/column.html", context=context)
-
-    return None
-
-
-class ManagerList(NamedTuple):
-    id: int
-    username: str
-
-
-def getAssignForm(req: HttpRequest, id: int) -> dict[str, list[ManagerList] | str]:
-    context = {"uploader": "", "manager": [], "all_managers": []}
-
-    try:
-        user = get_user(req)
-
-        fileObj = UploadTable.objects.get(id=id)
-
-        uploader = fileObj.uploader.username
-        managers = fileObj.assigned.distinct().values_list(
-            "manager__id", "manager__username"
-        )
-        all_managers = (
-            User.objects.filter(
-                role__role=RoleType.MANAGER, role__belongs__id=user.role.belongs.id
-            )
-            .exclude(id__in=[i[0] for i in managers])
-            .distinct()
-            .values_list("id", "username")
-        )
-        print(uploader, managers, all_managers)
-        context["uploader"] = uploader
-        context["managers"] = all_managers
-        context["all_managers"] = managers
-
-    except Exception:
-        pass
-
-    return context
-
-
-@htmx_response
-@auth_needed(admin_only=True)
-def assign_form(req: HttpRequest, id: int) -> HttpResponse | None:
-    context: dict[str, Any] = {"id": id}
-    user = get_user(req)
-
-    if is_hx_get(req):
-        try:
-            context.update(getAssignForm(req, id))
-
-        except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
-            context["error"] = DEFAULT_ERROR
-
-        return render(req, "View/HTMX/form.html", context=context)
-
-    elif is_hx_put(req):
-        value = QueryDict(req.body)  # type: ignore
-
-        managerID = value.get("user", "")
-
-        try:
-            manager = User.objects.get(id=managerID)
-
-            fileObj = UploadTable.objects.get(id=id, uploader=user)
-
-            assignFlag = fileObj.assigned.filter(manager__id=managerID).exists()  # type: ignore
-
-            if assignFlag:
-                raise ManagerAlreadyAssigned(managerID, id)
-
-            assignee = AssignTable(fileID=fileObj, manager=manager)
-            assignee.save()
-
-            context.update(getAssignForm(req, id))
-            messages.success(
-                req, f"Manager ID: {managerID} is added to the Task ID: {id}"
-            )
-
-        except User.DoesNotExist:
-            messages.error(req, "Manager ID: {managerID} does not exists!")
-
-        except ManagerAlreadyAssigned as f:
-            messages.error(req, f.get_error())
-
-        except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
-            messages.error(req, DEFAULT_ERROR)
-
-        return render(req, "View/HTMX/form.html", context=context)
-
-    elif is_hx_delete(req):
-        value = req.GET  # type: ignore
-
-        managerID = value.get("user", "")
-
-        try:
-            manager = User.objects.get(id=managerID)
-
-            fileObj = UploadTable.objects.get(id=id, uploader=user)
-
-            notassignFlag = fileObj.assigned.filter(manager__id=managerID).exists()  # type: ignore
-
-            if not notassignFlag:
-                raise ManagerDoesNotExist(managerID, id)
-
-            assignee = AssignTable.objects.get(fileID=fileObj, manager=manager)
-            assignee.delete()
-
-            context.update(getAssignForm(req, id))
-            messages.success(
-                req, f"Manager ID: {managerID} is removed from Task ID: {id}"
-            )
-        except User.DoesNotExist:
-            messages.error(req, "Manager ID: {managerID} does not exists!")
-
-        except ManagerDoesNotExist as f:
-            messages.error(req, f.get_error())
-
-        except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
-            messages.error(req, DEFAULT_ERROR)
-
-        return render(req, "View/HTMX/form.html", context=context)
-
-
-@htmx_response
-@auth_needed()
-def row_view(req: HttpRequest, id: int) -> HttpResponse:
-    if is_hx_get(req):
-        column = req.GET.get("column", "")
-        value = req.GET.get("search", "")
-        issue = req.GET.get("issue", "")
-        status = req.GET.get("status", "")
-        lock = req.GET.get("lock", "")
-        page = req.GET.get("page", "0")
-
-        context = get_context(req, id, column, value, issue, status, lock, page)
-        context.update({"admin": is_admin(get_user(req))})
-
-        return render(req, "View/HTMX/row.html", context=context)
-
-    return HttpResponse(status=403)
-
-
-@htmx_response
-@auth_needed()
-def quick_query(req: HttpRequest, id: str):
-    if is_hx_get(req):
-        conn = MongoConnection().connect()
-        column = req.GET.get("column", "")
-        value = req.GET.get("search", "")
-        context: dict[str, list[str]] = {"option": []}
-
-        if not column:
-            return render(req, "View/HTMX/suggests.html", context=context)
-
-        try:
-            _column = int(column)
-
-            if column:
-                a, b, c, d, e = MongoTemplate.get_quick_buffer_query(
-                    {"_id": ObjectId(id), "$or": auth_view(req.user)}, _column, value
-                )
-
-                options: list[dict] = conn.aggregate(a, b, c, d, e)
-
-                if options:
-                    context.update(options[0])
-
-        except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
-                )
-            )
-
-        return render(req, "View/HTMX/suggests.html", context=context)
-
-
 @login_needed()
+@file_permission_check
 def index_view(req: HttpRequest, id: str, idx: int) -> HttpResponse:
-    if is_hx_get(req):
-        return report_view(req, id, idx)
-
-    elif is_hx_post(req):
-        return report_view(req, id, idx)
-
-    else:
-        req.session[WRITE_TOKEN] = get_token()
-        get_admin_color(req, req.user)
-        get_manager_color(req, req.user)
+    if is_auth_get(req):
+        get_color(req)
         return render(
             req,
-            "View/single.html",
+            "Report/index.html",
             {
                 "id": id,
                 "idx": idx,
-                "manage": is_manager(req.user),
-                "token": hash_token(req.session[WRITE_TOKEN], req.user.id),
             },
         )
 
 
-@htmx_response
+############ HTMX Request ############
 @auth_needed()
-def report_view(req: HttpRequest, id: str, idx: int) -> HttpResponse:
-    conn = MongoConnection().connect()
-    context = {"id": id, "idx": idx}
+@htmx_response
+@file_permission_check
+def report_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
+    context: dict[str, Any] = {"id": id, "idx": idx}
 
     if is_hx_get(req):
+
         try:
-            conditions, filters = MongoTemplate.merge_everything(
-                MongoTemplate.get_buffer_query(
-                    {"$and": [{"_id": ObjectId(id), "$or": auth_view(req.user)}]}, idx
-                )
-            )
-            result: Document | None = conn.find_one(conditions, filters)
+            post = get_post_id(req.user)
+            records = DataTable.objects.get(fileID__id = id, id = idx)
+            subjects = Subject.objects.filter(branch__id=post["branch"]).values("name", "semester", "marks")
+            grades = Grade.objects.filter(subject__branch__id=post["branch"]).values("grade", "minMarks", "subject__name")
+            
+            sem_dict: dict = defaultdict(dict) # semester wise subjects with max marks
+            grade_dict: dict = defaultdict(dict) # minimum marks for a grade in sub 
+            grade_list: dict = defaultdict(list) # sorted list of grades to calculate grade
+            
+            for subs in subjects.iterator():
+                name = subs["name"]
+                semester = subs["semester"]
+                marks = subs["marks"]
+                
+                sem_dict[semester][name] = marks
+                
+            for gra in grades.iterator():
+                grade = gra["grade"]
+                minMarks = gra["minMarks"]
+                sub = gra["subject__name"]
+                grade_dict[sub][minMarks] = grade
+                
+                insort_left(grade_list[sub], minMarks) 
+                
+            _, column_list = get_columns(id)
 
-            if result is None:
-                context["error"] = "Mongo ID %s and index %s not found!" % (id, idx)
-                return render(req, "View/HTMX/report.html", context=context)
+            sem: list = column_list.semester
+            personal: list = column_list.personal
+            images: list = column_list.images
+            
+            personal_data: dict[str, str] = {}
+            image_data: dict[str, str] = {}
+            sem_data: dict[int, tuple[str, str, str]] = {}
 
-            columns: list = result.data.header.columns
-            images: list = [columns[i] for i in result.data.header.image_columns]
-            data = result.data.excel[0]
-            pd_data = {
-                columns[(idx % len(columns))]: val for idx, val in enumerate(data.row)
-            }
-            meta_data: Feed.FeedDict = data.feed.to_dict()
+            for column in personal:
+                personal[column] = records.data.get(column, "-")
+                
+            for column in images:
+                image_data[column] = records.data.get(column, "-")
+                
+            
+            
 
-            report = ReportStructure.get_structure(list(pd_data.keys()), images)
-
-            context.update(
-                {
-                    "data": pd_data,
-                    "personal": report.personal_info,
-                    "pic": report.profile_img,
-                    "sem_dict": report.sem_data,
-                    **get_post(req.user),
-                    **meta_data,
-                }
-            )
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION,
-                    taskID=id,
-                    index=idx,
-                    user=req.user,
-                    exception=e,
-                )
-            )
+            print(e)
             context["error"] = DEFAULT_ERROR
             return render(req, "View/HTMX/report.html", context=context)
 
-        finally:
-            conn.close()
 
         return render(req, "View/HTMX/report.html", context=context)
 

@@ -79,20 +79,6 @@
 {% endblock %}
 
 {% block customStyle %}
-    <style>
-        header{
-            background-color: {{request.session.mainColor}};
-            color: {{request.session.secColor}};
-        }
-
-        body{
-            color: {{request.session.mainColor}};
-        }
-
-        header .user-log, header .add-task{
-            color: {{request.session.mainColor}};
-        }
-    </style>
 {% endblock %}
 
 {% block headerLeft %}

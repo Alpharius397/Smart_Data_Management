@@ -17,7 +17,7 @@ def login_view(req: HttpRequest) -> HttpResponse:
     elif is_hx_post(req):
         try:
             next_url = (
-                req.GET.get("next") if req.GET.get("next") else reverse("Dash:dash")
+                req.GET.get("next") if req.GET.get("next") else reverse("Dash:index")
             )
             f = LoginForm(req.POST)
 

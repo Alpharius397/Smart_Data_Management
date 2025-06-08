@@ -1,0 +1,131 @@
+.upload-container {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: auto;
+  width: max-content;
+}
+
+.upload-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.upload-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.upload-button:hover {
+  background-color: #218838;
+}
+
+form {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  align-items: center;
+  justify-items: stretch;
+  justify-content: center;
+  row-gap: 5px;
+}
+
+.form-field {
+  margin: 5px 10px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.form-field label {
+  font-weight: 500;
+  text-align: center;
+  align-self: center;
+}
+
+.form-field input::placeholder {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-field input, .form-field select {
+  font-weight: 600;
+  font-size: 14px;
+  flex-grow: 1;
+}
+
+select {
+  background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+  background-position: 95% center;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 20px;
+  padding: 5px;
+  padding-left: 0.5rem;
+  padding-right: 1rem;
+  margin: 5px;
+  margin-left: 10px;
+  width: max-content;
+  font-style: italic;
+}
+
+.form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+input {
+  border-radius: 20px;
+  padding: 5px;
+  padding-left: 0.75rem;
+  border: 2px solid lightgray;
+  display: block;
+  margin: 5px;
+  margin-left: 10px;
+  width: max-content;
+}
+
+input[type="text"] {
+  font-style: italic;
+}
+
+input[type="file"] {
+  padding: 5px;
+}
+
+input[type="file"]::file-selector-button {
+  border-radius: 8px;
+  border: 1px solid blue;
+  color: white;
+  background-color: blue;
+  padding: 5px;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: white;
+  color: blue;
+  transition: ease-in 300ms;
+}
+
+.help-text {
+  font-style: italic;
+  font-size: 14px;
+  margin: 5px;
+}
+
+#progress {
+  margin-top: 10px;
+  width: 100%;
+  display: none;
+  height: 20px;
+}

@@ -1,0 +1,41 @@
+{% load template %}
+
+
+{% if error and error is not None %}
+
+    <ul class="messages">
+        <li class="error">{{error}}</li>
+    </ul>
+
+{% else %}
+
+    {% for i in semesters %}
+        <div class="task-item">
+            <div class="task-title"><h3>Semester {{i.id}}</h3>
+                <button class="drop-down down" id="up_{{i.id}}" onclick="addClass('.task-info#up_{{i.id}}','close') && addClass('.drop-down#up_{{i.id}}','down')">&#11206;</button>
+            </div>
+
+            <div class="task-info close" id="up_{{i.id}}">
+                <div class="assigned">
+                    <p class="info">
+                        Record Count: <b>{{i.count}}</b>
+                    </p><br>
+                </div>
+                <div class="view-task">
+                    <a href="{% url 'Table:index' id=i.id %}" class="next-button view-button">View Data</a>
+                </div>
+
+            </div>
+        </div>
+
+        {% if forloop.last %}
+            <div hx-get="{% url 'Task:htmxIndex' id=id %}" hx-target="closest div" hx-swap="outerHTML" hx-trigger="intersect once" hx-vals='{"page": "{{next}}", "semester": "{{request.GET.semester}}"}'></div>
+        {% endif %}
+
+    {% endfor %}
+
+{% endif %}
+
+<script>
+    getTaskHeight();
+</script>

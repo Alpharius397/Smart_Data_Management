@@ -1,0 +1,141 @@
+.tab {
+  margin: 0 0 10px 0;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgb(216, 218, 220);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  width: 85%;
+}
+
+.edit {
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  display: inline-flex;
+  padding: 0px;
+  margin-left: 5px;
+  transition: 500ms;
+}
+
+.image-change {
+  display: none;
+}
+
+.edit:hover {
+  transform: translateY(-2px);
+}
+
+.profile-image-tab {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.profile-image {
+  border-radius: 50%;
+  border: 1px solid black;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow-y: hidden;
+  width: 100px;
+  height: 100px;
+}
+
+.profile-image img {
+  width: 100px;
+  height: 100px;
+}
+
+.profile-image-edit {
+  width: 100px;
+  height: 60px;
+  opacity: 0;
+  background-color: rgb(169 169 169 / 26%);
+  position: relative;
+  z-index: 10;
+  bottom: 40px;
+  display: flex;
+  justify-content: center;
+  transition: 500ms;
+}
+
+.profile-image-edit img {
+  width: 20px;
+  height: 20px;
+  margin: 5px 0px 0px 0px;
+  color: black;
+}
+
+.profile-image-edit:hover {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.edit-form {
+  display: inline-flex;
+}
+
+form {
+  margin: 0px;
+  padding: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  margin: 5px;
+}
+
+.form-field label {
+  font-weight: 400;
+}
+
+.form-field input::placeholder {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-field input {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.form-field select {
+  width: 150px;
+  font-style: italic;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-items: center;
+  border: 1px solid lightgrey;
+  border-collapse: collapse;
+}
+
+.heading {
+  text-align: center;
+  background-color: blue;
+  font-size: 20px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  font-weight: bold;
+  color: white;
+}
+
+.info {
+  margin: 10px;
+}
+
+.personal-details,
+.institute-details {
+  margin: 10px 0px 10px 0px;
+  border: 1px solid lightgrey;
+}

@@ -1,0 +1,56 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Task/styles.css' %}">
+{% endblock %}
+
+{% block title %} Task Create Form {% endblock %}
+            
+{% block customStyle %}
+  <style>
+    header{
+      background-color: {{request.session.mainColor}};
+        color: {{request.session.secColor}};
+      }
+
+      body{
+        color: {{request.session.mainColor}};
+      }
+
+      header .user-log, header .add-task{
+        color: {{request.session.mainColor}};
+      }
+
+  </style>
+{% endblock %}
+
+{% block headerLeft %}
+ 
+<a class="next-button" href="{% url 'Dash:index' %}">Back To Table View</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Semester Edit</h1>{% endblock %}
+
+{% block mainContent %}
+
+<ul class="messages"></ul>
+
+    <div class="upload-container">
+        <h2>Edit a Semester Sub-Task</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubEdit' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="formCheck('#form')">
+            {% csrf_token %}
+
+            {% for field in form %}
+                <div class="form-field">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+                </div>
+                    
+            {% endfor %}
+            <button class="upload-button">Create Task</button>
+        </form>
+    </div>
+{% endblock %}
+

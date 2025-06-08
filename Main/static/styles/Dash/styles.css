@@ -1,0 +1,287 @@
+.tab {
+    margin: 0 0 10px 0;
+    padding: 20px;
+    padding-top: 0px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgb(216, 218, 220);
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    width: 85%;
+    overflow-y: scroll;
+}
+
+.sub-tab {
+    margin-left: 20px;
+}
+
+.search-bar {
+    display: flex;
+    flex-direction: row;
+    padding: 5px 5px 5px 10px;
+    border-radius: 30px;
+    border: 1px solid grey;
+    height: 20px;
+}
+
+.search-bar input {
+    font-size: 14px;
+    border: 0px solid rgba(0, 0, 0, 0);
+    z-index: 10;
+    margin-left: 5px;
+    padding: 5px;
+    width: 210px;
+}
+
+.search-bar input:focus {
+    border: none;
+    outline: none;
+}
+
+.search-bar input::placeholder {
+    font-weight: 600;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.search-bar input:focus + span::after {
+    width: 205px;
+    transition: 500ms width;
+}
+
+.search-bar span::after {
+    position: absolute;
+    content: "";
+    width: 0px;
+    height: 1px;
+    z-index: 10;
+    translate: -215px 20px;
+    background-color: grey;
+    transition: 500ms width;
+}
+
+.search-bar i {
+    font-size: 18px;
+}
+
+form {
+    margin: 0px;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.task-list {
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    border-radius: 10px 0px 0px 10px;
+    border: 1px solid gray;
+    padding: 10px;
+    padding-right: 0px;
+}
+
+::-webkit-scrollbar-track{
+    box-shadow: inset 0 0 5px red; 
+    border-radius: 16px;
+}
+
+.task-item {
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px 0px 0px 0px;
+    background: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.task-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.task-title h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.log-view {
+    margin-top: 20px;
+}
+
+:root {
+    --tab-height: 0px;
+}
+
+.task-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    transition: 1s;
+    overflow: hidden;
+    opacity: 0;
+    width: 100%;
+    height: var(--tab-height);
+    border-radius: 0px 0px 5px 5px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border: 0px 1px 1px 1px rgb(188, 190, 192);
+    opacity: 1;
+    margin-top: 10px;
+    transition: opacity 500ms, 700ms height, 700ms border, 700ms padding;
+}
+
+.view-task {
+    margin: 10px;
+}
+
+.task-info.close {
+    height: 0px;
+    border-radius: 0;
+    border: 0;
+    opacity: 0;
+    margin-top: 0px;
+
+    transition: opacity 500ms, 700ms height, 700ms border, 700ms padding, 1s margin-top;
+}
+
+
+.drop-down {
+    width: 30px;
+    height: 30px;
+    margin: 0px;
+    padding: 0;
+    background-color: #fff;
+    color: #535353;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 1s;
+    flex-shrink: 0;
+    rotate: 180deg;
+
+}
+
+.drop-down.down{
+    rotate: 360deg;
+}
+
+.assigned{    
+    max-height: 100px;
+    overflow-x: scroll;
+    flex-grow: 1;
+    padding-left: 10px;
+    scrollbar-width: none;
+}
+
+.info {
+    display: inline-block;
+    margin: 0;
+    word-break:keep-all;
+    word-wrap: break-word;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    line-height: 1.6;
+}
+
+.error {
+    color: red;
+}
+
+.arrow {
+    margin-left: auto;
+    font-size: 18px;
+    color: #6c757d;
+    display: inline;
+}
+    
+.log-view{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+
+.drop-down:hover{
+    background-color: #bababa;
+}
+
+.view-button {
+    background-color: #4caf50;
+    flex-shrink: 0;
+}
+.view-button:hover {
+    background-color: #367b39;
+    transform: translateY(-2px);
+}
+
+
+li{
+    margin-bottom: 5px;
+    margin-left: 5px;
+}
+
+.searchQuery{
+    display: block;
+    margin-bottom: 20px;
+}
+
+select{
+    background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+    background-position: 95% center;
+    -moz-appearance:none;
+    -webkit-appearance: none; 
+    appearance: none;
+    border-radius: 20px;
+    padding:5px;
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+}
+
+input[type="search"]{
+    border-radius: 20px;
+    padding:5px;
+    padding-left: 0.75rem;
+    border: 2px solid lightgray;
+}
+
+input[type="text"]::placeholder {
+    color: #aaa;
+    font-style: italic;
+}
+
+.logout {
+    background-color: red;
+}
+
+.logout:hover {
+    background-color: darkred;
+}
+
+.add-new-task {
+    background-color: #4caf50;
+}
+
+.add-new-task:hover {
+    background-color: #367b39;
+}
+
+.error-message {
+    font-weight: 800;
+    color: red;
+    display: inline;
+}
+
+
+
+@media screen and (max-width: 600px) {
+    .task-list {
+        padding: 10px;
+    }
+}

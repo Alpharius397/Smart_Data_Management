@@ -22,7 +22,7 @@
 
                             <div hx-put="{% url 'Table:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
 
-                                    <img class="edit-button" src="{% static 'img/edit.svg' %}" title="Edit This Field">
+                                    <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
                             </div>
                         </div>
 
@@ -44,7 +44,7 @@
                              hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 
                             {{ row.data|index_str:column|str }}
-                            <img class="edit-button" src="{% static 'img/edit.svg' %}" title="Edit This Field">
+                            <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
 
                         </div>
 
@@ -62,12 +62,12 @@
                 <div class="grid-layout">
                     <div class="data-loading">
                         <button class="view-icon" onclick="window.location.replace(`{% url 'Report:index' id=id idx=idx %}`);">
-                            <img src="{% static 'img/view.png' %}" alt="Refresh Page">
+                            <img src="{% static 'images/view.png' %}" alt="Refresh Page">
                             <p class="view-text">View</p>
                         </button>
 
                         <div class="refresh-button">
-                            <button class="refresh" id="refresh-{{idx}}"><img src="{% static 'img/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                            <button class="refresh" id="refresh-{{idx}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                         </div>
 
                     </div>

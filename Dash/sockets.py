@@ -1,7 +1,6 @@
 import json
 from Main.settings import settingsInterface as settings
 from Logs.loggers import LogStructure, APP_LOG, Task
-from tools.get_image import expand_image
 from tools.encrypt import decrypt_data, certificateHash
 from User.models import is_authenticated, is_manager, User
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  # type: ignore

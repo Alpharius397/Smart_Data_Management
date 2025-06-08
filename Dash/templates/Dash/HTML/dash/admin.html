@@ -1,0 +1,8 @@
+{% extends 'Dash/HTML/dash.html' %}
+
+{% load template %}
+{% load static %}
+
+{% block uploader_button %}
+    <a class="next-button add-new-task" href="{% url 'Task:create' %}">Add New Task</a>
+{% endblock %}

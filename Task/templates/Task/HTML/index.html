@@ -1,0 +1,75 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+{% endblock %}
+
+{% block title %} Task Dashboard {% endblock %}
+
+
+{% block headerLeft %}
+    <a class="next-button logout" onclick="confirmPrompt(`{% url 'Logout:logout' %}`)">Logout</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
+
+{% block headerRight %}
+    {% block manager_button%}{% endblock %}
+    {% block uploader_button%}{% endblock %}
+{% endblock %}
+
+{% block mainContent %}
+<div class="tab">
+    <h2>Tasks List</h2>
+
+    <div class="sub-tab">
+
+        <form hx-get="{% url 'Task:htmxIndex' id=id %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input, load" onsubmit="event.preventDefault()">
+            <div class="search-bar">
+                <i class="fa fa-search"></i>
+                <input type="text" placeholder="Search for Semester" name="semester" />
+                <span></span>
+            </div>
+        </form>
+        <div class="task-list">
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                <h2>Loading...</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="tab">
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+
+    function getTaskHeight(){
+        const tabs = document.querySelectorAll(".task-info");
+
+        for(let tab of tabs){
+            let height = 0;
+            for(let child of tab.childNodes){
+                if(child.offsetHeight){
+                    height = Math.max(height, child.offsetHeight + 10);
+                    console.log(child.offsetHeight, height);
+
+                }
+            }
+            tab.style.setProperty('--tab-height', height + 'px');
+        }
+    }
+
+    window.onresize = getTaskHeight;
+
+
+</script>
+{% endblock %}

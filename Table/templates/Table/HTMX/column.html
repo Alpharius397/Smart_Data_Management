@@ -2,7 +2,7 @@
 
 <div class="rows first" id="row-first" hx-swap-oob="true">
   {% for i in column %}
-    <p class="column-heading">{{ i|rstrip:2 }}</p>
+    <p class="column-heading">{{ i|rstrip:1 }}</p>
   {% endfor %}
 
   {% if column %}
@@ -13,7 +13,7 @@
 
   <option value="">----------</option>
   {% for i in search %}
-    <option value="{{ i }}">{{ i|rstrip:2 }}</option>
+    <option value="{{ i }}">{{ i|rstrip:1 }}</option>
   {% endfor %}
 
 <style>

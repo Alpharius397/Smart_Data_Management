@@ -1,3 +1,7 @@
+--- ABANDON List ---
+[X]: Added image compression. (Mongo docs has a max size of 16mB) {Reason: Postgres Migration}
+
+
 --- DONE List ---
 [X]: Excel Upload with images
 [X]: Simple Query Interface
@@ -14,30 +18,33 @@
 [X]: Use websockets instead of multiple HTTP requests
 [X]: Refactoring Certificate
 [X]: Multiple Images in excel handled
+[X]: Switch to postgresSQL (Defcon 3 Alert)
+[X]: Header of Company, cause why not 
+[X]: Refactoring Account Settings
+[X]: Profile Images for Accounts
+
 
 --- Partial List ---
 [X]: Add types and wrappers
 [X]: CSS Cleanup
 
 --- TODO List ---
-[]: Refactoring Account Settings
 []: Customized Header (Title and Icons)
 []: PDF (Certificate) Generation and Digital Signature
 []: Better GUI
-[]: Header of Company, cause why not 
 []: Options to enter Semester Subjects and later parse that to group subjects into semester
-[]: Added image compression. (Mongo docs has a max size of 16mB)
-
+[]: Refactor Login / Register Page
 
 --- Migration Log ---
 [X]: Database Switch
 [X]: Data Upload Done
 []: Data Display
 []: Data Updation
+[]: Massive Data Join
 
 --- Maybe List ---
 []: Add Test Cases, cause why not :)
-[]: Switch to postgresSQL (Defcon 3 Alert)
+
 
 
 

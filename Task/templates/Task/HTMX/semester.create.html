@@ -1,0 +1,9 @@
+{% extends 'Task/HTMX/message.html' %}
+
+{% block hxSwaps %}
+    <select name="semester" required id="id_semester" hx-swap-oob="true">
+        {% for value in option %}
+            <option value="{{ value.0 }}" {% if forloop.first %} selected {% endif %}> {{ value.1 }} </option>
+        {% endfor %}
+    </select>
+{% endblock %}

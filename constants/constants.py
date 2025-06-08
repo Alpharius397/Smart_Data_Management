@@ -17,7 +17,6 @@ WRONG_IMAGE: str = "Incorrect Image Format Detected"
 WRONG_PERSONAL: str = "Incorrect Data Format Detected"
 WRONG_SEM: str = "Incorrect Semester Format Detected"
 
-
 class ReportStructure(typing.NamedTuple):
     profile_img: list[str]
     personal_info: list[str]
