@@ -18,6 +18,8 @@ urlpatterns = [
     path("htmx/delete/<int:id>/", htmx_task_delete, name="htmxDelete"),
     path("htmx/create/<int:id>/", htmx_sem_create, name="htmxSubCreate"),
     path("htmx/edit/<int:id>/<int:idx>/", htmx_sem_edit, name="htmxSubEdit"),
-    path("htmx/delete/<int:id>/<int:idx>/", delete_screen, name="subDelete"),
+    path("htmx/delete/<int:id>/<int:idx>/", delete_screen, name="htmxSubDelete"),
+    path("htmx/assign/<int:id>", assign_form, name="htmxAssignForm"),
+    path("htmx/groupBy/<int:id>", groupBy_form, name="htmxGroupBy"),
     
 ]

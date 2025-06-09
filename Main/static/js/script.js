@@ -33,7 +33,7 @@ function get_header() {
 
   hamBurgerOption.style.setProperty("--top", header.offsetHeight + 'px');
   hamBurgerOption.style.setProperty("--height", 60*(childCount) + 'px');
-  console.log(childCount)
+
   switch(childCount){
     case 1: hamBurgerIcon.style.justifyContent = 'center';
     case 2: hamBurgerIcon.style.justifyContent = 'space-evenly';

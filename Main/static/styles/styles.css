@@ -129,10 +129,10 @@ footer {
   color: gray;
   padding: 5px;
   margin: 0px;
-  min-height: 15%;
   display: flex;
   align-items: center;
   justify-content: center;
+  height: fit-content;
 }
 
 footer p {

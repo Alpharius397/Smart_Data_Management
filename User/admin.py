@@ -79,10 +79,12 @@ class ManagerAdmin(admin.ModelAdmin):
 
         if db_field.name == "user":
             if is_admin(user):
+                pass
+            """
                 kwargs["queryset"] = User.objects.filter(
                     (Q(is_staff=False) | Q(is_superuser=False))
                     & (Q(role__belongs__id=user.role.belongs.id))
-                )
+                )"""
 
         elif db_field.name == "belongs":
             if is_admin(request.user):

@@ -1,0 +1,15 @@
+{% load template %}
+{% load static %}
+
+<form class="current-group" hx-post="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click from:find button[type='submit']" hx-swap="outerHTML" hx-target="closest form" onsubmit="event.preventDefault()">
+    <select name="column">
+        <option value="" disabled selected>----------</option>
+
+        {% for i in column %}
+            <option value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+
+    </select>
+    <button type="submit">Change</button>
+    <button hx-delete="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click" hx-target="closest form" hx-swap="outerHTML">Cancel</button>
+</div>

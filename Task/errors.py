@@ -6,7 +6,7 @@ class FileNameExists(MainException):
         
 class TaskDoesNotExists(MainException):
     def __init__(self, task: int):
-        super().__init__(f"File with ID {fileID} doesn't exists!")
+        super().__init__(f"Task with ID {task} doesn't exists!")
         
 class FileLocked(MainException):
     def __init__(self, fileId:int):
@@ -19,3 +19,19 @@ class InvalidForm(MainException):
 class FileProcessFailed(MainException):
     def __init__(self):
         super().__init__("File processing failed. Please Try Again!")
+
+class ManagerAlreadyAssigned(MainException):
+    def __init__(self, manager: int, taskID: int) -> None:
+        super().__init__(
+            f"Manager with ID: {manager} is already assigned to Task ID: {taskID}"
+        )
+
+class ManagerNeverAssigned(MainException):
+    def __init__(self, manager: int, taskID: int) -> None:
+        super().__init__(
+            f"Manager with ID: {manager} was never assigned to Task ID: {taskID}"
+        )
+
+class ColumnNotFound(MainException):
+    def __init__(self, column: str):
+        super().__init__(f"Column '{column}' was not found in the option!")

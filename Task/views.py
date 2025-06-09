@@ -1,8 +1,7 @@
-from typing import TypedDict
-from asgiref.sync import async_to_sync
+from typing import Any, NamedTuple, TypedDict
 from django.core.files.uploadedfile import UploadedFile # type: ignore
 from django.shortcuts import render  # type: ignore
-from django.http import HttpRequest  # type: ignore
+from django.http import HttpRequest, HttpResponse, QueryDict  # type: ignore
 from Task.forms import TaskCreateForm, TaskDeleteForm, TaskUpdateForm, SemesterCreateForm, SemesterEditForm
 from Task.models import TaskTable, UploadTable
 from django.db import transaction # type: ignore
@@ -17,22 +16,24 @@ from tools.url_auth import (
     is_hx_get,
     is_hx_post,
     auth_needed,
+    is_hx_put,
     login_needed,
     semester_permission_check,
     task_permission_check,
 )
-from User.models import get_post_id, get_user
-from .models import UploadTable, DataTable
+from User.models import RoleType, User, get_post_id, get_user
+from .models import AssignTable, UploadTable, DataTable
 from University.models import Schema, Subject
 from django.contrib import messages  # type: ignore
 import pandas as pd  # type: ignore
 from tools.utils import processSubjects
 from University.errors import SchemaNotDefined
 from .errors import (
-    FileLocked,
     FileNameExists,
     FileProcessFailed,
-    InvalidForm,
+    ManagerAlreadyAssigned,
+    ManagerNeverAssigned,
+    ColumnNotFound
 )
 from django.forms import forms # type: ignore
 from django.db import connection
@@ -442,3 +443,266 @@ def htmx_get_task(req: HttpRequest, id: int):
 def get_sem(req: HttpRequest, id: int):
     if is_auth_get(req):
         return render(req, "Task/HTML/index.html", context={"id": id})
+    
+class ManagerList(NamedTuple):
+    id: int
+    username: str
+    
+def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
+    context: dict[str, list[ManagerList]] = {"assigned_manager": [], "available_managers": []}
+
+    try:
+
+        managers: list[ManagerList] = task.assigned.distinct().values_list(
+            "manager__id", "manager__username"
+        )
+        
+        all_managers: list[ManagerList] = (
+            User.objects.filter(
+                role__role=RoleType.MANAGER, role__belongs=user.role.belongs
+            )
+            .exclude(id__in=[i[0] for i in managers])
+            .distinct()
+            .values_list("id", "username")
+        )
+
+        context["managers"] = all_managers
+        context["all_managers"] = managers
+
+    except Exception:
+        pass
+
+    return context
+
+@htmx_response
+@auth_needed(admin_only=True)
+@task_permission_check
+def assign_form(req: HttpRequest, id: int):
+    context: dict[str, Any] = {"id": id}
+    user = get_user(req)
+    task: TaskTable = req.__getattribute__("task")
+
+
+    if is_hx_get(req):
+        try:
+            context.update(getAssignForm(user, task))
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            context["error"] = DEFAULT_ERROR
+
+        return render(req, "Task/HTMX/assign.html", context=context)
+    
+    elif is_hx_put(req):
+        value = QueryDict(req.body)  # type: ignore
+
+        managerID = value.get("user", "")
+
+        try:
+            manager = User.objects.get(id=managerID)
+
+            assignFlag = task.assigned.filter(manager__id=managerID).exists()  # type: ignore
+
+            if assignFlag:
+                raise ManagerAlreadyAssigned(managerID, id)
+
+            assignee = AssignTable(taskID=task, manager=manager)
+            assignee.save()
+
+            context.update(getAssignForm(user, task))
+
+            messages.success(
+                req, f"Manager ID: {managerID} is added to the Task ID: {id}"
+            )
+
+        except User.DoesNotExist:
+            messages.error(req, "Manager ID: {managerID} does not exists!")
+
+        except ManagerAlreadyAssigned as f:
+            messages.error(req, f.get_error())
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Task/HTMX/assign.html", context=context)
+
+    elif is_hx_delete(req):
+        value = req.GET  # type: ignore
+
+        managerID = value.get("user", "")
+
+        try:
+            manager = User.objects.get(id=managerID)
+
+            notAssignFlag = task.assigned.filter(manager__id=managerID).exists()  # type: ignore
+
+            if not notAssignFlag:
+                raise ManagerNeverAssigned(managerID, id)
+
+            assignee = AssignTable.objects.get(taskID=task, manager=manager)
+            assignee.delete()
+
+            context.update(getAssignForm(user, task))
+            messages.success(
+                req, f"Manager ID: {managerID} is removed from Task ID: {id}"
+            )
+            
+        except User.DoesNotExist:
+            messages.error(req, "Manager ID: {managerID} does not exists!")
+
+        except ManagerNeverAssigned as f:
+            messages.error(req, f.get_error())
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Task/HTMX/assign.html", context=context)
+    
+    return None
+
+def getCommonColumn(id: int):
+    data_column = DataTable.data.field.column
+    taskID = DataTable.taskID.field.column
+    semester_column = DataTable.semester.field.column
+    data_table = DataTable._meta.db_table
+    
+    common_columns: list[str] = []
+    
+    with connection.cursor() as cursor:
+        sql_query = SQL('''
+                        select "C"."A" from (
+                            select jsonb_object_keys({data_column}) as "A",
+                            count(distinct {semester_column}) as "count" from {data_table} where {taskID}={id} group by "A" 
+                        ) as "C"
+                        where "C"."count"=(select count(distinct {semester_column}) from {data_table} where {taskID}={id}); 
+                        ''').format(
+                            data_column=Identifier(data_column),
+                            semester_column=Identifier(semester_column),
+                            data_table=Identifier(data_table),
+                            taskID=Identifier(taskID),
+                            id=Literal(id)
+                        ).as_string(cursor.connection)
+                        
+        cursor.execute(sql_query)
+        
+        common_columns = [col[0] for col in cursor.fetchall()]
+
+    return common_columns
+
+# select (data::jsonb->>'ID')::int as "A", jsonsum(data::jsonb) as "B" from "Task_datatable" group by "A" order by "A" offset 0 limit 5;
+@htmx_response
+@auth_needed(admin_only=True)
+@task_permission_check
+def groupBy_form(req: HttpRequest, id: int):
+    context: dict[str, Any] = {"id": id}
+    user = get_user(req)
+    task: TaskTable = req.__getattribute__("task")
+
+    if is_hx_get(req):
+        try:
+            context["column"] = task.groupByColumn
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            context["error"] = DEFAULT_ERROR
+
+        return render(req, "Task/HTMX/groupBy.html", context=context)
+    
+    elif is_hx_put(req):
+        value = QueryDict(req.body)  # type: ignore
+
+
+        try:
+            context["column"] = getCommonColumn(id)
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Task/HTMX/groupBy.change.html", context=context)
+
+    elif is_hx_delete(req):
+        try:
+            context["column"] = task.groupByColumn
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            context["error"] = DEFAULT_ERROR
+
+        return render(req, "Task/HTMX/groupBy.view.html", context=context)
+
+    elif is_hx_post(req):
+        column = req.POST.get("column","")
+        context["column"] = column
+        try:
+            
+            columns = set(getCommonColumn(id))
+
+            if column not in columns:
+                raise ColumnNotFound(column)
+            
+            task.groupByColumn = column
+            task.save()
+            context['column'] = column
+
+        except ColumnNotFound as f:
+            messages.error(req, f.get_error())
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
+                )
+            )
+
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Task/HTMX/groupBy.view.html", context=context)
+
+    return None

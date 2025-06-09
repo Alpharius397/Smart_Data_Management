@@ -23,30 +23,29 @@
 {% endblock %}
 
 {% block mainContent %}
-<div class="tab">
-    <h2>Tasks List</h2>
+    <div class="tab">
+        <h2>Tasks List</h2>
 
-    <div class="sub-tab">
+        <div class="sub-tab">
 
-        <form hx-get="{% url 'Task:htmxIndex' id=id %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input, load" onsubmit="event.preventDefault()">
-            <div class="search-bar">
-                <i class="fa fa-search"></i>
-                <input type="text" placeholder="Search for Semester" name="semester" />
-                <span></span>
-            </div>
-        </form>
-        <div class="task-list">
-            <div class="loading">
-                <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
-                <h2>Loading...</h2>
+            <form hx-get="{% url 'Task:htmxIndex' id=id %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input, load" onsubmit="event.preventDefault()">
+                <div class="search-bar">
+                    <i class="fa fa-search"></i>
+                    <input type="text" placeholder="Search for Semester" name="semester" />
+                    <span></span>
+                </div>
+            </form>
+            <div class="task-list">
+                <div class="loading">
+                    <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                    <h2>Loading...</h2>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-    <div class="tab">
-    </div>
-
+    <div class="tab" hx-get="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML"></div>
+    <div class="tab" hx-get="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML"></div>
 {% endblock %}
 
 {% block script %}
@@ -60,8 +59,6 @@
             for(let child of tab.childNodes){
                 if(child.offsetHeight){
                     height = Math.max(height, child.offsetHeight + 10);
-                    console.log(child.offsetHeight, height);
-
                 }
             }
             tab.style.setProperty('--tab-height', height + 'px');

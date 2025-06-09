@@ -112,7 +112,6 @@ class UploadTable(Model):
         constraints = [
             UniqueConstraint(fields=["fileName", "task"], name="unique_filename_for_each_task"),
             UniqueConstraint(fields=["task", "semester"], name="one_semester_per_task")
-            
         ]
         
         
@@ -134,7 +133,7 @@ class AssignTable(Model):
         verbose_name="AssignID", primary_key=True, null=False, blank=False
     )
     
-    fileID = ForeignKey(
+    taskID = ForeignKey(
         to=TaskTable,
         verbose_name="taskID",
         related_name="assigned",
@@ -152,6 +151,14 @@ class AssignTable(Model):
         verbose_name="Assigned User",
         limit_choices_to={"role__role": RoleType.MANAGER},
     )
+    
+    class Meta:
+        verbose_name = "Assign"
+        verbose_name_plural = "Assigns"
+        
+        constraints = [
+            UniqueConstraint(fields=["taskID", "manager"], name="unique_manager_for_each_task"),
+        ]
 
     def clean_managers(self):
         if not is_manager(self.manager):

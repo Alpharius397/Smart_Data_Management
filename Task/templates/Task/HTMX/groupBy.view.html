@@ -1,0 +1,16 @@
+{% load template %}
+{% load static %}
+
+
+<div class="current-group" hx-put="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click from:find img" hx-swap="outerHTML" hx-target="closest div">
+    <b> {{ column }} </b>
+    <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Change the column"/>
+</div>
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}

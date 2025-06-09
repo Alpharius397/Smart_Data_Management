@@ -278,7 +278,70 @@ input[type="text"]::placeholder {
     display: inline;
 }
 
+.assign-form {
+    margin-left: 20px;
+}
 
+.assign-form button {
+    margin-left: 10px;
+    padding: 5px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+.assign-form form {
+    margin-bottom: 10px;
+    height: min-content;
+}
+
+.assign-form .submit {
+    background-color:#4caf50;
+}
+
+.assign-form .submit:hover {
+    background-color: #367b39;
+
+}
+
+.assign-form .cancel {
+    background-color: red;
+}
+
+.assign-form .cancel:hover {
+    background-color: darkred;
+}
+
+.edit-button {
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    display: inline-flex;
+    padding: 0px;
+    margin: 0px;
+    transition: 500ms;
+}
+
+.edit-button:hover {
+    transform: translateY(-3px);
+}
+
+.group-column {
+    margin-left: 20px;
+    display: inline;
+}
+
+.current-group {
+    display: inline;
+}
+
+.help-text {
+    font-style: italic;
+    color: #535353;
+    margin-top: 10px;
+}
 
 @media screen and (max-width: 600px) {
     .task-list {
