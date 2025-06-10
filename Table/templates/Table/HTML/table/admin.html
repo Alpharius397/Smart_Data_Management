@@ -1,0 +1,6 @@
+{% extends 'Table/HTML/table.html' %}
+{% load template %}
+
+{% block edit_button %}
+    <a class="next-button edit-task" onclick="redirect(`{% url 'Task:subEdit' id=id idx=idx %}`)">Edit Data</a>
+{% endblock %}

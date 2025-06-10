@@ -1,6 +1,6 @@
 .tab {
   margin: 20px auto;
-  max-width: 1200px;
+  width: 95%;
   padding: 20px;
   padding-top: 0px;
   background: white;
@@ -101,7 +101,6 @@ input::placeholder {
 }
 
 .table-view {
-  width: auto;
   overflow: scroll;
   border: 1px solid lightgray;
   max-height: 500px;

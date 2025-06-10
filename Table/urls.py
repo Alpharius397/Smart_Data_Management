@@ -1,14 +1,20 @@
 from django.urls import path
-from Table.views import default_view, column_view, row_view, quick_query, assign_form, refresh_row, edit_form, edit_image_form
+from Table.views import *
 
 app_name = "Table"
 urlpatterns = [
-    path("<int:id>", default_view, name="index"),
-    path("<int:id>/columns", column_view, name="column"),
-    path("<str:id>/search/", row_view, name="search"),
-    path("<str:id>/quick_search/", quick_query, name="suggest"),
-    path("<str:id>/assign/", assign_form, name="assign"),
-    path("<str:id>/<int:idx>/refresh", refresh_row, name="refresh"),
-    path("<str:id>/<int:idx>/edit", edit_form, name="edit_text"),
-    path("<str:id>/<int:idx>/edit_image", edit_image_form, name="edit_image"),
+    path("<int:id>/", sem_view, name="index"),  # For combined View
+    path("htmx/<int:id>/columns", sem_column_view, name="htmxColumns"),
+    path("htmx/<int:id>/suggest/", sem_suggest_view, name="htmxSuggest"),
+    path("htmx/<int:id>/rows/", sem_row_view, name="htmxRows"),
+    path("<int:id>/<int:idx>/", sem_view, name="semIndex"),  # For Semester View
+    path("htmx/<int:id>/<int:idx>/columns", sem_column_view, name="htmxColumns"),
+    path("htmx/<int:id>/<int:idx>/suggest/", sem_suggest_view, name="htmxSuggest"),
+    path("htmx/<int:id>/<int:idx>/rows/", sem_row_view, name="htmxSemRows"),
+    path(
+        "htmx/<int:id>/<int:idx>/<int:rowID>/refresh", refresh_row, name="htmxRefresh"
+    ),
+    path("htmx/<int:id>/<int:idx>/<int:rowID>/edit", edit_form, name="htmxEdit"),
+    path("<int:id>/<int:idx>/<int:rowID>/edit", edit_form, name="edit_text"),
+    path("<int:id>/<int:idx>/<int:rowID>/edit_image", edit_image_form, name="edit_image"),
 ]

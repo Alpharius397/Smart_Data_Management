@@ -5,6 +5,7 @@ app_name = "Task"
 urlpatterns = [
     path("<int:id>", get_task, name='index'),
     path("<int:id>/<int:idx>", get_sem, name='semIndex'),
+    
     path("create/", task_create, name="create"),
     path("edit/<int:id>/", task_edit, name="edit"),
     path("delete/<int:id>/", task_delete, name="delete"),

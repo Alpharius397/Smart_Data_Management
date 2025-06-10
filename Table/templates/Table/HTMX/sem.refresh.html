@@ -10,18 +10,19 @@
         </div>
     </div>
 {% else %}
-{% for idx,row in result.items %}
 
-        <div class="rows" id="{{idx}}" hx-get="{% url 'Table:refresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
+    {% for rowID,row in result.items %}
+
+        <div class="rows" id="{{rowID}}" hx-get="{% url 'Table:htmxRefresh' id=id idx=idx rowID=rowID %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
             {% for image in images %}
 
                 {% with IMAGE=row.data|index_str:image|img %}
                     {% if admin is True and row.locked is not True %}
-                        <div class="row-data image column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{idx}}_{{image|encode|hex}}">
+                        <div class="row-data image column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{rowID}}_{{image|encode|hex}}">
 
-                            <div hx-put="{% url 'Table:edit_image' id=id idx=idx %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
+                            <div hx-put="{% url 'Table:edit_image' id=id idx=idx  %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
 
-                                    <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
+                                <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
                             </div>
                         </div>
 
@@ -38,7 +39,7 @@
                 <div class="row-data column-{{ column|encode|hex }}">
 
                     {% if admin is True and row.locked is not True %}
-                        <div hx-put="{% url 'Table:edit_text' id=id idx=idx %}"
+                        <div hx-put=""
                              hx-vals='{"column":"{{column|encode|hex}}","value":"{{ row.data|index_str:column }}"}'
                              hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 
@@ -66,7 +67,7 @@
                         </button>
 
                         <div class="refresh-button">
-                            <button class="refresh" id="refresh-{{idx}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                            <button class="refresh" id="refresh-{{rowID}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                         </div>
 
                     </div>
@@ -104,6 +105,9 @@
                 </div>
             </div>
         </div>
-
     {% endfor %}
 {% endif %}
+
+<script>
+    centerDiv();
+</script>

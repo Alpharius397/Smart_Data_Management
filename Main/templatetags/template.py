@@ -145,7 +145,6 @@ def rgb(obj: str, opacity: int = 1):
 
     return f"rgb({r},{g},{b},{opacity})"
 
-
 @register.filter(name="encode")
 def encode(obj: str):
     a = b"if-you-see-this-you-are-screwed"

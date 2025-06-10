@@ -1,9 +1,9 @@
 import datetime
 import json
 import typing
-from django.http import HttpRequest, HttpResponse, JsonResponse # type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
 import jwt
-from Task.models import TaskTable # type: ignore
+from Task.models import TaskTable  # type: ignore
 from constants.constants import DEFAULT_ERROR
 from tools.encrypt import authTokenCheck  # type: ignore
 from User.models import (  # type: ignore
@@ -14,7 +14,7 @@ from User.models import (  # type: ignore
     is_authenticated,
     is_manager,
 )
-from django.db.models import Q # type: ignore
+from django.db.models import Q  # type: ignore
 from Main.settings import settingsInterface as settings  # type: ignore
 from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
@@ -75,19 +75,23 @@ def get_color(req: HttpRequest):
     except Exception:
         pass
 
+
 def taskCheck(user: User, id: int):
     try:
         return TaskTable.objects.get(
-            Q(id = id) & (Q(branch = user.role.belongs) | Q(assigned__manager__id = user.id))
+            Q(id=id) & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
         )
     except Exception as e:
-        print("Task Error: ",e)
+        print("Task Error: ", e)
         return None
+
 
 def semesterCheck(user: User, id: int, idx: int):
     try:
         return TaskTable.objects.filter(
-            Q(id = id) & Q(data__semester=idx) & (Q(branch = user.role.belongs) | Q(assigned__manager__id = user.id))
+            Q(id=id)
+            & Q(data__semester=idx)
+            & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
         ).distinct()[0]
     except Exception as e:
         print(e)
@@ -282,6 +286,7 @@ def htmx_response(
 
     return _wrapped_view
 
+
 def task_permission_check(
     view_func: typing.Callable[..., HttpResponse | None],
 ):
@@ -299,6 +304,7 @@ def task_permission_check(
 
     return _wrapped_view
 
+
 def semester_permission_check(
     view_func: typing.Callable[..., HttpResponse | None],
 ):
@@ -307,14 +313,17 @@ def semester_permission_check(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, id: int, idx: int, *args, **kwargs):
         user = get_user(request)
-        
+
         if (task := semesterCheck(user, id, idx)) != None:
             request.__setattr__("task", task)
-            return view_func(request, id, idx,*args, **kwargs) or HttpResponse(status=403)
+            return view_func(request, id, idx, *args, **kwargs) or HttpResponse(
+                status=403
+            )
 
         return HttpResponse(status=403)
 
     return _wrapped_view
+
 
 def file_permission_check(
     view_func: typing.Callable[..., HttpResponse | None],
@@ -324,13 +333,14 @@ def file_permission_check(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
         user = get_user(request)
-        
+
         if taskCheck(user, id):
             return view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
 
     return _wrapped_view
+
 
 def jwt_required(
     view_func: typing.Callable[..., HttpResponse | None],

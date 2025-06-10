@@ -13,7 +13,7 @@
 <div class="row-data column-{{ column }}">
 
     {% if locked is not True %}
-        <div hx-post="{% url 'Table:edit_text' id=id idx=idx %}"
+        <div hx-post="{% url 'Table:edit_text' id=id idx=idx rowID=rowID %}"
              hx-vals='{"column":"{{column}}"}'
              hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 

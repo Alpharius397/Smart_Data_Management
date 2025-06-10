@@ -242,15 +242,14 @@ def htmx_sem_create(req: HttpRequest, id: int):
                         if pd_data.empty:
                             raise FileProcessFailed()
                     
-                    fields = pd_data.columns
-                    
                     pd_data.rename(
                         columns=processSubjects(
-                            list(fields), image_id
+                            list(pd_data.columns), image_id
                         ),
                         inplace=True,
                     )
                     
+                    fields = pd_data.columns
                     rows: list[DataTable] = []
                     task: TaskTable = req.__getattribute__("task")
                     sem = form.cleaned_data.get("semester")
@@ -313,44 +312,27 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
                         if pd_data.empty:
                             raise FileProcessFailed()
                     
-                    fields = pd_data.columns
                     
                     pd_data.rename(
                         columns=processSubjects(
-                            list(fields), image_id
+                            list(pd_data.columns), image_id
                         ),
                         inplace=True,
                     )
                     
-                    update: list[DataTable] = []
+                    fields = pd_data.columns
                     create: list[DataTable] = []
                     task: TaskTable = req.__getattribute__("task")
                     sem = form.cleaned_data.get("semester")
                     
                     data: QuerySet[DataTable] = task.data.filter(semester=idx)
-                    count: int = data.count()
+                    data.delete()
                     
                     for serial, row in enumerate(pd_data.itertuples(index=False)):
                         rowJson = {fields[idx]: str(row[idx]) for idx in range(len(row))}
-                        
-                        if serial < count:
-                            update.append(data[serial].update_data(rowJson))
-                            print(data[serial].semester)
-                        else:
-                            create.append(DataTable(taskID=task, data=rowJson, semester=sem))
+                        create.append(DataTable(taskID=task, data=rowJson, semester=sem))
 
                     DataTable.objects.bulk_create(create)
-                    DataTable.objects.bulk_update(
-                        update,
-                        fields=[
-                            "data",
-                            "issued",
-                            "locked",
-                            "time_of_issue",
-                            "time_of_lock",
-                            "status",
-                            "feed",
-                        ])
                     
                     messages.success(req, f"Semester Data Updated Successfully")
                     
@@ -368,6 +350,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
             messages.error(req, f.get_error())
 
         except Exception as e:
+            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html")
@@ -612,7 +595,6 @@ def getCommonColumn(id: int):
 
     return common_columns
 
-# select (data::jsonb->>'ID')::int as "A", jsonsum(data::jsonb) as "B" from "Task_datatable" group by "A" order by "A" offset 0 limit 5;
 @htmx_response
 @auth_needed(admin_only=True)
 @task_permission_check
@@ -639,9 +621,6 @@ def groupBy_form(req: HttpRequest, id: int):
         return render(req, "Task/HTMX/groupBy.html", context=context)
     
     elif is_hx_put(req):
-        value = QueryDict(req.body)  # type: ignore
-
-
         try:
             context["column"] = getCommonColumn(id)
 
