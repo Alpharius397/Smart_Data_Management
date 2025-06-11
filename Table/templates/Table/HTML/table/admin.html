@@ -2,5 +2,5 @@
 {% load template %}
 
 {% block edit_button %}
-    <a class="next-button edit-task" onclick="redirect(`{% url 'Task:subEdit' id=id idx=idx %}`)">Edit Data</a>
+    <a class="next-button edit-task" href="{% url 'Task:subEdit' id=id idx=idx %}">Edit Data</a>
 {% endblock %}

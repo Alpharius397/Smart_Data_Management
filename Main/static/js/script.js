@@ -17,17 +17,13 @@ function get_header() {
   const headerLeft = document.querySelector(".header-left");
   const headerRight = document.querySelector(".header-right");
 
-  hamBurgerOption.innerHTML = "";
-
   let childCount = 0;
 
   if ((headerLeft !== null) && (headerLeft.childElementCount > 0)) {
-    hamBurgerOption.appendChild(headerLeft.cloneNode(true));
     childCount++;
   }
 
   if ((headerRight !== null) && (headerRight.childElementCount > 0)) {
-    hamBurgerOption.appendChild(headerRight.cloneNode(true));
     childCount++;
   }
 
@@ -35,9 +31,10 @@ function get_header() {
   hamBurgerOption.style.setProperty("--height", 60*(childCount) + 'px');
 
   switch(childCount){
-    case 1: hamBurgerIcon.style.justifyContent = 'center';
-    case 2: hamBurgerIcon.style.justifyContent = 'space-evenly';
+    case 1: hamBurgerOption.style.justifyContent = 'center'; break;
+    case 2: hamBurgerOption.style.justifyContent = 'space-evenly'; break;
   }
+  console.log(childCount)
 
 }
 
@@ -101,13 +98,13 @@ function redirect(url_to_redirect) {
 }
 
 /**
- * @param {String} url_to_go
+ * @param {Event} event
  * @returns {void}
  */
-function confirmPrompt(url_to_go) {
+function confirmPrompt(event) {
   let confirmConfirm = confirm("Are you sure you want to proceed?");
 
-  if (confirmConfirm == true) redirect(url_to_go);
+  if (confirmConfirm != true) event.stopImmediatePropagation();
 }
 
 // const dialogBox = document.querySelector("dialog");

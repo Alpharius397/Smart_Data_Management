@@ -1,4 +1,5 @@
 {% load static %}
+{% load template %}
 
 
 <!DOCTYPE html>
@@ -19,13 +20,47 @@
                 color: {{request.session.secColor}};
             }
             
-            body, .header-option{
+            body, .header-option {
                 color: {{request.session.mainColor}};
             }
+
+            .header-option {
+                background-color: {{request.session.mainColor}};
+            }
+            .container{
+                background-color: {{request.session.secColor}};
+            }
+
+            header .hamburger.open {
+                background-color: {{request.session.secColor}};
+            }
+
+            header .hamburger:hover{
+                background-color: {{request.session.secColor}};
+            }
+
+            header .hamburger:hover svg path, header .hamburger.open svg path {
+                fill: {{request.session.mainColor}};
+                stroke: {{request.session.mainColor}};
+            }
+
+            svg path {
+                fill: {{request.session.secColor}};
+                stroke: {{request.session.secColor}};
+            }
             
-        .container{
-            background-color: {{request.session.secColor}};
-        }
+
+            .header-option div * {
+                background-color: {{request.session.secColor}};
+                color: {{request.session.mainColor}};
+                font-weight: 700;
+            }
+
+            .header-option div *:hover {
+                background-color: {{request.session.secColor|rgb:0.5}};
+                transform: translateY(-3px);
+            }
+
         </style>
         {% block customStyle %}{% endblock %} 
     {% endif %}
@@ -40,20 +75,27 @@
                 <path d="M4 6L20 6" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
             </svg>
         </div>
-        <div class="header-left">
-
-            {% block headerLeft %}{% endblock %}
-        </div>
-
+        
         <div class="header-center">
             {% block headerCenter %}{% endblock %}
         </div>
+
+        {% if request.session.icon %}
+            <div class="logo">
+                <img src="{{request.session.icon}}">
+            </div>
+        {% endif %}
+    </header>
+    <div class="header-option close">
         <div class="header-right">
             {% block headerRight %}{% endblock %}
         </div>
+        <div class="header-left">
+    
+            {% block headerLeft %}{% endblock %}
+        </div>
         
-    </header>
-    <div class="header-option close"></div>
+    </div>
 
     <!-- <dialog>
         <div class="my-dialog">

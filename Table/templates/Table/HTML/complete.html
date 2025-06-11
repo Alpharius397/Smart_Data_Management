@@ -86,11 +86,7 @@
 {% endblock %}
 
 {% block headerCenter %}
-    <h1>Table View</h1>
-{% endblock %}
-
-{% block headerRight %}
-    {% block edit_button %}{% endblock %}
+    <h1>Complete View</h1>
 {% endblock %}
 
 {% block mainContent %}
@@ -106,18 +102,18 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" onsubmit="event.preventDefault();">
+            <form hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" onsubmit="event.preventDefault();">
                 {% csrf_token %}
                 <div class="form-field">
                     <label for="search">Search For: </label>
-                    <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'Table:htmxSemSuggest' id=id idx=idx %}" hx-trigger="cancel, keyup, input from:.searchSelect" title="Enter a word to search">
+                    <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" hx-swap="innerHTML" hx-target="#suggests" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="click" title="Enter a word to search">
                     <datalist id="suggests" autocomplete="false">
                     </datalist>
                 </div>
 
                 <div class="form-field">
                     <label for="column">in Column: </label>
-                    <select name="column" id="column" class="searchSelect" hx-get="{% url 'Table:htmxSemColumns' id=id idx=idx %}" hx-swap="innerHTML" hx-target="this" hx-trigger="load">
+                    <select name="column" id="column" class="searchSelect" hx-get="{% url 'Table:htmxColumns' id=id %}" hx-swap="innerHTML" hx-target="this" hx-trigger="load">
                         <option value="">----------</option>
                     </select>
                 </div>
@@ -164,7 +160,7 @@
             </div>
             <div class="change-me">
                 <div class="full-flex-row"
-                     hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}"
+                     hx-get="{% url 'Table:htmxRows' id=id %}"
                      hx-vals= '{"page": "0", "column": "{{ request.GET.column }}",
                                "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}",
                                "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}'

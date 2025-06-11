@@ -12,14 +12,14 @@
 
 
 {% block headerLeft %}
-    <a class="next-button logout" onclick="confirmPrompt(`{% url 'Logout:logout' %}`)">Logout</a>
+    <a class="next-button add-new-task" href="{% url 'Dash:index' %}">Back To DashBoard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
 
 {% block headerRight %}
-    {% block manager_button%}{% endblock %}
-    {% block uploader_button%}{% endblock %}
+<a class="next-button add-new-task" href="{% url 'Table:index' id=id %}">View Complete Data</a>
+
 {% endblock %}
 
 {% block mainContent %}

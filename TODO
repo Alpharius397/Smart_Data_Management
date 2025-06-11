@@ -59,24 +59,3 @@ CREATE AGGREGATE jsonsum (complex)(
     stype = jsonb,
     initcond = '{}'
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---- Imaginary Postgres Layout ---
-
-Main Table
-
-File Table: _id (primary), uploader_id, ARRAY(manager_id),
-Data Table: _id (primary), file_id_foreign, ARRAY(excel data),
-Feed Table: _id (primary), data_id_foreign, locked, issue, time_of_issue, time_of_lock

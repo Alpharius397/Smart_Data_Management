@@ -6,7 +6,7 @@
         <option value="" disabled selected>----------</option>
 
         {% for i in column %}
-            <option value="{{ i }}">{{ i }}</option>
+            <option value="{{ i|encode|hex }}">{{ i|rstrip:1 }}</option>
         {% endfor %}
 
     </select>

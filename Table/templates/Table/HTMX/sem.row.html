@@ -61,10 +61,6 @@
             <div class="row-data view-area">
                 <div class="grid-layout">
                     <div class="data-loading">
-                        <button class="view-icon" onclick="window.location.replace(`{% url 'Report:index' id=id idx=idx %}`);">
-                            <img src="{% static 'images/view.png' %}" alt="Refresh Page">
-                            <p class="view-text">View</p>
-                        </button>
 
                         <div class="refresh-button">
                             <button class="refresh" id="refresh-{{rowID}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>

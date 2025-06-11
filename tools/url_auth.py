@@ -71,7 +71,7 @@ def get_color(req: HttpRequest):
         icon = color.icon.url
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
-        req.session["image"] = icon
+        req.session["icon"] = icon
     except Exception:
         pass
 

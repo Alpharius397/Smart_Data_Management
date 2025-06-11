@@ -39,7 +39,7 @@
                 <div class="row-data column-{{ column|encode|hex }}">
 
                     {% if admin is True and row.locked is not True %}
-                        <div hx-put=""
+                        <div hx-put="{% url 'Table:htmxEdit' id=id idx=idx rowID=rowID %}"
                              hx-vals='{"column":"{{column|encode|hex}}","value":"{{ row.data|index_str:column }}"}'
                              hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 
@@ -61,10 +61,6 @@
             <div class="row-data view-area">
                 <div class="grid-layout">
                     <div class="data-loading">
-                        <button class="view-icon" onclick="window.location.replace(`{% url 'Report:index' id=id idx=idx %}`);">
-                            <img src="{% static 'images/view.png' %}" alt="Refresh Page">
-                            <p class="view-text">View</p>
-                        </button>
 
                         <div class="refresh-button">
                             <button class="refresh" id="refresh-{{rowID}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
@@ -105,6 +101,7 @@
                 </div>
             </div>
         </div>
+
     {% endfor %}
 {% endif %}
 

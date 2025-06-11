@@ -625,6 +625,7 @@ def groupBy_form(req: HttpRequest, id: int):
             context["column"] = getCommonColumn(id)
 
         except Exception as e:
+            print(e)
             APP_LOG.write_error(
                 LogStructure()
                 .set_request(req)
@@ -655,22 +656,23 @@ def groupBy_form(req: HttpRequest, id: int):
         return render(req, "Task/HTMX/groupBy.view.html", context=context)
 
     elif is_hx_post(req):
-        column = req.POST.get("column","")
+        column: str = req.POST.get("column","")
         context["column"] = column
         try:
-            
+            _column = bytes.fromhex(column).decode()
             columns = set(getCommonColumn(id))
 
-            if column not in columns:
+            if _column not in columns:
                 raise ColumnNotFound(column)
             
-            task.groupByColumn = column
+            task.groupByColumn = _column
             task.save()
-            context['column'] = column
+            context['column'] = _column
 
         except ColumnNotFound as f:
             messages.error(req, f.get_error())
-
+        except ValueError:
+            messages.error(req, "Invalid Column Name detected! Request Aborted")
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure()
