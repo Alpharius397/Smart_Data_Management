@@ -121,3 +121,19 @@ class SemesterEditForm(Form):
         widget=forms.FileInput(attrs={"title": "Upload an excel file"}),
         label="Upload File"
     )
+
+class SemesterDeleteForm(Form):
+    taskID = forms.CharField(
+        max_length=100,
+        required=True,
+        help_text="Task ID",
+        widget=forms.TextInput(attrs={"readonly": "readonly"},),
+        label="Task ID"
+    )
+    
+    semester = forms.IntegerField(        
+        required=True,
+        help_text="Semester",
+        widget=forms.TextInput(attrs={"readonly": "readonly"},),
+        label="Semester"
+    )

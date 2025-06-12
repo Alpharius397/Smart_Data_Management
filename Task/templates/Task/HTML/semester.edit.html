@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{% static 'styles/Task/styles.css' %}">
 {% endblock %}
 
-{% block title %} Task Create Form {% endblock %}
+{% block title %} Semester Edit Form {% endblock %}
             
 {% block customStyle %}
   <style>
@@ -26,9 +26,9 @@
   </style>
 {% endblock %}
 
-{% block headerLeft %}
+{% block headerOption %}
  
-<a class="next-button" href="{% url 'Table:semIndex' id=id idx=idx %}">Back To Table View</a>
+<a class="next-button" href="{% url 'Table:semIndex' id=id idx=idx %}">Back To Semester Table View</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Semester Edit</h1>{% endblock %}
@@ -38,8 +38,8 @@
 <ul class="messages"></ul>
 
     <div class="upload-container">
-        <h2>Edit a Semester Sub-Task</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubEdit' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="formCheck('#form')">
+        <h2>Edit a Semester</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubEdit' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}
@@ -49,8 +49,11 @@
                 </div>
                     
             {% endfor %}
-            <button class="upload-button">Create Task</button>
+            <button class="upload-button" onclick="formCheck(event, '#form')">Edit Task</button>
         </form>
+        <div class="form-footer">
+          Want to delete this Semester? <a href="{% url 'Task:subDelete' id=id idx=idx %}">Click here</a>
+        </div>
     </div>
 {% endblock %}
 

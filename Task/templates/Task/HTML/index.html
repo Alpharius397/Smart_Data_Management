@@ -12,17 +12,27 @@
 
 
 {% block headerLeft %}
-    <a class="next-button add-new-task" href="{% url 'Dash:index' %}">Back To DashBoard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
 
-{% block headerRight %}
-<a class="next-button add-new-task" href="{% url 'Table:index' id=id %}">View Complete Data</a>
+{% block headerOption %}
+
+    <a class="next-button" href="{% url 'Task:subCreate' id=id %}">Add New Semester</a>
+    <a class="next-button" href="{% url 'Table:index' id=id %}">View Complete Data</a>
+    <a class="next-button" href="{% url 'Dash:index' %}">Back To DashBoard</a>
 
 {% endblock %}
 
 {% block mainContent %}
+<ul class="messages" id="messages">
+    {% if messages %}
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    {% endif %}
+</ul>
+
     <div class="tab">
         <h2>Tasks List</h2>
 

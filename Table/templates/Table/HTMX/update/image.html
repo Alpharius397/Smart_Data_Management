@@ -13,7 +13,7 @@
 
 <div class="row-data column-{{ column }}">
 
-    <div hx-get="{% url 'Table:edit_image' id=id idx=idx %}"
+    <div hx-get="{% url 'Table:edit_image' id=id idx=idx rowID=rowID %}"
         hx-vals='{"column":"{{column}}"}'
         hx-target="closest div.row-data" hx-swap="outerHTML" hx-trigger="load">
             <b>Loading...</b>

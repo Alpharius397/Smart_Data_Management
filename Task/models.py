@@ -1,3 +1,4 @@
+import json
 from django.db.models import ( # type: ignore
     CharField,
     Model,
@@ -18,6 +19,8 @@ from User.models import User, is_admin, is_manager, RoleType
 from django import forms # type: ignore
 import typing
 from django.db.models.manager import BaseManager # type: ignore
+from django.db import connection
+from psycopg2.sql import SQL, Identifier, Literal # type: ignore
 
 ############ MODEL ############
 class TaskTable(Model):
@@ -232,8 +235,206 @@ class DataTable(Model):
         self.feed = None
 
         return self
+    
+    @staticmethod
+    def getCommonColumn(id: int):
+        data_column = Identifier(DataTable.data.field.column)
+        taskID = Identifier(DataTable.taskID.field.column)
+        semester_column = Identifier(DataTable.semester.field.column)
+        data_table = Identifier(DataTable._meta.db_table)
+        id = Literal(id)
+        
+        common_columns: list[str] = []
+        
+        with connection.cursor() as cursor:
+            sql_query = SQL('''
+                            select "B"."data" 
+                            from (select distinct "A"."data" as "data", count("A"."semester") as "count" from 
+                            (select {semester_column} as "semester", jsonb_object_keys(MAX({data_column}::varchar)::jsonb) as "data" 
+                            from {data_table} where {taskID}={id} group by {semester_column}) as "A" group by "A"."data")
+                            as "B" where "B"."count"=(select count(distinct {semester_column}) from {data_table} where {taskID}={id});
+                            ''').format(
+                                data_column=data_column,
+                                semester_column=semester_column,
+                                data_table=data_table,
+                                taskID=taskID,
+                                id=id
+                            ).as_string(cursor.connection)
+                            
+            print(sql_query)
+            cursor.execute(sql_query)
+            
+            common_columns = [col[0] for col in cursor.fetchall()]
+
+        return common_columns
+    
+    @staticmethod
+    def availableSems(id: int):
+        task_table = TaskTable._meta.db_table
+        semesterLimit = TaskTable.semesterLimit.field.column
+        task_id = DataTable.taskID.field.column
+        semester_column = DataTable.semester.field.column
+        data_table = DataTable._meta.db_table
+        options = []
+        
+        with connection.cursor() as cursor:
+            sql_query = SQL('''select "a" 
+                            from generate_series(1, (select {semesterLimit} from {task_table} where "id" = {id} limit 1)) 
+                            as "a" where "a" not in (select distinct({semester_column}) from {data_table} where {task_id}={id});
+                            ''').format(
+                                semesterLimit = Identifier(semesterLimit),
+                                task_table = Identifier(task_table),
+                                id = Literal(id),
+                                semester_column = Identifier(semester_column),
+                                data_table = Identifier(data_table),
+                                task_id = Identifier(task_id)
+                            )
+                            
+            cursor.execute(sql_query)
+            options = [col[0] for col in cursor.fetchall()]
+
+        return options     
+    
+    @staticmethod
+    def getColumnValue(id: int, idx: int, rowID: int, column: str) -> "RowStatus":
+        value = RowStatus(True, False, "")
+        
+        try:
+            table_name = Identifier(DataTable._meta.db_table)
+            column=Literal(column)
+            data_column = Identifier(DataTable.data.field.column)
+            task_column = Identifier(DataTable.taskID.field.column)
+            semester_column = Identifier(DataTable.semester.field.column)
+            rowID=Literal(rowID)
+            semester = Literal(idx)
+            taskID = Literal(id)
+
+            with connection.cursor() as cursor:
+                sql_query = SQL('''
+                                select "locked", {data_column}::jsonb?{column} ,{data_column}::json ->> {column} 
+                                from {table_name} 
+                                where {task_column}={taskID} and "id"={rowID} and {semester_column}={semester} limit 1;
+                            ''').format(
+                                data_column=data_column,
+                                column=column,
+                                table_name=table_name,
+                                task_column=task_column,
+                                rowID=rowID,
+                                taskID=taskID,
+                                semester_column=semester_column,
+                                semester=semester,
+                            )
+
+                cursor.execute(sql_query)
+
+                value = cursor.fetchone() or value
+
+            return value
+
+        except Exception as e:
+            print(e)
+            pass
+
+        return value
+
+    @staticmethod
+    def setColumnValue(id: int, idx: int, rowID: int ,column: str, value: str) -> bool:
+        result = False
+
+        dicts: dict = json.loads(value)
+
+        if (column not in dicts) or (len(dicts.keys()) > 1):
+            raise ValueError("Invalid values detected")
+
+        table_name = Identifier(DataTable._meta.db_table)
+        rowColumn = Identifier(DataTable.data.field.column)
+        task_column = Identifier(DataTable.taskID.field.column)
+        semester_column = Identifier(DataTable.semester.field.column)
+        locked = Identifier(DataTable.locked.field.column)
+        _column = Literal(column)
+        rowID=Literal(rowID)
+        semester = Literal(idx)
+        taskID = Literal(id)
+        _value = Literal(value)
+
+        with connection.cursor() as cursor:
+            sql_query = SQL("""
+                            update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
+                                where {task_column} = {taskID} 
+                                and "id" = {rowID}
+                                and {semester_column}={semester}
+                                and {rowColumn}::jsonb?{_column}
+                                and {locked} is false;
+                            """
+                        ).format(
+                            table_name=table_name,
+                            rowColumn=rowColumn,
+                            _value=_value,
+                            task_column=task_column,
+                            taskID=taskID,
+                            rowID=rowID,
+                            semester_column=semester_column,
+                            semester=semester,
+                            locked=locked,
+                            _column=_column,
+                        )
+
+            cursor.execute(sql_query)
+            result = (cursor.rowcount == 1) or result
+
+        return result
+    
+    
+    @staticmethod
+    def suggestValues(id: int, idx: int, column: str, value: str) -> list[str]:
+        column_name = Literal(column)
+        table_name = Identifier(DataTable._meta.db_table)
+        _value = Literal(f"%{value}%")
+        task_column = Identifier(DataTable.taskID.field.column)
+        taskID = Literal(id)
+        sem_column = Identifier(DataTable.semester.field.column)
+        semID = Literal(idx)
+        data_column = Identifier(DataTable.data.field.column)
+        suggests: list[str] = []
+
+        with connection.cursor() as cursor:
+            sql_query = SQL('''
+                            select "A"."option" 
+                            from (
+                                select distinct {data_column}::jsonb ->> {column_name} as "option" 
+                                from {table_name} where {task_column}={taskID} and {sem_column}={semID} 
+                                and {data_column}::jsonb ->> {column_name} is not null 
+                                and {data_column}::jsonb ->> {column_name} like {value}
+                                ) 
+                            as "A" order by length("A"."option"), "A"."option" limit 5;
+            ''').format(
+                data_column=data_column,
+                column_name=column_name,
+                table_name=table_name,
+                task_column=task_column,
+                taskID=taskID,
+                sem_column=sem_column,
+                semID=semID,
+                value=_value,
+            ).as_string(cursor.connection)
+
+            cursor.execute(sql_query)
+
+            suggests = [col[0] for col in cursor.fetchall()]        
+            
+        return suggests
 
 ############ TYPES ############
 type Upload = BaseManager[UploadTable]
 type Assign = BaseManager[AssignTable]
 type Data = BaseManager[DataTable]
+
+class RowStatus(typing.NamedTuple):
+    locked: bool
+    exists: bool
+    value: str
+
+    def __iter__(self):
+        yield self.locked
+        yield self.exists
+        yield self.value

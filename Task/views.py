@@ -2,7 +2,7 @@ from typing import Any, NamedTuple, TypedDict
 from django.core.files.uploadedfile import UploadedFile # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse, QueryDict  # type: ignore
-from Task.forms import TaskCreateForm, TaskDeleteForm, TaskUpdateForm, SemesterCreateForm, SemesterEditForm
+from Task.forms import SemesterDeleteForm, TaskCreateForm, TaskDeleteForm, TaskUpdateForm, SemesterCreateForm, SemesterEditForm
 from Task.models import TaskTable, UploadTable
 from django.db import transaction # type: ignore
 from django.db.models import Q, QuerySet # type: ignore
@@ -36,34 +36,6 @@ from .errors import (
     ColumnNotFound
 )
 from django.forms import forms # type: ignore
-from django.db import connection
-from psycopg2.sql import SQL, Identifier, Literal # type: ignore
-
-def availableSems(id: int):
-    task_table = TaskTable._meta.db_table
-    semesterLimit = TaskTable.semesterLimit.field.column
-    task_id = DataTable.taskID.field.column
-    semester_column = DataTable.semester.field.column
-    data_table = DataTable._meta.db_table
-    options = []
-    
-    with connection.cursor() as cursor:
-        sql_query = SQL('select "a" from generate_series(1, (select {semesterLimit} from {task_table} where "id" = {id} limit 1)) as "a" where "a" not in (select distinct({semester_column}) from {data_table} where {task_id}={id});').format(
-                            semesterLimit = Identifier(semesterLimit),
-                            task_table = Identifier(task_table),
-                            id = Literal(id),
-                            semester_column = Identifier(semester_column),
-                            data_table = Identifier(data_table),
-                            task_id = Identifier(task_id)
-                        ).as_string(
-                            cursor.connection
-                        )
-                        
-        cursor.execute(sql_query)
-        options = [col[0] for col in cursor.fetchall()]
-
-    return options        
-
 
 @login_needed(admin_only=True)
 def task_create(req: HttpRequest):
@@ -212,7 +184,7 @@ def htmx_task_delete(req: HttpRequest, id: int):
 def sem_create(req: HttpRequest, id: int):
     
     if is_auth_get(req):
-        sems = [("", "------")] + list(map(lambda x: (x,x)  ,availableSems(id)))
+        sems = [("", "------")] + list(map(lambda x: (x,x), DataTable.availableSems(id)))
         form = SemesterCreateForm(initial={"taskID": id})
         form.setChoice(sems)
         
@@ -226,7 +198,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
         pd_data: pd.DataFrame = pd.DataFrame()
         image_id: list[int] = []
         form = SemesterCreateForm(req.POST, req.FILES)
-        semesterChoice = [("", "------")] + list(map(lambda x: (x,x), availableSems(id)))
+        semesterChoice = [("", "------")] + list(map(lambda x: (x,x), DataTable.availableSems(id)))
         form.setChoice(semesterChoice)
         
         try:
@@ -259,7 +231,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
                         rows.append(DataTable(taskID=task, data=rowJson, semester=sem))
 
                     DataTable.objects.bulk_create(rows)
-                    semesterChoice = [("", "------")] + list(map(lambda x: (x,x), availableSems(id)))
+                    semesterChoice = [("", "------")] + list(map(lambda x: (x,x), DataTable.availableSems(id)))
                     messages.success(req, f"Semester Data Uploaded Successfully")
                     
                 else:
@@ -276,6 +248,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
             messages.error(req, f.get_error())
 
         except Exception as e:
+            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/semester.create.html", context={'option': semesterChoice})
@@ -291,7 +264,7 @@ def sem_edit(req: HttpRequest, id: int, idx: int):
     
 @htmx_response
 @auth_needed(admin_only=True)
-@task_permission_check
+@semester_permission_check
 def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
     
     if is_hx_post(req):
@@ -302,7 +275,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
         try:
             with transaction.atomic():
                 if form.is_valid():
-                    
+            
                     excel_file = req.FILES["file"]
                     assert isinstance(excel_file, UploadedFile), "Incompatible File Type!"
                     
@@ -323,14 +296,13 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
                     fields = pd_data.columns
                     create: list[DataTable] = []
                     task: TaskTable = req.__getattribute__("task")
-                    sem = form.cleaned_data.get("semester")
                     
                     data: QuerySet[DataTable] = task.data.filter(semester=idx)
                     data.delete()
                     
                     for serial, row in enumerate(pd_data.itertuples(index=False)):
                         rowJson = {fields[idx]: str(row[idx]) for idx in range(len(row))}
-                        create.append(DataTable(taskID=task, data=rowJson, semester=sem))
+                        create.append(DataTable(taskID=task, data=rowJson, semester=idx))
 
                     DataTable.objects.bulk_create(create)
                     
@@ -354,30 +326,53 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html")
-    
+
+
 @login_needed(admin_only=True)
-def delete_screen(req: HttpRequest, id: int):
+@semester_permission_check
+def sem_delete(req: HttpRequest, id: int, idx: int):
+    
     if is_auth_get(req):
-        context = {"id": id}
-
+        form = SemesterDeleteForm(initial={"taskID": id, "semester": idx})
+        
+        return render(req, "Task/HTML/semester.delete.html", context={"id": id, "idx": idx, "form": form})
+    
+@htmx_response
+@auth_needed(admin_only=True)
+@semester_permission_check
+def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
+    
+    if is_hx_post(req):
+        form = SemesterDeleteForm(req.POST)
+        
         try:
-            exists = UploadTable.objects.filter(id=id).only("id").exists()
+            with transaction.atomic():
+                if form.is_valid():
+                    task: TaskTable = req.__getattribute__("task")
+                    
+                    task.data.filter(semester=idx).delete()
+                    
+                    messages.success(req, f"Semester Data Deleted Successfully")
+                    
+                else:
+                    for field, error in form.errors.items(): 
+                        messages.error(req, "{}: {}".format(SemesterDeleteForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
+                        
+        except AssertionError as e:
+            messages.error(req, str(e))
 
-            if not exists:
-                raise FileDoesNotExists(id)
+        except (ValueError, FileProcessFailed):
+            messages.error(req, FileProcessFailed().get_error())
 
-        except FileDoesNotExists as e:
-            messages.error(req, e.get_error())
+        except FileNameExists as f:
+            messages.error(req, f.get_error())
 
-        except Exception as f:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=f)
-            )
+        except Exception as e:
+            print(e)
             messages.error(req, DEFAULT_ERROR)
 
-        return render(req, "Upload/delete.html", context)
+        return render(req, "Task/HTMX/message.html")
+
 
 @login_needed(admin_only=True)
 @task_permission_check
@@ -566,34 +561,7 @@ def assign_form(req: HttpRequest, id: int):
     
     return None
 
-def getCommonColumn(id: int):
-    data_column = DataTable.data.field.column
-    taskID = DataTable.taskID.field.column
-    semester_column = DataTable.semester.field.column
-    data_table = DataTable._meta.db_table
-    
-    common_columns: list[str] = []
-    
-    with connection.cursor() as cursor:
-        sql_query = SQL('''
-                        select "C"."A" from (
-                            select jsonb_object_keys({data_column}) as "A",
-                            count(distinct {semester_column}) as "count" from {data_table} where {taskID}={id} group by "A" 
-                        ) as "C"
-                        where "C"."count"=(select count(distinct {semester_column}) from {data_table} where {taskID}={id}); 
-                        ''').format(
-                            data_column=Identifier(data_column),
-                            semester_column=Identifier(semester_column),
-                            data_table=Identifier(data_table),
-                            taskID=Identifier(taskID),
-                            id=Literal(id)
-                        ).as_string(cursor.connection)
-                        
-        cursor.execute(sql_query)
-        
-        common_columns = [col[0] for col in cursor.fetchall()]
 
-    return common_columns
 
 @htmx_response
 @auth_needed(admin_only=True)
@@ -622,7 +590,7 @@ def groupBy_form(req: HttpRequest, id: int):
     
     elif is_hx_put(req):
         try:
-            context["column"] = getCommonColumn(id)
+            context["column"] = DataTable.getCommonColumn(id)
 
         except Exception as e:
             print(e)
@@ -660,7 +628,7 @@ def groupBy_form(req: HttpRequest, id: int):
         context["column"] = column
         try:
             _column = bytes.fromhex(column).decode()
-            columns = set(getCommonColumn(id))
+            columns = set(DataTable.getCommonColumn(id))
 
             if _column not in columns:
                 raise ColumnNotFound(column)
@@ -668,6 +636,7 @@ def groupBy_form(req: HttpRequest, id: int):
             task.groupByColumn = _column
             task.save()
             context['column'] = _column
+            messages.success(req, "Group By Column changed successfully")
 
         except ColumnNotFound as f:
             messages.error(req, f.get_error())

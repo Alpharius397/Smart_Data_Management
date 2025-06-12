@@ -105,10 +105,7 @@ def get_all_columns(id: int) -> tuple[int, ColumnType]:
     with connection.cursor() as cursor:
         sql_query = SQL(
                 """
-                    select "A"."option" 
-                    from (select distinct(jsonb_object_keys(max({data_column}::varchar)::jsonb)) as "option" 
-                    from {table_name} where {taskID_column}={taskID}) as "A" 
-                    order by length("A"."option"), "A"."option";
+                select distinct jsonb_object_keys("A"."data"::jsonb) as "data" from (select "semester", MAX({data_column}::varchar) as "data" from {table_name} where {taskID_column}={taskID} group by {semester_column}) as "A" order by "data";
                 """
             ).format(
                 data_column=data_column,
@@ -332,40 +329,9 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
         context: dict[str, list[str] | int] = {"id": id, "idx": idx, "option": []}
 
         try:
-            column_name = Literal(column)
-            table_name = Identifier(DataTable._meta.db_table)
-            _value = Literal(f"%{value}%")
-            task_column = Identifier(DataTable.taskID.field.column)
-            taskID = Literal(id)
-            sem_column = Identifier(DataTable.semester.field.column)
-            semID = Literal(id)
-            data_column = Identifier(DataTable.data.field.column)
-
-            with connection.cursor() as cursor:
-                sql_query = SQL('''
-                                select "A"."option" 
-                                from (
-                                    select distinct {data_column}::jsonb ->> {column_name} as "option" 
-                                    from {table_name} where {task_column}={taskID} and {sem_column}={semID} 
-                                    and {data_column}::jsonb ->> {column_name} is not null 
-                                    and {data_column}::jsonb ->> {column_name} like {value}
-                                    ) 
-                                as "A" order by length("A"."option"), "A"."option" limit 5;
-                ''').format(
-                    data_column=data_column,
-                    column_name=column_name,
-                    table_name=table_name,
-                    task_column=task_column,
-                    taskID=taskID,
-                    sem_column=sem_column,
-                    semID=semID,
-                    value=_value,
-                ).as_string(cursor.connection)
-
-                cursor.execute(sql_query)
-
-                suggestions = [col[0] for col in cursor.fetchall() if bool(col)]
-                context["option"] = suggestions
+            column = bytes.fromhex(column).decode()
+            suggestions = DataTable.suggestValues(id, idx, column, value)
+            context["option"] = suggestions
 
         except Exception as e:
             APP_LOG.write_error(
@@ -426,111 +392,10 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
         return render(req, "Table/HTMX/sem.refresh.html", context=context)
 
 
-class RowStatus(NamedTuple):
-    locked: bool
-    exists: bool
-    value: str
-
-    def __iter__(self):
-        yield self.locked
-        yield self.exists
-        yield self.value
-
-
-def getColumnValue(id: int, idx: int, rowID: int, column: str) -> RowStatus:
-    value = RowStatus(True, False, "")
-    try:
-        table_name = Identifier(DataTable._meta.db_table)
-        column=Literal(column)
-        data_column = Identifier(DataTable.data.field.column)
-        task_column = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column)
-        rowID=Literal(rowID)
-        semester = Literal(idx)
-        taskID = Literal(id)
-
-        with connection.cursor() as cursor:
-            sql_query = SQL('''
-                            select "locked", {data_column}::jsonb?{column} ,{data_column}::json ->> {column} 
-                            from {table_name} 
-                            where {task_column}={taskID} and "id"={rowID} and {semester_column}={semester} limit 1;
-                        ''')
-            sql_query = sql_query.format(
-                data_column=data_column,
-                column=column,
-                table_name=table_name,
-                task_column=task_column,
-                rowID=rowID,
-                taskID=taskID,
-                semester_column=semester_column,
-                semester=semester,
-            )
-            sql_query = sql_query.as_string(cursor.connection)
-
-            cursor.execute(sql_query)
-
-            value = cursor.fetchone() or value
-
-        return value
-
-    except Exception as e:
-        print(e)
-        pass
-
-    return value
-
-
 class UpdateStatus(NamedTuple):
     updated: bool
     exists: bool
     locked: bool
-
-
-def setColumnValue(id: int, idx: int, rowID: int ,column: str, value: str) -> bool:
-    result = False
-
-    try:
-        dicts: dict = json.loads(value)
-
-        if (column not in dicts) or (len(dicts.keys()) > 1):
-            raise ValueError("Invalid values detected")
-
-        table_name = Identifier(DataTable._meta.db_table)
-        rowColumn = Identifier(DataTable.data.field.column)
-        task_column = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column)
-        locked = Identifier(DataTable.locked.field.column)
-        _column = Literal(column)
-        rowID=Literal(rowID)
-        semester = Literal(idx)
-        taskID = Literal(id)
-        _value = Literal(value)
-
-        with connection.cursor() as cursor:
-            sql_query = SQL(
-                """update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
-                                where {task_column} = {taskID} and "id" = {rowID} and {semester_column}={semester} and {rowColumn}::jsonb?{_column} and {locked} is false;
-                            """
-            ).format(
-                table_name=table_name,
-                rowColumn=rowColumn,
-                _value=_value,
-                task_column=task_column,
-                taskID=taskID,
-                rowID=rowID,
-                semester_column=semester_column,
-                semester=semester,
-                locked=locked,
-                _column=_column,
-            ).as_string(cursor.connection)
-
-            cursor.execute(sql_query)
-            result = (cursor.rowcount == 1) or result
-
-    except Exception as e:
-        pass
-
-    return result
 
 
 @htmx_response
@@ -550,7 +415,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             if _column[-1:] == "I":
                 raise OnlyTextAllowed(_column[:-1])
 
-            locked, exists, value = getColumnValue(id, idx, rowID ,_column)
+            locked, exists, value = DataTable.getColumnValue(id, idx, rowID ,_column)
 
             if not exists:
                 raise ColumnDoesNotExist(idx, _column[:-1])
@@ -592,7 +457,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             if _column[-1] == "I":
                 raise OnlyTextAllowed(_column[:-1])
 
-            locked, exists, value = getColumnValue(id, idx, rowID, _column)
+            locked, exists, value = DataTable.getColumnValue(id, idx, rowID, _column)
 
             if not exists:
                 raise ColumnDoesNotExist(idx, _column[:-1])
@@ -623,7 +488,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             if _column[-1:] == "I":
                 raise OnlyTextAllowed(_column[:-1])
 
-            updated = setColumnValue(id, idx, rowID, _column, json.dumps({_column: value}))
+            updated = DataTable.setColumnValue(id, idx, rowID, _column, json.dumps({_column: value}))
 
             context["updated"] = updated
 
@@ -651,14 +516,15 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
 
 @htmx_response
 @auth_needed(admin_only=True)
-@file_permission_check
-def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
+@semester_permission_check
+def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
     if is_hx_put(req):
         column = QueryDict(req.body).get("column", "")
 
         context = {
             "id": id,
             "idx": idx,
+            "rowID": rowID,
             "column": column,
             "locked": False,
         }
@@ -669,7 +535,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
             if _column[-1:] != "I":
                 raise OnlyImageAllowed(_column[:-1])
 
-            locked, exists, value = getColumnValue(id, idx, _column)
+            locked, exists, value = DataTable.getColumnValue(id, idx, rowID, _column)
 
             if not exists:
                 raise ColumnDoesNotExist(idx, _column[:-1])
@@ -699,6 +565,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         context = {
             "id": id,
             "idx": idx,
+            "rowID": rowID,
             "column": column,
             "locked": False,
             "value": "Data Not Found",
@@ -710,7 +577,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
             if _column[-1:] != "I":
                 raise OnlyImageAllowed(_column[:-1])
 
-            locked, exists, value = getColumnValue(id, idx, _column)
+            locked, exists, value = DataTable.getColumnValue(id, idx, rowID, _column)
 
             if not exists:
                 raise ColumnDoesNotExist(idx, _column[:-1])
@@ -733,7 +600,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
     elif is_hx_post(req):
         column: str = req.POST.get("column", "")
 
-        context = {"id": id, "idx": idx, "updated": False, "column": column}
+        context = {"id": id, "idx": idx, "rowID": rowID, "updated": False, "column": column}
         try:
             image = req.FILES["file"]
             _column = bytes.fromhex(column).decode()
@@ -750,18 +617,18 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
                     f"{IMAGE.width}:{IMAGE.height}:{b64encode(b.getvalue()).decode()}"
                 )
 
-                updated = setColumnValue(id, idx, _column, json.dumps({_column: value}))
+                updated = DataTable.setColumnValue(id, idx, rowID, _column, json.dumps({_column: value}))
 
                 context["updated"] = updated
 
             if updated:
                 messages.success(
                     req,
-                    f"Column '{_column[:-1]}' of Row ID: '{idx}' was successfully updated",
+                    f"Column '{_column[:-1]}' of Row ID: '{rowID}' was successfully updated",
                 )
             else:
                 messages.error(
-                    req, f"Updating Column '{_column[:-1]}' of Row ID: '{idx}' failed!"
+                    req, f"Updating Column '{_column[:-1]}' of Row ID: '{rowID}' failed!"
                 )
 
         except OnlyImageAllowed as g:
@@ -779,7 +646,6 @@ def edit_image_form(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         return render(req, "Table/HTMX/update/image.html", context=context)
 
 # select "A"."id",jsonsum("A"."data") from (select distinct data::jsonb->>'IDT' as "id", data::jsonb as "data" from "Task_datatable" where "taskID_id"=1) as "A" group by "A"."id" order by length("A"."id"), "A"."id" limit 1;
-get_sem_context
 
 def boolSQL(value: bool | None):
     match(value):
@@ -790,7 +656,7 @@ def boolSQL(value: bool | None):
 
 class Context(NamedTuple):
     ID: str
-    data: dict
+    data: str
     locked: bool 
     issued: bool
     status: bool

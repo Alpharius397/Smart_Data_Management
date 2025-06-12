@@ -4,8 +4,10 @@ body {
   padding: 0;
   height: 100vh;
   background-color: #f5f5f5;
-  flex-direction: column;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-rows: 1fr 0 8fr 1fr;
+  grid-template-columns: 100%;
+  grid-auto-rows: 0;
 }
 
 header {
@@ -14,7 +16,6 @@ header {
   align-items: center;
   background-color: #5256ba;
   color: white;
-  height: max-content;
 }
 
 header h1 {
@@ -31,6 +32,7 @@ header .hamburger {
   border-radius: 8px;
   border: 1px solid black;
   height: 50px;
+  transition: 300ms;
 }
 
 header .hamburger:hover {
@@ -45,9 +47,8 @@ header .hamburger.open {
 
 .header-option {
   --height: 100px;
-  --top: 0px;
   background-color: #5256ba;
-  padding: 5px 5px 5px 5px;
+  padding: 5px 25px 5px 25px;
   height: var(--height);
   overflow: hidden;
   flex-direction: column;
@@ -55,25 +56,18 @@ header .hamburger.open {
   display: flex;
   align-items: stretch;
   transition: 700ms;
-  flex-grow: 1;
-  width: 100%;
-  padding: 0px;
-  align-items: center;
+  align-items: stretch;
   flex-direction: column;
   z-index: 100;
   backdrop-filter: blur(5px);
   box-shadow: 0px 5px 5px grey;
+  grid-row: 2;
 }
 
-.header-option div {
+.header-option * {
   display: flex;
   justify-content: center;
-  width: 100%;
-
-}
-
-.header-option div > * {
-  width: 90%;
+  font-weight: 700;
 }
 
 .header-option.close {
@@ -85,6 +79,7 @@ header .hamburger.open {
 svg path {
   fill: #f5f5f5;
   stroke: #f5f5f5;
+  transition: 300ms;
 }
 
 header .header-left,
@@ -119,13 +114,13 @@ header .header-center {
   padding-top: 20px;
   margin: 0px;
   background-color: #f5f5f5;
-  height: max-content;
-  min-height: 70%;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   justify-content: stretch;
   align-items: center;
+  flex-grow: 10;
+  width: auto;
 }
 
 footer {
@@ -158,7 +153,7 @@ footer img {
   height: 100px;
 }
 
-/* dialog {
+dialog {
   margin: 0;
   padding: 0;
   border-radius: 10px;
@@ -167,13 +162,18 @@ footer img {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 10000;
+  resize: both;
 }
+
 
 dialog .my-dialog {
   display: flex;
   flex-direction: column;
   padding: 0;
-  width: 200px;
+  min-width: 200px;
+  width: 100%;
+  height: 100%;
   border-radius: 10px;
   margin: 0px;
 }
@@ -183,13 +183,20 @@ dialog .dialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0px 0px 0px 5px;
+  padding: 0px 5px 0px 5px;
   border-radius: 5px 5px 0px 0px;
   word-wrap: break-word;
 }
 
 .dialog-header button {
   background-color: red;
+  border: 1px  solid gray;
+  color: white;
+  transition: 500ms;
+}
+
+.dialog-header button:hover {
+  background-color: darkred;
 }
 
 .dialog-header .dialog-title {
@@ -200,13 +207,18 @@ dialog .dialog-header {
 dialog .dialog-message {
   padding: 5px 5px 0px 10px;
   word-wrap: break-word;
+  flex-grow: 1;
 }
 
 dialog .dialog-button {
   display: flex;
   justify-content: flex-end;
-  padding: 0px 5px 0px 0px;
-} */
+  padding-bottom: 3px;
+}
+
+dialog .dialog-button button {
+  margin: 5px;
+}
 
 .messages {
   list-style: none;

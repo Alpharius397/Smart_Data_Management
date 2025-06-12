@@ -1,5 +1,5 @@
 .tab {
-    margin: 0 0 10px 0;
+    margin: 10px 0 10px 0;
     padding: 20px;
     padding-top: 0px;
     background: white;
@@ -7,7 +7,6 @@
     border: 1px solid rgb(216, 218, 220);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     width: 85%;
-    overflow-y: scroll;
 }
 
 .sub-tab {
@@ -107,7 +106,7 @@ form {
 .task-title h3 {
     margin: 0;
     font-size: 18px;
-    color: #333;
+    color: inherit;
 }
 
 .log-view {
@@ -330,17 +329,37 @@ input[type="text"]::placeholder {
 
 .group-column {
     margin-left: 20px;
-    display: inline;
+    height: 30px;
+    display: block;
+    align-items: center;
+
 }
 
 .current-group {
-    display: inline;
+    display: inline-flex;
+    justify-content: space-evenly;
+    align-items: stretch;
+    width: max-content;
+    margin-right: 5px;
+}
+
+.current-group img {
+    translate: 0 -3px;
 }
 
 .help-text {
     font-style: italic;
     color: #535353;
     margin-top: 10px;
+}
+
+.help-icon{
+    height: 30px;
+    margin: auto 0;
+    display: inline-block;
+    justify-content: center;
+    align-items: center;
+    display: inline-flex;
 }
 
 @media screen and (max-width: 600px) {

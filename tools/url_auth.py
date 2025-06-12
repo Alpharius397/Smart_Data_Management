@@ -89,9 +89,7 @@ def taskCheck(user: User, id: int):
 def semesterCheck(user: User, id: int, idx: int):
     try:
         return TaskTable.objects.filter(
-            Q(id=id)
-            & Q(data__semester=idx)
-            & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
+            Q(id=id) & Q(data__semester=idx) & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
         ).distinct()[0]
     except Exception as e:
         print(e)

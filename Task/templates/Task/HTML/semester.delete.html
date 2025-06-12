@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{% static 'styles/Task/styles.css' %}">
 {% endblock %}
 
-{% block title %} Task Delete Form {% endblock %}
+{% block title %} Semester Delete Form {% endblock %}
             
 {% block customStyle %}
   <style>
@@ -28,18 +28,18 @@
 
 {% block headerOption %}
  
-<a class="next-button" href="{% url 'Task:index' id=id %}">Back To Task Dashboard</a>
+<a class="next-button" href="{% url 'Table:semIndex' id=id idx=idx %}">Back To Semester Table View</a>
 {% endblock %}
 
-{% block headerCenter %}<h1>Task Delete</h1>{% endblock %}
+{% block headerCenter %}<h1>Semester Delete</h1>{% endblock %}
 
 {% block mainContent %}
 
 <ul class="messages"></ul>
 
     <div class="upload-container">
-        <h2>Delete Task</h2>
-        <form id="form" hx-post="{% url 'Task:htmxDelete' id=id %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+        <h2>Delete a Semester</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubDelete' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="formCheck('#form')">
             {% csrf_token %}
 
             {% for field in form %}
@@ -49,27 +49,11 @@
                 </div>
                     
             {% endfor %}
-            <button class="upload-button" onclick="confirmThis(event)">Delete Task</button>
+            <button class="upload-button">Delete Task</button>
         </form>
         <div class="form-footer">
-          Edit this Task? <a href="{% url 'Task:edit' id=id %}">Edit Task</a>
+          Want to edit this Semester? <a href="{% url 'Task:subEdit' id=id idx=idx %}">Click here</a>
         </div>
     </div>
 {% endblock %}
 
-{% block script %}
-<script>
-
-  /**
-  * @param {Event} event
-  */
-  function confirmThis(event){
-      const a = confirm("This action cannot be undone. Are you sure you want to delete this Task?");
-
-      if(a==false){
-        event.stopImmediatePropagation();
-      }
-    }
-
-  </script>
-{% endblock %}

@@ -31,6 +31,9 @@
                 background-color: {{request.session.secColor}};
             }
 
+            header .hamburger {
+                background-color: {{request.session.mainColor}};
+            }
             header .hamburger.open {
                 background-color: {{request.session.secColor}};
             }
@@ -50,13 +53,12 @@
             }
             
 
-            .header-option div * {
+            .header-option * {
                 background-color: {{request.session.secColor}};
                 color: {{request.session.mainColor}};
-                font-weight: 700;
             }
 
-            .header-option div *:hover {
+            .header-option *:hover, .header-option *:focus {
                 background-color: {{request.session.secColor|rgb:0.5}};
                 transform: translateY(-3px);
             }
@@ -67,37 +69,30 @@
 
 </head>
 <body>
-    <header>
-        <div class="hamburger">
-            <svg width="40px" height="40px" viewBox="0 0 24 24">
-                <path d="M4 18L20 18" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M4 12L20 12" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
-                <path d="M4 6L20 6" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </div>
-        
-        <div class="header-center">
-            {% block headerCenter %}{% endblock %}
-        </div>
-
-        {% if request.session.icon %}
-            <div class="logo">
-                <img src="{{request.session.icon}}">
+        <header>
+            <button class="hamburger">
+                <svg width="40px" height="40px" viewBox="0 0 24 24">
+                    <path d="M4 18L20 18" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 12L20 12" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M4 6L20 6" stroke="currentcolor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="header-center">
+                {% block headerCenter %}{% endblock %}
             </div>
-        {% endif %}
-    </header>
-    <div class="header-option close">
-        <div class="header-right">
-            {% block headerRight %}{% endblock %}
-        </div>
-        <div class="header-left">
-    
-            {% block headerLeft %}{% endblock %}
+            
+            {% if request.session.icon %}
+                <div class="logo">
+                    <img src="{{request.session.icon}}">
+                </div>
+            {% endif %}
+        </header>
+
+        <div class="header-option close">
+            {% block headerOption %}{% endblock %}
         </div>
         
-    </div>
-
-    <!-- <dialog>
+    <dialog>
         <div class="my-dialog">
             <div class="dialog-header">
                 <div class="dialog-title">Heading</div>
@@ -109,8 +104,7 @@
                 <button class="dialog-no">No</button>
             </div>
         </div>
-    </dialog> -->
-
+    </dialog>
     <div class='container'>
         {% block mainContent %}{% endblock %}
     </div>
@@ -119,7 +113,6 @@
         <img src="{% static 'images/logo.png' %}" alt="TinkerTechLogix logo">
         <span class='copyright'>&copy;</span><p> 2025 Smart Data Management System </p>
     </footer>
-
 </body>
 <script src="{% static 'js/htmx.js' %}"></script>
 <script src="{% static 'js/socket.js' %}"></script>

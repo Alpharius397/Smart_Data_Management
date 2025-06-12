@@ -36,13 +36,12 @@
             <div class="row-data view-area">
                 <div class="grid-layout">
                     <div class="data-loading">
-                        <button class="view-icon" onclick="window.location.replace(`{% url 'Report:index' id=id idx=idx %}`);">
+                        <button class="view-icon" onclick="redirect(`{% url 'Report:index' id=id idx=idx %}`);">
                             <img src="{% static 'images/view.png' %}" alt="Refresh Page">
                             <p class="view-text">View</p>
                         </button>
 
                     </div>
-
                     <div class="status-report">
                         <div class="report-status">
                             <p>Verify Status: </p>

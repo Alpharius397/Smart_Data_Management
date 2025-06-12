@@ -1,12 +1,12 @@
 .tab {
   margin: 20px auto;
-  width: 95%;
   padding: 20px;
   padding-top: 0px;
   background: white;
   border-radius: 8px;
   border: 1px solid rgb(216, 218, 220);
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  width: 90%;
 }
 
 .sub-tab {
@@ -203,29 +203,14 @@ input::placeholder {
   scrollbar-width: none;
 }
 
-button {
+.grid-layout button {
   height: 50px;
   margin: 10px;
   border-radius: 8px;
   color: white;
   font-weight: 700;
+  text-decoration: none;
   border: none;
-}
-
-.submit {
-  background-color: #367b39;
-}
-
-.cancel {
-  background-color: red;
-}
-
-.submit:hover {
-  background-color: darkgreen;
-}
-
-.cancel:hover {
-  background-color: darkred;
 }
 
 .change-me {
@@ -234,21 +219,32 @@ button {
 }
 
 .view-icon {
-  width: 75px;
-  background-color: #367b39;
+  width: 80%;
+  background-color: #4caf50;
   display: flex;
   justify-content: center;
   align-items: center;
   align-content: center;
   padding: 0px 5px 0px 5px;
   cursor: pointer;
+  transition: 500ms;
+}
+
+.view-icon:hover {
+  background-color: #367b39;
+}
+
+.refresh-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .refresh {
-  width: 100px;
+  width: 80%;
   display: flex;
   background-color: #0098ff;
-  justify-content: space-evenly;
+  justify-content: center;
   align-items: center;
   align-content: center;
   overflow: hidden;
@@ -280,14 +276,12 @@ button {
 .refresh:hover p,
 .rows.htmx-request .refresh p {
   width: 0px;
-  transform: translateX(50px);
+  transform: translateX(100px);
   transition: 1s;
-  margin-right: 0px;
 }
 
 .refresh:hover img,
 .rows.htmx-request .refresh img {
-  margin: auto;
   transform: rotateZ(180deg);
   transition: 1.5s;
 }
@@ -481,7 +475,7 @@ div.report-status p {
 
 /* Media Query */
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 900px) {
   .view-area {
     position: relative;
     right: 0px;

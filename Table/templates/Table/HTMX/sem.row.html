@@ -20,7 +20,7 @@
                     {% if admin is True and row.locked is not True %}
                         <div class="row-data image column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{rowID}}_{{image|encode|hex}}">
 
-                            <div hx-put="{% url 'Table:edit_image' id=id idx=idx  %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
+                            <div hx-put="{% url 'Table:edit_image' id=id idx=idx rowID=rowID %}" hx-vals='{"column":"{{ image|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
 
                                 <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
                             </div>
@@ -61,13 +61,15 @@
             <div class="row-data view-area">
                 <div class="grid-layout">
                     <div class="data-loading">
-
+                        <button class="view-icon" onclick="dialogBoxOpen()">
+                            <img src="{% static 'images/view.png' %}" alt="Refresh Page">
+                            <p class="view-text">View</p>
+                        </button>
                         <div class="refresh-button">
                             <button class="refresh" id="refresh-{{rowID}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
                         </div>
 
                     </div>
-
                     <div class="status-report">
                         <div class="report-status">
                             <p>Verify Status: </p>
@@ -98,6 +100,8 @@
                             {% endif %}
                         </div>
                     </div>
+
+
                 </div>
             </div>
         </div>

@@ -14,25 +14,14 @@ const hamBurgerIcon = document.querySelector(".hamburger");
 const header = document.querySelector("header");
 
 function get_header() {
-  const headerLeft = document.querySelector(".header-left");
-  const headerRight = document.querySelector(".header-right");
 
-  let childCount = 0;
+  let childCount = hamBurgerOption.childElementCount;
 
-  if ((headerLeft !== null) && (headerLeft.childElementCount > 0)) {
-    childCount++;
-  }
-
-  if ((headerRight !== null) && (headerRight.childElementCount > 0)) {
-    childCount++;
-  }
-
-  hamBurgerOption.style.setProperty("--top", header.offsetHeight + 'px');
   hamBurgerOption.style.setProperty("--height", 60*(childCount) + 'px');
 
   switch(childCount){
     case 1: hamBurgerOption.style.justifyContent = 'center'; break;
-    case 2: hamBurgerOption.style.justifyContent = 'space-evenly'; break;
+    default : hamBurgerOption.style.justifyContent = 'space-evenly';
   }
   console.log(childCount)
 
@@ -61,11 +50,20 @@ function add_csrf() {
   });
 }
 
-function formCheck(id){
+/**
+ * 
+ * @param {Event} event 
+ * @param {string} id 
+ * @returns 
+ */
+function formCheck(event, id){
   const form = document.querySelector(id);
+  
+  console.log(form)
 
-  if(form.checkValidity() == false){
-    form.reportValidity();  
+  if(form.checkValidity() === false){
+    form.reportValidity(); 
+    event.stopImmediatePropagation(); 
   }
 }
 
@@ -107,129 +105,139 @@ function confirmPrompt(event) {
   if (confirmConfirm != true) event.stopImmediatePropagation();
 }
 
-// const dialogBox = document.querySelector("dialog");
-// const dialogTitle = document.querySelector(".dialog-title");
-// const dialogMessage = document.querySelector(".dialog-message");
+const dialogBox = document.querySelector("dialog");
+const dialogTitle = document.querySelector(".dialog-title");
+const dialogMessage = document.querySelector(".dialog-message");
 
-// let dialogClose = document.querySelector(".dialog-close");
-// let dialogYes = document.querySelector(".dialog-yes");
-// let dialogNo = document.querySelector(".dialog-no");
+let dialogClose = document.querySelector(".dialog-close");
+let dialogYes = document.querySelector(".dialog-yes");
+let dialogNo = document.querySelector(".dialog-no");
 
-// let offsetX = 0;
-// let offsetY = 0;
-// let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+let isDragging = false;
 
-// /**
-//  * @param {string} title
-//  */
-// function setTitle(title) {
-//   dialogTitle.textContent = title;
-// }
+/**
+ * @param {string} title
+ */
+function setTitle(title) {
+  dialogTitle.textContent = title;
+}
 
-// /**
-//  * @param {string} message
-//  */
-// function setMessage(message) {
-//   dialogMessage.textContent = message;
-// }
+/**
+ * @param {string} message
+ */
+function setMessage(message) {
+  dialogMessage.innerHTML = message;
+  dialogBox.style.width = Math.max(dialogBox.offsetWidth, dialogMessage.offsetWidth) + 'px';
+  console.info(Math.max(dialogBox.offsetWidth, dialogMessage.offsetWidth))
+}
 
-// /**
-//  * @param {(event: Event) => void | () => void} callBack
-//  * @param {boolean} closeAfter
-//  */
-// function setClose(callBack = () => { }, closeAfter = true) {
-//   const funcClosure = function(event = null) {
-//     callBack(event);
-//     if (closeAfter) __closeBox();
-//   };
-//   const clonedNode = dialogClose.cloneNode(true);
-//   dialogClose.parentElement.replaceChild(clonedNode, dialogClose);
-//   dialogClose = clonedNode;
-//   dialogClose.addEventListener("click", funcClosure);
-// }
+/**
+ * @param {(event: Event) => void | () => void} callBack
+ * @param {boolean} closeAfter
+ */
+function setClose(callBack, closeAfter = true) {
+  const funcClosure = function(event = null) {
+    callBack(event);
+    if (closeAfter) __closeBox();
+  };
+  const clonedNode = dialogClose.cloneNode(true);
+  dialogClose.parentElement.replaceChild(clonedNode, dialogClose);
+  dialogClose = clonedNode;
+  dialogClose.addEventListener("click", funcClosure);
+}
 
-// /**
-//  * @param {(event: Event) => void | () => void} callBack
-//  * @param {boolean} closeAfter
-//  */
-// function setYes(callBack = () => { }, closeAfter = true) {
-//   const funcClosure = function(event = null) {
-//     callBack(event);
-//     if (closeAfter) __closeBox();
-//   };
+/**
+ * @param {(event: Event) => void | () => void} callBack
+ * @param {boolean} closeAfter
+ * @param {string} title
+ */
+function setYes(callBack, closeAfter = true, title = 'Yes') {
+  const funcClosure = function(event = null) {
+    callBack(event);
+    if (closeAfter) __closeBox();
+  };
 
-//   const clonedNode = dialogYes.cloneNode(true);
-//   dialogYes.parentElement.replaceChild(clonedNode, dialogYes);
-//   dialogYes = clonedNode;
-//   dialogYes.addEventListener("click", funcClosure);
-// }
+  const clonedNode = dialogYes.cloneNode(true);
+  dialogYes.parentElement.replaceChild(clonedNode, dialogYes);
+  dialogYes = clonedNode;
+  dialogYes.textContent = title; 
+  dialogYes.addEventListener("click", funcClosure);
+}
 
-// /**
-//  * @param {(event: Event) => void | () => void} callBack
-//  * @param {boolean} closeAfter
-//  */
-// function setNo(callBack = () => { }, closeAfter = true) {
-//   const funcClosure = function(event = null) {
-//     callBack(event);
-//     if (closeAfter) __closeBox();
-//   };
-//   const clonedNode = dialogNo.cloneNode(true);
-//   dialogNo.parentElement.replaceChild(clonedNode, dialogNo);
-//   dialogNo = clonedNode;
-//   dialogNo.addEventListener("click", funcClosure);
-// }
+/**
+ * @param {(event: Event) => void | () => void} callBack
+ * @param {boolean} closeAfter
+ * @param {string} title
+ */
+function setNo(callBack, closeAfter = true, title = 'No') {
+  const funcClosure = function(event = null) {
+    callBack(event);
+    if (closeAfter) __closeBox();
+  };
+  const clonedNode = dialogNo.cloneNode(true);
+  dialogNo.parentElement.replaceChild(clonedNode, dialogNo);
+  dialogNo = clonedNode;
+  dialogNo.textContent = title; 
+  dialogNo.addEventListener("click", funcClosure);
+}
 
-// /**
-//  * Opens the dialog and enables dragging
-//  */
-// function dialogBoxOpen() {
-//   dialogBox.showModal();
-//   dialogBox.addEventListener("click", dialogBoxClose);
-//   dialogBox.addEventListener("mousedown", dialogBoxDragStart);
-//   document.addEventListener("mousemove", dialogBoxDragGoing);
-//   dialogBox.addEventListener("mouseup", dialogBoxDragEnd);
-// }
+/**
+ * Opens the dialog and enables dragging
+ */
+function dialogBoxOpen() {
+  dialogBox.showModal();
+  dialogBox.addEventListener("click", dialogBoxClose);
+  dialogBox.addEventListener("mousedown", dialogBoxDragStart);
+  document.addEventListener("mousemove", dialogBoxDragGoing);
+  dialogBox.addEventListener("mouseup", dialogBoxDragEnd);
+}
 
-// function __closeBox() {
-//   dialogBox.close();
-//   dialogBox.removeEventListener("click", dialogBoxClose);
-//   dialogBox.removeEventListener("mousedown", dialogBoxDragStart);
-//   document.removeEventListener("mousemove", dialogBoxDragGoing);
-//   dialogBox.removeEventListener("mouseup", dialogBoxDragEnd);
-// }
+function __closeBox() {
+  dialogBox.close();
+  dialogBox.removeEventListener("click", dialogBoxClose);
+  dialogBox.removeEventListener("mousedown", dialogBoxDragStart);
+  document.removeEventListener("mousemove", dialogBoxDragGoing);
+  dialogBox.removeEventListener("mouseup", dialogBoxDragEnd);
+}
 
-// /**
-//  * @param {Event} event
-//  */
-// function dialogBoxClose(event) {
-//   if (event.target === dialogBox) {
-//     __closeBox();
-//   }
-// }
+/**
+ * @param {MouseEvent} event
+ */
+function dialogBoxClose(event) {
+  console.log(event.offsetX)
+  if (event.target === dialogBox && ((event.offsetX > (dialogBox.offsetWidth + 10)) ||  (event.offsetY > (dialogBox.offsetHeight + 10)) || (event.offsetX < (-10)) || (event.offsetY > (dialogBox.offsetHeight + 10)))) {
+    __closeBox();
+  }
+}
 
-// /**
-//  * @param {MouseEvent} event
-//  */
-// function dialogBoxDragStart(event) {
-//   isDragging = true;
-//   offsetX = event.clientX - dialogBox.offsetLeft;
-//   offsetY = event.clientY - dialogBox.offsetTop;
-// }
+/**
+ * @param {MouseEvent} event
+ */
+function dialogBoxDragStart(event) {
 
-// /**
-//  * @param {MouseEvent} event
-//  */
-// function dialogBoxDragGoing(event) {
-//   if (isDragging) {
-//     dialogBox.style.left = `${event.clientX - offsetX}px`;
-//     dialogBox.style.top = `${event.clientY - offsetY}px`;
-//     dialogBox.style.position = "fixed";
-//   }
-// }
+  if(event.target.closest('dialog') && event.target !== dialogBox){
+    isDragging = true;
+    offsetX = event.clientX - dialogBox.offsetLeft;
+    offsetY = event.clientY - dialogBox.offsetTop;
+  }
+}
 
-// function dialogBoxDragEnd() {
-//   isDragging = false;
-// }
+/**
+ * @param {MouseEvent} event
+ */
+function dialogBoxDragGoing(event) {
+  if (isDragging) {
+    dialogBox.style.left = `${event.clientX - offsetX}px`;
+    dialogBox.style.top = `${event.clientY - offsetY}px`;
+    dialogBox.style.position = "fixed";
+  }
+}
+
+function dialogBoxDragEnd() {
+  isDragging = false;
+}
 
 /**
  *
