@@ -20,7 +20,9 @@ from django import forms # type: ignore
 import typing
 from django.db.models.manager import BaseManager # type: ignore
 from django.db import connection
-from psycopg2.sql import SQL, Identifier, Literal # type: ignore
+from psycopg2.sql import SQL, Identifier, Literal
+
+from tools.utils import ColumnType, segregateColumns # type: ignore
 
 ############ MODEL ############
 class TaskTable(Model):
@@ -384,7 +386,6 @@ class DataTable(Model):
 
         return result
     
-    
     @staticmethod
     def suggestValues(id: int, idx: int, column: str, value: str) -> list[str]:
         column_name = Literal(column)
@@ -416,13 +417,122 @@ class DataTable(Model):
                 sem_column=sem_column,
                 semID=semID,
                 value=_value,
-            ).as_string(cursor.connection)
+            )
 
             cursor.execute(sql_query)
 
             suggests = [col[0] for col in cursor.fetchall()]        
             
         return suggests
+    
+    @staticmethod
+    def suggestAllValues(id: int, column: str, value: str) -> list[str]:
+        column_name = Literal(column)
+        table_name = Identifier(DataTable._meta.db_table)
+        _value = Literal(f"%{value}%")
+        task_column = Identifier(DataTable.taskID.field.column)
+        taskID = Literal(id)
+        sem_column = Identifier(DataTable.semester.field.column)
+        data_column = Identifier(DataTable.data.field.column)
+        suggests: list[str] = []
+
+        with connection.cursor() as cursor:
+            sql_query = SQL('''
+                            select "A"."option" 
+                            from (
+                                select distinct {data_column}::jsonb ->> {column_name} as "option" 
+                                from {table_name} where {task_column}={taskID}
+                                and {data_column}::jsonb ->> {column_name} is not null 
+                                and {data_column}::jsonb ->> {column_name} like {value}
+                                ) 
+                            as "A" order by length("A"."option"), "A"."option" limit 5;
+            ''').format(
+                data_column=data_column,
+                column_name=column_name,
+                table_name=table_name,
+                task_column=task_column,
+                taskID=taskID,
+                sem_column=sem_column,
+                value=_value,
+            )
+
+            cursor.execute(sql_query)
+
+            suggests = [col[0] for col in cursor.fetchall()]        
+            
+        return suggests
+    
+    @staticmethod
+    def get_columns(id: int, idx: int) -> tuple[int, ColumnType]:
+        table_name = Identifier(DataTable._meta.db_table)
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        semester_column = Identifier(DataTable.semester.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        taskID = Literal(id)
+        semID = Literal(idx)
+
+        columns: list[str] = []
+        count: int = 0
+
+        with connection.cursor() as cursor:
+            sql_query = (
+                SQL(
+                    """
+                        select *
+                        from (select distinct(jsonb_object_keys(max({data_column}::varchar)::jsonb)) as "option" 
+                        from {table_name} where {taskID_column}={taskID} and {semester_column}={semID}) as "A" 
+                        order by length("A"."option"), "A"."option";
+                    """
+                )
+                .format(
+                    data_column=data_column,
+                    table_name=table_name,
+                    taskID_column=taskID_column,
+                    semester_column=semester_column,
+                    semID=semID,
+                    taskID=taskID,
+                )
+            )
+
+            cursor.execute(sql_query)
+            columns = [col[0] for col in cursor.fetchall()]
+            count = cursor.rowcount
+
+        return count, segregateColumns(columns)
+
+    @staticmethod
+    def get_all_columns(id: int) -> tuple[int, ColumnType]:
+        table_name = Identifier(DataTable._meta.db_table)
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        semester_column = Identifier(DataTable.semester.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        taskID = Literal(id)
+
+        columns: list[str] = []
+        count: int = 0
+
+        with connection.cursor() as cursor:
+            sql_query = SQL(
+                    """
+                    select distinct jsonb_object_keys("A"."data"::jsonb) as "data" 
+                    from (select "semester", MAX({data_column}::varchar) as "data" from {table_name} 
+                    where {taskID_column}={taskID} group by {semester_column}) as "A" order by "data";
+                    """
+                ).format(
+                    data_column=data_column,
+                    table_name=table_name,
+                    taskID_column=taskID_column,
+                    semester_column=semester_column,
+                    taskID=taskID,
+                )
+            
+            cursor.execute(sql_query)
+
+            cursor.execute(sql_query)
+            columns = [col[0] for col in cursor.fetchall()]
+            count = cursor.rowcount
+
+        return count, segregateColumns(columns)
 
 ############ TYPES ############
 type Upload = BaseManager[UploadTable]

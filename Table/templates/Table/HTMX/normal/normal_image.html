@@ -3,28 +3,24 @@
 
 {% if messages %}
     <ul class="messages" id="messages" hx-swap-oob="true">
-        {% if messages %}
         {% for message in messages %}
             <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
         {% endfor %}
-        {% endif %}
     </ul>
 {% endif %}
 
-{% with IMAGE=value|img %}
-    {% if locked is not True %}
-        <div class="row-data image column-{{ column }}">
+<div class="row-data image column-{{ column }}">
+    {% with IMAGE=value|img %}
+        {% if locked is not True %}
             <img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{idx}}_{{column}}">
-
-            <div hx-put="{% url 'Table:edit_image' id=id idx=idx rowID=rowID %}" hx-vals='{"column":"{{ column }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
-
+            <div hx-put="{% url 'Table:htmxSemEditImage' id=id idx=idx rowID=rowID %}" hx-vals='{"column":"{{ column }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
                     <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
             </div>
-        </div>
-
-    {% else %}
-
-        <div class="row-data column-{{ column }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
-
-    {% endif %}
-{% endwith %}
+            
+        {% else %}
+            
+            <img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}">
+            
+        {% endif %}
+    {% endwith %}
+</div>

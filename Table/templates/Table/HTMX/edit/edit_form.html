@@ -2,27 +2,22 @@
 
 {% if messages %}
     <ul class="messages" id="messages" hx-swap-oob="true">
-        {% if messages %}
         {% for message in messages %}
             <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
         {% endfor %}
-        {% endif %}
     </ul>
 {% endif %}
 
 {% if locked is True %}
-    <div>
-        {{value|str}}
-    </div>
     <script>
-        htmx.trigger("#refresh-{{idx}}", "click")
+        htmx.trigger("button#refresh-{{rowID}}", "click")
     </script>
 {% else %}
-    <form class="edit-form" hx-post="{% url 'Table:edit_text' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}"}' hx-target="closest div.row-data" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
+    <form class="edit-form" hx-post="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}"}' hx-target="closest div.row-data" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
         {% csrf_token %}
         <input type="text" name="value" value="{{value}}">
         <button type="submit" value="Change" class="submit">Change</button>
-        <button type="cancel" value="Discard" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'Table:edit_text' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-target="closest div.row-data" hx-vals='{"column":"{{column}}"}'>Cancel</button>
+        <button type="cancel" value="Discard" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-target="closest div.row-data" hx-vals='{"column":"{{column}}"}'>Cancel</button>
 
     </form>
 {% endif %}

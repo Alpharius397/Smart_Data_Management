@@ -1,6 +1,4 @@
 from base64 import b64decode, b64encode
-from collections import defaultdict
-from bisect import bisect_right, insort_left
 import functools
 from io import BytesIO
 import json
@@ -12,12 +10,11 @@ from django.db.models import Q
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
-from University.models import Grade, Subject
-from Task.models import DataTable, AssignTable, UploadTable
+from University.models import Subject
+from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
 from tools.get_image import compress_image
 from User.models import (
-    RoleType,
     get_post_id,
     get_user,
     is_admin,
@@ -43,16 +40,16 @@ from tools.url_auth import (
     login_needed,
     api_key_required,
     auth_needed,
+    semester_permission_check,
+    task_permission_check,
 )
-from Report.errors import ManagerAlreadyAssigned, ManagerDoesNotExist
-from Report.forms import VerifyForm
+from Report.forms import FeedBackForm, FeedBackView
 from django.utils import timezone  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
-from tools.utils import ColumnType, ReportStructure, segregateColumns
+from tools.utils import ColumnType, get_string_value
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
-from tools.token import get_token, hash_token
+from tools.token import hash_token
 from Card.models import Card
-from django.http import QueryDict
 from django.db import transaction
 from constants.constants import DEFAULT_ERROR, DONE, FAILED, MAX_RECORD, WRITE_TOKEN
 from .sockets import cardWriteWebSocket
@@ -62,33 +59,6 @@ from django.db import connection
 
 
 ############ UTILS ############
-def get_columns(ID: int) -> tuple[int, ColumnType]:
-    columns: list[str] = []
-    table_name = Identifier(DataTable.objects.model._meta.db_table)
-    data_column = Identifier(DataTable.data.field.column)  # type: ignore
-    fileID_column = Identifier(DataTable.fileID.field.column)  # type: ignore
-    fileID = Literal(ID)
-
-    columns: list[str] = []
-    count: int = 0
-
-    with connection.cursor() as cursor:
-        sql_query = SQL(
-            'select "A"."option" as "option" from (select distinct(jsonb_object_keys({data})) as "option" from {table} where {file}={fileID}) as "A" order by length("A"."option"), "A"."option";'
-        )
-        sql_query = sql_query.format(
-            data=data_column, table=table_name, file=fileID_column, fileID=fileID
-        )
-        sql_query = sql_query.as_string(connection.connection)
-
-        cursor.execute(sql_query)
-
-        for col in cursor.fetchall():
-            columns.append(col[0])
-            count += 1
-    return count, segregateColumns(columns)
-
-
 def get_2_value(value: str) -> bool:
     assert value in [
         "true",
@@ -163,9 +133,9 @@ def get_context(
             _page : _page + MAX_RECORD
         ]
 
-        _, column_list = get_columns(id)
+        _, column_list = DataTable.get_all_columns(id)
 
-        columns: list = column_list.semester + column_list.personal
+        columns: list = column_list.text
         image_idx: list = column_list.images
 
         pd_data = {
@@ -215,259 +185,238 @@ def get_context(
 
 ########### HTTP Request #############
 @login_needed()
-@file_permission_check
-def index_view(req: HttpRequest, id: str, idx: int) -> HttpResponse:
+@semester_permission_check
+def sem_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
     if is_auth_get(req):
-        get_color(req)
-        return render(
-            req,
-            "Report/index.html",
-            {
-                "id": id,
-                "idx": idx,
-            },
+
+        return render(req, "Report/HTML/sem.index.html", { "id": id, "idx": idx, "rowID": rowID, "form": FeedBackForm()})
+
+class SubjectMeta(NamedTuple):
+    sem: int
+    marks: int
+
+class SemMeta(NamedTuple):
+    marks: int
+    total: int
+
+class CompleteMeta(NamedTuple):
+    ID: str
+    data: dict
+    locked: bool
+    issued: bool
+    status: bool | None
+                
+def get_complete_data(req: HttpRequest, id: int, idx: int):
+    
+    table_name = Identifier(DataTable._meta.db_table)
+    data_column = Identifier(DataTable.data.field.column)  # type: ignore
+    locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+    issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+    status_column = Identifier(DataTable.status.field.column)  # type: ignore
+    taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+    identifier = Literal(idx)
+    taskID = Literal(id)
+    
+    records = CompleteMeta("",None,False,False,{})
+    task: TaskTable = req.__getattribute__("task")
+    groupBy = Literal(task.groupByColumn)
+    
+    with connection.cursor() as cursor:
+        sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+            data_column=data_column,
+            groupBy=groupBy,
+            locked_column=locked_column,
+            issued_column=issued_column,
+            status_column=status_column,
+            table_name=table_name,
+            taskID_column=taskID_column,
+            taskID=taskID,
+            identifier=identifier
         )
 
+        cursor.execute(sql_query)
+        (ID, data, locked, issued, status) = cursor.fetchone()
+        records = CompleteMeta(ID, json.loads(data), locked, issued, status)
+
+    return records
 
 ############ HTMX Request ############
 @auth_needed()
-@htmx_response
-@file_permission_check
+@login_needed()
+@task_permission_check
 def report_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
-    context: dict[str, Any] = {"id": id, "idx": idx}
-
-    if is_hx_get(req):
+    context = {"id": id, "idx": idx}
+    user = get_user(req)
+    if is_auth_get(req):
 
         try:
-            post = get_post_id(req.user)
-            records = DataTable.objects.get(fileID__id = id, id = idx)
-            subjects = Subject.objects.filter(branch__id=post["branch"]).values("name", "semester", "marks")
-            grades = Grade.objects.filter(subject__branch__id=post["branch"]).values("grade", "minMarks", "subject__name")
+            records = get_complete_data(req, id, idx)
+            subjects = Subject.objects.filter().values("name", "semester", "marks")
             
-            sem_dict: dict = defaultdict(dict) # semester wise subjects with max marks
-            grade_dict: dict = defaultdict(dict) # minimum marks for a grade in sub 
-            grade_list: dict = defaultdict(list) # sorted list of grades to calculate grade
-            
+            sem_dict: dict[str, SubjectMeta] = {} # semester wise subjects with max marks
             for subs in subjects.iterator():
                 name = subs["name"]
                 semester = subs["semester"]
                 marks = subs["marks"]
                 
-                sem_dict[semester][name] = marks
+                sem_dict[name] = SubjectMeta(semester, marks)
                 
-            for gra in grades.iterator():
-                grade = gra["grade"]
-                minMarks = gra["minMarks"]
-                sub = gra["subject__name"]
-                grade_dict[sub][minMarks] = grade
                 
-                insort_left(grade_list[sub], minMarks) 
-                
-            _, column_list = get_columns(id)
-
-            sem: list = column_list.semester
-            personal: list = column_list.personal
-            images: list = column_list.images
-            
             personal_data: dict[str, str] = {}
             image_data: dict[str, str] = {}
-            sem_data: dict[int, tuple[str, str, str]] = {}
-
-            for column in personal:
-                personal[column] = records.data.get(column, "-")
-                
-            for column in images:
-                image_data[column] = records.data.get(column, "-")
-                
+            sem_data: dict[int, dict[str, tuple[int, int]]] = {}
             
+            for column, values in records.data.items():
+                if(column[-1]=='I'):
+                    image_data[column[:-1]] = values
+                else:
+                    if((sub := column[:-1]) in sem_dict):
+                        if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
+                        sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
+                    else:
+                        personal_data[sub] = values
             
-
+            sem_data = {key: sem_data[key] for key in sorted(sem_data.keys()) }
+            
+            context.update(get_post(user))
+            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
 
         except Exception as e:
             print(e)
             context["error"] = DEFAULT_ERROR
-            return render(req, "View/HTMX/report.html", context=context)
+            return render(req, "Report/HTMX/report.html", context=context)
 
 
-        return render(req, "View/HTMX/report.html", context=context)
-
+        return render(req, "Report/HTMX/report.html", context=context)
 
 @htmx_response
 @auth_needed()
-def feed_view(req: HttpRequest, id: str, idx: int) -> HttpResponse:
-    if is_hx_post(req) and is_manager(req.user):
-        conn = MongoConnection().connect()
-        context = {"id": id, "idx": idx}
-
-        f = VerifyForm(req.POST)
-
-        if f.is_valid():
-            _status, feed = f.cleaned_data.get("status"), f.cleaned_data.get("feed")
-
-            if _status == "True":
-                status = True
-            elif _status == "False":
-                status = False
-            else:
-                status = None
-
-            try:
-                status_col = f"data.excel.{idx}.feed.status"
-                feed_col = f"data.excel.{idx}.feed.feed"
-                where, updates = MongoTemplate.update_query(
-                    {"_id": ObjectId(id), "$or": auth_view(req.user)},
-                    {status_col: status, feed_col: feed},
-                )
-                success = conn.update_one(where, updates)
-
-                conditions, filters = MongoTemplate.merge_everything(
-                    MongoTemplate.get_buffer_query(start=idx),
-                    initial_a={
-                        "$and": [
-                            {
-                                "_id": ObjectId(id),
-                                "header.manager": req.user.id,
-                                "header.post": get_post_id(req.user),
-                            }
-                        ]
-                    },
-                )
-                result: Document | None = conn.find_one(conditions, filters)
-
-                if result is None:
-                    context["error"] = MONGO_ERROR
-                else:
-                    meta_data: Feed.FeedDict = result.data.excel[0].feed.to_dict()
-                    manager: list[str | None] = list(
-                        map(get_user_by_id, result.header.manager)
-                    )
-                    context.update({"form": VerifyForm(data=meta_data)})
-                    context.update({**meta_data, "manager": manager})
-
-                if success:
-                    context["msg"] = "Status Updated!"
-                    APP_LOG.write_info(
-                        LogStructure()
-                        .set_request(req)
-                        .set_description(
-                            type=Task.FEED_EDIT, taskID=id, index=idx, user=req.user
-                        )
-                    )
-                else:
-                    context["error"] = "Mongo ID %s not found" % id
-
-            except Exception as e:
-                APP_LOG.write_error(
-                    LogStructure()
-                    .set_request(req)
-                    .set_description(
-                        type=Task.EXCEPTION,
-                        taskID=id,
-                        index=idx,
-                        user=req.user,
-                        exception=e,
-                    )
-                )
-                context["error"] = DEFAULT_ERROR
-
-            finally:
-                conn.close()
-        else:
-            context["error"] = f.errors.as_text()
-
-        return render(req, "View/single/manager.html", context=context)
-
-    elif is_hx_get(req) and is_manager(req.user):
-        conn = MongoConnection().connect()
-        context = {"id": id, "idx": idx}
+@task_permission_check
+def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+    context = {"id": id, "idx": idx, "rowID": rowID}
+    user = get_user(req)
+    
+    if is_hx_get(req):
 
         try:
-            conditions, filters = MongoTemplate.merge_everything(
-                MongoTemplate.get_buffer_query(start=idx),
-                initial_a={
-                    "$and": [
-                        {
-                            "_id": ObjectId(id),
-                            "header.manager": req.user.id,
-                            "header.post": get_post_id(req.user),
-                        }
-                    ]
-                },
-            )
-            result = conn.find_one(conditions, filters)
+            records = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
 
-            if result is None:
-                context["error"] = MONGO_ERROR
+            context.update({"result": records.data})
+
+        except Exception as e:
+            messages.error(req, "Data Fetching Failed")
+            return render(req, "Report/HTMX/sem.report.html", context=context)
+
+
+        return render(req, "Report/HTMX/sem.report.html", context=context)
+    
+@htmx_response
+@auth_needed()
+@semester_permission_check
+def sem_feed_view(req: HttpRequest, id: str, idx: int, rowID: int) -> HttpResponse:
+    context = {"id": id, "idx": idx, "rowID": rowID}
+    user = get_user(req)
+    
+    if is_hx_post(req) and is_manager(req.user):
+
+        f = FeedBackForm(req.POST)
+
+        try:
+            if f.is_valid():
+                status = f.cleaned_data.get("status")
+                feedBack = f.cleaned_data.get("feedBack")
+                locked = f.cleaned_data.get("locked")
+                issued = f.cleaned_data.get("issued")
+                
+                data = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
+                data.status = get_3_value(status)
+                data.feed = feedBack
+                data.locked = get_2_value(locked)
+                data.issued = get_2_value(issued)
+                data.save()
+                messages.success(req, f"Status for Row ID: '{rowID}' was updated successfully")
             else:
-                meta_data = result.data.excel[0].feed.to_dict()
-                manager = list(map(get_user_by_id, result.header.manager))
-                context.update({**meta_data, "manager": manager})
+                for field, error in f.errors.items(): 
+                    messages.error(req, "{}: {}".format(FeedBackForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
+
+        except DataTable.DoesNotExist:
+            messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure()
                 .set_request(req)
                 .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
+                    type=Task.EXCEPTION,
+                    taskID=id,
+                    index=idx,
+                    user=req.user,
+                    exception=e,
                 )
             )
-            context["error"] = DEFAULT_ERROR
-        finally:
-            conn.close()
+            messages.error(req, DEFAULT_ERROR)
 
-        context.update(
-            {
-                "form": VerifyForm(
-                    data={
-                        "status": (
-                            lambda x: (
-                                "True"
-                                if x
-                                else ("False")
-                                if x is not None
-                                else ("None")
-                            )
-                        )(context.get("status", "None")),
-                        "feed": context.get("feed", ""),
-                    }
+        return render(req, "Report/HTMX/message.html")
+
+    elif is_hx_get(req) and is_manager(user):
+
+        try:
+            data = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
+            status = data.status
+            feedBack = data.feed
+            locked = data.locked
+            issued = data.issued
+            
+            context["form"] = FeedBackForm(initial={"status": status, "feedBack": feedBack, "locked": locked, "issued": issued})
+            
+        except DataTable.DoesNotExist:
+            messages.error(req, f"RowID: '{rowID}' does not exits")
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(
+                    type=Task.EXCEPTION,
+                    taskID=id,
+                    index=idx,
+                    user=req.user,
+                    exception=e,
                 )
-            }
-        )
-        return render(req, "View/single/manager.html", context=context)
+            )
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Report/HTMX/manager.form.html", context=context)
 
     elif is_hx_get(req) and is_admin(req.user):
-        conn = MongoConnection().connect()
-        context = {"id": id, "idx": idx}
 
         try:
-            conditions, filters = MongoTemplate.merge_everything(
-                MongoTemplate.get_header_query(),
-                MongoTemplate.get_feedback_query(start=idx, limit=1),
-                initial_a={"$and": [{"_id": ObjectId(id), "$or": auth_view(req.user)}]},
-            )
-            result = conn.find_one(conditions, filters)
-
-            if result is None:
-                context["error"] = MONGO_ERROR
-            else:
-                meta_data = result.data.excel[0].feed.to_dict()
-                manager = list(map(get_user_by_id, result.header.manager))
-                context.update({**meta_data, "manager": manager})
+            data = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
+            status = data.status
+            feedBack = data.feed
+            locked = data.locked
+            issued = data.issued
+            
+            context["form"] = FeedBackView(initial={"status": get_string_value(status), "feedBack": feedBack, "locked": get_string_value(locked), "issued": get_string_value(issued)})
+            
+        except DataTable.DoesNotExist:
+            messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure()
                 .set_request(req)
                 .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
+                    type=Task.EXCEPTION,
+                    taskID=id,
+                    index=idx,
+                    user=req.user,
+                    exception=e,
                 )
             )
-            context["error"] = DEFAULT_ERROR
+            messages.error(req, DEFAULT_ERROR)
 
-        finally:
-            conn.close()
-
-        return render(req, "View/single/admin.html", context=context)
+        return render(req, "Report/HTMX/admin.form.html", context=context)
 
 
 @htmx_response

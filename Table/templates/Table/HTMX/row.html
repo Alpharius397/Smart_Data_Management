@@ -13,25 +13,25 @@
 
     {% for idx,row in result.items %}
 
-        <div class="rows" id="{{idx}}" hx-get="" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
-            {% for image in images %}
+        <div class="rows" id="{{idx}}" hx-get="{% url 'Table:htmxRefresh' id=id idx=idx %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
+            
+            {% for column, value in row.data.items %}
 
-                {% with IMAGE=row.data|index_str:image|img %}
-                    <div class="row-data column-{{ image|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
+                {% if column|isImage is True %}
+                    {% with IMAGE=value|img %}
+                        <div class="row-data column-{{ column|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
+                    {% endwith %}
 
-                {% endwith %}
-            {% endfor %}
-
-            {% for column in columns %}
+                {% elif column|isText is True %}
                 <div class="row-data column-{{ column|encode|hex }}">
-
-                        <div>
-                            {{row.data|index_str:column|str}}
-                        </div>
+                    <div>
+                        {{value|str}}
+                    </div>
                 </div>
-
+                {% endif %}
+                
             {% endfor %}
-
+            
 
             <div class="row-data view-area">
                 <div class="grid-layout">
@@ -40,6 +40,9 @@
                             <img src="{% static 'images/view.png' %}" alt="Refresh Page">
                             <p class="view-text">View</p>
                         </button>
+                        <div class="refresh-button">
+                            <button class="refresh" id="refresh-{{idx}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page"><p class="refresh-text">Refresh</p></button>
+                        </div>
 
                     </div>
                     <div class="status-report">
@@ -57,9 +60,9 @@
                         <div class="report-status">
                             <p>Lock Status: </p>
                             {% if row.locked is True %}
-                                <p class="correct">Locked</p>
+                                <p class="wrong">Locked</p>
                             {% else %}
-                                <p class="wrong">Unlocked</p>
+                                <p class="correct">Unlocked</p>
                             {% endif %}
                         </div>
 

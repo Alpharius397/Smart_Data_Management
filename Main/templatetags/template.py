@@ -167,3 +167,11 @@ def hex(obj: bytes):
 @register.filter(name="rstrip")
 def rstrip(obj: str, index: int):
     return obj[:-index]
+
+@register.filter(name="isImage")
+def isImage(obj: str):
+    return str(obj[-1]) == 'I'
+
+@register.filter(name="isText")
+def isText(obj: str):
+    return str(obj[-1]) == 'T'

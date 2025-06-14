@@ -216,7 +216,7 @@ def login_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
-            request.user = get_user(request)
+            get_color(request)
             if is_authenticated(request.user):
                 if not (manager_only or admin_only):  # both false
                     return view_func(request, *args, **kwargs) or HttpResponse(
@@ -247,7 +247,6 @@ def auth_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
-            request.user = get_user(request)
 
             if is_authenticated(request.user):
                 if (not manager_only) and (not admin_only):

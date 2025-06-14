@@ -1,53 +1,19 @@
 {% load template %}
 
-{% if error %}
-
-    <ul class="messages">
-            <li class="error">{{error}}</li>
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% if messages %}
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+        {% endif %}
     </ul>
 
 {% else %}
 
-    <div class="header-box">
-        {{university}} - {{institute}} - {{branch}}
+    <div class="table-view-again">
+        {% for %}
     </div>
-    <div class="container-box">
-        {% for pics in pic %}
-            <div class="image-box">
-                    {% with image=data|index_str:pics|img %}
-                        <img src="{{image.img}}" width="{{image.width}}" height="{{image.height}}">
-                    {% endwith %}
-                    <h3>{{pics}}</h3>
-                </div>
-        {% endfor %}
-    </div>
-    <div class="sub-header-box">
-        personal-info
-    </div>
-    <div class="personal-info">
-        {% for i in personal %}
-            <p><strong>{{i}}: </strong>{{data|index_str:i}}</p>
-        {% endfor %}
 
-    </div>
-    <div class="semester-info">
-        <div class="sub-header-box">
-            semester-info
-        </div>
-        <div class="semester-row">
-
-            {% for sem,subs in sem_dict.items %}
-                <div class="semester">
-                    <h3>Semester {{sem}}</h3>
-
-                    {% for sub in subs %}
-                        <p><strong>{{sub|clean}}:</strong>{{data|index_str:sub}}</p>
-                    {% endfor %}
-
-                </div>
-                
-            {% endfor %}
-
-        </div>
-    </div>
 {% endif %}
+

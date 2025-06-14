@@ -1,4 +1,4 @@
-from typing import Iterator, TypedDict, Any, NamedTuple  # type: ignore
+from typing import Iterator, TypedDict, Literal, NamedTuple  # type: ignore
 from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
 from constants.constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
@@ -26,6 +26,44 @@ class ColumnType(NamedTuple):
 
 
 ############ UTILS ############
+def get_2_value(value: Literal['true', 'false']) -> bool:
+    assert value in [
+        "true",
+        "false",
+    ], f"Invalid Boolean Type. Value '{value}' not in ['true', 'false']"
+
+    if value == "true":
+        return True
+    else:
+        return False
+
+def get_3_value(value: Literal['true', 'false', 'none']) -> bool | None:
+    assert value in [
+        "true",
+        "false",
+        "none",
+    ], f"Invalid Nullable Boolean Type. Value '{value}' not in ['true', 'false', 'none']"
+
+    if value == "true":
+        return True
+    elif value == "none":
+        return None
+    else:
+        return False
+
+def boolSQL(value: bool | None):
+    match(value):
+        case True: return 'true'
+        case False: return 'false'
+        case None: return 'null'
+        case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
+        
+        
+def get_string_value(value: bool | None) -> Literal['true', 'false', 'none']:
+    if value is True:  return 'true'
+    if value is False:  return 'false'
+    if value is None:  return 'none'
+
 def textAnnotate(column: str) -> str:
     return f"{column}T"
 

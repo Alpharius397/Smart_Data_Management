@@ -1,0 +1,44 @@
+{% load template %}
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    </ul>
+
+{% else %}
+
+    <div class="semester-report">
+        <h2> Semester Data </h2>
+
+        <table class="grid-view">
+            <tr>
+
+                <th class="heading left-top">Column</th>
+                <th class="heading right-top">Value</th>
+            </tr>
+            {% for column, value in result.items %}
+                <tr>
+                    <td class="row-data {% if forloop.last %}left-bottom{% endif %}">{{column|rstrip:1}}</td>
+                    <td class="row-data {% if forloop.last %}right-bottom{% endif %}">
+                        {% if column|isImage is True %}
+                            {% with IMAGE=value|img %}
+                                <img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}">
+                            {% endwith %}
+                                
+                        {% elif column|isText is True %}
+                            {{value|str}}
+                        {% else %}
+                            <b>Invalid Data Found!</b>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endif %}
+

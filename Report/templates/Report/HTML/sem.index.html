@@ -1,0 +1,76 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Report/styles.css' %}">
+{% endblock %}
+
+{% block title %} Single View {% endblock %}
+
+{% block cssStyle %}
+    <style>
+
+        .semester{
+            background-color: {{request.session.mainColor|rgb:0.7 }};
+        }
+
+        .header-box{
+            background-color: {{request.session.mainColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester h3 {
+            border-color: {{request.session.secColor}};
+            color: {{request.session.secColor}};
+        }
+
+        .semester p {
+            color: {{request.session.secColor}};
+        }
+
+        header .user-log{
+            color: {{request.session.mainColor}};
+        }
+
+        .personal-info p{
+            color: {{request.session.mainColor}};
+        }
+    </style>
+{% endblock %}
+
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Table:semIndex' id=id idx=idx %}">Back To Semester Table</a>
+{% endblock %}
+
+{% block headerCenter %}
+    <h1>Semester Report</h1>
+{% endblock %}
+
+{% block mainContent %}
+    <ul class="messages" id="messages">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    </ul>
+
+    <div class="tab">
+        <div class="semester-report" hx-get="{% url 'Report:htmxSemIndex' id=id idx=idx rowID=rowID %}" hx-swap="innerHTML" hx-target="this" hx-trigger="load">
+            <h2> Semester Data </h2>
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Fetching data...</h2>
+            </div>
+        </div>
+
+        <div class="semester-feedback" hx-get="{% url 'Report:htmxSemFeedBack' id=id idx=idx rowID=rowID %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
+            <h2> Feedback Form </h2>
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Fetching Feedback...</h2>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

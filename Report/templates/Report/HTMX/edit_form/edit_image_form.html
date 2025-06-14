@@ -1,8 +1,0 @@
-<form class="edit-form" hx-post="{% url 'View:edit_image' id=id idx=idx %}" hx-encoding='multipart/form-data' hx-swap="outerHTML" hx-vals='{"column":"{{column}}"}' hx-target="closest form" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
-
-    {% csrf_token %}
-    <input type="file" name="file" required="">
-    <button type="submit" class="submit">Change</button>
-    <button type="cancel" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'View:image' id=id idx=idx %}" hx-swap="outerHTML" hx-target="closest form" hx-vals='{"column":"{{column}}"}'>Cancel</button>
-
-</form>

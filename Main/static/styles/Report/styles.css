@@ -1,31 +1,38 @@
 .tab {
-    margin: 20px auto;
-    max-width: 1200px;
+    margin: 10px 0 10px 0;
     padding: 20px;
     padding-top: 0px;
     background: white;
     border-radius: 8px;
     border: 1px solid rgb(216, 218, 220);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.sub-tab {
-    margin-left: 20px;
+    width: 85%;
 }
 
 form {
     margin: 0px;
     padding: 0;
-    margin-left: 10px;
+    margin-left: 20px;
+    color: black
 }
 
 .form-field {
-    margin: 5px;
-    display: inline-block;
+    margin: 5px 10px;
+    display: flex;
+    flex-direction: row;
 }
 
 .form-field label {
-    font-weight: 400;
+    font-weight: 700;
+    text-align: center;
+    align-self: center;
+    vertical-align: top;
+    margin-right: 5px;
+}
+
+.form-field label:has( ~ textarea) {
+    vertical-align: top;
+    align-self: flex-start;
 }
 
 .form-field input::placeholder {
@@ -33,28 +40,12 @@ form {
     font-size: 14px;
 }
 
-.form-field input {
-    font-weight: 600;
+.form-field input, .form-field select {
     font-size: 14px;
 }
 
-.form-field select {
-    width: 150px;
-    font-style: italic;
-}
-
-li{
-    margin-bottom: 5px;
-    margin-left: 5px;
-}
-
-.searchQuery{
-    display: block;
-    margin-bottom: 20px;
-}
-
 select{
-    background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+    background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path fill='white' stroke ='white' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
     background-position: 95% center;
     -moz-appearance:none;
     -webkit-appearance: none; 
@@ -63,423 +54,117 @@ select{
     padding:5px;
     padding-left: 0.5rem;
     padding-right: 1rem;
+    width: 120px;
 }
 
-input {
+input[type="search"]{
     border-radius: 20px;
     padding:5px;
     padding-left: 0.75rem;
     border: 2px solid lightgray;
 }
 
-input::placeholder {
+input[type="text"]::placeholder {
     color: #aaa;
     font-style: italic;
 }
 
-.loading-button{
-    background-color: grey;
+.grid-view {
+    width: 80%;
+    margin: 0px auto;
+    border-spacing: 0px;
 }
 
-.error-button{
-    background-color: red;
+.grid-view tr th:first-child {
+    width: 33%;
+    font-style: italic;
 }
 
-.write-card{
-    display: inline-block;
+.grid-view tr th:last-child {
+    width: 66%;
 }
 
-.edit-task:hover {
-    background-color: #367b39;
-    transform: translateY(-2px);
+.grid-view tr:nth-child(even){
+    background-color: rgb(194, 194, 194);
 }
 
-.back-dash:hover {
-    background-color: #367b39;
-    transform: translateY(-2px);
-}
-
-.table-view {
-    width: auto;
-    overflow: scroll;
-    border: 1px solid lightgray;
-    max-height: 500px;
-    padding: 0px 9.5px 0px 0px;
-    border-collapse: collapse;
-}
-
-.column-heading {
-    font-weight: 700;
+.heading {
+    color: inherit;
+    background-color: inherit;
     border: 1px solid gray;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
-    text-align: center;
-    background-color: white;
-    padding: 5px;
-    border-collapse: collapse;
-
-}
-
-.row-data {
-    border: 1px solid lightgray;
-    margin: 0;
     padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-collapse: collapse;
-    transition: 1s;
 }
 
-.image {
-    flex-direction: column;
-}
-
-.image img {
-    width: 210px;
-    display: block;
-    margin: 10px auto;
-}
-
-.first {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.view-area {
-    position: sticky;
-    right: -10px; /* what a hack. [Ain't nobody reading this] */
-    background-color: white;
+.row-data{
+    padding: 10px;
     border: 1px solid gray;
-}
-
-.full-row {
-    grid-column: 1/-1;
-}
-
-.report-status {
-    font-weight: bold;
-    flex-shrink: 1;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.report-status p{
-    display: inline;
-    width: max-content;
-    margin: 4px;
-    border-radius: 50px;
-}
-
-.report-text{
-    display: inline;
-}
-
-.status-report {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 2px;
-    align-items: center;
-    justify-content: center;
-}
-
-.loading {
-    position: sticky;
-    right: 4px;
-    border: none;
-    display: flex;
-}
-
-.full-flex-row {
-    display: flex;
-    overflow-y: scroll;
-    scrollbar-width: none;
-}
-
-button {
-    height: 50px;
-    margin: 10px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 700;
-    border: none;
-}
-
-.submit {
-    background-color: #367b39;
-}
-
-.cancel {
-    background-color: red;
-}
-
-.submit:hover {
-    background-color: darkgreen;
-}
-
-.cancel:hover {
-    background-color: darkred;
-}
-
-.change-me {
-    display: flex;
-    flex-direction: column;
-}
-
-.view-icon {
-    width: 75px;
-    background-color: #367b39;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    padding: 0px 5px 0px 5px;
-    cursor: pointer;
-}
-
-.refresh {
-    width: 100px;
-    display: flex;
-    background-color:#0098ff;
-    justify-content: space-evenly;
-    align-items: center;
-    align-content: center;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.refresh-text, .view-text {
-    display: flex;
-    transition: 1s;
-    align-content: center;
+    justify-self: center;
+    align-self: center;
+    color: black;
+    vertical-align: middle;
+    align-self: center;
     justify-items: center;
     text-align: center;
-    margin: auto;
 }
 
-.refresh-text {
-    width: 50px;
-    margin: 0;
-    padding: 0;
+.row-data * {
+    margin: 5px auto;
 }
 
-.view-text {
-    width: 30px;
-    margin: 0;
-    padding: 0;
+.row-data img {
+    height: 200px;
 }
 
-.refresh:hover p, .rows.htmx-request .refresh p{
-    width: 0px;
-    transform: translateX(50px);
-    transition: 1s;
-    margin-right: 0px;
+.left-top {
+    border-radius: 8px 0 0 0;
 }
 
-.refresh:hover img, .rows.htmx-request .refresh img{
-    margin: auto;
-    transform: rotateZ(180deg);
-    transition: 1.5s;
+.right-top {
+    border-radius: 0 8px 0 0;
 }
 
-.rows.htmx-request .refresh, .rows.htmx-request .view-icon {
-    cursor:not-allowed;
+.left-bottom {
+    border-radius: 0 0 0 8px;
 }
 
-.data-loading{
-    display: flex;
-    justify-content: center;
-    align-content: center;
-    align-items: center;
-    flex-direction: row;
-    max-height: max-content;
+.right-bottom {
+    border-radius: 0 0 8px 0;
 }
 
-.grid-layout{
-    display: grid;
-    grid-template-rows: 1fr 2fr;
-    align-items: center;
-    justify-content: center;
-    grid-template-columns: 1fr;
-    z-index: 0;
-    border: #555;
-    column-gap: 5px;
+select option[value="true"], select:has( > option[value="true"]:checked){
+    background-color: green;
+    font-weight: 600;
+    color: white;
 }
 
-.edit-button {
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    display: inline-flex;
-    padding: 0px;
-    margin: 0px;
+select option[value="false"], select:has( > option[value="false"]:checked){
+    background-color: red;
+    font-weight: 600;
+    color: white;
 }
 
-.edit-button img {
-    width: 20px;
-    height: 20px;
-    background-color: white;
-    display: inline-flex;
-    padding: 0px;
-    margin: 0px;
+select option[value="none"], select:has( > option[value="none"]:checked){
+    background-color: grey;
+    font-weight: 600;
+    color: white;
 }
 
-.popup {
-    visibility: hidden;
-    background-color: #555;
-    color: #fff;
-    border-radius: 6px;
-    padding: 8px 0px 8px 5px;
-    position: relative;
-    z-index: 0;
-    bottom: 35px;
-    left: 37px;
-    margin-left: -80px;
-    height: fit-content;
-    width: fit-content;
-    animation: fadeOut 1s;
+
+select[name="locked"] option[value="true"], select[name="locked"]:has( > option[value="true"]:checked){
+    background-color: red;
+    font-weight: 600;
+    color: white;
 }
 
-.popup::after {
-    content: "";
-    position: relative;
-    top: 28px;
-    right: 25px;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: #555 transparent transparent transparent;
+select[name="locked"] option[value="false"], select[name="locked"]:has( > option[value="false"]:checked){
+    background-color: green;
+    font-weight: 600;
+    color: white;
 }
 
-@keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
-}
 
-@keyframes fadeOut {
-    from {opacity: 1;}
-    to {opacity: 0;}
-}
-
-.edit-button:hover .popup {
-    visibility: visible;
-    animation: fadeIn 1s;
-}
-
-.view-icon:hover img{
-    opacity: 1;
-    height: 30px;
-    transition: 1s;
-}
-
-.view-icon:hover p{
-    opacity: 0;
-    transition: 1s;
-}
-
-.view-icon img {
-    transform: translateX(50%);
-    position: relative;
-    opacity: 0;
-    transition: 1s;
-    height: 0;
-    width: 30px
-}
-
-.view-icon p {
-    position: relative;
-    opacity: 1;
-    transform: translateX(-50%);
-}
-
-.refresh img {
-    display: inline;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    transition: 1s;
-}
-
-.refresh-text {
-    width: 50px;
-    margin: 0;
-}
-
-div.report-status {
-    font-weight: bold;
-    flex-shrink: 1;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-div.report-status p {
-    display: inline;
-    width: max-content;
-    margin: 4px;
-    border-radius: 50px;
-}
-
-.report-text {
-    display: inline;
-}
-
-.status-report {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin: 2px;
-}
-
-.edit-form {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.edit-form input {
-    max-width: 200px;
-}
-
-.assign-form {
-    margin-left: 10px;
-}
-
-/* HTMX CSS below */
-
-.rows.htmx-request .refresh img {
-    animation-name: rotateAboutZ;
-    animation-iteration-count: infinite;
-    animation-duration: 1s;
-}
-
-.rows.htmx-added .row-data {
-    background-color: yellow;
-    transition: 1s;
-}
-
-.rows.htmx-request .row-data {
-    opacity: 0.5;
-}
-
-.rows.htmx-request .view-area {
-    opacity: 1;
-}
-
-/* Media Query */
-
-
-@media screen and (max-width: 600px) {
-    .view-area {
-        position: relative;
-        right: 0px;
-    }
+.help-text {
+    margin: 5px 15px 20px 15px;
+    color: gray; 
+    font-style: italic;
 }

@@ -3,17 +3,15 @@
 
 {% if messages %}
     <ul class="messages" id="messages" hx-swap-oob="true">
-        {% if messages %}
         {% for message in messages %}
             <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
         {% endfor %}
-        {% endif %}
     </ul>
 {% endif %}
 <div class="row-data column-{{ column }}">
 
     {% if locked is not True %}
-        <div hx-post="{% url 'Table:edit_text' id=id idx=idx rowID=rowID %}"
+        <div hx-post="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}"
              hx-vals='{"column":"{{column}}"}'
              hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 

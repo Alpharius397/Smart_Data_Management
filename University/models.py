@@ -102,8 +102,6 @@ class Schema(Model):
     
     date = DateTimeField(default=timezone.now, verbose_name="Date of Creation")
     
-    default = BooleanField(default=False, null=False, blank=True, verbose_name="Default Schema")
-    
     branch = ForeignKey(
         to=Branch, null=True, blank=False, on_delete=RESTRICT, related_name="schema"
     )  # type: ignore
@@ -141,8 +139,6 @@ class Subject(Model):
         null=False,
     )  # type: ignore
 
-    grade: "grade"
-
 
     class Meta:
         verbose_name = "Subject"
@@ -154,25 +150,6 @@ class Subject(Model):
 
     def __str__(self):
         return f"{self.name} - {self.semester} - {self.schema}"
-
-class Grade(Model):
-    id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore
-    
-    subject = ForeignKey(verbose_name="Subject", null=False, blank=False, to=Subject, on_delete=CASCADE, related_name="grade")
-    
-    grade = CharField(verbose_name="Grade", null=False, blank=False, max_length=2)
-    
-    minMarks = IntegerField(verbose_name="Min Marks Needed", null=False, blank=False, validators=[MinValueValidator(0, "Minimum marks cannot be negative")])
-    
-    
-    class Meta:
-        verbose_name = "Grade"
-        verbose_name_plural = "Grades"
-        
-        constraints = [
-            UniqueConstraint(fields=["subject", "minMarks", "grade"], name="unique_grades_and_minMarks_for_subject"),
-        ]
-
 
 class Color(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore

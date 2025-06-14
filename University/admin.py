@@ -1,6 +1,6 @@
 from django.contrib import admin  # type: ignore
 from User.models import get_user, is_admin
-from .models import Subject, University, Institute, Branch, Color
+from .models import Subject, University, Institute, Branch, Color, Schema
 from .forms import ColorPickerForm
 from django.db.models import Q  # type: ignore
 
@@ -8,6 +8,7 @@ admin.site.register(University)
 admin.site.register(Institute)
 admin.site.register(Branch)
 admin.site.register(Subject)
+admin.site.register(Schema)
 
 
 @admin.register(Color)

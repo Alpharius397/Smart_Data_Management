@@ -1,0 +1,26 @@
+{% load template %}
+
+<div class="semester-feedback">
+    <h2> Feedback Form </h2>
+    <form hx-post="{% url 'Report:' id=id idx=idx rowID=rowID %}" hx-target="none" hx-trigger="click from:find button">
+        {% for field in form %}
+            <div class="form-field">
+                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                {{ field }}
+            </div>
+            <p class="help-text">{{ field.help_text }}</p>
+            
+        {% endfor %}
+
+        <button>Update Feedback</button>
+    </form>
+</div>
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+

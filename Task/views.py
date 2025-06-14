@@ -1,11 +1,11 @@
 from typing import Any, NamedTuple, TypedDict
 from django.core.files.uploadedfile import UploadedFile # type: ignore
 from django.shortcuts import render  # type: ignore
-from django.http import HttpRequest, HttpResponse, QueryDict  # type: ignore
+from django.http import HttpRequest, QueryDict  # type: ignore
 from Task.forms import SemesterDeleteForm, TaskCreateForm, TaskDeleteForm, TaskUpdateForm, SemesterCreateForm, SemesterEditForm
-from Task.models import TaskTable, UploadTable
+from Task.models import TaskTable
 from django.db import transaction # type: ignore
-from django.db.models import Q, QuerySet # type: ignore
+from django.db.models import QuerySet # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
 from constants.constants import DEFAULT_ERROR, MAX_RECORD
 from tools.get_image import image_load
@@ -21,13 +21,11 @@ from tools.url_auth import (
     semester_permission_check,
     task_permission_check,
 )
-from User.models import RoleType, User, get_post_id, get_user
-from .models import AssignTable, UploadTable, DataTable
-from University.models import Schema, Subject
+from User.models import RoleType, User, get_user
+from .models import AssignTable, DataTable
 from django.contrib import messages  # type: ignore
 import pandas as pd  # type: ignore
 from tools.utils import processSubjects
-from University.errors import SchemaNotDefined
 from .errors import (
     FileNameExists,
     FileProcessFailed,
@@ -37,41 +35,49 @@ from .errors import (
 )
 from django.forms import forms # type: ignore
 
+############ TYPES ############
+class ManagerList(NamedTuple):
+    id: int
+    username: str
+
+class SemData(TypedDict):
+    id: int
+    count: int
+
+############ UTILS ############
+def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
+    context: dict[str, list[ManagerList]] = {"assigned_manager": [], "available_managers": []}
+
+    try:
+
+        managers: list[ManagerList] = task.assigned.distinct().values_list(
+            "manager__id", "manager__username"
+        )
+        
+        all_managers: list[ManagerList] = (
+            User.objects.filter(
+                role__role=RoleType.MANAGER, role__belongs=user.role.belongs
+            )
+            .exclude(id__in=[i[0] for i in managers])
+            .distinct()
+            .values_list("id", "username")
+        )
+
+        context["managers"] = all_managers
+        context["all_managers"] = managers
+
+    except Exception:
+        pass
+
+    return context
+
+############ HTTP Request ############
 @login_needed(admin_only=True)
 def task_create(req: HttpRequest):
     if is_auth_get(req):
         f = TaskCreateForm(initial={"username": req.user.username})
 
         return render(req, "Task/HTML/task.create.html", {"form": f})
-
-@htmx_response
-@auth_needed(admin_only=True)
-def htmx_task_create(req: HttpRequest):
-    user = get_user(req)
-    
-    if is_hx_post(req):
-        f = TaskCreateForm(req.POST)
-        
-        if f.is_valid():
-            try:
-                post = get_post_id(user)
-                name = f.cleaned_data.get("fileName")
-                semesterLimit = f.cleaned_data.get("semesterLimit")
-                task = TaskTable(name=name, semesterLimit=semesterLimit, creator=user, branch=user.role.belongs)
-                task.save()
-                messages.success(req, "Task was successfully created!")
-            except forms.ValidationError as g:
-                print(g)
-                for field, error in g.error_dict.items(): 
-                    messages.error(req, "{}: {}".format(field, ",".join([','.join(i) for i in error])))
-            except Exception as e:
-                messages.error(req, DEFAULT_ERROR)
-        else:
-            for field, error in f.errors.items():
-                messages.error(req, "{}: {}".format(TaskCreateForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
-        
-                
-        return render(req, "Task/HTMX/message.html")
 
 @login_needed(admin_only=True)
 @task_permission_check
@@ -95,6 +101,93 @@ def task_edit(req: HttpRequest, id: int):
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Task/HTML/task.edit.html", context=context)
+
+@login_needed(admin_only=True)
+@task_permission_check
+def task_delete(req: HttpRequest, id: int):
+    if is_auth_get(req):
+    
+        context = {"id": id}
+        try:
+            task: TaskTable = req.__getattribute__("task")
+            context["form"] = TaskDeleteForm(initial={"taskID": task.id, "fileName": task.name, "semesterLimit": task.semesterLimit})
+            
+        except TaskTable.DoesNotExist: # Wouldn't reach this
+            messages.error(req, "Task ID: {} does not exists!".format(id))
+
+        except Exception as f:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(type=Task.EXCEPTION, user=req.user, exception=f)
+            )
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Task/HTML/task.delete.html", context=context)
+    
+@login_needed(admin_only=True)
+@task_permission_check
+def sem_create(req: HttpRequest, id: int):
+    
+    if is_auth_get(req):
+        sems = [("", "------")] + list(map(lambda x: (x,x), DataTable.availableSems(id)))
+        form = SemesterCreateForm(initial={"taskID": id})
+        form.setChoice(sems)
+        
+        return render(req, "Task/HTML/semester.create.html", context={"id": id, "form": form})
+    
+@login_needed(admin_only=True)
+@semester_permission_check
+def sem_edit(req: HttpRequest, id: int, idx: int):
+    
+    if is_auth_get(req):
+        form = SemesterEditForm(initial={"taskID": id, "semester": idx})
+        
+        return render(req, "Task/HTML/semester.edit.html", context={"id": id, "idx": idx, "form": form})
+    
+@login_needed(admin_only=True)
+@semester_permission_check
+def sem_delete(req: HttpRequest, id: int, idx: int):
+    
+    if is_auth_get(req):
+        form = SemesterDeleteForm(initial={"taskID": id, "semester": idx})
+        
+        return render(req, "Task/HTML/semester.delete.html", context={"id": id, "idx": idx, "form": form})
+
+@login_needed(admin_only=True)
+@task_permission_check
+def get_task(req: HttpRequest, id: int):
+    if is_auth_get(req):
+        return render(req, "Task/HTML/index.html", context={"id": id})
+    
+############ HTMX Request ############
+@htmx_response
+@auth_needed(admin_only=True)
+def htmx_task_create(req: HttpRequest):
+    user = get_user(req)
+    
+    if is_hx_post(req):
+        f = TaskCreateForm(req.POST)
+        
+        if f.is_valid():
+            try:
+                name = f.cleaned_data.get("fileName")
+                semesterLimit = f.cleaned_data.get("semesterLimit")
+                task = TaskTable(name=name, semesterLimit=semesterLimit, creator=user, branch=user.role.belongs)
+                task.save()
+                messages.success(req, "Task was successfully created!")
+            except forms.ValidationError as g:
+                print(g)
+                for field, error in g.error_dict.items(): 
+                    messages.error(req, "{}: {}".format(field, ",".join([','.join(i) for i in error])))
+            except Exception as e:
+                messages.error(req, DEFAULT_ERROR)
+        else:
+            for field, error in f.errors.items():
+                messages.error(req, "{}: {}".format(TaskCreateForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
+        
+                
+        return render(req, "Task/HTMX/message.html")
 
 @htmx_response
 @auth_needed(admin_only=True)
@@ -132,29 +225,6 @@ def htmx_task_edit(req: HttpRequest, id: int):
 
         return render(req, "Task/HTMX/message.html")
 
-@login_needed(admin_only=True)
-@task_permission_check
-def task_delete(req: HttpRequest, id: int):
-    if is_auth_get(req):
-    
-        context = {"id": id}
-        try:
-            task: TaskTable = req.__getattribute__("task")
-            context["form"] = TaskDeleteForm(initial={"taskID": task.id, "fileName": task.name, "semesterLimit": task.semesterLimit})
-            
-        except TaskTable.DoesNotExist: # Wouldn't reach this
-            messages.error(req, "Task ID: {} does not exists!".format(id))
-
-        except Exception as f:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=f)
-            )
-            messages.error(req, DEFAULT_ERROR)
-
-        return render(req, "Task/HTML/task.delete.html", context=context)
-
 @htmx_response
 @auth_needed(admin_only=True)
 @task_permission_check
@@ -179,17 +249,6 @@ def htmx_task_delete(req: HttpRequest, id: int):
 
         return render(req, "Task/HTMX/message.html")
 
-@login_needed(admin_only=True)
-@task_permission_check
-def sem_create(req: HttpRequest, id: int):
-    
-    if is_auth_get(req):
-        sems = [("", "------")] + list(map(lambda x: (x,x), DataTable.availableSems(id)))
-        form = SemesterCreateForm(initial={"taskID": id})
-        form.setChoice(sems)
-        
-        return render(req, "Task/HTML/semester.create.html", context={"id": id, "form": form})
-        
 @htmx_response
 @auth_needed(admin_only=True)
 @task_permission_check
@@ -253,15 +312,6 @@ def htmx_sem_create(req: HttpRequest, id: int):
 
         return render(req, "Task/HTMX/semester.create.html", context={'option': semesterChoice})
 
-@login_needed(admin_only=True)
-@semester_permission_check
-def sem_edit(req: HttpRequest, id: int, idx: int):
-    
-    if is_auth_get(req):
-        form = SemesterEditForm(initial={"taskID": id, "semester": idx})
-        
-        return render(req, "Task/HTML/semester.edit.html", context={"id": id, "idx": idx, "form": form})
-    
 @htmx_response
 @auth_needed(admin_only=True)
 @semester_permission_check
@@ -327,16 +377,6 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
 
         return render(req, "Task/HTMX/message.html")
 
-
-@login_needed(admin_only=True)
-@semester_permission_check
-def sem_delete(req: HttpRequest, id: int, idx: int):
-    
-    if is_auth_get(req):
-        form = SemesterDeleteForm(initial={"taskID": id, "semester": idx})
-        
-        return render(req, "Task/HTML/semester.delete.html", context={"id": id, "idx": idx, "form": form})
-    
 @htmx_response
 @auth_needed(admin_only=True)
 @semester_permission_check
@@ -373,17 +413,6 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
 
         return render(req, "Task/HTMX/message.html")
 
-
-@login_needed(admin_only=True)
-@task_permission_check
-def get_task(req: HttpRequest, id: int):
-    if is_auth_get(req):
-        return render(req, "Task/HTML/index.html", context={"id": id})
-
-class SemData(TypedDict):
-    id: int
-    count: int
-
 @htmx_response
 @auth_needed(admin_only=True)
 @task_permission_check
@@ -416,42 +445,6 @@ def htmx_get_task(req: HttpRequest, id: int):
     
         return render(req, "Task/HTMX/index.html", context=context)
     
-@login_needed(admin_only=True)
-@task_permission_check
-def get_sem(req: HttpRequest, id: int):
-    if is_auth_get(req):
-        return render(req, "Task/HTML/index.html", context={"id": id})
-    
-class ManagerList(NamedTuple):
-    id: int
-    username: str
-    
-def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
-    context: dict[str, list[ManagerList]] = {"assigned_manager": [], "available_managers": []}
-
-    try:
-
-        managers: list[ManagerList] = task.assigned.distinct().values_list(
-            "manager__id", "manager__username"
-        )
-        
-        all_managers: list[ManagerList] = (
-            User.objects.filter(
-                role__role=RoleType.MANAGER, role__belongs=user.role.belongs
-            )
-            .exclude(id__in=[i[0] for i in managers])
-            .distinct()
-            .values_list("id", "username")
-        )
-
-        context["managers"] = all_managers
-        context["all_managers"] = managers
-
-    except Exception:
-        pass
-
-    return context
-
 @htmx_response
 @auth_needed(admin_only=True)
 @task_permission_check
@@ -560,8 +553,6 @@ def assign_form(req: HttpRequest, id: int):
         return render(req, "Task/HTMX/assign.html", context=context)
     
     return None
-
-
 
 @htmx_response
 @auth_needed(admin_only=True)
