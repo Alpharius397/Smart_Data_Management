@@ -59,8 +59,6 @@ function add_csrf() {
 function formCheck(event, id){
   const form = document.querySelector(id);
   
-  console.log(form)
-
   if(form.checkValidity() === false){
     form.reportValidity(); 
     event.stopImmediatePropagation(); 
@@ -108,6 +106,7 @@ function confirmPrompt(event) {
 const dialogBox = document.querySelector("dialog");
 const dialogTitle = document.querySelector(".dialog-title");
 const dialogMessage = document.querySelector(".dialog-message");
+const dialogButton = document.querySelector(".dialog-button");
 
 let dialogClose = document.querySelector(".dialog-close");
 let dialogYes = document.querySelector(".dialog-yes");
@@ -129,10 +128,13 @@ function setTitle(title) {
  */
 function setMessage(message) {
   dialogMessage.innerHTML = message;
-  dialogBox.style.width = Math.max(dialogBox.offsetWidth, dialogMessage.offsetWidth) + 'px';
-  console.info(Math.max(dialogBox.offsetWidth, dialogMessage.offsetWidth))
+  dialogResize();
 }
 
+function dialogResize(){
+  dialogBox.style.width = Math.max(dialogBox.offsetWidth, dialogMessage.offsetWidth + 50) + 'px';
+  dialogBox.style.height = Math.max(dialogBox.offsetHeight, dialogMessage.offsetHeight + 10) + 'px';
+}
 /**
  * @param {(event: Event) => void | () => void} callBack
  * @param {boolean} closeAfter
@@ -186,12 +188,22 @@ function setNo(callBack, closeAfter = true, title = 'No') {
 /**
  * Opens the dialog and enables dragging
  */
-function dialogBoxOpen() {
+function dialogBoxOpen(draggable = true, closable = true) {
   dialogBox.showModal();
-  dialogBox.addEventListener("click", dialogBoxClose);
-  dialogBox.addEventListener("mousedown", dialogBoxDragStart);
-  document.addEventListener("mousemove", dialogBoxDragGoing);
-  dialogBox.addEventListener("mouseup", dialogBoxDragEnd);
+  dialogResize();
+
+  if(closable){ 
+    dialogBox.addEventListener("click", dialogBoxClose);
+    dialogButton.style.display = '';
+  } else {
+    dialogButton.style.display = 'none';
+  }
+
+  if(draggable){
+    dialogBox.addEventListener("mousedown", dialogBoxDragStart);
+    document.addEventListener("mousemove", dialogBoxDragGoing);
+    dialogBox.addEventListener("mouseup", dialogBoxDragEnd);
+  }
 }
 
 function __closeBox() {

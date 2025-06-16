@@ -13,3 +13,9 @@ class ManagerDoesNotExist(MainException):
         super().__init__(
             f"Manager with ID: {manager} was neverr assigned to Task ID: {fileID}"
         )
+
+class InvalidSchema(MainException):
+    def __init__(self) -> None:
+        super().__init__(
+            "Schema Parameter was not found! Please ensure that a valid schema is defined"
+        )

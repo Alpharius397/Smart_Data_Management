@@ -1,6 +1,7 @@
 from typing import Any, NamedTuple, TypedDict
 from django.core.files.uploadedfile import UploadedFile # type: ignore
 from django.shortcuts import render  # type: ignore
+from django.urls import reverse # type: ignore
 from django.http import HttpRequest, QueryDict  # type: ignore
 from Task.forms import SemesterDeleteForm, TaskCreateForm, TaskDeleteForm, TaskUpdateForm, SemesterCreateForm, SemesterEditForm
 from Task.models import TaskTable
@@ -230,12 +231,14 @@ def htmx_task_edit(req: HttpRequest, id: int):
 @task_permission_check
 def htmx_task_delete(req: HttpRequest, id: int):
     if is_hx_post(req):
-    
+        context: dict[str, str] = {}
+        
         try:
             task: TaskTable = req.__getattribute__("task")
             task.delete()
-            messages.success(req, "Task was deleted successfully")
+            messages.success(req, "Task was deleted successfully! Redirecting to Task Dashboard")
             
+            context["redirect"] = req.build_absolute_uri(reverse('Dash:index'))
         except TaskTable.DoesNotExist: # Wouldn't reach this
             messages.error(req, "Task ID: {} does not exists!".format(id))
 
@@ -247,7 +250,7 @@ def htmx_task_delete(req: HttpRequest, id: int):
             )
             messages.error(req, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/message.html")
+        return render(req, "Task/HTMX/message.html",)
 
 @htmx_response
 @auth_needed(admin_only=True)
@@ -384,6 +387,7 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
     
     if is_hx_post(req):
         form = SemesterDeleteForm(req.POST)
+        context: dict[str, str] = {}
         
         try:
             with transaction.atomic():
@@ -392,8 +396,8 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
                     
                     task.data.filter(semester=idx).delete()
                     
-                    messages.success(req, f"Semester Data Deleted Successfully")
-                    
+                    messages.success(req, f"Semester Data Deleted Successfully! Redirecting to the Semester Dashboard")
+                    context["redirect"] = req.build_absolute_uri(reverse('Task:index', args=(id,)))
                 else:
                     for field, error in form.errors.items(): 
                         messages.error(req, "{}: {}".format(SemesterDeleteForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
@@ -411,7 +415,7 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
             print(e)
             messages.error(req, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/message.html")
+        return render(req, "Task/HTMX/message.html",context=context)
 
 @htmx_response
 @auth_needed(admin_only=True)

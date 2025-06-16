@@ -49,7 +49,7 @@
                 </div>
                     
             {% endfor %}
-            <button class="upload-button" onclick="confirmThis(event)">Delete Task</button>
+            <button class="upload-button" onclick="formCheck(event,'#form')">Delete Task</button>
         </form>
         <div class="form-footer">
           Edit this Task? <a href="{% url 'Task:edit' id=id %}">Edit Task</a>
@@ -59,17 +59,23 @@
 
 {% block script %}
 <script>
+  document.body.addEventListener('htmx:confirm', function(event) {
+      event.preventDefault();
 
-  /**
-  * @param {Event} event
-  */
-  function confirmThis(event){
-      const a = confirm("This action cannot be undone. Are you sure you want to delete this Task?");
+      swal({
+        title: "Are you sure?",
+        text: "This action cannot be undone. Are you sure you want to delete this Task?",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+      })
+      .then((value) => {
+        if (value === true) {
+            event.detail.issueRequest();
+        }
+          
+      });
+    });
+</script>
 
-      if(a==false){
-        event.stopImmediatePropagation();
-      }
-    }
-
-  </script>
 {% endblock %}

@@ -9,8 +9,9 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
-from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
-from University.models import Subject
+from django.http import HttpRequest, HttpResponse, JsonResponse, FileResponse  # type: ignore
+from Report.errors import InvalidSchema
+from University.models import Subject, Schema
 from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
 from tools.get_image import compress_image
@@ -43,10 +44,10 @@ from tools.url_auth import (
     semester_permission_check,
     task_permission_check,
 )
-from Report.forms import FeedBackForm, FeedBackView
+from Report.forms import FeedBackForm, FeedBackView, CompleteFeedBackView
 from django.utils import timezone  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
-from tools.utils import ColumnType, get_string_value
+from tools.utils import ColumnType, get_2_value, get_3_value, get_string_value
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from tools.token import hash_token
 from Card.models import Card
@@ -57,140 +58,7 @@ from Main.models import *
 from psycopg2.sql import SQL, Identifier, Literal
 from django.db import connection
 
-
-############ UTILS ############
-def get_2_value(value: str) -> bool:
-    assert value in [
-        "true",
-        "false",
-    ], f"Invalid Boolean Type. Value '{value}' not in ['true', 'false']"
-
-    if value == "true":
-        return True
-    else:
-        return False
-
-
-def get_3_value(value: str) -> bool | None:
-    assert value in [
-        "true",
-        "false",
-        "none",
-    ], (
-        f"Invalid Nullable Boolean Type. Value '{value}' not in ['true', 'false', 'none']"
-    )
-
-    if value == "true":
-        return True
-    elif value == "none":
-        return None
-    else:
-        return False
-
-
-def get_context(
-    req: HttpRequest,
-    id: int,
-    column: str = "",
-    value: str = "",
-    issue: str = "",
-    status: str = "",
-    lock: str = "",
-    page: str = "0",
-) -> dict[str, str | bool | None]:
-    context: dict[str, Any] = {"id": id}
-    search = False
-    user = get_user(req)
-    column_list: ColumnType = ColumnType([], [], [])
-
-    try:
-        _page: int = int(page)
-
-        query = Q(fileID__id=id) & (
-            Q(fileID__uploader__id=user.id) | Q(fileID__assigned__manager__id=user.id)
-        )
-
-        searching = status or issue or lock or (column and value)
-
-        if status:
-            query &= Q(status=get_3_value(status))
-
-        if issue:
-            query &= Q(issued=get_2_value(issue))
-
-        if lock:
-            query &= Q(locked=get_2_value(lock))
-
-        if column and value:
-            query &= Q(
-                **{
-                    f"data__{column}__isnull": False,
-                    f"data__{column}__icontains": value,
-                }
-            )
-
-        records = DataTable.objects.filter(query).order_by("id")[
-            _page : _page + MAX_RECORD
-        ]
-
-        _, column_list = DataTable.get_all_columns(id)
-
-        columns: list = column_list.text
-        image_idx: list = column_list.images
-
-        pd_data = {
-            (row.id): {
-                "status": row.status,
-                "locked": row.locked,
-                "issued": row.issued,
-                "data": row.data,
-            }
-            for row in records
-        }
-
-        empty = not bool(pd_data)
-
-        if empty:  # no buffer left
-            context["empty"] = True
-
-        if searching and (_page == 0) and empty:
-            context["error"] = "No Matching Records Found"
-
-    except Exception as e:
-        APP_LOG.write_error(
-            LogStructure()
-            .set_request(req)
-            .set_description(
-                type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-            )
-        )
-        context["error"] = DEFAULT_ERROR
-        return context
-
-    if search:
-        context["error"] = "No matching records found"
-    else:
-        context.update(
-            {
-                "result": pd_data,
-                "images": image_idx,
-                "columns": columns,
-                "start": _page,
-                "max_record": _page + MAX_RECORD,
-            }
-        )
-
-    return context
-
-
-########### HTTP Request #############
-@login_needed()
-@semester_permission_check
-def sem_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
-    if is_auth_get(req):
-
-        return render(req, "Report/HTML/sem.index.html", { "id": id, "idx": idx, "rowID": rowID, "form": FeedBackForm()})
-
+############ TYPES ############
 class SubjectMeta(NamedTuple):
     sem: int
     marks: int
@@ -202,11 +70,15 @@ class SemMeta(NamedTuple):
 class CompleteMeta(NamedTuple):
     ID: str
     data: dict
+
+class CompleteFeed(NamedTuple):
+    ID: str
     locked: bool
     issued: bool
     status: bool | None
-                
-def get_complete_data(req: HttpRequest, id: int, idx: int):
+
+############ UTILS ############
+def get_complete_data(req: HttpRequest, id: int, idx: str):
     
     table_name = Identifier(DataTable._meta.db_table)
     data_column = Identifier(DataTable.data.field.column)  # type: ignore
@@ -217,12 +89,12 @@ def get_complete_data(req: HttpRequest, id: int, idx: int):
     identifier = Literal(idx)
     taskID = Literal(id)
     
-    records = CompleteMeta("",None,False,False,{})
+    records = CompleteMeta("", {})
     task: TaskTable = req.__getattribute__("task")
     groupBy = Literal(task.groupByColumn)
     
     with connection.cursor() as cursor:
-        sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+        sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
             data_column=data_column,
             groupBy=groupBy,
             locked_column=locked_column,
@@ -235,18 +107,65 @@ def get_complete_data(req: HttpRequest, id: int, idx: int):
         )
 
         cursor.execute(sql_query)
-        (ID, data, locked, issued, status) = cursor.fetchone()
-        records = CompleteMeta(ID, json.loads(data), locked, issued, status)
+        (ID, data) = cursor.fetchone()
+        records = CompleteMeta(ID, json.loads(data))
 
     return records
 
-############ HTMX Request ############
-@auth_needed()
+def get_complete_feed(req: HttpRequest, id: int, idx: str):
+    
+    table_name = Identifier(DataTable._meta.db_table)
+    data_column = Identifier(DataTable.data.field.column)  # type: ignore
+    locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+    issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+    status_column = Identifier(DataTable.status.field.column)  # type: ignore
+    taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+    identifier = Literal(idx)
+    taskID = Literal(id)
+    
+    records = CompleteFeed("", False, False, None)
+    task: TaskTable = req.__getattribute__("task")
+    groupBy = Literal(task.groupByColumn)
+    
+    with connection.cursor() as cursor:
+        sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+            data_column=data_column,
+            groupBy=groupBy,
+            locked_column=locked_column,
+            issued_column=issued_column,
+            status_column=status_column,
+            table_name=table_name,
+            taskID_column=taskID_column,
+            taskID=taskID,
+            identifier=identifier
+        )
+
+        cursor.execute(sql_query)
+        (ID, locked, issued, status) = cursor.fetchone()
+        records = CompleteFeed(ID, locked, issued, status)
+
+    return records
+
+########### HTTP Request #############
+@login_needed()
+@semester_permission_check
+def sem_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+    if is_auth_get(req):
+
+        return render(req, "Report/HTML/sem.index.html", { "id": id, "idx": idx, "rowID": rowID})
+    
 @login_needed()
 @task_permission_check
-def report_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
+def index_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+    if is_auth_get(req):
+        return render(req, "Report/HTML/index.html", { "id": id, "idx": idx, **get_post(req.user) })
+    
+@login_needed()
+@task_permission_check
+def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
     context = {"id": id, "idx": idx}
     user = get_user(req)
+    
     if is_auth_get(req):
 
         try:
@@ -276,7 +195,7 @@ def report_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
                     else:
                         personal_data[sub] = values
             
-            sem_data = {key: sem_data[key] for key in sorted(sem_data.keys()) }
+            sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
             
             context.update(get_post(user))
             context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
@@ -284,10 +203,126 @@ def report_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         except Exception as e:
             print(e)
             context["error"] = DEFAULT_ERROR
-            return render(req, "Report/HTMX/report.html", context=context)
 
+        return render(req, "Report/HTML/generated.report.html", context=context)
+
+############ HTMX Request ############
+@auth_needed()
+@htmx_response
+def htmx_schema(req: HttpRequest):
+    context: dict[str, list[tuple[int, str]]] = {"options":[]}
+    user = get_user(req)
+    
+    if is_hx_get(req):
+        try:
+            post = get_post_id(user)
+            schemas = Schema.objects.filter(branch__id = post["branch"]).only("id", "name").values("id", "name")
+            print(schemas)
+            options: list[tuple[int, str]] = []
+            
+            for schema in schemas.iterator():
+                id: int = int(schema["id"])
+                name: str = str(schema["name"])
+
+                options.append((id, name))
+
+            context['options'] = options
+            
+        except Exception as e:
+            print(e)
+            messages.error(req, DEFAULT_ERROR)
+        
+            
+        return render(req, "Report/HTMX/schema.html", context=context)
+
+def getSubjects(schema_id: int, branch_id: int):
+    
+    sem_dict: dict[str, SubjectMeta] = {} # semester wise subjects with max marks
+    
+    try:
+        
+        subjects = Subject.objects.filter(schema__id=schema_id, schema__branch__id=branch_id).values("name", "semester", "marks")
+            
+        for subs in subjects.iterator():
+            name = subs["name"]
+            semester = subs["semester"]
+            marks = subs["marks"]
+                
+            sem_dict[name] = SubjectMeta(semester, marks)
+            
+    except Exception as e:
+        print(e)
+        
+    return sem_dict
+        
+@auth_needed()
+@htmx_response
+@task_permission_check
+def report_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+    context = {"id": id, "idx": idx}
+    user = get_user(req)
+    
+    if is_hx_get(req):
+
+        schema_id = req.GET.get("schema", "")
+        
+        try:
+            post = get_post_id(user)
+            records = get_complete_data(req, id, idx)
+            sem_dict = getSubjects(schema_id, post["branch"])
+                
+            personal_data: dict[str, str] = {}
+            image_data: dict[str, str] = {}
+            sem_data: dict[int, dict[str, tuple[int, int]]] = {}
+            
+            for column, values in records.data.items():
+                if(column[-1]=='I'):
+                    image_data[column[:-1]] = values
+                else:
+                    if((sub := column[:-1]) in sem_dict):
+                        if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
+                        sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
+                    else:
+                        personal_data[sub] = values
+            
+            sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
+            
+            context.update(get_post(user))
+            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
+
+        except InvalidSchema as f:
+            messages.error(req, f.get_error())
+
+        except Exception as e:
+            print(e)
+            messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/report.html", context=context)
+
+
+@htmx_response
+@auth_needed()
+@task_permission_check
+def htmx_feedBack(req: HttpRequest, id: int, idx: str):
+    context = {"id": id, "idx": idx}
+    user = get_user(req)
+    
+    if is_hx_get(req):
+
+        
+        try:
+            records = get_complete_feed(req, id, idx)
+            context.update({"form": CompleteFeedBackView(initial={"status": get_string_value(records.status), "locked": get_string_value(records.locked), "issued": get_string_value(records.issued)})})
+
+        except InvalidSchema as f:
+            messages.error(req, f.get_error())
+
+        except Exception as e:
+            messages.error(req, DEFAULT_ERROR)
+
+        return render(req, "Report/HTMX/form.html", context=context)
+
+
 
 @htmx_response
 @auth_needed()

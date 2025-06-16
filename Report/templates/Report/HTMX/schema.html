@@ -1,0 +1,15 @@
+<option value="" disabled selected>----------</option>
+{% for opt in options%}
+    <option value="{{ opt.0 }}">{{ opt.1 }}</option>
+{% endfor %}
+
+{% if messages %}
+    <ul class="messages" id="messages" hx-swap-oob="true">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<script>
+    $('select[name="schema"]').select2()
+</script>

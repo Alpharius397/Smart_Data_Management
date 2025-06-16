@@ -117,7 +117,7 @@ header .header-center {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  justify-content: stretch;
+  justify-content: center;
   align-items: center;
   flex-grow: 10;
   width: auto;
@@ -273,6 +273,7 @@ dialog .dialog-button button {
   justify-content: center;
   border-radius: 8px;
   border: 1px solid lightgray;
+  color: inherit;
 }
 
 @keyframes rotateAboutZ {
@@ -296,6 +297,23 @@ dialog .dialog-button button {
   display: inline;
   font-weight: bold;
   margin: 5px;
+}
+
+.process-state  {
+  overflow: hidden;
+}
+
+.dialog {
+  flex-direction: column;
+  padding: 5px;
+}
+
+dialog.loading::backdrop {
+  backdrop-filter: blur(1px);
+}
+
+.dialog h2 {
+  color: inherit
 }
 
 .logo {
@@ -329,4 +347,10 @@ dialog .dialog-button button {
   transition:
     background-color 0.3s ease,
     transform 0.2s ease;
+}
+
+@media screen and (max-width: 600px) {
+  .logo img {
+    display: none;
+  }
 }

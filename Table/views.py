@@ -201,11 +201,11 @@ def get_context(
             )
 
             cursor.execute(sql_query)
-            
+            print(sql_query.as_string(cursor.connection))            
             for col in cursor.fetchall():
                 ID, Data, Locked, Issued, Status = col
                 records.append(Context(ID, json.loads(Data), Locked, Issued, Status))
-            
+
         pd_data = {
             (row.ID): {
                 "status": row.status,
@@ -220,7 +220,6 @@ def get_context(
 
         if searching and (page == 0) and empty:
             context["error"] = "No Matching Records Found"
-
         context.update(
             {
                 "result": pd_data,
@@ -231,6 +230,7 @@ def get_context(
         )
         
     except Exception as e:
+        print(e)
         APP_LOG.write_error(
             LogStructure()
             .set_request(req)

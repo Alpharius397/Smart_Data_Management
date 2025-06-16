@@ -49,7 +49,7 @@
                 </div>
                     
             {% endfor %}
-            <button class="upload-button">Delete Task</button>
+            <button class="upload-button" onclick="formCheck(event,'#form')">Edit Task</button>
         </form>
         <div class="form-footer">
           Incorrect Task Created? <a href="{% url 'Task:delete' id=id %}">Delete Task</a>
@@ -58,21 +58,5 @@
 {% endblock %}
 
 {% block script %}
-<script>
 
-    htmx.on("#form","htmx:beforeSend", function(event){
-
-        htmx.find('#progress').setAttribute('value', 0);
-        htmx.find('#progress').setAttribute('style', "display:block;");
-    });
-
-    htmx.on('#form', 'htmx:xhr:progress', function(event) {
-        htmx.find('#progress').setAttribute('value', event.detail.loaded/event.detail.total * 100)
-
-        if(event.detail.loaded==event.detail.total){
-            htmx.find('#progress').setAttribute('style', "display:none;");
-        }
-    });
-
-  </script>
 {% endblock %}

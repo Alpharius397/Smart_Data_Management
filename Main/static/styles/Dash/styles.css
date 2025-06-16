@@ -26,8 +26,6 @@
     font-size: 14px;
     border: 0px solid rgba(0, 0, 0, 0);
     z-index: 10;
-    margin-left: 5px;
-    padding: 5px;
     width: 210px;
 }
 
@@ -53,13 +51,14 @@
     width: 0px;
     height: 1px;
     z-index: 10;
-    translate: -215px 20px;
+    translate: -213px 20px;
     background-color: grey;
     transition: 500ms width;
 }
 
 .search-bar i {
     font-size: 18px;
+    color:#535353 !important;
 }
 
 form {
@@ -243,6 +242,10 @@ select{
     padding-right: 1rem;
 }
 
+option {
+    font-style: italic;
+}
+
 input[type="search"]{
     border-radius: 20px;
     padding:5px;
@@ -279,6 +282,7 @@ input[type="text"]::placeholder {
 
 .assign-form {
     margin-left: 20px;
+    color:#333;
 }
 
 .assign-form button {
@@ -332,6 +336,7 @@ input[type="text"]::placeholder {
     height: 30px;
     display: block;
     align-items: center;
+    color:#333;
 
 }
 
@@ -361,6 +366,10 @@ input[type="text"]::placeholder {
     align-items: center;
     display: inline-flex;
 }
+svg.search path {
+    stroke: #333 !important;
+    fill: #333 !important;
+}   
 
 @media screen and (max-width: 600px) {
     .task-list {

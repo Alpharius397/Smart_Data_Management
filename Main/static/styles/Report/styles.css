@@ -7,12 +7,12 @@
     border: 1px solid rgb(216, 218, 220);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     width: 85%;
+    overflow-x: scroll;
 }
 
 form {
     margin: 0px;
     padding: 0;
-    margin-left: 20px;
     color: black
 }
 
@@ -24,7 +24,7 @@ form {
 
 .form-field label {
     font-weight: 700;
-    text-align: center;
+    text-align: left;
     align-self: center;
     vertical-align: top;
     margin-right: 5px;
@@ -55,8 +55,51 @@ select{
     padding-left: 0.5rem;
     padding-right: 1rem;
     width: 120px;
+    color:#333;
 }
 
+select[name="schema"] {
+    background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path fill='black' stroke ='black' d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>") no-repeat;
+    background-position: 95% center;
+    -moz-appearance:none;
+    -webkit-appearance: none; 
+    appearance: none;
+    border-radius: 20px;
+    padding:5px;
+    padding-left: 0.5rem;
+    padding-right: 1rem;
+    width: 120px;
+    color:#333;
+}
+.select2-container--default .select2-selection--single {
+    border-radius: 20px;
+  }
+  
+  .select2-container--default .select2-results>.select2-results__options {
+    color: #333;
+    font-style: italic;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #080707 transparent transparent transparent;
+  }
+  
+  .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #080707 transparent;
+  }
+  
+  .select2-search--dropdown .select2-search__field {
+    padding-left: 8px;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    font-style: italic;
+    font-size: 14px;
+  }
+  
+  .select2-results__option {
+    font-size: 14px;
+  }
 input[type="search"]{
     border-radius: 20px;
     padding:5px;
@@ -167,4 +210,165 @@ select[name="locked"] option[value="false"], select[name="locked"]:has( > option
     margin: 5px 15px 20px 15px;
     color: gray; 
     font-style: italic;
+}
+
+.report-header {
+    display: grid;
+    margin: 0;
+    margin-bottom: 10px;
+    grid-template-columns: 1fr 3fr 1fr;
+    grid-template-rows: 100px;
+    align-items:center;
+    text-align: center;
+    justify-items: center;
+    border-bottom: 5px double darkred;
+    padding: 5px;
+}
+
+.report-header h2 {
+    font-size: xx-large;
+}
+
+.report-header img {
+    max-width: 100px;
+    max-height: 100px;
+}
+
+.personal-header{
+    display: flex;
+    width: 90%;
+    justify-self: center;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid darkred;
+}
+
+.text {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    column-gap: 5px;
+    row-gap: 5px;
+    flex-grow: 1;
+}
+
+.image {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-evenly;
+
+}
+
+.big-text {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    text-wrap:wrap;
+    word-wrap: break-word;
+    width: 100%;
+}
+
+.big-text p {
+    margin: 0;
+    margin-left: 5px;
+    flex-grow: 1;
+    color: #333 !important;
+}
+
+.big-text h3, .big-image h3 {
+    margin: 0px;
+}
+
+.big-image {
+    display: inline-flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    height: max-content;
+    justify-content: center;
+    align-items: center;
+    margin: 0 0 0 auto;
+    border: 1px groove gray;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.big-image img {
+    width: 120px;
+}
+
+.heading-title {
+    text-align: center;
+    font-size: x-large;
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+.university-heading {
+    display: inline-flex;
+    flex-direction: column;
+}
+
+.university-heading * {
+    margin: 0;
+}
+
+.semester-data {
+    width: 90%;
+    border-spacing: 0;
+    border: 1px solid darkred;
+    border-radius: 8px;
+}
+
+.semester-data * {
+    border: 1px solid darkred;
+    border-spacing: 0px;
+    padding: 5px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.semester-data tr:last-child  td:first-child {
+    border-radius: 0 0 0 8px;
+}
+
+.semester-data tr:last-child td:last-child {
+    border-radius: 0 0 8px 0;
+}
+
+.semester-data tr td {
+    width: 33%;
+}
+
+
+.semester-title{
+    font-size: larger;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid darkred;
+    border-radius: 8px 8px 0 0;
+}
+
+.semester-cell {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    justify-items: center;
+}
+
+.semester-data  .column {
+    font-weight: 600;
+}
+
+.semester-heading {
+    display: flex;
+    flex-direction: column;
+}
+
+.schema-field {
+    margin-left: 20px;
+    color: #333;
 }

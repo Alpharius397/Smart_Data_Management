@@ -407,7 +407,7 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} is not null 
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
-                            as "A" order by length("A"."option"), "A"."option" limit 5;
+                            as "A" order by "A"."option" limit 5;
             ''').format(
                 data_column=data_column,
                 column_name=column_name,
@@ -445,7 +445,7 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} is not null 
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
-                            as "A" order by length("A"."option"), "A"."option" limit 5;
+                            as "A" order by "A"."option" limit 5;
             ''').format(
                 data_column=data_column,
                 column_name=column_name,
@@ -481,7 +481,7 @@ class DataTable(Model):
                         select *
                         from (select distinct(jsonb_object_keys(max({data_column}::varchar)::jsonb)) as "option" 
                         from {table_name} where {taskID_column}={taskID} and {semester_column}={semID}) as "A" 
-                        order by length("A"."option"), "A"."option";
+                        order by "A"."option";
                     """
                 )
                 .format(

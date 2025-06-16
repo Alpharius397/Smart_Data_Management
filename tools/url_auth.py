@@ -68,10 +68,12 @@ def get_color(req: HttpRequest):
         color: Color = role.belongs.institute.color
         main_color = color.main_color
         sec_color = color.sec_color
-        icon = color.icon.url
+        instituteIcon = color.instituteIcon.url
+        universityIcon = color.universityIcon.url
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
-        req.session["icon"] = icon
+        req.session["instituteIcon"] = instituteIcon
+        req.session["universityIcon"] = universityIcon
     except Exception:
         pass
 

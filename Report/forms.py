@@ -64,3 +64,28 @@ class FeedBackView(Form):
         label="Row Issue Status",
         widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
     )
+    
+class CompleteFeedBackView(Form):
+    status = forms.ChoiceField(
+        required=False,
+        help_text="Set the status of row",
+        choices=[("true",'Verified'),("false",'Rejected'),("none",'Unchecked')],
+        label="Row Status",
+        widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
+    )
+    
+    locked = forms.ChoiceField(
+        required=False,
+        help_text="Set the Lock status of row",
+        choices=[("true",'Lock'),("false",'Unlock')],
+        label="Row Lock Status",
+        widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
+    )
+
+    issued = forms.ChoiceField(
+        required=False,
+        help_text="Set the issue status of row",
+        choices=[("true",'Issued'),("false",'Cancel Issue')],
+        label="Row Issue Status",
+        widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
+    )

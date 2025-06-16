@@ -51,7 +51,11 @@
 {% if messages %}
     <ul class="messages" id="messages" hx-swap-oob="true">
         {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+            {% if message.tags != 'success' %}
+                <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+            {% else %}
+                <script>swal("", "{{message}}", "success");</script>
+            {% endif %}
         {% endfor %}
     </ul>
 {% endif %}

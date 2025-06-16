@@ -56,4 +56,25 @@
         </div>
     </div>
 {% endblock %}
+{% block script %}
+<script>
+  document.body.addEventListener('htmx:confirm', function(event) {
+      event.preventDefault();
 
+      swal({
+        title: "Are you sure?",
+        text: "This action cannot be undone. Are you sure you want to edit this Semester?",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+      })
+      .then((value) => {
+        if (value === true) {
+            event.detail.issueRequest();
+        }
+          
+      });
+    });
+</script>
+
+{% endblock %}

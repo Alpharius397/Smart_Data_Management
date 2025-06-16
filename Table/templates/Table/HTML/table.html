@@ -103,7 +103,7 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" onsubmit="event.preventDefault();">
+            <form id="htmx-form" hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="click from:#search ,input from:#search, click from:.select2-selection__rendered#select2-column-container" onsubmit="event.preventDefault()">
                 {% csrf_token %}
 
                 <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSemSuggest' id=id idx=idx %}" hx-trigger="cancel, keyup, input from:.searchSelect">
@@ -126,31 +126,31 @@
                 <div class="form-field">
 
                     <label for="status">Status: </label>
-                    <select name="status" id="status" class="searchSelect">
+                    <select name="status" id="status" class="searchSelect" value="{{request.GET.status}}">
                         <option value="">----------</option>
-                        <option value="none">Unchecked</option>
-                        <option value="true">Verified</option>
-                        <option value="false">Rejected</option>
+                        <option value="none" {% if request.GET.status == 'none' %}selected{% endif %}>Unchecked</option>
+                        <option value="true" {% if request.GET.status == 'true' %}selected{% endif %}>Verified</option>
+                        <option value="false" {% if request.GET.status == 'false' %}selected{% endif %}>Rejected</option>
                     </select>
                 </div>
 
                 <div class="form-field">
 
                     <label for="lock">Locked: </label>
-                    <select name="lock" id="lock" class="searchSelect">
+                    <select name="lock" id="lock" class="searchSelect" value="{{request.GET.lock}}">
                         <option value="">----------</option>
-                        <option value="true">Locked</option>
-                        <option value="false">Not Locked</option>
+                        <option value="true" {% if request.GET.lock == 'true' %}selected{% endif %}>Locked</option>
+                        <option value="false" {% if request.GET.lock == 'false' %}selected{% endif %}>Not Locked</option>
                     </select>
                 </div>
 
                 <div class="form-field">
 
                     <label for="issue">Issued: </label>
-                    <select name="issue" id="issue" class="searchSelect">
+                    <select name="issue" id="issue" class="searchSelect" value="{{request.GET.issue}}">
                         <option value="">----------</option>
-                        <option value="true">Issued</option>
-                        <option value="false">Not Issued</option>
+                        <option value="true" {% if request.GET.issue == 'true' %}selected{% endif %}>Issued</option>
+                        <option value="false" {% if request.GET.issue == 'false' %}selected{% endif %}>Not Issued</option>
                     </select>
 
                 </div>
@@ -183,9 +183,12 @@
     <script>
         add_csrf();
         const a = document.querySelector(".table-view");
+        const form = document.querySelector("#htmx-form");
+        const searchText = document.querySelector("input#search");
+        const columns = document.querySelector("select#column");
 
         function centerDiv(){
-            const b = document.querySelector(".loading");
+            var b = document.querySelector(".loading");
             let left = a.scrollLeft + ((a.offsetWidth - b.offsetWidth) / 2);
             b.style.left = left + 'px';
         }
@@ -194,6 +197,17 @@
 
         a.addEventListener("scroll", centerDiv);
         window.onresize = centerDiv;
+
+        document.addEventListener("htmx:confirm", function(event){
+            if(event.detail.elt === form){
+                event.preventDefault();
+                console.log(searchText.value, columns.value)
+                if(searchText?.value !== '' && columns?.value !== ''){
+                    event.detail.issueRequest();
+                }
+            }
+        }
+        )
 
     </script>
 {% endblock %}

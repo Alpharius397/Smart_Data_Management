@@ -163,7 +163,6 @@ def hex(obj: bytes):
     except Exception:
         return a
 
-
 @register.filter(name="rstrip")
 def rstrip(obj: str, index: int):
     return obj[:-index]

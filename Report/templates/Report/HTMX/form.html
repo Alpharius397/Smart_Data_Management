@@ -1,0 +1,13 @@
+<div class="semester-feedback" id="feed-me">
+    <h2> Feedback Form </h2>
+    <form onsubmit="event.preventDefault()">
+        {% for field in form %}
+            <div class="form-field">
+                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                {{ field }}
+            </div>
+            <p class="help-text">{{ field.help_text }}</p>
+            
+        {% endfor %}
+    </form>
+</div>

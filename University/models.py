@@ -103,7 +103,7 @@ class Schema(Model):
     date = DateTimeField(default=timezone.now, verbose_name="Date of Creation")
     
     branch = ForeignKey(
-        to=Branch, null=True, blank=False, on_delete=RESTRICT, related_name="schema"
+        to=Branch, null=False, blank=False, on_delete=RESTRICT, related_name="schema"
     )  # type: ignore
     
     subject: "subject"
@@ -174,7 +174,8 @@ class Color(Model):
         validators=[ColorRegex],
     )  # type: ignore
     
-    icon = ImageField(verbose_name="Institute Icon", upload_to="icon", null=True)
+    instituteIcon = ImageField(verbose_name="Institute Icon", upload_to="icon", null=True)
+    universityIcon = ImageField(verbose_name="University Icon", upload_to="icon", null=True)
     
     class Meta:
         verbose_name = "Color Theme"
@@ -189,4 +190,3 @@ type branch = BaseManager[Branch]
 type color = BaseManager[Color]
 type schema = BaseManager[Schema]
 type subject = BaseManager[Subject]
-type grade = BaseManager[Grade]
