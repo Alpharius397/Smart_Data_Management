@@ -10,6 +10,7 @@
     {% endfor %}
 
 </ul>
+{% if redirect %}
 <script defer>
     setTimeout(()=> {
         {% if redirect %}
@@ -18,4 +19,5 @@
 
     }, 2000);
 </script>
+{% endif %}
 {% block hxSwaps %}{% endblock %}

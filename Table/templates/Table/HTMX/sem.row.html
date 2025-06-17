@@ -25,7 +25,7 @@
         
                                 <div hx-put="{% url 'Table:htmxSemEditImage' id=id idx=idx rowID=rowID %}" hx-vals='{"column":"{{ column|encode|hex }}"}' hx-swap="outerHTML" hx-trigger="click from:find img">
         
-                                    <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
+                                    <img class="edit-button" src="{% static 'images/edit.svg' %}" data-title="Edit This Field">
                                 </div>
                             </div>
         
@@ -46,7 +46,7 @@
                                 hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
 
                                 {{ value|str }}
-                                <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Edit This Field">
+                                <img class="edit-button" src="{% static 'images/edit.svg' %}" data-title="Edit This Field">
 
                             </div>
 

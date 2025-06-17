@@ -365,6 +365,8 @@ input[type="text"]::placeholder {
     justify-content: center;
     align-items: center;
     display: inline-flex;
+    position: relative;
+    top: 1px
 }
 svg.search path {
     stroke: #333 !important;

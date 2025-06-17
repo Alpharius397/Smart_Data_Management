@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/select2.css' %}">
     <link rel="stylesheet" href="{% static 'styles/Table/styles.css' %}">
 {% endblock %}
 
@@ -103,13 +104,12 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form id="htmx-form" hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="click from:#search ,input from:#search, click from:.select2-selection__rendered#select2-column-container" onsubmit="event.preventDefault()">
-                {% csrf_token %}
+            <form class="htmx-form" hx-get="{% url 'Table:htmxSemRows' id=id idx=idx %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input from:#search" >
 
-                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSemSuggest' id=id idx=idx %}" hx-trigger="cancel, keyup, input from:.searchSelect">
+                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find select,find input" hx-get="{% url 'Table:htmxSemSuggest' id=id idx=idx %}" hx-trigger="input from:.searchSelect, input from:#search">
                     <div class="form-field">
                         <label for="search">Search For: </label>
-                        <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" title="Enter a word to search">
+                        <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" data-title="Enter a word to search" class="searchSelect">
                         <datalist id="suggests" autocomplete="false">
                         </datalist>
                     </div>
@@ -180,34 +180,10 @@
     </div>
 {% endblock %}
 {% block script %}
-    <script>
-        add_csrf();
-        const a = document.querySelector(".table-view");
-        const form = document.querySelector("#htmx-form");
-        const searchText = document.querySelector("input#search");
-        const columns = document.querySelector("select#column");
-
-        function centerDiv(){
-            var b = document.querySelector(".loading");
-            let left = a.scrollLeft + ((a.offsetWidth - b.offsetWidth) / 2);
-            b.style.left = left + 'px';
-        }
-
-        document.addEventListener("DOMContentLoaded", centerDiv);
-
-        a.addEventListener("scroll", centerDiv);
-        window.onresize = centerDiv;
-
-        document.addEventListener("htmx:confirm", function(event){
-            if(event.detail.elt === form){
-                event.preventDefault();
-                console.log(searchText.value, columns.value)
-                if(searchText?.value !== '' && columns?.value !== ''){
-                    event.detail.issueRequest();
-                }
-            }
-        }
-        )
-
-    </script>
+<script src="{% static 'js/libs/jquery.js' %}"></script>
+<script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/pages/table.js' %}"></script>
+<script>
+    fancy_function_doing_everything_for_table_i_dont_know_why_i_am_writing_the_name_this_long_but_oh_well();
+</script>
 {% endblock %}

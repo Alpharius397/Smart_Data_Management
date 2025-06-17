@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/select2.css' %}">
     <link rel="stylesheet" href="{% static 'styles/Report/styles.css' %}">
 {% endblock %}
 
@@ -36,6 +37,15 @@
         .personal-info p{
             color: {{request.session.mainColor}};
         }
+
+        
+        *[hx-get].htmx-request button, *[hx-post].htmx-request button, *[hx-put].htmx-request button, *[hx-delete].htmx-request button{
+            background-image: url("{% static 'images/loading.gif' %}"); 
+            background-repeat: no-repeat;
+            background-position: 50% 50%;
+            color: rgb(0, 0, 0, 0);
+        }
+        
     </style>
 {% endblock %}
 
@@ -54,7 +64,7 @@
         {% endfor %}
     </ul>
 
-    <div class="tab" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="change from:find select" hx-include="select">
+    <div class="tab" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select">
         <h2> Schema Options </h2>
     
         <div class="schema-field">
@@ -66,14 +76,6 @@
         </div>
 
     </div>
-
-    <div class="tab">
-        <div class="semester-report" >
-            <h1>Please choose a valid schema to generate report</h1>
-        </div>
-
-    </div>
-
     <div class="tab">
         <div class="semester-feedback" id="feed-me" hx-get="{% url 'Report:htmxFeed' id=id idx=idx %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
             <h2> Feedback Form </h2>
@@ -83,8 +85,19 @@
             </div>
         </div>
     </div>
+    
+    <div class="tab">
+        <div class="semester-report" >
+            <h1>Please choose a valid schema to generate report</h1>
+        </div>
+
+    </div>
+
+
 
 {% endblock %}
 {% block script%}
-
+<script src="{% static 'js/libs/jquery.js' %}"></script>
+<script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/pages/report.js' %}"></script>
 {% endblock %}

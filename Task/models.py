@@ -407,7 +407,7 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} is not null 
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
-                            as "A" order by "A"."option" limit 5;
+                            as "A" order by length("A"."option"), "A"."option" limit 5;
             ''').format(
                 data_column=data_column,
                 column_name=column_name,
@@ -445,7 +445,7 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} is not null 
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
-                            as "A" order by "A"."option" limit 5;
+                            as "A" order by length("A"."option"), "A"."option" limit 5;
             ''').format(
                 data_column=data_column,
                 column_name=column_name,

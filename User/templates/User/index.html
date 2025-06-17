@@ -30,10 +30,12 @@
         .container{
             background-color: {{request.session.secColor}};
         }
+
+
     </style>
 {% endblock %}
-{% block headerLeft %}
-    <a class="next-button" href="{% url 'Dash:dash' %}">Back To Dashboard</a>
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Dash:index' %}">Back To Dashboard</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>User Account</h1>{% endblock %}
@@ -81,7 +83,7 @@
 
                     {{username}}
 
-                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
                 </div>
 
             </div>
@@ -95,7 +97,7 @@
 
                     {{email}}
 
-                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
                 </div>
 
             </div>
@@ -109,7 +111,7 @@
 
                     {{password}}
 
-                    <img src="{% static 'images/edit.svg' %}" class="edit" title="Edit this field">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
                 </div>
 
             </div>
@@ -145,14 +147,21 @@
         const file_input = document.querySelector(".image-change input[type='file']");
         const edit_form = document.querySelector(".image-change button");
 
-        edit_image.addEventListener("click", function(event){
-            let confirmThis = confirm("Are you sure you want to change your profile image?");
-
+        edit_image.addEventListener("click", async function(event){
             event.stopPropagation();
-            if(confirmThis==true){
+            let a = await swal({
+                title:"Are you sure?",
+                text: "Are you sure you want to change your profile image?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+                closeModal: false
+              })
+            
+            if (a) {
                 file_input.click();
-            }
-        });
+            }}
+                );
 
         file_input.addEventListener("change", function(event){
             if(this.files.length==1){

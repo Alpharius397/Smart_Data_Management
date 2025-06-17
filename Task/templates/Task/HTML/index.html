@@ -55,29 +55,13 @@
         </div>
     </div>
 
-    <div class="tab" hx-get="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML"></div>
-    <div class="tab" hx-get="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML"></div>
+    <div style="display:none;" hx-get="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+    <div style="display:none;" hx-get="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+    
 {% endblock %}
 
 {% block script %}
-<script>
 
-    function getTaskHeight(){
-        const tabs = document.querySelectorAll(".task-info");
+    <script src="{% static 'js/pages/dash.js' %}"></script>
 
-        for(let tab of tabs){
-            let height = 0;
-            for(let child of tab.childNodes){
-                if(child.offsetHeight){
-                    height = Math.max(height, child.offsetHeight + 10);
-                }
-            }
-            tab.style.setProperty('--tab-height', height + 'px');
-        }
-    }
-
-    window.onresize = getTaskHeight;
-
-
-</script>
 {% endblock %}

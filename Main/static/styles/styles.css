@@ -349,6 +349,35 @@ dialog.loading::backdrop {
     transform 0.2s ease;
 }
 
+[data-title]:hover:after {
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.1s ease 0.5s;
+}
+
+[data-title]:after {
+  content: attr(data-title);
+  background-color: #333;
+  color: #fff;
+  position: absolute;
+  padding: 5px;
+  left: 100%;
+  bottom: 100%;
+  white-space: wrap;
+  width: 150px;
+  box-shadow: 1px 1px 3px #222222;
+  opacity: 0;
+  border: 1px solid #111111;
+  font-size: 12px;
+  z-index: 99999;
+  visibility: hidden;
+  transition: all 0.1s ease 0.5s;
+
+}
+[data-title] {
+  position: relative;
+}
+
 @media screen and (max-width: 600px) {
   .logo img {
     display: none;

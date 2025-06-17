@@ -102,13 +102,12 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect,input from:#search" onsubmit="event.preventDefault();">
-                {% csrf_token %}
+            <form class="htmx-form" hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input:from #search" onsubmit="event.preventDefault();">
 
-                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="cancel, keyup, input from:.searchSelect">
+                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="input from:.searchSelect, input:from #search">
                     <div class="form-field">
                         <label for="search">Search For: </label>
-                        <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" title="Enter a word to search">
+                        <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" data-title="Enter a word to search">
                         <datalist id="suggests" autocomplete="false">
                         </datalist>
                     </div>
@@ -180,19 +179,10 @@
     </div>
 {% endblock %}
 {% block script %}
+<script src="{% static 'js/libs/jquery.js' %}"></script>
+<script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/pages/table.js' %}"></script>
     <script>
-        add_csrf();
-        const a = document.querySelector(".table-view");
-
-        function centerDiv(){
-            const b = document.querySelector(".loading");
-            let left = a.scrollLeft + ((a.offsetWidth - b.offsetWidth) / 2);
-            b.style.left = left + 'px';
-        }
-
-        document.addEventListener("DOMContentLoaded", centerDiv);
-
-        a.addEventListener("scroll", centerDiv);
-        window.onresize = centerDiv;
+        fancy_function_doing_everything_for_table_i_dont_know_why_i_am_writing_the_name_this_long_but_oh_well();
     </script>
 {% endblock %}

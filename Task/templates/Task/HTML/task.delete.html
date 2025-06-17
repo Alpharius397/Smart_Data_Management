@@ -58,6 +58,7 @@
 {% endblock %}
 
 {% block script %}
+<script src="{% static 'js/libs/swal.js' %}"></script>
 <script>
   document.body.addEventListener('htmx:confirm', function(event) {
       event.preventDefault();

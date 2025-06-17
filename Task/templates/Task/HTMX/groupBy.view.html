@@ -4,7 +4,7 @@
 
 <div class="current-group" hx-put="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click from:find img" hx-swap="outerHTML" hx-target="closest div">
     <b> {{ column|rstrip:1 }} </b>
-    <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Change the column"/>
+    <img class="edit-button" src="{% static 'images/edit.svg' %}" data-title="Change the column"/>
 </div>
 
 {% if messages %}

@@ -7,10 +7,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" href="{% static 'styles/select2.css' %}"> -->
-    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
     <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
     {% block styleSheet %}{% endblock %}
     <title>{% block title %}{% endblock %}</title>
@@ -126,11 +122,7 @@
     </footer>
 </body>
 
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/swal.js' %}"></script>
-<script src="{% static 'js/jquery.js' %}"></script>
-<script src="{% static 'js/select2.js' %}"></script>
-<script src="{% static 'js/socket.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
+<script src="{% static 'js/libs/htmx.js' %}"></script>
+<script src="{% static 'js/pages/main.js' %}"></script>
 {% block script %}{% endblock %}
 </html>

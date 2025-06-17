@@ -1,4 +1,4 @@
-<option value="" disabled selected>----------</option>
+<option value="">----------</option>
 {% for opt in options%}
     <option value="{{ opt.0 }}">{{ opt.1 }}</option>
 {% endfor %}
@@ -11,5 +11,5 @@
     </ul>
 {% endif %}
 <script>
-    $('select[name="schema"]').select2()
+    setObserver();
 </script>

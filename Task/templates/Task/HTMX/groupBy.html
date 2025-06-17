@@ -1,6 +1,7 @@
 {% load template %}
 {% load static %}
 
+<div class="tab">
 
 <div class="group-by">
 
@@ -11,10 +12,10 @@
 
         <div class="current-group" hx-put="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click from:find img" hx-swap="outerHTML" hx-target="closest div">
             <b> {{ column|rstrip:1 }} </b>
-            <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Change the column"/>
+            <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Change the column">
         </div>
         <div class="help-icon" 
-        title="The group by column is used to join the various semester data into a single unified format. 
+        data-title="The group by column is used to join the various semester data into a single unified format. 
 Please choose a appropriate column that is unique.">
         <svg height="20px" width="20px" viewBox="0 0 512 512" >
             <style type="text/css">
@@ -36,6 +37,7 @@ Please choose a appropriate column that is unique.">
             </svg>
         </div>
     </div>
+</div>
 </div>
 
 {% if messages %}

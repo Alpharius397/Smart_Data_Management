@@ -2,7 +2,6 @@
 {% load template %}
 {% load static %}
 
-
 {% block styleSheet %}
     <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
 {% endblock %}
@@ -75,26 +74,5 @@
 {% endblock %}
 
 {% block script %}
-<script>
-
-    function getTaskHeight(){
-        const tabs = document.querySelectorAll(".task-info");
-
-        for(let tab of tabs){
-            let height = 0;
-            for(let child of tab.childNodes){
-                if(child.offsetHeight){
-                    height = Math.max(height, child.offsetHeight + 10);
-                    console.log(child.offsetHeight, height);
-
-                }
-            }
-            tab.style.setProperty('--tab-height', height + 'px');
-        }
-    }
-
-    window.onresize = getTaskHeight;
-
-
-</script>
+<script src="{% static 'js/pages/dash.js' %}"></script>
 {% endblock %}

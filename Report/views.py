@@ -168,18 +168,12 @@ def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
     
     if is_auth_get(req):
 
+        schema_id = req.GET.get("schema", "")
+        
         try:
+            post = get_post_id(user)
             records = get_complete_data(req, id, idx)
-            subjects = Subject.objects.filter().values("name", "semester", "marks")
-            
-            sem_dict: dict[str, SubjectMeta] = {} # semester wise subjects with max marks
-            for subs in subjects.iterator():
-                name = subs["name"]
-                semester = subs["semester"]
-                marks = subs["marks"]
-                
-                sem_dict[name] = SubjectMeta(semester, marks)
-                
+            sem_dict = getSubjects(schema_id, post["branch"])
                 
             personal_data: dict[str, str] = {}
             image_data: dict[str, str] = {}
@@ -199,7 +193,7 @@ def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
             
             context.update(get_post(user))
             context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
-
+            
         except Exception as e:
             print(e)
             context["error"] = DEFAULT_ERROR
@@ -288,7 +282,7 @@ def report_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
             sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
             
             context.update(get_post(user))
-            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
+            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data, "schema":schema_id})
 
         except InvalidSchema as f:
             messages.error(req, f.get_error())
@@ -318,6 +312,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
             messages.error(req, f.get_error())
 
         except Exception as e:
+            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/form.html", context=context)
