@@ -57,7 +57,7 @@ def is_auth_delete(req: HttpRequest) -> bool:
 
 def auth_page(req: HttpRequest) -> HttpResponse:
     return redirect(
-        reverse(settings.LOGIN_URL) + f"?next={req.path}&alert=Unauthenticated Request!"
+        reverse(settings.LOGIN_URL) + f"?next={req.path}&warning=Unauthenticated Request!"
     )
 
 

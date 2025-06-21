@@ -1,19 +1,16 @@
 {% load static %}
 {% load template %}
 
-{% if messages %}
-    <ul class="messages" id="messages" hx-swap-oob="true">
-        {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
+<script>
+    {
+        swal({
+            text:`{{ text|escapejs }}`,
+            title: `{{ title|escapejs }}`,
+            icon: `{{ icon|escapejs }}`,
+        });
+    }
 
-<div class="row-data column-{{ column }}">
+</script>
 
-    <div hx-get="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}"
-        hx-vals='{"column":"{{column}}"}'
-        hx-target="closest div.row-data" hx-swap="outerHTML" hx-trigger="load">
-            <b>Loading...</b>
-        </div>
-</div>
+{% include 'Table/HTMX/base/text.form.html' with locked=locked %}
+

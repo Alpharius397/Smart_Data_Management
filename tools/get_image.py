@@ -19,11 +19,23 @@ def get_image_data(
     images = {}
     for image in sheet._images:  # type: ignore
         img = Image.open(BytesIO(image._data()))
+        width, height = img.width, img.height
+        default_size = 200
+        
+        if width > height:
+            height = int((height / width) * default_size) 
+            width = default_size
+        else:
+            width = int((width / height) * default_size)
+            height = default_size
+
+        temp = img.resize((width, height), Image.Resampling.BILINEAR)
 
         with BytesIO() as b:
-            img.save(b, format=img.format, quality=95)
+            temp.save(b, format=img.format, quality=95)
+            print(1)
             images[(image.anchor._from.row, image.anchor._from.col)] = (
-                f"{img.width}:{img.height}:{b64encode(b.getvalue()).decode()}"
+                f"{temp.width}:{temp.height}:{b64encode(b.getvalue()).decode()}"
             )
 
     return images
@@ -64,7 +76,7 @@ def image_load(data: bytes) -> tuple[list[int], pandas.DataFrame]:
     try:
         op_data = openpyxl.load_workbook(BytesIO(data))
         pd_data = pandas.read_excel(BytesIO(data))
-    except Exception:
+    except Exception as e:
         return [], pd_data
 
     if op_data and len(op_data.sheetnames) == 0:

@@ -1,0 +1,62 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
+{% endblock %}
+
+{% block title %} Task Dashboard {% endblock %}
+
+
+{% block headerLeft %}
+{% endblock %}
+
+{% block headerCenter %}<h1>Semester Dashboard</h1>{% endblock %}
+
+{% block headerOption %}
+
+    <a class="next-button" href="{% url 'Table:index' id=id %}">View Complete Data</a>
+    <a class="next-button" href="{% url 'Dash:index' %}">Back To DashBoard</a>
+
+{% endblock %}
+
+{% block mainContent %}
+<ul class="messages" id="messages">
+    {% if messages %}
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+    {% endif %}
+</ul>
+
+    <div class="tab">
+        <h2>Semester List</h2>
+
+        <div class="sub-tab">
+
+            <form hx-get="{% url 'Task:htmxIndex' id=id %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input, load" onsubmit="event.preventDefault()">
+                <div class="search-bar">
+                    <svg height="20px" width="20px" viewBox="0 0 2000 2000" class="search"><path d="m1152 832c0-247-201-448-448-448s-448 201-448 448 201 448 448 448 448-201 448-448zm512 832c0 70-58 128-128 128-34 0-67-14-90-38l-343-342c-117 81-257 124-399 124-389 0-704-315-704-704s315-704 704-704 704 315 704 704c0 142-43 282-124 399l343 343c23 23 37 56 37 90z"/></svg>
+
+                    <input type="text" placeholder="Search for Semester" name="semester" />
+                    <span></span>
+                </div>
+            </form>
+            <div class="task-list">
+                <div class="loading">
+                    <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                    <h2>Loading...</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+
+    <script src="{% static 'js/pages/dash.js' %}"></script>
+
+{% endblock %}

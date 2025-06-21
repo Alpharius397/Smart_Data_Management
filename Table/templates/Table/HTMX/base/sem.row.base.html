@@ -1,0 +1,65 @@
+{% load template %}
+{% load static %}
+
+<div class="rows" id="{{rowID}}" hx-get="{% url 'Table:htmxSemRefresh' id=id idx=idx rowID=rowID %}" hx-trigger="click from:find .refresh delay:1s" hx-target="closest div" hx-swap="outerHTML settle:500ms">
+            
+    {% for column, value in row.data.items %}
+
+        {% if column|isImage is True %}
+            {% include 'Table/HTMX/base/image.form.html' with locked=row.locked column=column|encode|hex %}
+
+        {% elif column|isText is True %}
+
+            {% include 'Table/HTMX/base/text.form.html' with locked=row.locked column=column|encode|hex %}
+
+        {% endif %}
+
+    {% endfor %}
+    
+    <div class="row-data view-area">
+        <div class="grid-layout">
+            <div class="data-loading">
+                <button class="view-icon" onclick="redirect(`{% url 'Report:semIndex' id=id idx=idx rowID=rowID %}`)">
+                    <img src="{% static 'images/view.png' %}" alt="Refresh Page" loading="lazy">
+                    <p class="view-text">View</p>
+                </button>
+                <div class="refresh-button">
+                    <button class="refresh" id="refresh-{{rowID}}"><img src="{% static 'images/refresh.png' %}" alt="Refresh Page" loading="lazy"><p class="refresh-text">Refresh</p></button>
+                </div>
+
+            </div>
+            <div class="status-report">
+                <div class="report-status">
+                    <p>Verify Status: </p>
+                    {% if row.status is True %}
+                        <p class="correct">Verified</p>
+                    {% elif row.status is False %}
+                        <p class="wrong">Rejected</p>
+                    {% else %}
+                        <p class="none">Unchecked</p>
+                    {% endif %}
+                </div>
+
+                <div class="report-status">
+                    <p>Lock Status: </p>
+                    {% if row.locked is True %}
+                        <p class="wrong">Locked</p>
+                    {% else %}
+                        <p class="correct">Unlocked</p>
+                    {% endif %}
+                </div>
+
+                <div class="report-status">
+                    <p>Issue Status: </p>
+                    {% if row.issued is True %}
+                        <p class="correct">Issued</p>
+                    {% else %}
+                        <p class="wrong">Not Issued</p>
+                    {% endif %}
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>

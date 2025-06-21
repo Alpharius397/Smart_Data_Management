@@ -72,6 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.gzip.GZipMiddleware"
 ]
 
 ROOT_URLCONF = "Main.urls"
@@ -181,7 +182,7 @@ MEDIA_ROOT = os.path.join(
 MEDIA_URL = "media/"  # URL prefix for accessing media files
 APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
 DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")
-LOGIN_URL = "Login:login"
+LOGIN_URL = "Login:index"
 MONGO_URL = "mongodb://127.0.0.1:27017/"
 MONGO_CRED = MongoDB("smart", "excel")
 KEY = b"123456789123456789123456"

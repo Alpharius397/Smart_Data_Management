@@ -344,6 +344,9 @@ select[name="locked"] option[value="false"], select[name="locked"]:has( > option
     width: 33%;
 }
 
+.semester-report.htmx-request{
+    opacity: 0.5;
+}
 
 .semester-title{
     font-size: larger;

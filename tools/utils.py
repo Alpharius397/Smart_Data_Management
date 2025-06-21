@@ -1,6 +1,9 @@
-from typing import Iterator, TypedDict, Literal, NamedTuple  # type: ignore
+from typing import Iterator, TypedDict, Literal, NamedTuple
+import typing  # type: ignore
 from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
+from django.forms import forms
+from django.forms.utils import ErrorDict, ErrorList
 from constants.constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
 
 
@@ -51,18 +54,12 @@ def get_3_value(value: Literal['true', 'false', 'none']) -> bool | None:
     else:
         return False
 
-def boolSQL(value: bool | None):
+def get_string_value(value: bool | None) -> Literal['true', 'false', 'none']:
     match(value):
         case True: return 'true'
         case False: return 'false'
         case None: return 'null'
         case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
-        
-        
-def get_string_value(value: bool | None) -> Literal['true', 'false', 'none']:
-    if value is True:  return 'true'
-    if value is False:  return 'false'
-    if value is None:  return 'none'
 
 def textAnnotate(column: str) -> str:
     return f"{column}T"
@@ -148,7 +145,14 @@ def segregateColumns(columns: list[str]) -> ColumnType:
             image.append(column)
 
         else:
-            print(column)
             raise IncorrectDataFormat()
 
     return ColumnType(image, text)
+
+def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Literal['success', 'error', 'warning'] = 'error', title: str = ''):
+    
+    if context:
+        context.update({"text": text, "icon": icon, "title": title})
+        return {}
+    else:
+        return {"text": text, "icon": icon, "title": title}

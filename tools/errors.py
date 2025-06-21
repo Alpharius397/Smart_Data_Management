@@ -14,3 +14,4 @@ class ImageExpansionFailed(MainException):
 class IncorrectDataFormat(MainException):
     def __init__(self) -> None:
         super().__init__("Incorrect Data Format detected")
+

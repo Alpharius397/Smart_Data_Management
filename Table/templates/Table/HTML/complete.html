@@ -3,6 +3,7 @@
 {% load static %}
 
 {% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/select2.css' %}">
     <link rel="stylesheet" href="{% static 'styles/Table/styles.css' %}">
 {% endblock %}
 
@@ -102,9 +103,9 @@
 
         <div class="searchQuery">
             <h2>Search Columns: </h2>
-            <form class="htmx-form" hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input:from #search" onsubmit="event.preventDefault();">
+            <form class="htmx-form" hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input from:#search" onsubmit="event.preventDefault();">
 
-                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="input from:.searchSelect, input:from #search">
+                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="input from:.searchSelect, input from:#search">
                     <div class="form-field">
                         <label for="search">Search For: </label>
                         <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" data-title="Enter a word to search">
@@ -182,7 +183,7 @@
 <script src="{% static 'js/libs/jquery.js' %}"></script>
 <script src="{% static 'js/libs/select2.js' %}"></script>
 <script src="{% static 'js/pages/table.js' %}"></script>
-    <script>
-        fancy_function_doing_everything_for_table_i_dont_know_why_i_am_writing_the_name_this_long_but_oh_well();
-    </script>
+<script>
+    fancy_function_doing_everything_for_table_i_dont_know_why_i_am_writing_the_name_this_long_but_oh_well();
+</script>
 {% endblock %}

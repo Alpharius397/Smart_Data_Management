@@ -828,7 +828,6 @@ class RedisConnection:
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-        
         return False
         
     def unset(self, key: str) -> bool:
@@ -862,5 +861,13 @@ class RedisConnection:
     @staticmethod        
     def get_secs_from_minutes(minutes:int) -> int: 
         return minutes*60
+    
+    
+    def __enter__(self):
+        return self.connect()
+    
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
 

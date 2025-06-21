@@ -1,5 +1,5 @@
 import re
-from django import template
+from django import forms, template
 from Main.templatetags.bad_image import bad_image
 from typing import NamedTuple
 from datetime import datetime
@@ -54,15 +54,13 @@ def len__(obj) -> int:
 
 @register.filter(name="img")
 def image(obj) -> Image:
-    default_height = 200
 
     try:
         raw_img = obj.split(":")
         width, height, img = raw_img
-
-        width = int((int(width) / int(height)) * default_height)
-        height = default_height
+        
     except:
+
         width, height = 200, 200
         img = bad_image
     img = img.replace("-", "+").replace("_", "/")
@@ -165,7 +163,7 @@ def hex(obj: bytes):
 
 @register.filter(name="rstrip")
 def rstrip(obj: str, index: int):
-    return obj[:-index]
+    return 'None' if obj is None else obj[:-index]
 
 @register.filter(name="isImage")
 def isImage(obj: str):
@@ -174,3 +172,19 @@ def isImage(obj: str):
 @register.filter(name="isText")
 def isText(obj: str):
     return str(obj[-1]) == 'T'
+
+@register.filter(name="step")
+def step(obj: forms.Form, steps: int = 0):
+    fields: list = []
+    current: list = []
+    
+    for idx, field in enumerate(iter(obj)):
+        
+        if idx>0 and idx%steps == 0:
+            fields.append(current.copy())
+            current.clear()
+        current.append(field)
+        
+    if current: fields.append(current)
+        
+    return fields

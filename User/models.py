@@ -55,6 +55,7 @@ class RoleType:
 
 ############ MODEL ############
 class User(_User):
+    """ Custom User Proxy """
     id: int
     role: "Role"
     email: str  # type: ignore

@@ -1,18 +1,65 @@
-from django.forms import Form
-from django import forms
+from Main.forms import MainForm
+from django import forms # type: ignore
+from django.urls import reverse # type: ignore
 from University.models import University
+from User.models import RoleType
 
-LEVEL = ['Admin','Manager']
-
-class RegisterForm(Form):
-    username = forms.CharField(max_length=100, required=True,help_text='Enter the username')
-    email = forms.EmailField(max_length=255,required=True,help_text='Enter the email')
-    level = forms.ChoiceField(help_text='Enter the role',required=True,choices=[('Manager','Manager'),('Admin','Admin')])
-    university = forms.ModelChoiceField(help_text='Enter the University',required=True,queryset=University.objects.all(),widget=forms.Select(attrs={'hx-get':'uni/','hx-target':'#id_institute','hx-swap':'innerHTML','hx-trigger':'load,click'}))
-    institute = forms.CharField(help_text='Enter the Institute',required=True,widget=forms.Select(attrs={'hx-get':'insti/','hx-target':'#id_branch','hx-swap':'innerHTML','hx-trigger':'load,click'}))
-    branch = forms.CharField(help_text='Enter the Branch',required=True,widget=forms.Select())
-    password = forms.CharField(widget=forms.PasswordInput(),help_text='Enter the password')
-    confirm_password = forms.CharField(widget=forms.PasswordInput(),help_text='Re-enter the password')
+class RegisterForm(MainForm):
+    username = forms.CharField(
+        max_length=100, 
+        required=True,
+        help_text='Enter the username'
+    )
+    
+    email = forms.EmailField(
+        max_length=255,
+        required=True,
+        help_text='Enter the email'
+    )
+    
+    level = forms.ChoiceField(
+        help_text='Choose the role',
+        required=True,
+        choices=[(RoleType.MANAGER,RoleType.MANAGER),(RoleType.ADMIN,RoleType.ADMIN)]
+    )
+    
+    university = forms.ModelChoiceField(
+        help_text='Choose the University',
+        required=True,
+        queryset=University.objects.all(),
+        widget=forms.Select(attrs={
+                'hx-get':"htmx/institute/",
+                'hx-target':'#id_institute',
+                'hx-swap':'innerHTML',
+                'hx-trigger':'load,click'
+                })
+        )
+    
+    institute = forms.CharField(
+        help_text='Choose the Institute',
+        required=True,
+        widget=forms.Select(attrs={
+                'hx-get':"htmx/branch/",
+                'hx-target':'#id_branch',
+                'hx-swap':'innerHTML',
+                'hx-trigger':'load,click'})
+    )
+    
+    branch = forms.CharField(
+        help_text='Choose the Branch',
+        required=True,
+        widget=forms.Select()
+    )
+    
+    password = forms.CharField(
+        widget=forms.PasswordInput(),
+        help_text='Enter the password'
+    )
+    
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(),
+        help_text='Re-enter the password'
+    )
     
     def clean_confirm_password(self):
         password_1 = self.cleaned_data.get("password",None)
@@ -25,14 +72,3 @@ class RegisterForm(Form):
             raise forms.ValidationError(("Password cannot be different"))
             
         return password_2
-    
-    def clean_level(self):
-        level = self.cleaned_data.get("level",None)
-        
-        if(level is None):
-            raise forms.ValidationError(("Level cannot be empty"))
-        
-        if(level not in LEVEL):
-            raise forms.ValidationError(("Unknown level detected"))
-        
-        return level

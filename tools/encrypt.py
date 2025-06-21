@@ -127,8 +127,8 @@ def authTokenCheck(token: str):
         _encrypted = b64decode(token)
         iv, encrypted = _encrypted[:AES_IV_LENGTH], _encrypted[AES_IV_LENGTH:]
 
-        cipherA = AES.new(settings.AES_KEY_2.encode(), mode=AES.MODE_CBC, iv=iv)
-        cipherB = AES.new(settings.AES_KEY_1.encode(), mode=AES.MODE_CBC, iv=iv)
+        cipherA = AES.new(settings.AES_KEY_2, mode=AES.MODE_CBC, iv=iv)
+        cipherB = AES.new(settings.AES_KEY_1, mode=AES.MODE_CBC, iv=iv)
 
         data = cipherB.decrypt(cipherA.decrypt(encrypted))
 

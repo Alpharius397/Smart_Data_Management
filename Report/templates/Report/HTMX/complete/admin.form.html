@@ -1,0 +1,50 @@
+{% load template %}
+
+<div class="semester-feedback">
+    <h2> Feedback Form </h2>
+    <form onsubmit="event.preventDefault()">
+        {% for field in form %}
+            <div class="form-field">
+                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                {{ field }}
+            </div>
+            <p class="help-text">{{ field.help_text }}</p>
+            
+        {% endfor %}
+    </form>
+</div>
+
+{% if messages %}
+    <script>
+        {
+            function makeMessage(tags, message){
+                let a = document.createElement('li');
+                a.className=tags;
+                a.innerHTML = message
+                return a;
+            }
+            
+            let wrong = false;
+    
+    
+            let main = document.createElement("ul");
+            main.className="messages";
+
+            let tag = '';
+            {% for message in messages %}
+                main.appendChild(makeMessage("{{ message.tags }}", "{{ message }}"));
+                tag = '{{message.tags}}';
+        
+                if(tag != 'success' && !wrong){
+                    wrong = true;
+                }
+            {% endfor %}
+            
+            swal({
+                content: main,
+                icon: ((!wrong)?("success"):("error"))
+            })}
+    
+    </script>
+{% endif %}
+

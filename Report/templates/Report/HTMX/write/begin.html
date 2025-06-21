@@ -1,0 +1,37 @@
+
+<div class="messages" id="messages" hx-swap-oob="true">
+    <script>
+        {
+            {% if ok is True %}
+                swal({
+                    title: "Are you sure?",
+                    text: "{{ msg }}", 
+                    icon: "info"
+                }).then((ok) => {
+                    if(ok){
+                        window.location.href = "{{path}}{{url}}"
+                    }
+                })
+
+            {% else %}
+
+                function makeMessage(tags, message){
+                    let a = document.createElement('li');
+                    a.className=tags;
+                    a.innerHTML = message
+                    return a;
+                }
+                
+                let main = document.createElement("ul");
+                main.className="messages";
+                main.appendChild(makeMessage("success", "{{ msg }}"));
+                swal({
+                    content: main,
+                    icon: "warning"
+                });
+
+            {% endif %}
+
+        }
+    
+    </script>

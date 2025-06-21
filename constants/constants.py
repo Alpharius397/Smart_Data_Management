@@ -16,6 +16,9 @@ MONGO_ERROR: str = "MongoDB Connection Failed"
 WRONG_IMAGE: str = "Incorrect Image Format Detected"
 WRONG_PERSONAL: str = "Incorrect Data Format Detected"
 WRONG_SEM: str = "Incorrect Semester Format Detected"
+SUCCESS: str = "success"
+ERROR: str = "error"
+WARNING: str = "warning"
 
 class ReportStructure(typing.NamedTuple):
     profile_img: list[str]

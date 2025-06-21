@@ -64,15 +64,17 @@
         {% endfor %}
     </ul>
 
-    <div class="tab" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select">
+    <div class="tab" hx-get="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:find button" hx-include="find select">
         <h2> Schema Options </h2>
     
-        <div class="schema-field">
+        <div class="schema-field" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select" hx-indicator=".semester-report">
             Choose a valid schema option:
             
             <select name="schema" hx-get="{% url 'Report:htmxSchema' %}" hx-target="this" hx-trigger="load" hx-swap="innerHTML" hx-params="none">
                 <option value="" disabled selected>----------</option>
             </select>
+
+            <button id="click-issue">Issue</button>
         </div>
 
     </div>
@@ -88,7 +90,10 @@
     
     <div class="tab">
         <div class="semester-report" >
-            <h1>Please choose a valid schema to generate report</h1>
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Fetching Data...</h2>
+            </div>
         </div>
 
     </div>
@@ -99,5 +104,6 @@
 {% block script%}
 <script src="{% static 'js/libs/jquery.js' %}"></script>
 <script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/libs/swal.js' %}"></script>
 <script src="{% static 'js/pages/report.js' %}"></script>
 {% endblock %}

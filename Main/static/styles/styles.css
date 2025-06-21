@@ -378,6 +378,10 @@ dialog.loading::backdrop {
   position: relative;
 }
 
+.swal-text{
+  text-align: center;
+}
+
 @media screen and (max-width: 600px) {
   .logo img {
     display: none;

@@ -1,17 +1,17 @@
-{% if redirect %}
+<script>
+    {% if error is False and redirect %}
+        setTimeout(()=>{
+            window.location.replace(`{{redirect}}`);
+        }, 1000);
+    {% endif %}
+    
+    {
+        swal({
+            text:`{{ text|escapejs }}`,
+            title: `{{ title|escapejs }}`,
+            icon: `{{ icon|escapejs }}`,
+        });
+    }
 
-    <script>
-        window.location.replace("{{redirect}}");
-    </script>
 
-{% endif %}
-
-{% if messages %}
-
-    <ul class="messages">
-        {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
-        {% endfor %}
-    </ul>
-
-{% endif %}
+</script>

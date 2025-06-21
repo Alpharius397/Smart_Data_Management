@@ -1,23 +1,29 @@
 {% load template %}
 
-{% if messages %}
-    <ul class="messages" id="messages" hx-swap-oob="true">
-        {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-
-{% if locked is True %}
+{% if error is True %}
     <script>
-        htmx.trigger("button#refresh-{{rowID}}", "click")
+        {
+            swal({
+                text:`{{ text|escapejs }}`,
+                title: `{{ title|escapejs }}`,
+                icon: `{{ icon|escapejs }}`,
+            });
+        }
+
     </script>
 {% else %}
-    <form class="edit-form" hx-post="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-vals='{"column":"{{column}}"}' hx-target="closest div.row-data" hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
-        {% csrf_token %}
-        <input type="text" name="value" value="{{value}}">
-        <button type="submit" value="Change" class="submit">Change</button>
-        <button type="cancel" value="Discard" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-target="closest div.row-data" hx-vals='{"column":"{{column}}"}'>Cancel</button>
 
-    </form>
+    {% if locked is True %}
+        <script>
+            htmx.trigger("button#refresh-{{rowID}}", "click")
+        </script>
+    {% else %}
+        <form class="edit-form" hx-post="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-target="closest div.row-data" hx-vals='{"column":"{{column}}"}' hx-trigger="click from:find button[type='submit']" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+            <input type="text" name="value" value="{{value}}">
+            <button type="submit" value="Change" class="submit">Change</button>
+            <button type="cancel" value="Discard" class="cancel" hx-trigger="click from:closest button" hx-get="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}" hx-swap="outerHTML" hx-target="closest div.row-data" hx-vals='{"column":"{{column}}"}'>Cancel</button>
+
+        </form>
+    {% endif %}
 {% endif %}

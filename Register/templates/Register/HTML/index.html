@@ -1,0 +1,45 @@
+{% load static %}
+{% load template %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'styles/Register/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/Register/styles.css' %}">
+    <title>Register Form</title>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Register</h2>
+        <form hx-post="{% url 'Register:htmxRegister' %}" hx-target="this" hx-trigger="click from:find button" hx-swap="afterend" onsubmit="event.preventDefault()">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                {% for fields in form|step:3 %}
+                    <div class="form-subgrid" style="grid-template-columns:repeat({{fields|len}}, 1fr);">
+                        {% for field in fields %}
+                            <div class="form-group">
+                                <label for='{{ field.name }}'>{{ field.label }}: </label>
+                                {{ field }}
+                                <p class="help_text">{{ field.help_text }} </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+                
+            <button class="register-button" id="reg">Register</button>
+        </form>
+        <div class="form-footer">
+            <p>Already have an account? <a href="{% url 'Login:index' %}">Login</a></p>
+        </div>
+    </div>
+
+    <script src="{% static 'js/libs/htmx.js' %}"></script>
+    <script src="{% static 'js/libs/swal.js' %}"></script>
+
+
+</body>
+</html>

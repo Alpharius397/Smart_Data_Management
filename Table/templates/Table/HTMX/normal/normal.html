@@ -1,28 +1,17 @@
 {% load static %}
 {% load template %}
 
-{% if messages %}
-    <ul class="messages" id="messages" hx-swap-oob="true">
-        {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-        {% endfor %}
-    </ul>
+{% if error is True %}
+    <script>
+        {
+            swal({
+                text:`{{ text|escapejs }}`,
+                title: `{{ title|escapejs }}`,
+                icon: `{{ icon|escapejs }}`,
+            });
+        }
+
+    </script>
 {% endif %}
-<div class="row-data column-{{ column }}">
+{% include 'Table/HTMX/base/text.form.html' with locked=locked %}
 
-    {% if locked is not True %}
-        <div hx-post="{% url 'Table:htmxSemEditText' id=id idx=idx rowID=rowID %}"
-             hx-vals='{"column":"{{column}}"}'
-             hx-target="closest div" hx-swap="outerHTML" hx-trigger="click from:find img">
-
-            {{ value|str }}
-            <img class="edit-button" src="{% static 'images/edit.svg' %}" data-title="Edit This Field">
-
-        </div>
-
-    {% else %}
-        <div>
-            {{value|str}}
-        </div>
-    {% endif %}
-</div>

@@ -4,6 +4,7 @@ const columns = document.querySelector("select#column");
 
 const htmxSuggest = document.querySelector(".here-cause-htmx");
 const htmxForm = document.querySelector(".htmx-form");
+var firstTime = true;
 
 function centerDiv(){
     var b = document.querySelector(".loading");
@@ -18,7 +19,7 @@ window.onresize = centerDiv;
 document.addEventListener("htmx:confirm", function(event){
     if(event.detail.elt === htmxForm){
         event.preventDefault(); 
-        if((columns?.value !== '' && searchText?.value !== '') || (searchText?.value === '' && columns?.value === '')){
+        if((columns.value !== '' && searchText.value !== '') || (searchText.value === '' && columns.value === '')){
             event.detail.issueRequest();
         }
     }
@@ -40,7 +41,11 @@ function setObserver(){
 
         for(const mutation of mutations){
             if(mutation.type == 'attributes' && mutation.attributeName == 'title'){
-                document.querySelector("select#status").dispatchEvent(new Event("input"));
+                if(firstTime){
+                    firstTime = !firstTime;
+                } else {
+                    document.querySelector("select#status").dispatchEvent(new Event("input"));
+                }
             }
         }
     });

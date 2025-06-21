@@ -114,6 +114,7 @@
     </dialog>
     <div class='container'>
         {% block mainContent %}{% endblock %}
+        {% csrf_token %}
     </div>
 
     <footer>
@@ -123,6 +124,7 @@
 </body>
 
 <script src="{% static 'js/libs/htmx.js' %}"></script>
+<script src="{% static 'js/libs/swal.js' %}"></script>
 <script src="{% static 'js/pages/main.js' %}"></script>
 {% block script %}{% endblock %}
 </html>

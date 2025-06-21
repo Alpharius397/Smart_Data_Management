@@ -1,15 +1,9 @@
-/**
- *
- * @param {String} value
- * @returns {String | null}
- */
-
 const hamBurgerOption = document.querySelector(".header-option"); // On all pages so no worries
 const hamBurgerIcon = document.querySelector(".hamburger"); // On all pages so no worries
-const header = document.querySelector("header"); // On all pages so no worries
 
 function get_header() {
 
+  if(hamBurgerOption == null ) return
   let childCount = hamBurgerOption.childElementCount;
 
   hamBurgerOption.style.setProperty("--height", 60*(childCount) + 'px');
@@ -20,17 +14,17 @@ function get_header() {
   }
 }
 
-hamBurgerIcon.addEventListener("click", function(event) {
-  hamBurgerIcon.classList.toggle("open");
-  hamBurgerOption.classList.toggle("close");
+hamBurgerIcon?.addEventListener("click", function(event) {
+  hamBurgerIcon?.classList.toggle("open");
+  hamBurgerOption?.classList.toggle("close");
   event.stopPropagation();
 });
 
 document.addEventListener("click", function(event) {
 
   if((event.target !== hamBurgerOption) && (event.target !== hamBurgerIcon)) {
-    if(hamBurgerIcon !== null && hamBurgerIcon.classList.contains("open")){
-      hamBurgerIcon.click();
+    if(hamBurgerIcon !== null && hamBurgerIcon?.classList.contains("open")){
+      hamBurgerIcon?.click();
     }
   }
 });
@@ -70,14 +64,17 @@ function redirect(url_to_redirect) {
  * @param {Event} event
  * @returns {void}
  */
-function confirmPrompt(event) {
-  let confirmConfirm = confirm("Are you sure you want to proceed?");
+async function confirmPrompt(event) {
+  event.preventDefault();
 
-  if (confirmConfirm != true) event.stopImmediatePropagation();
+  let confirmConfirm = await swal(
+    {title:"Are you sure?",text:"Are you sure about this action",icon:"warning",buttons:true,dangerMode:true}
+  );
+  console.log(confirmConfirm)
+  if (confirmConfirm !== true) event.stopImmediatePropagation();
 }
 
 /**
- *
  * @param {String} selector
  * @param {String} classOne
  */
@@ -99,3 +96,26 @@ function handleSize() {
 
 get_header()
 window.onresize = handleSize;
+
+/**
+ * @param {string} className 
+ * @param {string} message 
+ * @returns
+ */
+function makeLi(className, message){
+  let a = document.createElement('li');
+  a.className=className;
+  a.innerHTML = message
+  return a;
+}
+
+/**
+ * @param {string} className 
+ * @param {string} message 
+ * @returns
+ */
+function makeUl(className = "messages"){
+  let a = document.createElement('ul');
+  a.className=className;
+  return a;
+}

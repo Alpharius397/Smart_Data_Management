@@ -19,3 +19,11 @@ class InvalidSchema(MainException):
         super().__init__(
             "Schema Parameter was not found! Please ensure that a valid schema is defined"
         )
+        
+class DataNotLocked(MainException):
+    def __init__(self):
+        super().__init__("Current Data is not locked! Please lock the data first")
+        
+class RedisFailed(MainException):
+    def __init__(self):
+        super().__init__("Failed To Process Request")

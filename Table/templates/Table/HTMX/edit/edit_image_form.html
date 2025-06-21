@@ -1,11 +1,16 @@
 {% load template %}
 
-{% if messages %}
-    <ul class="messages" id="messages" hx-swap-oob="true">
-        {% for message in messages %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-        {% endfor %}
-    </ul>
+{% if error is True %}
+    <script>
+        {
+            swal({
+                text:`{{ text|escapejs }}`,
+                title: `{{ title|escapejs }}`,
+                icon: `{{ icon|escapejs }}`,
+            });
+        }
+
+    </script>
 {% endif %}
 {% if locked is True %}
     <script>

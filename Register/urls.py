@@ -3,7 +3,8 @@ from .views import *
 
 app_name = 'Register'
 urlpatterns = [
- 	path('',register_view,name='register'),
-  	path('uni/',insti_change,name='insti'),
-  	path('insti/',branch_change,name='branch'),
+ 	path('',register_view,name='index'),
+ 	path('htmx',htmx_register_view,name='htmxRegister'),
+  	path('htmx/institute/',insti_change,name='htmxInstitute'),
+  	path('htmx/branch/',branch_change,name='htmxBranch'),
 ]

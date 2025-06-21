@@ -24,7 +24,7 @@
 {% endblock %}
 
 {% block headerOption %}
-    <a class="next-button logout" href="{% url 'Logout:logout' %}" onclick="confirmPrompt()">Logout</a>
+    <a class="next-button logout" href="#" onclick="confirmPrompt(event)">Logout</a>
     {% block manager_button%}{% endblock %}
     {% block uploader_button%}{% endblock %}
 {% endblock %}
@@ -74,5 +74,5 @@
 {% endblock %}
 
 {% block script %}
-<script src="{% static 'js/pages/dash.js' %}"></script>
+    <script src="{% static 'js/pages/dash.js' %}"></script>
 {% endblock %}

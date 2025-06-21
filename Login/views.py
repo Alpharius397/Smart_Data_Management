@@ -6,18 +6,36 @@ from django.urls import reverse  # type: ignore
 from django.contrib.auth import login, authenticate  # type: ignore
 from User.models import is_manager, is_admin
 from django.contrib import messages  # type: ignore
-from tools.url_auth import is_hx_post
-from constants.constants import DEFAULT_ERROR
+from tools.url_auth import is_hx_post, htmx_response
+from constants.constants import DEFAULT_ERROR, ERROR, SUCCESS, WARNING
+from tools.utils import setSwalAlert
 
 
 def login_view(req: HttpRequest) -> HttpResponse:
     if req.method == "GET":
-        return render(req, "Login/index.html", {"form": LoginForm})
+        success = req.GET.get(SUCCESS, "")
+        warning = req.GET.get(WARNING, "")
+        
+        context: dict[str, LoginForm | str] = {"form": LoginForm()}
+        
+        if warning :
+            context.update({"message": warning, "icon": WARNING, "title": "Warning"})
+        
+        elif success:
+            context.update({"message": success, "icon": SUCCESS, "title": "Successful Action"})
 
-    elif is_hx_post(req):
+        return render(req, "Login/HTML/index.html", context)
+    
+    return HttpResponse(status=403)
+
+@htmx_response
+def htmx_login_view(req: HttpRequest) -> HttpResponse:
+    context = {"error": False, "redirect":req.build_absolute_uri(), **setSwalAlert()}
+    
+    if is_hx_post(req):
         try:
-            next_url = (
-                req.GET.get("next") if req.GET.get("next") else reverse("Dash:index")
+            context["redirect"] = (
+                next if ((next := req.GET.get("next")) and (next != req.build_absolute_uri() )) else reverse("Dash:index")
             )
             f = LoginForm(req.POST)
 
@@ -29,18 +47,19 @@ def login_view(req: HttpRequest) -> HttpResponse:
 
                 if (user is not None) and (is_manager(user) or is_admin(user)):
                     login(req, user)
-                    return render(
-                        req, "Login/HTMX/messages.html", {"redirect": next_url}
-                    )
-
-                messages.error(req, "Incorrect Credentials")
-                return render(req, "Login/HTMX/messages.html")
+                    setSwalAlert(context, "Login was successful!\nRedirecting to Dashboard", "success", "Login Success")
+                else:
+                    setSwalAlert(context, "Incorrect Credentials", "warning", "Login Failed")
+                    context["error"] = True
+                    
 
             else:
-                messages.error(req, "Login Failed")
-                return render(req, "Login/HTMX/messages.html")
-        except Exception as e:
-            print(e)
-            messages.error(req, DEFAULT_ERROR)
+                setSwalAlert(context, f.getErrors(), "warning", "Login Failed")                
+                context["error"] = True
+                
+        except Exception:
+            context["error"] = True
 
-    return HttpResponse(status=403)
+        return render(req, "Login/HTMX/messages.html", context=context)
+    
+    return None
