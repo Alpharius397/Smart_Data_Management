@@ -43,16 +43,7 @@
 <script src="{% static 'js/pages/main.js' %}"></script>
 <script src="{% static 'js/libs/htmx.js' %}"></script>
 <script src="{% static 'js/libs/swal.js' %}"></script>
-<script>
-    {% if text and icon and title %}
-    {
-        swal({
-            text:`{{ text|escapejs }}`,
-            title: `{{ title|escapejs }}`,
-            icon: `{{ icon|escapejs }}`,
-        });
-    }
 
-    {% endif %}
-</script>
+{% include "HTMX/swal.html" %}
+
 </html>

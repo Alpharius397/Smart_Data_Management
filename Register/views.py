@@ -1,17 +1,15 @@
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
-from Register.errors import InvalidLevel, UserExists
+from django.shortcuts import render # type: ignore
+from django.http import HttpRequest # type: ignore
+from Register.errors import UserExists 
 from Register.forms import RegisterForm
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group # type: ignore
 from tools.url_auth import htmx_response, is_hx_post, is_hx_get
 from User.models import User, Role, RoleType
 from University.models import Institute, Branch
 from constants.constants import DEFAULT_ERROR, WARNING
-from django.db.models import Q
-from django.contrib import messages
-from django.urls import reverse
-from django.db import transaction
-
+from django.db.models import Q # type: ignore
+from django.urls import reverse # type: ignore
+from django.db import transaction # type: ignore
 from tools.utils import setSwalAlert
 
 def register_view(req:HttpRequest):
@@ -25,7 +23,7 @@ def register_view(req:HttpRequest):
 def htmx_register_view(req: HttpRequest):
     if is_hx_post(req) :
         f = RegisterForm(req.POST)
-        context = {"error": False, "redirect":reverse("Login:index"), **setSwalAlert()}
+        context = setSwalAlert(title="Registration Process")
 
         try:
             with transaction.atomic():
@@ -52,22 +50,22 @@ def htmx_register_view(req: HttpRequest):
                         user.groups.add(group)
                         
                     role.save()
-                    setSwalAlert(context, "Registration was successful", 'success', "Registration Success")
+                    context["redirect"] = reverse("Login:index")
+                    setSwalAlert(context, "Registration was successful\nRedirecting to Login Page", 'success')
                 else:
-                    setSwalAlert(context, f.getErrors(), 'warning', "Registration Failed")
+                    setSwalAlert(context, f.getErrors())
                     
         except UserExists as f:
-            setSwalAlert(context, f.get_error(), 'warning', "Registration Failed")
+            setSwalAlert(context, f.get_error())
         
         except Branch.DoesNotExist as g:
-            setSwalAlert(context, f"Specified Branch does not exists", 'error', "Registration Failed")
+            setSwalAlert(context, f"Specified Branch does not exists")
         
         except Group.DoesNotExist as g:
-            setSwalAlert(context, f"Specified Group (Admin) does not exists", 'error', "Registration Failed")
+            setSwalAlert(context, f"Specified Group (Admin) does not exists")
         
         except Exception as e:
-            print(e)
-            setSwalAlert(context, DEFAULT_ERROR, 'error', "Registration Failed")
+            setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req,'Register/HTMX/message.html',context=context)
 
@@ -85,8 +83,6 @@ def insti_change(req: HttpRequest):
             pass
         
         return render(req,'Register/HTMX/option.html',{'option':insti})
-    
-    
 
 @htmx_response
 def branch_change(req: HttpRequest):

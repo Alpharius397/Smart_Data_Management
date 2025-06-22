@@ -41,7 +41,7 @@
 
     <div class="upload-container">
         <h2>Edit a Semester</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubEdit' id=id idx=idx %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubEdit' id=id idx=idx %}" hx-swap="afterend" hx-target="this" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}
@@ -79,5 +79,15 @@
       });
     });
 </script>
-
+{% if text and title and icon %}
+<script>
+  {
+      swal({
+          text:`{{ text|escapejs }}`,
+          title: `{{ title|escapejs }}`,
+          icon: `{{ icon|escapejs }}`,
+      });
+  }
+</script>
+{% endif %}
 {% endblock %}

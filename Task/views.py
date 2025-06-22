@@ -55,6 +55,14 @@ class SemData(TypedDict):
     id: int
     count: int
 
+############ CONSTANTS ############
+ASSIGN_FORM = "Assign Form"
+TASK_CREATE = "Task Creation"
+TASK_DELETE = "Task Deletion"
+TASK_EDIT = "Task Updation"
+SEMESTER_CREATE = "Semester Creation"
+SEMESTER_DELETE = "Semester Deletion"
+SEMESTER_EDIT = "Semester Updation"
 
 ############ UTILS ############
 def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
@@ -102,7 +110,7 @@ def task_edit(req: HttpRequest, id: int):
     user = get_user(req)
 
     if is_auth_get(req):
-        context = {"id": id, "error": True, **setSwalAlert()}
+        context = {"id": id}
         try:
             task: TaskTable = req.__getattribute__("task")
             context["form"] = TaskUpdateForm(
@@ -112,9 +120,6 @@ def task_edit(req: HttpRequest, id: int):
                     "semesterLimit": task.semesterLimit,
                 }
             )
-            context["error"] = False
-        except TaskTable.DoesNotExist:
-            setSwalAlert(context, "Task ID: {} does not exists!".format(id), "warning")
 
         except Exception as f:
             APP_LOG.write_error(
@@ -122,7 +127,7 @@ def task_edit(req: HttpRequest, id: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=user, exception=f)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title=TASK_EDIT)
 
         return render(req, "Task/HTML/task.edit.html", context=context)
 
@@ -131,7 +136,8 @@ def task_edit(req: HttpRequest, id: int):
 @task_permission_check
 def task_delete(req: HttpRequest, id: int):
     if is_auth_get(req):
-        context = {"id": id, "error": True}
+        context = {"id": id}
+        
         try:
             task: TaskTable = req.__getattribute__("task")
             context["form"] = TaskDeleteForm(
@@ -141,7 +147,6 @@ def task_delete(req: HttpRequest, id: int):
                     "semesterLimit": task.semesterLimit,
                 }
             )
-            context["error"] = False
 
         except Exception as f:
             APP_LOG.write_error(
@@ -149,7 +154,7 @@ def task_delete(req: HttpRequest, id: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=f)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title=TASK_DELETE)
 
         return render(req, "Task/HTML/task.delete.html", context=context)
 
@@ -158,15 +163,20 @@ def task_delete(req: HttpRequest, id: int):
 @task_permission_check
 def sem_create(req: HttpRequest, id: int):
     if is_auth_get(req):
-        sems = [("", "------")] + list(
-            map(lambda x: (x, x), DataTable.availableSems(id))
-        )
-
         form = SemesterCreateForm(initial={"taskID": id})
-        form.setChoice(sems)
+        context={"id": id, "form": form}
+        try:
+            sems = [("", "------")] + list(
+                map(lambda x: (x, x), DataTable.availableSems(id))
+            )
 
+            form.setChoice(sems)
+
+        except Exception:
+            setSwalAlert(context, DEFAULT_ERROR, title=SEMESTER_CREATE)
+            
         return render(
-            req, "Task/HTML/semester.create.html", context={"id": id, "form": form}
+            req, "Task/HTML/semester.create.html", 
         )
 
 
@@ -215,7 +225,7 @@ def htmx_task_create(req: HttpRequest):
     user = get_user(req)
 
     if is_hx_post(req):
-        context = setSwalAlert()
+        context = setSwalAlert(title=TASK_CREATE)
 
         f = TaskCreateForm(req.POST)
 
@@ -233,16 +243,15 @@ def htmx_task_create(req: HttpRequest):
                 setSwalAlert(
                     context,
                     "Task was successfully created!",
-                    "warning",
-                    "Task Creation",
+                    "success",
                 )
             except forms.ValidationError as g:  # type: ignore
-                setSwalAlert(context, getErrors(g), "warning", "Task Creation")
+                setSwalAlert(context, getErrors(g))
             except Exception:
-                setSwalAlert(context, DEFAULT_ERROR, "warning")
+                setSwalAlert(context, DEFAULT_ERROR)
 
         else:
-            setSwalAlert(context, f.getErrors(), "warning", "Task Creation")
+            setSwalAlert(context, f.getErrors())
         return render(req, "Task/HTMX/message.html")
 
 
@@ -252,7 +261,7 @@ def htmx_task_create(req: HttpRequest):
 def htmx_task_edit(req: HttpRequest, id: int):
     if is_hx_post(req):
         f = TaskUpdateForm(req.POST)
-        context = {"id": id, **setSwalAlert()}
+        context = {"id": id, **setSwalAlert(title=TASK_EDIT)}
         try:
             task: TaskTable = req.__getattribute__("task")
             if f.is_valid():
@@ -264,10 +273,10 @@ def htmx_task_edit(req: HttpRequest, id: int):
 
                 task.save()
                 setSwalAlert(
-                    context, "Task Edited Successfully", "success", "Task Edit"
+                    context, "Task Edited Successfully", "success"
                 )
             else:
-                setSwalAlert(context, f.getErrors(), "warning", "warning", "Task Edit")
+                setSwalAlert(context, f.getErrors())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -275,7 +284,7 @@ def htmx_task_edit(req: HttpRequest, id: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning", "Task Edit")
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html")
 
@@ -285,7 +294,7 @@ def htmx_task_edit(req: HttpRequest, id: int):
 @task_permission_check
 def htmx_task_delete(req: HttpRequest, id: int):
     if is_hx_post(req):
-        context: dict[str, str] = {}
+        context: dict[str, str] = setSwalAlert(title=TASK_DELETE)
 
         try:
             task: TaskTable = req.__getattribute__("task")
@@ -294,7 +303,6 @@ def htmx_task_delete(req: HttpRequest, id: int):
                 context,
                 "Task was deleted successfully! Redirecting to Task Dashboard",
                 "success",
-                "Task Deletion",
             )
 
             context["redirect"] = req.build_absolute_uri(reverse("Dash:index"))
@@ -305,7 +313,7 @@ def htmx_task_delete(req: HttpRequest, id: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning", "Task Edit")
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(
             req,
@@ -321,19 +329,21 @@ def htmx_sem_create(req: HttpRequest, id: int):
         pd_data: pd.DataFrame = pd.DataFrame()
         image_id: list[int] = []
         form = SemesterCreateForm(req.POST, req.FILES)
-        semesterChoice = [("", "------")] + list(
-            map(lambda x: (x, x), DataTable.availableSems(id))
-        )
-        form.setChoice(semesterChoice)
-        context = setSwalAlert()
+        
+        context = {"option": [], **setSwalAlert(title=SEMESTER_CREATE)}
 
         try:
+            semesterChoice = [("", "------")] + list(
+                map(lambda x: (x, x), DataTable.availableSems(id))
+            )
+            form.setChoice(semesterChoice)
+            
             with transaction.atomic():
                 if form.is_valid():
                     excel_file = req.FILES["file"]
-                    assert isinstance(
-                        excel_file, UploadedFile
-                    ), "Incompatible File Type!"
+                    assert isinstance(excel_file, UploadedFile), (
+                        "Incompatible File Type!"
+                    )
 
                     with excel_file.open() as file:
                         image_id, pd_data = image_load(file.read())
@@ -365,23 +375,22 @@ def htmx_sem_create(req: HttpRequest, id: int):
                         context,
                         "Semester Data Uploaded Successfully",
                         "success",
-                        "Semester Upload",
                     )
                 else:
                     setSwalAlert(
-                        context, form.getErrors(), "warning", "Semester Upload"
+                        context, form.getErrors()
                     )
 
         except AssertionError as e:
-            setSwalAlert(context, str(e), "warning", "Task Edit")
+            setSwalAlert(context, str(e))
 
         except (ValueError, FileProcessFailed):
             setSwalAlert(
-                context, FileProcessFailed().get_error(), "warning", "Task Edit"
+                context, FileProcessFailed().get_error()
             )
 
         except FileNameExists as f:
-            setSwalAlert(context, f.get_error(), "warning", "Task Edit")
+            setSwalAlert(context, f.get_error())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -389,7 +398,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning", "Task Edit")
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(
             req, "Task/HTMX/semester.create.html", context={"option": semesterChoice}
@@ -404,15 +413,15 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
         pd_data: pd.DataFrame = pd.DataFrame()
         image_id: list[int] = []
         form = SemesterEditForm(req.POST, req.FILES)
-        context = setSwalAlert()
+        context = setSwalAlert(title=SEMESTER_EDIT)
 
         try:
             with transaction.atomic():
                 if form.is_valid():
                     excel_file = req.FILES["file"]
-                    assert isinstance(
-                        excel_file, UploadedFile
-                    ), "Incompatible File Type!"
+                    assert isinstance(excel_file, UploadedFile), (
+                        "Incompatible File Type!"
+                    )
 
                     with excel_file.open() as file:
                         image_id, pd_data = image_load(file.read())
@@ -432,7 +441,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
                     data: QuerySet[DataTable] = task.data.filter(semester=idx)
                     data.delete()
 
-                    for serial, row in enumerate(pd_data.itertuples(index=False)):
+                    for row in pd_data.itertuples(index=False):
                         rowJson = {
                             fields[idx]: str(row[idx]) for idx in range(len(row))
                         }
@@ -442,23 +451,27 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
 
                     DataTable.objects.bulk_create(create)
 
-                    messages.success(req, f"Semester Data Updated Successfully")
+                    setSwalAlert(
+                        context,
+                        "Semester Data Updated Successfully",
+                        "success",
+                    )
 
                 else:
                     setSwalAlert(
-                        context, form.getErrors(), "warning", "Semester Upload"
+                        context, form.getErrors()
                     )
 
         except AssertionError as e:
-            setSwalAlert(context, str(e), "warning", "Task Edit")
+            setSwalAlert(context, str(e))
 
         except (ValueError, FileProcessFailed):
             setSwalAlert(
-                context, FileProcessFailed().get_error(), "warning", "Task Edit"
+                context, FileProcessFailed().get_error()
             )
 
         except FileNameExists as f:
-            setSwalAlert(context, f.get_error(), "warning", "Task Edit")
+            setSwalAlert(context, f.get_error())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -466,9 +479,9 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning", "Task Edit")
+            setSwalAlert(context, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/message.html")
+        return render(req, "Task/HTMX/message.html", context=context)
 
 
 @htmx_response
@@ -477,7 +490,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
 def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
     if is_hx_post(req):
         form = SemesterDeleteForm(req.POST)
-        context: dict[str, str] = {}
+        context: dict[str, str] = setSwalAlert(title=SEMESTER_DELETE)
 
         try:
             with transaction.atomic():
@@ -490,7 +503,6 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
                         context,
                         "Semester Data Deleted Successfully! Redirecting to the Semester Dashboard",
                         "success",
-                        "Semester Deletion",
                     )
 
                     context["redirect"] = req.build_absolute_uri(
@@ -499,19 +511,19 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
 
                 else:
                     setSwalAlert(
-                        context, form.getErrors(), "warning", "Semester Upload"
+                        context, form.getErrors()
                     )
 
         except AssertionError as e:
-            setSwalAlert(context, str(e), "warning", "Task Edit")
+            setSwalAlert(context, str(e))
 
         except (ValueError, FileProcessFailed):
             setSwalAlert(
-                context, FileProcessFailed().get_error(), "warning", "Task Edit"
+                context, FileProcessFailed().get_error()
             )
 
         except FileNameExists as f:
-            setSwalAlert(context, f.get_error(), "warning", "Task Edit")
+            setSwalAlert(context, f.get_error())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -519,7 +531,7 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
             )
-            setSwalAlert(context, DEFAULT_ERROR, "warning", "Task Edit")
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html", context=context)
 
@@ -529,7 +541,7 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
 @task_permission_check
 def htmx_get_task(req: HttpRequest, id: int):
     if is_hx_get(req):
-        context = {"id": id, "semesters": [], "error": None}
+        context = {"id": id, "semesters": []}
 
         try:
             task: TaskTable = req.__getattribute__("task")
@@ -551,13 +563,17 @@ def htmx_get_task(req: HttpRequest, id: int):
             context["next"] = start + MAX_RECORD
 
             if (semester) and (not semList):
-                context["error"] = "No matching Semesters Found!"
+                messages.error(req, "No matching Semesters Found!")
             elif (not semList) and (start == 0):
-                context["error"] = "No Semesters Found!"
-
+                messages.error(req, "No Semesters Found!")
         except Exception as e:
-            print(e)
-            context["error"] = DEFAULT_ERROR
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req)
+                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
+            )
+            
+            messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/index.html", context=context)
 
@@ -566,14 +582,14 @@ def htmx_get_task(req: HttpRequest, id: int):
 @auth_needed(admin_only=True)
 @task_permission_check
 def assign_form(req: HttpRequest, id: int):
-    context: dict[str, Any] = {"id": id}
+    context: dict[str, Any] = {"id": id, "error": True}
     user = get_user(req)
     task: TaskTable = req.__getattribute__("task")
 
     if is_hx_get(req):
         try:
             context.update(getAssignForm(user, task))
-
+            context["error"] = False
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure()
@@ -583,7 +599,7 @@ def assign_form(req: HttpRequest, id: int):
                 )
             )
 
-            context["error"] = DEFAULT_ERROR
+            setSwalAlert(context, DEFAULT_ERROR, title=ASSIGN_FORM)
 
         return render(req, "Task/HTMX/assign.html", context=context)
 
@@ -591,6 +607,7 @@ def assign_form(req: HttpRequest, id: int):
         value = QueryDict(req.body)  # type: ignore
 
         managerID = value.get("user", "")
+        setSwalAlert(context, title=ASSIGN_FORM)
 
         try:
             manager = User.objects.get(id=managerID)
@@ -605,15 +622,17 @@ def assign_form(req: HttpRequest, id: int):
 
             context.update(getAssignForm(user, task))
 
-            messages.success(
-                req, f"Manager ID: {managerID} is added to the Task ID: {id}"
+            setSwalAlert(
+                context,
+                f"Manager ID: {managerID} is added to the Task ID: {id}",
+                "success",
             )
-
         except User.DoesNotExist:
-            messages.error(req, "Manager ID: {managerID} does not exists!")
-
+            setSwalAlert(
+                context, f"Manager ID: {managerID} does not exists!"
+            )
         except ManagerAlreadyAssigned as f:
-            messages.error(req, f.get_error())
+            setSwalAlert(context, f.get_error())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -623,8 +642,7 @@ def assign_form(req: HttpRequest, id: int):
                     type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
                 )
             )
-
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/assign.html", context=context)
 
@@ -632,7 +650,7 @@ def assign_form(req: HttpRequest, id: int):
         value = req.GET  # type: ignore
 
         managerID = value.get("user", "")
-
+        setSwalAlert(context, title=ASSIGN_FORM)
         try:
             manager = User.objects.get(id=managerID)
 
@@ -645,15 +663,15 @@ def assign_form(req: HttpRequest, id: int):
             assignee.delete()
 
             context.update(getAssignForm(user, task))
-            messages.success(
-                req, f"Manager ID: {managerID} is removed from Task ID: {id}"
+            setSwalAlert(
+                context, f"Manager ID: {managerID} is removed from Task ID: {id}", "success"
             )
 
         except User.DoesNotExist:
-            messages.error(req, "Manager ID: {managerID} does not exists!")
+            setSwalAlert(context, "Manager ID: {managerID} does not exists!")
 
         except ManagerNeverAssigned as f:
-            messages.error(req, f.get_error())
+            setSwalAlert(context, f.get_error())
 
         except Exception as e:
             APP_LOG.write_error(
@@ -664,11 +682,9 @@ def assign_form(req: HttpRequest, id: int):
                 )
             )
 
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/assign.html", context=context)
-
-    return None
 
 
 @htmx_response
@@ -692,7 +708,7 @@ def groupBy_form(req: HttpRequest, id: int):
                 )
             )
 
-            context["error"] = DEFAULT_ERROR
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.html", context=context)
 
@@ -701,7 +717,6 @@ def groupBy_form(req: HttpRequest, id: int):
             context["column"] = DataTable.getCommonColumn(id)
 
         except Exception as e:
-            print(e)
             APP_LOG.write_error(
                 LogStructure()
                 .set_request(req)
@@ -710,7 +725,8 @@ def groupBy_form(req: HttpRequest, id: int):
                 )
             )
 
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR)
+
 
         return render(req, "Task/HTMX/groupBy.change.html", context=context)
 
@@ -727,13 +743,14 @@ def groupBy_form(req: HttpRequest, id: int):
                 )
             )
 
-            context["error"] = DEFAULT_ERROR
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.view.html", context=context)
 
     elif is_hx_post(req):
         column: str = req.POST.get("column", "")
         context["column"] = column
+        setSwalAlert(context, title="Group By Form")
         try:
             _column = bytes.fromhex(column).decode()
             columns = set(DataTable.getCommonColumn(id))
@@ -744,12 +761,13 @@ def groupBy_form(req: HttpRequest, id: int):
             task.groupByColumn = _column
             task.save()
             context["column"] = _column
-            messages.success(req, "Group By Column changed successfully")
+            setSwalAlert(context, "Group By Column changed successfully", "success")
 
         except ColumnNotFound as f:
-            messages.error(req, f.get_error())
+            setSwalAlert(context, f.get_error())
+            
         except ValueError:
-            messages.error(req, "Invalid Column Name detected! Request Aborted")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure()
@@ -759,8 +777,7 @@ def groupBy_form(req: HttpRequest, id: int):
                 )
             )
 
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.view.html", context=context)
 
-    return None

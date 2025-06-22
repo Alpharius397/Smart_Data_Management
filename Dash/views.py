@@ -4,7 +4,7 @@ from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
 from Main.models import RedisConnection
-from django.conf import settings  # type: ignore
+from Main.settings import settingsInterface as settings  # type: ignore
 from User.models import (
     RoleType,
     User,
@@ -29,7 +29,7 @@ from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from constants.constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
 from .sockets import cardReadWebSocket
-
+from django.contrib import messages
 
 ############ TYPES ############
 class FileRecord(TypedDict):
@@ -215,11 +215,11 @@ def task_fetch(req: HttpRequest) -> HttpResponse | None:
             flag, managers = get_data(result)
 
             if value and flag and queryset and start == 0:
-                error = "No matching records found!"
+                messages.error(req, "No matching records found!")
 
             elif flag and start == 0:
-                if is_admin(user): error = "No Tasks Present"
-                else : error = "No Tasks Assigned"
+                if is_admin(user):  messages.error(req, "No Tasks Present!")
+                else : error =  messages.error(req, "No Tasks Assigned")
 
             next_ = start + MAX_RECORD
 
@@ -229,12 +229,12 @@ def task_fetch(req: HttpRequest) -> HttpResponse | None:
                 .set_request(req)
                 .set_description(type=Task.EXCEPTION, user=user, exception=e)
             )
-            error = DEFAULT_ERROR
+            messages.error(req, DEFAULT_ERROR)
 
         return render(
             req,
             "Dash/HTMX/task.html",
-            context={"managers": managers, "error": error, "next": next_},
+            context={"managers": managers,"next": next_},
         )
 
     return None

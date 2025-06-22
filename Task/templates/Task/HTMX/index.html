@@ -2,10 +2,13 @@
 {% load static %}
 
 
-{% if error and error is not None %}
+{% if messages and messages is not None %}
 
-    <ul class="messages">
-        <li class="error">{{error}}</li>
+    <ul class="messages" id="messages">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
+            
     </ul>
 
 {% else %}

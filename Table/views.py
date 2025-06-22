@@ -68,6 +68,7 @@ def get_sem_context(
     lock: typing.Literal['true', 'false'] = "false",
     page: int = 0,
 ) -> dict[str, int | dict | str | bool]:
+    """ TODO: Change to Postgres cause the column might break this """
     
     context: dict[str, int | dict | str | bool] = {"id": id, "idx": idx}
     user = get_user(req)
@@ -473,7 +474,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
         body = QueryDict(req.body)
         column: str = body.get("column", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID,"column": column, "locked": False, "value": "", **setSwalAlert(), "error": True}
+        context = {"id": id, "idx": idx, "rowID": rowID,"column": column, "locked": False, "value": ""}
 
         try:
             column = bytes.fromhex(column).decode()
@@ -495,19 +496,19 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             context["error"] = False
 
         except ColumnDoesNotExist as f:
-            setSwalAlert(context, f.get_error(), "warning")
+            setSwalAlert(context, f.get_error(), title="Data (Text) Updation")
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error(), title="Data (Text) Updation")
 
         except OnlyTextAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error(), title="Data (Text) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Text) Updation")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
             
 
         return render(req, "Table/HTMX/edit/edit_form.html", context=context)
@@ -522,8 +523,6 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             "column": column,
             "locked": False,
             "value": "Data Not Found",
-            **setSwalAlert(), 
-            "error": True
         }
 
         try:
@@ -538,22 +537,21 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
 
             context["locked"] = locked
             context["value"] = value
-            context["error"] = False
 
         except ColumnDoesNotExist as f:
-            setSwalAlert(context, f.get_error(), "warning")
+            setSwalAlert(context, f.get_error(), title="Data (Text) Updation")
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error(), title="Data (Text) Updation")
 
         except OnlyTextAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error(), title="Data (Text) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Text) Updation")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
 
         return render(req, "Table/HTMX/normal/normal.html", context=context)
 
@@ -561,7 +559,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
         column = req.POST.get("column", "")
         value = req.POST.get("value", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID,"updated": False, "column": column, **setSwalAlert(),"locked": False, "value": "Data Not Found"}
+        context = {"id": id, "idx": idx, "rowID": rowID,"updated": False, "column": column,"locked": False, "value": "Data Not Found", **setSwalAlert(title="Data (Text) Updation")}
         try:
             column = bytes.fromhex(column).decode()
 
@@ -579,19 +577,19 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
                 setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
 
             else:
-                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!", "warning")
+                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!")
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error())
 
         except OnlyTextAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error())
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Table/HTMX/update/text.html", context=context)
 
@@ -608,7 +606,6 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
             "rowID": rowID,
             "column": column,
             "locked": False,
-            **setSwalAlert(), "error": True
         }
 
         try:
@@ -630,16 +627,16 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
             context["error"] = False
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error(), title="Data (Image) Updation")
 
         except OnlyImageAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error(), title="Data (Image) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/edit/edit_image_form.html", context=context)
 
@@ -672,23 +669,23 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
             
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error(), title="Data (Image) Updation")
 
         except OnlyImageAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error(), title="Data (Image) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/normal/normal_image.html", context=context)
 
     elif is_hx_post(req):
         column = req.POST.get("column", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID, "updated": False, "column": column, **setSwalAlert(), "locked": True, "value":""}
+        context = {"id": id, "idx": idx, "rowID": rowID, "updated": False, "column": column, **setSwalAlert(title="Data (Image) Updation"), "locked": True, "value":""}
         try:
             image = req.FILES["file"]
             column = bytes.fromhex(column).decode()
@@ -717,22 +714,22 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
                 setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
 
             else:
-                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!", "warning")
+                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!")
 
         except RowLocked as a:
-            setSwalAlert(context, a.get_error(), "warning")
+            setSwalAlert(context, a.get_error())
 
         except OnlyImageAllowed as g:
-            setSwalAlert(context, g.get_error(), "warning")
+            setSwalAlert(context, g.get_error())
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
             
         except UnidentifiedImageError:
-            setSwalAlert(context, "Invalid Image Uploaded! Request Aborted", "warning")
+            setSwalAlert(context, "Invalid Image Uploaded! Request Aborted")
             
         except Exception as e:
-            setSwalAlert(context, DEFAULT_ERROR, "warning")
+            setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Table/HTMX/update/image.html", context=context)
 
@@ -740,7 +737,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
 @htmx_response
 @auth_needed()
 @task_permission_check
-def column_view(req: HttpRequest, id: int) -> HttpResponse | None:
+def column_view(req: HttpRequest, id: int):
     if is_hx_get(req):
         context = {"search": [], "column": [], "count": 0}
 
@@ -752,12 +749,10 @@ def column_view(req: HttpRequest, id: int) -> HttpResponse | None:
             context["count"] = count
 
         except Exception as e:
-            print(e)
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR)
         
         return render(req, "Table/HTMX/column.html", context=context)
 
-    return None
 
 @htmx_response
 @auth_needed()
@@ -770,6 +765,7 @@ def complete_row_view(req: HttpRequest, id: int) -> HttpResponse:
         status = req.GET.get("status", "")
         lock = req.GET.get("lock", "")
         user = get_user(req)
+        
         try:
             page = int(req.GET.get("page", "0"))
         except Exception as e:

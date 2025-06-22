@@ -80,22 +80,36 @@ def get_color(req: HttpRequest):
 
 def taskCheck(user: User, id: int):
     try:
-        return TaskTable.objects.get(
-            Q(id=id) & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
-        )
+        if is_admin(user):
+            return TaskTable.objects.get(
+                Q(id=id) & Q(branch=user.role.belongs)
+            )
+            
+        elif is_manager(user):
+            return TaskTable.objects.get(
+                Q(id=id) & Q(assigned__manager__id=user.id)
+            )
+            
     except Exception as e:
         print("Task Error: ", e)
-        return None
+    return None
 
 
 def semesterCheck(user: User, id: int, idx: int):
     try:
-        return TaskTable.objects.filter(
-            Q(id=id) & Q(data__semester=idx) & (Q(branch=user.role.belongs) | Q(assigned__manager__id=user.id))
-        ).distinct()[0]
+        if is_admin(user):
+            return TaskTable.objects.filter(
+                Q(id=id) & Q(data__semester=idx) & Q(branch=user.role.belongs)
+            ).distinct()[0]
+            
+        elif is_manager(user):
+            return TaskTable.objects.filter(
+                Q(id=id) & Q(data__semester=idx) & Q(assigned__manager__id=user.id)
+            ).distinct()[0]
     except Exception as e:
         print(e)
-        return None
+        
+    return None
 
 
 def noneCheck(*args: typing.Any) -> bool:

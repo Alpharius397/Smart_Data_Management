@@ -1,17 +1,6 @@
 {% load static %}
 {% load template %}
 
-{% if error is True %}
-    <script>
-        {
-            swal({
-                text:`{{ text|escapejs }}`,
-                title: `{{ title|escapejs }}`,
-                icon: `{{ icon|escapejs }}`,
-            });
-        }
-
-    </script>
-{% endif %}
+{% include "HTMX/swal.html" %}
 {% include 'Table/HTMX/base/text.form.html' with locked=locked %}
 

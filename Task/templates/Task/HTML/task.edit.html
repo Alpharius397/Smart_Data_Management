@@ -39,7 +39,7 @@
 
     <div class="upload-container">
         <h2>Edit Task</h2>
-        <form id="form" hx-post="{% url 'Task:htmxEdit' id=id %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
+        <form id="form" hx-post="{% url 'Task:htmxEdit' id=id %}" hx-swap="afterend" hx-target="this" hx-trigger="click from:find button" onsubmit="event.preventDefault()">
             {% csrf_token %}
 
             {% for field in form %}
@@ -55,4 +55,17 @@
           Incorrect Task Created? <a href="{% url 'Task:delete' id=id %}">Delete Task</a>
         </div>
     </div>
+{% endblock %}
+{% block script %}
+  {% if text and title and icon %}
+    <script>
+      {
+          swal({
+              text:`{{ text|escapejs }}`,
+              title: `{{ title|escapejs }}`,
+              icon: `{{ icon|escapejs }}`,
+          });
+      }
+    </script>
+  {% endif %}
 {% endblock %}

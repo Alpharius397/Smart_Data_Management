@@ -1,23 +1,13 @@
-<ul class="messages" id="messages">
-    {% for message in messages %}
-        {% if message.tags != 'success' %}
-            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-        {% else %}
-            <script>
-                swal("", "{{message}}", "success");
-            </script>
-        {% endif %}
-    {% endfor %}
+{% include "HTMX/swal.html" %}
 
-</ul>
 {% if redirect %}
-<script defer>
-    setTimeout(()=> {
-        {% if redirect %}
-            redirect("{{redirect}}");
-        {% endif %}
+    <script defer>
+        setTimeout(()=> {
+            {% if redirect %}
+                redirect("{{redirect}}");
+            {% endif %}
 
-    }, 2000);
-</script>
+        }, 2000);
+    </script>
 {% endif %}
 {% block hxSwaps %}{% endblock %}

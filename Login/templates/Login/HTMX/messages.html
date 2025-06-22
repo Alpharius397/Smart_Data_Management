@@ -1,17 +1,10 @@
 <script>
-    {% if error is False and redirect %}
+    {% if redirect %}
         setTimeout(()=>{
             window.location.replace(`{{redirect}}`);
         }, 1000);
     {% endif %}
     
-    {
-        swal({
-            text:`{{ text|escapejs }}`,
-            title: `{{ title|escapejs }}`,
-            icon: `{{ icon|escapejs }}`,
-        });
-    }
-
-
 </script>
+
+{% include "HTMX/swal.html" %}

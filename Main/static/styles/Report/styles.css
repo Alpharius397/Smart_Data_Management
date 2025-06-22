@@ -1,7 +1,6 @@
 .tab {
     margin: 10px 0 10px 0;
-    padding: 20px;
-    padding-top: 0px;
+    padding: 10px;
     background: white;
     border-radius: 8px;
     border: 1px solid rgb(216, 218, 220);
@@ -374,4 +373,18 @@ select[name="locked"] option[value="false"], select[name="locked"]:has( > option
 .schema-field {
     margin-left: 20px;
     color: #333;
+}
+
+button#click-issue{
+    color: white;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 16px;
+    border: 0px;
+    font-weight: 700;
+    background-color: #4caf50;
+}
+
+button#click-issue:hover {
+    background-color: #367b39;
 }

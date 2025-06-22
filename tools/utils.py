@@ -58,12 +58,18 @@ def get_string_value(value: bool | None) -> Literal['true', 'false', 'none']:
     match(value):
         case True: return 'true'
         case False: return 'false'
-        case None: return 'null'
+        case None: return 'none'
         case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
 
 def textAnnotate(column: str) -> str:
     return f"{column}T"
 
+def get_SQL_boolean(value: bool | None) -> Literal['true', 'false', 'null']:
+    match(value):
+        case True: return 'true'
+        case False: return 'false'
+        case None: return 'null'
+        case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
 
 def imageAnnotate(column: str):
     return f"{column}I"
@@ -152,7 +158,10 @@ def segregateColumns(columns: list[str]) -> ColumnType:
 def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Literal['success', 'error', 'warning'] = 'error', title: str = ''):
     
     if context:
-        context.update({"text": text, "icon": icon, "title": title})
+        if ("title" in context):
+            context.update({"text": text, "icon": icon})
+        else:
+            context.update({"text": text, "icon": icon, "title": title})
         return {}
     else:
         return {"text": text, "icon": icon, "title": title}

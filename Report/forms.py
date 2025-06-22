@@ -1,8 +1,8 @@
-from django.forms import Form # type: ignore
+from Main.forms import MainForm
 from django import forms # type: ignore
 
 
-class FeedBackForm(Form):
+class FeedBackForm(MainForm):
     status = forms.ChoiceField(
         required=False,
         help_text="Set the status of row",
@@ -32,7 +32,7 @@ class FeedBackForm(Form):
         label="Row Issue Status"    
     )
     
-class FeedBackView(Form):
+class FeedBackView(MainForm):
     status = forms.ChoiceField(
         required=False,
         help_text="Current status of row",
@@ -65,7 +65,7 @@ class FeedBackView(Form):
         widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
     )
     
-class CompleteFeedBackView(Form):
+class CompleteFeedBackView(MainForm):
     status = forms.ChoiceField(
         required=False,
         help_text="Current status of row",
@@ -90,16 +90,18 @@ class CompleteFeedBackView(Form):
         widget=forms.Select(attrs={"readonly": "readonly", "disabled":"true"})
     )
     
-class CompleteFeedBack(Form):
+class CompleteFeedBack(MainForm):
     status = forms.ChoiceField(
         required=False,
         help_text="Current status of row",
+        choices=[("true",'Verified'),("false",'Rejected'),("none",'Unchecked')],
         label="Row Status",
     )
     
     locked = forms.ChoiceField(
         required=False,
         help_text="CurrentLock status of row",
+        choices=[("true",'Lock'),("false",'Unlock')],
         label="Row Lock Status",
     )
 
@@ -107,4 +109,5 @@ class CompleteFeedBack(Form):
         required=False,
         help_text="Current issue status of row",
         label="Row Issue Status",
+        choices=[("true",'Issued'),("false",'Cancel Issue')],
     )

@@ -53,3 +53,16 @@
     </div>
 {% endblock %}
 
+{% block script %}
+  {% if text and title and icon %}
+    <script>
+      {
+          swal({
+              text:`{{ text|escapejs }}`,
+              title: `{{ title|escapejs }}`,
+              icon: `{{ icon|escapejs }}`,
+          });
+      }
+    </script>
+  {% endif %}
+{% endblock %}

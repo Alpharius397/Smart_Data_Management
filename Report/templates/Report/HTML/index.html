@@ -38,14 +38,6 @@
             color: {{request.session.mainColor}};
         }
 
-        
-        *[hx-get].htmx-request button, *[hx-post].htmx-request button, *[hx-put].htmx-request button, *[hx-delete].htmx-request button{
-            background-image: url("{% static 'images/loading.gif' %}"); 
-            background-repeat: no-repeat;
-            background-position: 50% 50%;
-            color: rgb(0, 0, 0, 0);
-        }
-        
     </style>
 {% endblock %}
 
@@ -64,7 +56,25 @@
         {% endfor %}
     </ul>
 
-    <div class="tab" hx-get="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:find button" hx-include="find select">
+    {% if isManager is True %}
+
+        <div class="tab" hx-get="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".messages" hx-trigger="click from:find button" hx-include="find select">
+            <h2> Schema Options </h2>
+        
+            <div class="schema-field" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select" hx-indicator=".semester-report">
+                Choose a valid schema option:
+                
+                <select name="schema" hx-get="{% url 'Report:htmxSchema' %}" hx-target="this" hx-trigger="load" hx-swap="innerHTML" hx-params="none">
+                    <option value="" disabled selected>----------</option>
+                </select>
+
+                <button id="click-issue">Issue</button>
+            </div>
+
+        </div>
+
+    {% else %}
+    <div class="tab">
         <h2> Schema Options </h2>
     
         <div class="schema-field" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select" hx-indicator=".semester-report">
@@ -74,10 +84,13 @@
                 <option value="" disabled selected>----------</option>
             </select>
 
-            <button id="click-issue">Issue</button>
         </div>
 
     </div>
+
+
+    {% endif %}
+
     <div class="tab">
         <div class="semester-feedback" id="feed-me" hx-get="{% url 'Report:htmxFeed' id=id idx=idx %}" hx-trigger="load" hx-target="this" hx-swap="outerHTML">
             <h2> Feedback Form </h2>
@@ -104,6 +117,5 @@
 {% block script%}
 <script src="{% static 'js/libs/jquery.js' %}"></script>
 <script src="{% static 'js/libs/select2.js' %}"></script>
-<script src="{% static 'js/libs/swal.js' %}"></script>
 <script src="{% static 'js/pages/report.js' %}"></script>
 {% endblock %}

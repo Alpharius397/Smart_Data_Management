@@ -3,40 +3,8 @@
     <option value="{{ opt.0 }}">{{ opt.1 }}</option>
 {% endfor %}
 
-{% if messages %}
-    <div class="messages" id="messages" hx-swap-oob="true">
-        <script>
-            {
-                function makeMessage(tags, message){
-                    let a = document.createElement('li');
-                    a.className=tags;
-                    a.innerHTML = message
-                    return a;
-                }
-                
-                let wrong = false;
-        
-        
-                let main = document.createElement("ul");
-                main.className="messages";
-    
-                let tag = '';
-                {% for message in messages %}
-                    main.appendChild(makeMessage("{{ message.tags }}", "{{ message }}"));
-                    tag = '{{message.tags}}';
-            
-                    if(tag != 'success' && !wrong){
-                        wrong = true;
-                    }
-                {% endfor %}
-                
-                swal({
-                    content: main,
-                    icon: ((!wrong)?("success"):("error"))
-                })}
-        
-        </script>
-{% endif %}
 <script>
     setObserver();
 </script>
+
+{% include "HTMX/swal.html" %}

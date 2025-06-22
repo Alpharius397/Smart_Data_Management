@@ -1,13 +1,14 @@
 {% load template %}
 
 {% if messages %}
-    <ul class="messages" id="messages" hx-swap-oob="true">
+
+    <ul class="messages" id="messages">
         {% for message in messages %}
             <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
         {% endfor %}
     </ul>
 
-{% endif %}
+{% else %}
 
     <div class="semester-report">
         <h2> Semester Data </h2>
@@ -40,4 +41,5 @@
         </div>
     </div>
 
+{% endif %}
 

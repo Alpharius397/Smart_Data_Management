@@ -1,9 +1,9 @@
-    <script>
-        {
-            swal({
-                text:`{{ text|escapejs }}`,
-                title: `{{ title|escapejs }}`,
-                icon: `{{ icon|escapejs }}`,
-            });
-        }
-    </script>
+<script>
+    {% if redirect %}
+        setTimeout(()=>{
+            window.location.replace(`{{redirect}}`);
+        }, 1000);
+    {% endif %}
+
+</script>
+{% include "HTMX/swal.html" %}

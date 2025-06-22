@@ -277,7 +277,7 @@ class DataTable(Model):
         task_id = DataTable.taskID.field.column
         semester_column = DataTable.semester.field.column
         data_table = DataTable._meta.db_table
-        options = []
+        options: list[int] = []
         
         with connection.cursor() as cursor:
             sql_query = SQL('''select "a" 
@@ -293,7 +293,7 @@ class DataTable(Model):
                             )
                             
             cursor.execute(sql_query)
-            options = [col[0] for col in cursor.fetchall()]
+            options = [int(col[0]) for col in cursor.fetchall()]
 
         return options     
     

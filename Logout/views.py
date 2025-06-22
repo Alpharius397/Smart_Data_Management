@@ -1,12 +1,11 @@
-from django.urls import reverse
-from django.conf import settings
-from django.shortcuts import redirect
-from django.contrib.auth import logout
-from django.http import HttpRequest, HttpResponse
+from django.urls import reverse # type: ignore
+from Main.settings import settingsInterface as settings
+from django.shortcuts import redirect # type: ignore
+from django.contrib.auth import logout # type: ignore
+from django.http import HttpRequest, HttpResponse # type: ignore
+from constants.constants import SUCCESS
 
-# Create your views here.
 def logout_view(req:HttpRequest) -> HttpResponse:
-
     logout(req)
-    return redirect(reverse(settings.LOGIN_URL) + '?success=Logout Successfully')
+    return redirect(reverse(settings.LOGIN_URL) + f'?{SUCCESS}=Logout Successfully')
 

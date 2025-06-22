@@ -47,7 +47,7 @@ from tools.url_auth import (
 from Report.forms import CompleteFeedBack, FeedBackForm, FeedBackView, CompleteFeedBackView
 from django.utils import timezone  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
-from tools.utils import ColumnType, get_2_value, get_3_value, get_string_value, get_string_value
+from tools.utils import ColumnType, get_2_value, get_3_value, get_SQL_boolean, get_string_value, get_string_value, setSwalAlert
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from tools.token import hash_token, get_token
 from Card.models import Card
@@ -150,47 +150,41 @@ def get_complete_feed(req: HttpRequest, id: int, idx: str):
 def set_complete_feed(req: HttpRequest, id: int, idx: str, locked: bool, issued: bool, status: bool | None) -> int:
     
     table_name = Identifier(DataTable._meta.db_table)
-    locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
-    issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
-    status_column = Identifier(DataTable.status.field.column)  # type: ignore
+    locked_column = Identifier(DataTable.locked.field.column)
+    issued_column = Identifier(DataTable.issued.field.column)
+    status_column = Identifier(DataTable.status.field.column)
     taskID_column = Identifier(DataTable.taskID.field.column)
     rowColumn = Identifier(DataTable.data.field.column)
     identifier = Literal(idx)
     taskID = Literal(id)
-    locked = Literal(get_string_value(locked))
-    issued = Literal(get_string_value(issued))
-    status = Literal(get_string_value(status))
+    locked = get_SQL_boolean(locked) # type: ignore
+    issued = get_SQL_boolean(issued) # type: ignore
+    status = get_SQL_boolean(status) # type: ignore
     
     task: TaskTable = req.__getattribute__("task")
     groupBy = Literal(task.groupByColumn)
     updated: int = 0
     
     with connection.cursor() as cursor:
-                                # update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
-                                # where {task_column} = {taskID} 
-                                # and "id" = {rowID}
-                                # and {semester_column}={semester}
-                                # and {rowColumn}::jsonb?{_column}
-                                # and {locked} is false;
-                            
-                            
+
         sql_query = SQL('''
-                        update {table_name} set {locked_column}={locked}, {issued_column}={issued}, {status_column}={status}
+                        update {table_name} set {locked_column}=%(locked)s, {issued_column}=%(issued)s, {status_column}=%(status)s
                         where {taskID_column}={taskID} and {rowColumn}::jsonb?{groupBy} and {rowColumn}::jsonb->>{groupBy}={identifier};
-                        ''').format(
-            groupBy=groupBy,
-            locked_column=locked_column,
-            locked=locked,
-            issued=issued,
-            status=status,
-            issued_column=issued_column,
-            status_column=status_column,
-            table_name=table_name,
-            taskID_column=taskID_column,
-            taskID=taskID,
-            rowColumn=rowColumn,
-            identifier=identifier
-        )
+                        '''% {
+                                "locked":locked,
+                                "issued":issued,
+                                "status":status,
+                        }).format(
+                            groupBy=groupBy,
+                            locked_column=locked_column,
+                            issued_column=issued_column,
+                            status_column=status_column,
+                            table_name=table_name,
+                            taskID_column=taskID_column,
+                            taskID=taskID,
+                            rowColumn=rowColumn,
+                            identifier=identifier
+                        )
 
         cursor.execute(sql_query)
         updated = cursor.rowcount
@@ -202,15 +196,14 @@ def set_complete_feed(req: HttpRequest, id: int, idx: str, locked: bool, issued:
 @semester_permission_check
 def sem_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
     if is_auth_get(req):
-
         return render(req, "Report/HTML/sem.index.html", { "id": id, "idx": idx, "rowID": rowID})
     
 @login_needed()
 @task_permission_check
 def index_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
     if is_auth_get(req):
-        return render(req, "Report/HTML/index.html", { "id": id, "idx": idx, **get_post(req.user) })
-    
+        return render(req, "Report/HTML/index.html", { "id": id, "idx": idx, **get_post(req.user), "isManager": is_manager(req.user) })
+
 @login_needed()
 @task_permission_check
 def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
@@ -247,7 +240,7 @@ def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
             
         except Exception as e:
             print(e)
-            context["error"] = DEFAULT_ERROR
+            setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Report/HTML/generated.report.html", context=context)
 
@@ -262,7 +255,6 @@ def htmx_schema(req: HttpRequest):
         try:
             post = get_post_id(user)
             schemas = Schema.objects.filter(branch__id = post["branch"]).only("id", "name").values("id", "name")
-            print(schemas)
             options: list[tuple[int, str]] = []
             
             for schema in schemas.iterator():
@@ -275,8 +267,7 @@ def htmx_schema(req: HttpRequest):
             
         except Exception as e:
             print(e)
-            messages.error(req, DEFAULT_ERROR)
-        
+            setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/schema.html", context=context)
 
@@ -299,11 +290,11 @@ def getSubjects(schema_id: int, branch_id: int):
         print(e)
         
     return sem_dict
-        
+
 @auth_needed()
 @htmx_response
 @task_permission_check
-def report_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+def report_view(req: HttpRequest, id: int, idx: str):
     context = {"id": id, "idx": idx}
     user = get_user(req)
     
@@ -339,7 +330,6 @@ def report_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
             messages.error(req, f.get_error())
 
         except Exception as e:
-            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/report.html", context=context)
@@ -349,7 +339,7 @@ def report_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
 @auth_needed()
 @task_permission_check
 def htmx_feedBack(req: HttpRequest, id: int, idx: str):
-    context = {"id": id, "idx": idx}
+    context = {"id": id, "idx": idx, "form": CompleteFeedBackView()}
     user = get_user(req)
     
     if is_hx_get(req) and is_admin(user):
@@ -358,11 +348,10 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
             records = get_complete_feed(req, id, idx)
             context.update({"form": CompleteFeedBackView(initial={"status": get_string_value(records.status), "locked": get_string_value(records.locked), "issued": get_string_value(records.issued)})})
 
-        except InvalidSchema as f:
-            messages.error(req, f.get_error())
+        except ValueError as f:
+            messages.error(req, str(f))
 
         except Exception as e:
-            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/complete/admin.form.html", context=context)
@@ -374,17 +363,17 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
             context.update({"form": CompleteFeedBack(initial={"status": get_string_value(records.status), "locked": get_string_value(records.locked), "issued": get_string_value(records.issued)})})
 
         except InvalidSchema as f:
-            messages.error(req, f.get_error())
+            setSwalAlert(context, f.get_error(), title="Feedback Fetch")
 
         except Exception as e:
-            print(e)
-            messages.error(req, DEFAULT_ERROR)
+            setSwalAlert(context, DEFAULT_ERROR, title="Feedback Fetch")
 
         return render(req, "Report/HTMX/complete/manager.form.html", context=context)
     
     elif is_hx_post(req) and is_manager(user):
         try:
             form = CompleteFeedBack(req.POST)
+            setSwalAlert(context, title="Feedback Status")
             
             with transaction.atomic():
                 if form.is_valid():
@@ -393,21 +382,15 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     issued = form.cleaned_data.get("issued")
                     status = form.cleaned_data.get("status")
                     
-                    updated = set_complete_feed(req, id, idx, get_2_value(locked), get_2_value(issued), get_3_value(status))                
-                    messages.success(req, f"Status of {updated} records was updated successfully")
+                    updated = set_complete_feed(req, id, idx, get_2_value(locked), get_2_value(issued), get_3_value(status)) 
+                    setSwalAlert(context, f"Status of {updated} records was updated successfully", "success")
                 else:
-                    for field, error in form.errors.items():
-                        print(error.as_ul())
-                        messages.error(req, "{}: {}".format(CompleteFeedBack.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
-            
+                    setSwalAlert(context, form.getErrors())
                 
         except Exception as e:
-            print(e)
-            messages.error(req, DEFAULT_ERROR)
-            
-        return render(req, "Report/HTMX/message.html")
+            setSwalAlert(context, DEFAULT_ERROR)
         
-
+        return render(req, "Report/HTMX/message.html", context=context)
 
 @htmx_response
 @auth_needed()
@@ -453,7 +436,7 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
                 data.locked = get_2_value(locked)
                 data.issued = get_2_value(issued)
                 data.save()
-                print(data)
+
                 messages.success(req, f"Status for Row ID: {rowID} was updated successfully")
             else:
                 for field, error in f.errors.items(): 
