@@ -60,18 +60,43 @@ function redirect(url_to_redirect) {
   window.location.href = url_to_redirect;
 }
 
+var SkipThis = {
+  flag: false,
+  
+  setFlag: function(value){
+    
+    if(typeof(value) !== 'boolean') {
+      console.warn("Invalid value, required boolean")
+      return false;
+    } else {
+      this.flag = value;
+
+      return true;
+    }
+  }
+}
+
 /**
  * @param {Event} event
  * @returns {void}
  */
-async function confirmPrompt(event) {
-  event.preventDefault();
+function confirmPrompt(event) {
+  
+  if(!SkipThis.flag){
+    event.preventDefault();
 
-  let confirmConfirm = await swal(
-    {title:"Are you sure?",text:"Are you sure about this action",icon:"warning",buttons:true,dangerMode:true}
-  );
-  console.log(confirmConfirm)
-  if (confirmConfirm !== true) event.stopImmediatePropagation();
+    swal(
+      {title:"Are you sure?",text:"Are you sure about this action",icon:"warning",buttons:true,dangerMode:true}
+    ).then((confirmConfirm) => {
+      if (confirmConfirm === true){ 
+        SkipThis.setFlag(true);
+        event.target.click();
+      }
+    })
+
+  } else {
+    SkipThis.setFlag(false);
+  }
 }
 
 /**

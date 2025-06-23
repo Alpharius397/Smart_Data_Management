@@ -128,6 +128,7 @@ form {
   justify-content: space-evenly;
   font-weight: bold;
   color: white;
+  border-radius: 20px 20px 0 0;
 }
 
 .info {
@@ -138,4 +139,13 @@ form {
 .institute-details {
   margin: 10px 0px 10px 0px;
   border: 1px solid lightgrey;
+  border-radius: 20px;
+}
+
+.confirm {
+  background-color: #28a745;
+}
+
+.confirm:hover {
+  background-color: #218838 !important; 
 }

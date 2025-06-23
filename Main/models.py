@@ -871,3 +871,12 @@ class RedisConnection:
         self.close()
 
 
+class WriteToken(TypedDict):
+    ID: int
+    processing: bool
+
+class ReadToken(TypedDict):
+    ID: int
+    processing: bool
+    data: str
+    

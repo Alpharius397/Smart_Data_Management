@@ -10,26 +10,11 @@
 
 {% block customStyle %}
     <style>
-        header{
+        .heading {
             background-color: {{request.session.mainColor}};
             color: {{request.session.secColor}};
         }
-
-        body{
-            color: {{request.session.mainColor}};
-        }
-
-        header .user-log, header .add-task{
-            color: {{request.session.mainColor}};
-        }
-
-        .task-item h3{
-            color: {{request.session.mainColor}};
-        }
-
-        .container{
-            background-color: {{request.session.secColor}};
-        }
+        
 
 
     </style>
@@ -42,31 +27,28 @@
 
 {% block mainContent %}
 
-    <div class="messages" id="messages">
-        {% if messages %}
-            <ul>
-                {% for message in messages %}
-                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    </div>
-
     <div class="tab">
         <div class="profile-image-tab">
             <div class="profile-image">
                 <img src="{{profile}}" height="50px" id="profile-image">
                 <div class="profile-image-edit"><img src="{% static 'images/edit.svg' %}" ></div>
                 <form class="image-change"
-                      hx-encoding='multipart/form-data'
-                      hx-post="{% url 'User:imageChange' %}"
-                      hx-swap="outerHTML" hx-target=".messages"
-                      hx-trigger="click from:find button"
-                      onsubmit="event.preventDefault()">
+                    hx-encoding='multipart/form-data'
+                    hx-post="{% url 'User:imageChange' %}"
+                    hx-swap="afterend" hx-target="this"
+                    hx-trigger="click from:find button"
+                    onsubmit="event.preventDefault()">
                     {% csrf_token %}
                     <input type="file" name="image" />
                     <button class="submit">Click Me</button>
                 </form>
+                <form class="image-delete"
+                style="display:none;"
+                hx-delete="{% url 'User:imageChange' %}"
+                hx-swap="afterend" hx-target="this"
+                hx-trigger="click"
+                onsubmit="event.preventDefault()">
+            </form>
             </div>
         </div>
 
@@ -142,10 +124,15 @@
 {% endblock %}
 
 {% block script %}
+{% include "HTMX/swal.html" %}
+
     <script>
+        add_csrf();
+
         const edit_image = document.querySelector(".profile-image-edit");
         const file_input = document.querySelector(".image-change input[type='file']");
         const edit_form = document.querySelector(".image-change button");
+        const delete_image = document.querySelector(".image-delete");
 
         edit_image.addEventListener("click", async function(event){
             event.stopPropagation();
@@ -153,15 +140,32 @@
                 title:"Are you sure?",
                 text: "Are you sure you want to change your profile image?",
                 icon: "warning",
-                buttons: true,
+                buttons: {
+                    1: {
+                        text: "Change the Image",
+                        value: true,
+                        className: 'confirm'
+                    },
+                    danger: {
+                        text: "Delete The Image",
+                        value: false,
+
+                    },
+                    warning:{
+                        text: "Cancel",
+                        value: null,
+                    }
+                },
                 dangerMode: true,
                 closeModal: false
-              })
+                });
             
-            if (a) {
-                file_input.click();
-            }}
-                );
+            switch(a){
+                case true: file_input?.click(); break;
+                case false: delete_image?.click(); break;
+            }
+            
+        });
 
         file_input.addEventListener("change", function(event){
             if(this.files.length==1){

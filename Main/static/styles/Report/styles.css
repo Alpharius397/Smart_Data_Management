@@ -375,7 +375,7 @@ select[name="locked"] option[value="false"], select[name="locked"]:has( > option
     color: #333;
 }
 
-button#click-issue{
+button.click-issue{
     color: white;
     margin: 10px;
     padding: 10px;
@@ -383,8 +383,9 @@ button#click-issue{
     border: 0px;
     font-weight: 700;
     background-color: #4caf50;
+    cursor: pointer;
 }
 
-button#click-issue:hover {
+button.click-issue:hover {
     background-color: #367b39;
 }

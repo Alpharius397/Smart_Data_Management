@@ -155,7 +155,7 @@ def segregateColumns(columns: list[str]) -> ColumnType:
 
     return ColumnType(image, text)
 
-def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Literal['success', 'error', 'warning'] = 'error', title: str = ''):
+def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Literal['success', 'error', 'warning','info'] = 'error', title: str = ''):
     
     if context:
         if ("title" in context):

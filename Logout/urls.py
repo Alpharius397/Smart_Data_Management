@@ -3,5 +3,5 @@ from .views import *
 
 app_name = 'Logout'
 urlpatterns = [
- 	path('',logout_view,name='logout'),
+ 	path('',logout_view,name='index'),
 ]

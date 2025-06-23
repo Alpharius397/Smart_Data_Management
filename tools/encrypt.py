@@ -55,13 +55,13 @@ def certificateToken() -> str:
     nowTime = datetime.now(timezone.get_current_timezone())
     nowTime += timedelta(days=settings.CERTIFICATE_EXPIRE_DAYS)
 
-    nowTime = nowTime.strftime("%H:%M:%d:%m:%Y").encode()
+    nowTimeByte: bytes= nowTime.strftime("%H:%M:%d:%m:%Y").encode()
 
     iv = bytes(AES.new(get_token(AES.block_size).encode(), mode=AES.MODE_CBC).iv)
     cipherA = AES.new(settings.AES_KEY_1, mode=AES.MODE_CBC, iv=iv)
     cipherB = AES.new(settings.AES_KEY_2, mode=AES.MODE_CBC, iv=iv)
 
-    padded = pad(nowTime, AES.block_size)
+    padded = pad(nowTimeByte, AES.block_size)
 
     encrypt_1 = cipherA.encrypt(padded)
     encryptFinal = cipherB.encrypt(encrypt_1)

@@ -3,6 +3,7 @@ import json
 import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
 import jwt
+from Main.models import RedisConnection
 from Task.models import TaskTable  # type: ignore
 from constants.constants import DEFAULT_ERROR
 from tools.encrypt import authTokenCheck  # type: ignore
@@ -20,7 +21,9 @@ from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
 from University.models import Color  # type: ignore
 from functools import wraps  # type: ignore
-from django.utils import timezone  # type: ignore
+from django.utils import timezone # type: ignore
+from tools.errors import TokenExpired  # type: ignore
+from Main.models import WriteToken, ReadToken
 
 
 def is_hx_get(req: HttpRequest) -> bool:
@@ -447,6 +450,38 @@ def api_key_required(view_func):
             print(e)
             return JsonResponse({"error": DEFAULT_ERROR}, status=404)
 
+    return _wrapped_view
+
+def token_check(view_func):
+    """ Checks the token issuer and adds appropriate users for auth """
+    
+    @wraps(view_func)
+    def _wrapped_view(
+        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
+    ) -> HttpResponse:
+        
+        try:
+            token = kwargs.get("token", "")
+            with RedisConnection() as redis:
+                data: WriteToken | ReadToken = redis.get(token)
+                
+                processing = data.get("processing", None)
+                ID = data.get("ID", -1)
+
+                if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
+                    raise TokenExpired()
+
+                request.user = User.objects.get(id=ID)
+                
+                return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+        
+        except User.DoesNotExist:
+            return HttpResponse(status=401)
+        
+        except Exception as e:
+            print(e)
+            return HttpResponse(status=404)
+        
     return _wrapped_view
 
 

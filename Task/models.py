@@ -13,16 +13,15 @@ from django.db.models import ( # type: ignore
     SET_NULL,
     UniqueConstraint
 )
-from django.core.validators import MinValueValidator # type: ignore
+from django.core.validators import MinValueValidator
 from University.models import Branch
 from User.models import User, is_admin, is_manager, RoleType
 from django import forms # type: ignore
 import typing
 from django.db.models.manager import BaseManager # type: ignore
 from django.db import connection
-from psycopg2.sql import SQL, Identifier, Literal
-
-from tools.utils import ColumnType, segregateColumns # type: ignore
+from psycopg2.sql import SQL, Identifier, Literal, Composable
+from tools.utils import ColumnType, get_SQL_boolean, segregateColumns
 
 ############ MODEL ############
 class TaskTable(Model):
@@ -206,7 +205,7 @@ class DataTable(Model):
     )
 
     issued = BooleanField(
-        verbose_name="Issue Status", default=False, null=True, blank=False
+        verbose_name="Issue Status", default=False, null=False, blank=False
     )
     
     time_of_lock = DateTimeField(
@@ -533,6 +532,124 @@ class DataTable(Model):
             count = cursor.rowcount
 
         return count, segregateColumns(columns)
+    
+    @staticmethod
+    def get_complete_data(task: TaskTable, id: int, idx: str):
+        table_name = Identifier(DataTable._meta.db_table)
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+        status_column = Identifier(DataTable.status.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        identifier = Literal(idx)
+        taskID = Literal(id)
+        
+        records = CompleteMeta("", {})
+        groupBy = Literal(task.groupByColumn)
+        
+        with connection.cursor() as cursor:
+            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+                data_column=data_column,
+                groupBy=groupBy,
+                locked_column=locked_column,
+                issued_column=issued_column,
+                status_column=status_column,
+                table_name=table_name,
+                taskID_column=taskID_column,
+                taskID=taskID,
+                identifier=identifier
+            )
+
+            cursor.execute(sql_query)
+            (ID, data) = cursor.fetchone()
+            records = CompleteMeta(ID, json.loads(data))
+
+        return records
+
+    @staticmethod
+    def get_complete_feed(task: TaskTable, id: int, idx: str):
+        
+        table_name = Identifier(DataTable._meta.db_table)
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+        status_column = Identifier(DataTable.status.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        identifier = Literal(idx)
+        taskID = Literal(id)
+        
+        records = CompleteFeed("", False, False, None)
+        groupBy = Literal(task.groupByColumn)
+        
+        with connection.cursor() as cursor:
+            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+                data_column=data_column,
+                groupBy=groupBy,
+                locked_column=locked_column,
+                issued_column=issued_column,
+                status_column=status_column,
+                table_name=table_name,
+                taskID_column=taskID_column,
+                taskID=taskID,
+                identifier=identifier
+            )
+
+            cursor.execute(sql_query)
+            (ID, locked, issued, status) = cursor.fetchone()
+            records = CompleteFeed(ID, locked, issued, status)
+
+        return records
+
+    @staticmethod
+    def set_complete_feed(task: TaskTable, id: int, idx: str, locked: bool = None, issued: bool = None, status: bool | None = None) -> int:
+        
+        table_name = Identifier(DataTable._meta.db_table)
+        locked_column = Identifier(DataTable.locked.field.column)
+        issued_column = Identifier(DataTable.issued.field.column)
+        status_column = Identifier(DataTable.status.field.column)
+        taskID_column = Identifier(DataTable.taskID.field.column)
+        rowColumn = Identifier(DataTable.data.field.column)
+        identifier = Literal(idx)
+        taskID = Literal(id)
+        
+        updateQuery = SQL(", ")
+        
+        status = get_SQL_boolean(status) # type: ignore
+        
+        query: list[Composable] = [SQL("{0}=%s" % status).format(status_column)]
+        
+        if locked is not None:
+            locked = get_SQL_boolean(locked) # type: ignore
+            query.append(SQL("{0}=%s" % locked).format(locked_column))
+        
+        if issued is not None:
+            issued = get_SQL_boolean(issued) # type: ignore
+            query.append(SQL("{0}=%s" % issued).format(issued_column))
+            
+        updateQuery = SQL(", ").join(query)
+        
+        groupBy = Literal(task.groupByColumn)
+        updated: int = 0
+        
+        with connection.cursor() as cursor:
+
+            sql_query = SQL('''
+                            update {table_name} set {updateQuery}
+                            where {taskID_column}={taskID} and {rowColumn}::jsonb?{groupBy} and {rowColumn}::jsonb->>{groupBy}={identifier};
+                            ''').format(
+                                groupBy=groupBy,
+                                updateQuery=updateQuery,
+                                table_name=table_name,
+                                taskID_column=taskID_column,
+                                taskID=taskID,
+                                rowColumn=rowColumn,
+                                identifier=identifier
+                            )
+
+            cursor.execute(sql_query)
+            updated = cursor.rowcount
+
+        return updated
 
 ############ TYPES ############
 type Upload = BaseManager[UploadTable]
@@ -548,3 +665,13 @@ class RowStatus(typing.NamedTuple):
         yield self.locked
         yield self.exists
         yield self.value
+
+class CompleteMeta(typing.NamedTuple):
+    ID: str
+    data: dict
+
+class CompleteFeed(typing.NamedTuple):
+    ID: str
+    locked: bool
+    issued: bool
+    status: bool | None

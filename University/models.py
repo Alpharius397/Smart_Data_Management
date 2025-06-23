@@ -1,3 +1,4 @@
+from typing import NamedTuple, TypedDict
 from django.db.models import ( # type: ignore
     CASCADE,
     CharField,
@@ -9,16 +10,13 @@ from django.db.models import ( # type: ignore
     AutoField,
     ImageField,
     DateTimeField,
-    BooleanField,
     UniqueConstraint
 )
 from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator # type: ignore
-from django.forms import forms # type: ignore
 from django.utils import timezone # type: ignore
 from django.db.models.manager import BaseManager # type: ignore
 
 ColorRegex = RegexValidator(r"^#[a-fA-F0-9]{6}$", message="Invalid Hex color")
-
 
 class University(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore
@@ -147,9 +145,30 @@ class Subject(Model):
         constraints = [
             UniqueConstraint(fields=["semester", "schema", "name"], name="unique_name_for_each_semester_and_schema"),
         ]
-
+        
     def __str__(self):
         return f"{self.name} - {self.semester} - {self.schema}"
+    
+    @staticmethod
+    def getSubjects(schema_id: int, branch_id: int):
+        
+        sem_dict: dict[str, SubjectMeta] = {} # semester wise subjects with max marks
+        
+        try:
+            
+            subjects = Subject.objects.filter(schema__id=schema_id, schema__branch__id=branch_id).values("name", "semester", "marks")
+                
+            for subs in subjects.iterator():
+                name = subs["name"]
+                semester = subs["semester"]
+                marks = subs["marks"]
+                    
+                sem_dict[name] = SubjectMeta(sem=semester, marks=marks)
+                
+        except Exception as e:
+            print(e)
+            
+        return sem_dict
 
 class Color(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore
@@ -190,3 +209,11 @@ type branch = BaseManager[Branch]
 type color = BaseManager[Color]
 type schema = BaseManager[Schema]
 type subject = BaseManager[Subject]
+
+class SemMeta(NamedTuple):
+    marks: int
+    total: int
+
+class SubjectMeta(NamedTuple):
+    sem: int
+    marks: int

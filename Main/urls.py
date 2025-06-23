@@ -16,6 +16,7 @@ urlpatterns = [
     path("logs/", include("Logs.urls", "Logs")),
     path("certificate/", include("Certificate.urls", "Certificate")),
     path("mobile/", include("Mobile.urls", "Mobile")),
+    path("card/", include("Card.urls", "Card")),
 ]
 
 admin.site.site_header = "System Admin"

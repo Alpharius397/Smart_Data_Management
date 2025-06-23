@@ -15,11 +15,7 @@ urlpatterns = [
     path("htmx/<int:id>/<int:idx>/<int:rowID>/", sem_report_view, name="htmxSemIndex"),
     path("htmx/schema/", htmx_schema, name="htmxSchema"),
     
-    path(
-        "<int:id>/<str:idx>/<str:token>/<int:schema>/",
-        (lambda x: HttpResponse(status=404)),
-        name="writeBase",
-    ),
+
 ]
 
 websocket_urlpatterns = [

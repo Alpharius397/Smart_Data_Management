@@ -1,13 +1,15 @@
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse  # type: ignore
+from Main.forms import getErrors
 from constants.constants import DEFAULT_ERROR  # type: ignore
 from django.db.models.expressions import Q  # type: ignore
 from tools.url_auth import (
     htmx_response,
     is_auth_get,
+    is_hx_delete,
     is_hx_get,
     is_hx_post,
     auth_needed,
@@ -19,11 +21,12 @@ from django.contrib import messages
 from User.errors import PasswordMismatch, UserNameAlreadyExists, EmailAlreadyExists
 from Crypto.Random.random import randint
 from Main.templatetags.bad_image import bad_image
+from tools.utils import setSwalAlert
 
 
 ############ HTTP Request ############
 @login_needed()
-def account_view(req: HttpRequest) -> HttpResponse | None:
+def account_view(req: HttpRequest):
     if is_auth_get(req):
         user = get_user(req)
 
@@ -35,22 +38,19 @@ def account_view(req: HttpRequest) -> HttpResponse | None:
             "institute": user.role.belongs.institute.name,
             "university": user.role.belongs.institute.university.name,
             "role": user.role.role,
-            "profile": user.role.profile.url,
         }
 
         try:
-            with user.role.profile.open() as f:
-                Image.open(f)
-
-            context["profile"] = user.role.profile.url
+            if user.role.has_profile_image():
+                context["profile"] = user.role.profile.url
+            else:
+                context["profile"] = "/media/profile/default.profile.png" 
+            
 
         except Exception as e:
-            print(e)
-            messages.error(req, "Invalid Image")
+            setSwalAlert(context, "Invalid Profile Image Found!", title="Profile Image")
             context["profile"] = f"data:image/jpeg;base64,{bad_image}"
         return render(req, "User/index.html", context=context)
-
-    return None
 
 
 ############ HTMX Request ############
@@ -67,7 +67,7 @@ def get_username(req: HttpRequest):
 
 @htmx_response
 @auth_needed()
-def change_username(req: HttpRequest) -> HttpResponse | None:
+def change_username(req: HttpRequest):
     user = get_user(req)
 
     if is_hx_get(req):
@@ -82,7 +82,7 @@ def change_username(req: HttpRequest) -> HttpResponse | None:
         username = req.POST.get("username", "")
         user_id = user.id
         previous_name = user.username
-        context = {"username": previous_name}
+        context = {"username": previous_name, **setSwalAlert(title="Username Change")}
 
         try:
             if User.objects.filter(Q(username=username) & ~Q(id=user_id)).exists():
@@ -92,28 +92,25 @@ def change_username(req: HttpRequest) -> HttpResponse | None:
             user.save()
 
             context["username"] = username
-            messages.success(
-                req, f"Username changed from {previous_name} to {username}"
-            )
+
+            setSwalAlert(context, "Username changed successfully!", "success")
 
         except ValidationError as f:
-            for message in f.messages:
-                messages.error(req, message)
+            setSwalAlert(context, getErrors(f))
 
         except UserNameAlreadyExists as g:
-            messages.error(req, g.get_error())
+            setSwalAlert(context,  g.get_error())
 
         except Exception as e:
-            messages.error(req, DEFAULT_ERROR)
-            print(e)
+            setSwalAlert(context,  DEFAULT_ERROR)
 
         return render(req, "User/HTMX/username/username.html", context=context)
-    return None
+
 
 
 @htmx_response
 @auth_needed()
-def get_email(req: HttpRequest) -> HttpResponse | None:
+def get_email(req: HttpRequest):
     user = get_user(req)
     if is_hx_get(req):
         return render(req, "User/HTMX/email/email.html", context={"email": user.email})
@@ -122,8 +119,9 @@ def get_email(req: HttpRequest) -> HttpResponse | None:
 
 @htmx_response
 @auth_needed()
-def change_email(req: HttpRequest) -> HttpResponse | None:
+def change_email(req: HttpRequest):
     user = get_user(req)
+    
     if is_hx_get(req):
         return render(
             req, "User/HTMX/email/email.change.html", context={"email": user.email}
@@ -133,7 +131,7 @@ def change_email(req: HttpRequest) -> HttpResponse | None:
         email = req.POST.get("email", "")
         user_id = user.id
         previous_email = user.email
-        context = {"email": previous_email}
+        context = {"email": previous_email, **setSwalAlert(title="Email Change")}
 
         try:
             if User.objects.filter(Q(email=email) & ~Q(id=user_id)).exists():
@@ -143,26 +141,23 @@ def change_email(req: HttpRequest) -> HttpResponse | None:
             user.save()
 
             context["email"] = email
-            messages.success(req, f"Email changed from {previous_email} to {email}")
+
+            setSwalAlert(context, f"Email changed from {previous_email} to {email}", "success")
 
         except ValidationError as f:
-            for message in f.messages:
-                messages.error(req, message)
+            setSwalAlert(context, getErrors(f))
 
         except EmailAlreadyExists as g:
-            messages.error(req, g.get_error())
+            setSwalAlert(context,  g.get_error())
 
         except Exception as e:
-            messages.error(req, DEFAULT_ERROR)
-            print(e)
+            setSwalAlert(context,  DEFAULT_ERROR)
 
         return render(req, "User/HTMX/email/email.html", context=context)
-    return None
-
 
 @htmx_response
 @auth_needed()
-def get_password(req: HttpRequest) -> HttpResponse | None:
+def get_password(req: HttpRequest):
     if is_hx_get(req):
         defaultPassword = "*" * randint(8, 20)
         return render(
@@ -176,7 +171,7 @@ def get_password(req: HttpRequest) -> HttpResponse | None:
 
 @htmx_response
 @auth_needed()
-def change_password(req: HttpRequest) -> HttpResponse | None:
+def change_password(req: HttpRequest):
     user = get_user(req)
 
     if is_hx_get(req):
@@ -185,6 +180,7 @@ def change_password(req: HttpRequest) -> HttpResponse | None:
     if is_hx_post(req):
         prevPass = req.POST.get("previous", None)
         newPass = req.POST.get("new", None)
+        context = setSwalAlert(title="Password Change")
 
         try:
             if not check_password(prevPass, user.password):
@@ -193,37 +189,33 @@ def change_password(req: HttpRequest) -> HttpResponse | None:
             user.set_password(newPass)
             user.save()
 
-            messages.success(req, "Password was changed successfully")
+            setSwalAlert(context, "Password was changed successfully")
 
         except ValidationError as f:
-            for message in f.messages:
-                messages.error(req, message)
+            setSwalAlert(context, getErrors(f))
 
         except PasswordMismatch as g:
-            messages.error(req, g.get_error())
+            setSwalAlert(context,  g.get_error())
 
         except Exception as e:
-            messages.error(req, DEFAULT_ERROR)
-            print(e)
+            setSwalAlert(context,  DEFAULT_ERROR)
 
         return render(req, "User/HTMX/password/password.html")
-    return None
 
 
 @htmx_response
 @auth_needed()
-def get_profile(req: HttpRequest) -> HttpResponse | None:
+def get_profile(req: HttpRequest):
     if is_hx_get(req):
         return render(req, "User/profile/profile.html")
-    return None
 
 
 @htmx_response
 @auth_needed()
-def change_image(req: HttpRequest) -> HttpResponse | None:
+def change_image(req: HttpRequest):
     if is_hx_post(req):
         user = get_user(req)
-        context = {"profile": f"data:image/jpeg;base64,{bad_image}"}
+        context = {"profile": f"data:image/jpeg;base64,{bad_image}", **setSwalAlert(title="Profile Image Change")}
 
         try:
             role = user.role
@@ -235,10 +227,34 @@ def change_image(req: HttpRequest) -> HttpResponse | None:
             role.save()
 
             context["profile"] = role.profile.url  # type: ignore
-            messages.success(req, "Image Change was successful")
+            
+            setSwalAlert(context, "Image Change was successful", "success")
+        
+        except UnidentifiedImageError:
+            setSwalAlert(context, "Invalid Image Uploaded!"  )
+            
         except Exception as e:
-            messages.error(req, DEFAULT_ERROR)
-            print(e)
+            setSwalAlert(context,  DEFAULT_ERROR)
 
         return render(req, "User/HTMX/image/image.html", context=context)
-    return None
+    
+    if is_hx_delete(req):
+        user = get_user(req)
+        context = {"profile": f"data:image/jpeg;base64,{bad_image}", **setSwalAlert(title="Profile Image Delete")}
+
+        try:
+            role = user.role
+            role.profile.delete(save=True)  # type: ignore
+
+            if role.has_profile_image():
+                context["profile"] = role.profile.url  # type: ignore
+            else:
+                context["profile"] = "/media/profile/default.profile.png"  # type: ignore
+                
+            setSwalAlert(context, "Image was deleted successful", "success")
+        
+        except Exception as e:
+            raise e
+            setSwalAlert(context,  DEFAULT_ERROR)
+
+        return render(req, "User/HTMX/image/image.html", context=context)

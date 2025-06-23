@@ -18,10 +18,12 @@ def login_view(req: HttpRequest) -> HttpResponse:
         context: dict[str, LoginForm | str] = {"form": LoginForm()}
         
         if warning :
-            context.update({"message": warning, "icon": WARNING, "title": "Warning"})
+            setSwalAlert(context, warning, title="Authentication Process")
         
         elif success:
-            context.update({"message": success, "icon": SUCCESS, "title": "Successful Action"})
+            setSwalAlert(context, success, "success", title="Authentication Process")
+            
+        print(context)
 
         return render(req, "Login/HTML/index.html", context)
     

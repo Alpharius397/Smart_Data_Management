@@ -1,3 +1,4 @@
+from PIL import Image
 from django.contrib.auth.models import User as _User  # type: ignore
 from django.db.models import (  # type: ignore
     OneToOneField,
@@ -8,11 +9,12 @@ from django.db.models import (  # type: ignore
     ImageField,
     AutoField
 )
+from django.core.files import File
 from django.http import HttpRequest # type: ignore
 from University.models import Branch, University, Institute
 from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
-
+from Main.settings import settingsInterface as settings
 
 ############ TYPES ############
 class PostNameDict(TypedDict):
@@ -95,17 +97,25 @@ class Role(Model):
     )
     
     profile = ImageField(
-        verbose_name="Profile Image", upload_to="profile", null=False, default="1_BAmBc8T.jpg"
+        verbose_name="Profile Image", upload_to="profile", null=False, default="profile/default.profile.png"
     )  # type: ignore
     
     belongs = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
+    
+    def has_profile_image(self) -> bool:
+        try:
+            self.profile.file
+            return True
+        except Exception as e:
+            print("Error", e)
+        
+        return False
 
     def save(self, *args, **kwargs):
         try:
             this = Role.objects.get(id=self.id)
-
             if this.profile != self.profile:
                 this.profile.delete(save=False)  # type: ignore
 
@@ -113,7 +123,7 @@ class Role(Model):
             pass
 
         except Exception as e:
-            print("Error saving user: ", e)
+            raise e
 
         super().save(*args, **kwargs)
 
