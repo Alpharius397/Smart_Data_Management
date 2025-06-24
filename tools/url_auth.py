@@ -447,7 +447,6 @@ def api_key_required(view_func):
                 )
 
         except Exception as e:
-            print(e)
             return JsonResponse({"error": DEFAULT_ERROR}, status=404)
 
     return _wrapped_view
@@ -467,19 +466,16 @@ def token_check(view_func):
                 
                 processing = data.get("processing", None)
                 ID = data.get("ID", -1)
-
                 if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
                     raise TokenExpired()
 
                 request.user = User.objects.get(id=ID)
-                
                 return view_func(request, *args, **kwargs) or HttpResponse(status=403)
         
         except User.DoesNotExist:
             return HttpResponse(status=401)
         
         except Exception as e:
-            print(e)
             return HttpResponse(status=404)
         
     return _wrapped_view

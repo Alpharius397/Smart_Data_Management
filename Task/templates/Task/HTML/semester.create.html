@@ -37,8 +37,8 @@
 <ul class="messages"></ul>
 
     <div class="upload-container">
-        <h2>Create a Semester Sub-Task</h2>
-        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubCreate' id=id %}" hx-swap="outerHTML" hx-target=".messages" hx-trigger="click from:find button" onsubmit="event.preventDefault();">
+        <h2>Create a Semester</h2>
+        <form id="form" hx-encoding='multipart/form-data' hx-post="{% url 'Task:htmxSubCreate' id=id %}" hx-swap="afterend" hx-target="this" hx-trigger="click from:find button" onsubmit="event.preventDefault();">
             {% csrf_token %}
 
             {% for field in form %}
@@ -48,7 +48,7 @@
                 </div>
                     
             {% endfor %}
-            <button class="upload-button" onclick="formCheck(event, '#form')">Create Task</button>
+            <button class="upload-button" onclick="formCheck(event, '#form')">Create Semester</button>
         </form>
     </div>
 {% endblock %}

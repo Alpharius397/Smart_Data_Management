@@ -20,3 +20,7 @@ urlpatterns = [
         name="confirm",
     )
 ]
+
+websocket_urlpatterns = [
+    path("write/<int:id>/<str:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
+]

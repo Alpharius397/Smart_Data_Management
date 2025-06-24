@@ -7,8 +7,6 @@ from datetime import datetime
 
 class Image(NamedTuple):
     img: str
-    width: int
-    height: int
 
 
 register = template.Library()
@@ -54,18 +52,7 @@ def len__(obj) -> int:
 
 @register.filter(name="img")
 def image(obj) -> Image:
-
-    try:
-        raw_img = obj.split(":")
-        width, height, img = raw_img
-        
-    except:
-
-        width, height = 200, 200
-        img = bad_image
-    img = img.replace("-", "+").replace("_", "/")
-
-    return Image(f"data:image/png;base64,{img}", width, height)
+    return Image(f"data:image/png;base64,{str(obj).replace("-","+").replace("_","/")}")
 
 
 @register.filter(name="in")

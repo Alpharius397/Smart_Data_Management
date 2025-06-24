@@ -176,7 +176,7 @@ def sem_create(req: HttpRequest, id: int):
             setSwalAlert(context, DEFAULT_ERROR, title=SEMESTER_CREATE)
             
         return render(
-            req, "Task/HTML/semester.create.html", 
+            req, "Task/HTML/semester.create.html", context=context
         )
 
 
@@ -252,7 +252,7 @@ def htmx_task_create(req: HttpRequest):
 
         else:
             setSwalAlert(context, f.getErrors())
-        return render(req, "Task/HTMX/message.html")
+        return render(req, "Task/HTMX/message.html", context=context)
 
 
 @htmx_response
@@ -286,7 +286,7 @@ def htmx_task_edit(req: HttpRequest, id: int):
             )
             setSwalAlert(context, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/message.html")
+        return render(req, "Task/HTMX/message.html", context=context)
 
 
 @htmx_response
@@ -318,6 +318,7 @@ def htmx_task_delete(req: HttpRequest, id: int):
         return render(
             req,
             "Task/HTMX/message.html",
+            context=context
         )
 
 
@@ -380,6 +381,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
                     setSwalAlert(
                         context, form.getErrors()
                     )
+                context["option"] = semesterChoice
 
         except AssertionError as e:
             setSwalAlert(context, str(e))
@@ -401,7 +403,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(
-            req, "Task/HTMX/semester.create.html", context={"option": semesterChoice}
+            req, "Task/HTMX/semester.create.html", context=context
         )
 
 

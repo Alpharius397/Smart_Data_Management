@@ -137,7 +137,6 @@ class Subject(Model):
         null=False,
     )  # type: ignore
 
-
     class Meta:
         verbose_name = "Subject"
         verbose_name_plural = "Subjects"

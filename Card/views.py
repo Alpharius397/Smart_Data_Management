@@ -1,33 +1,20 @@
-from base64 import b64decode, b64encode
-import functools
-from io import BytesIO
-import json
-from PIL import Image
 from typing import Any, NamedTuple, TypedDict, Literal
-import typing
-from django.contrib import messages
-from django.db.models import Q
-from django.shortcuts import render  # type: ignore
-from django.urls import reverse  # type: ignore
-from django.http import HttpRequest, HttpResponse, JsonResponse, FileResponse  # type: ignore
-from Report.errors import DataNotLocked, InvalidSchema, RedisFailed
-from University.models import Subject, Schema, SemMeta
+from django.http import HttpRequest, JsonResponse  # type: ignore
+from Card.errors import CardIdMissing
+from Report.errors import DataNotLocked
+from Report.views import getReport
+from University.models import Subject
 from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
-from tools.get_image import compress_image
 from User.models import (
     get_post_id,
     get_user,
-    is_admin,
-    is_manager,
     get_post,
-    get_user_by_id,
-    get_post_by_ID,
-    User,
+    is_authenticated, 
+    is_manager,
+    User
 )
-import pandas as pd
 from tools.encrypt import encrypt_data, decrypt_data
-from Main.templatetags.bad_image import bad_image
 from tools.url_auth import (
     is_auth_post,
     api_key_required,
@@ -35,18 +22,20 @@ from tools.url_auth import (
     task_permission_check,
     token_check,
 )
-from Report.forms import CompleteFeedBack, FeedBackForm, FeedBackView, CompleteFeedBackView
-from django.utils import timezone  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
-from tools.utils import ColumnType, get_2_value, get_3_value, get_SQL_boolean, get_string_value, get_string_value, setSwalAlert
+from tools.utils import get_2_value, setSwalAlert
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
-from tools.token import hash_token, get_token
 from Card.models import Card
 from django.db import transaction
-from constants.constants import DEFAULT_ERROR, DONE, FAILED, MAX_RECORD, WRITE_TOKEN
-from Main.models import RedisConnection, ReadToken, WriteToken
-from psycopg2.sql import SQL, Identifier
-from django.db import connection
+from django.utils import timezone
+from constants.constants import DEFAULT_ERROR, WRITE_TOKEN
+from Main.models import RedisConnection
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore
+from tools.token import hash_token
+from asgiref.sync import sync_to_async, async_to_sync
+from django.template.loader import render_to_string # type: ignore
+from channels.layers import get_channel_layer # type: ignore
 
 ############ TYPES ############
 
@@ -87,7 +76,6 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
         try:
             post = get_post_id(user)
             
-            record = DataTable.get_complete_data(task, id, idx)
             feed = DataTable.get_complete_feed(task, id, idx)
             
             if feed.locked is False:
@@ -95,30 +83,27 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             
             sem_dict = Subject.getSubjects(schema, post["branch"])
                 
-            personal_data: dict[str, str] = {}
-            image_data: dict[str, str] = {}
-            sem_data: dict[int, dict[str, tuple[int, int]]] = {}
+            post = get_post_id(user)
+            sem_dict = Subject.getSubjects(schema, post["branch"])
             
-            for column, values in record.data.items():
-                if(column[-1]=='I'):
-                    image_data[column[:-1]] = values
-                else:
-                    if((sub := column[:-1]) in sem_dict):
-                        if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
-                        sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
-                    else:
-                        personal_data[sub] = values
-                        
+            report_data = getReport(sem_dict, task, id, idx, True)
             context.update(get_post(user))
-            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
+            context.update(report_data)
             
             encrypted = encrypt_data(settings.KEY, context)
             
+            with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/compress.txt", "w") as f:
+                f.write(encrypted)
+            
+            with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/decompress.txt", "w") as f:
+                f.write(json.dumps(context))
+            
+            
             return JsonResponse(data=FetchJson(data=encrypted), safe=True, status=200)
-        except:
-            pass
-        
-        
+        except Exception as e:
+            print(e)
+            return JsonResponse(data=FetchJson(data=DEFAULT_ERROR), safe=True, status=500)
+
 @csrf_exempt
 @api_key_required
 @token_check
@@ -127,8 +112,52 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
     user = get_user(req)
     task: TaskTable = req.__getattribute__("task")
-    context:dict[str, Any] = {}
-    
+    context: dict = {}
+    if is_auth_post(req):
+        
+        try:
+            with transaction.atomic():
+                data = ConfirmJson(**req.POST.dict()) # type: ignore
+                post = get_post_id(user)
+                sem_dict = Subject.getSubjects(schema, post["branch"])
+                
+                issued = data["status"]
+                cardID = data['card']
+                
+                if(not cardID):
+                    raise CardIdMissing()
+                
+                with RedisConnection() as redis:
+                    redis.unset(token)
+                
+                context.update({**get_post(user), **getReport(sem_dict, task, id, idx)})
+                
+                DataTable.set_complete_feed(task, id, idx, issued=get_2_value(issued))
+                
+                card, _ = Card.objects.get_or_create(cardID=cardID)
+                
+                card.data = context
+                card.last_write = timezone.now()
+                card.done_by = user
+                card.save()
+                cardWriteWebSocket(token, data)
+                
+                return JsonResponse(data={"status": "Feedback updated successfully"}, status=200)
+            
+        except Exception as e:
+            print(e)
+            return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
+
+
+@csrf_exempt
+@api_key_required
+@token_check
+@auth_needed(manager_only=True)
+@task_permission_check
+def read_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
+    user = get_user(req)
+    task: TaskTable = req.__getattribute__("task")
+    context: dict = {}
     if is_auth_post(req):
         
         try:
@@ -137,12 +166,97 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             with RedisConnection() as redis:
                 redis.unset(token)
             
-            issued = data["status"]
             
-            DataTable.set_complete_feed(task, id, idx, issued=get_2_value(issued))
-            print(data)
-            
+            return JsonResponse(data={"status": "Feedback updated successfully"}, status=200)
+        
         except Exception as e:
             print(e)
+            return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
+        
+def cardWriteWebSocket(token: str, data: ConfirmJson):
+    try:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(token, {"type": "card.write", **data})
+    except Exception as e:
+        APP_LOG.write_error(LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e))
+
+class CardWriteExeConsumer(AsyncWebsocketConsumer):
+    
+    user: User
+    taskID: int
+    idx: int
+    token: str
+
+    async def auth_user(self) -> bool:
+        try:
+            user: User = self.user
+            managerFlag = await sync_to_async(is_manager)(user)
+            authFlag = await sync_to_async(is_authenticated)(user)
             
-    return JsonResponse(data={"status": "We are trying to reach you out about your car's extended warranty"}, status=200)
+            return bool(managerFlag and authFlag)
+        except Exception as e:
+            return False
+    
+    async def auth_token(self) -> bool:
+        try:
+            sessionToken = self.session.get(WRITE_TOKEN, "")
+            return bool(hash_token(sessionToken, self.user.id) == self.token)
+        except Exception as e:
+            return False
+    
+    async def connect(self) -> None:
+        
+        try:
+            self.taskID = self.scope["url_route"]["kwargs"]["id"]
+            self.idx = self.scope["url_route"]["kwargs"]["idx"]
+            self.token = self.scope["url_route"]["kwargs"]["token"]
+            self.session = self.scope["session"]
+            
+            self.user = self.scope["user"]
+            self.room_group_name = self.token
+            
+            tokenFlags = await self.auth_token()
+            userFlags = await self.auth_user()
+            
+            if(not (tokenFlags and userFlags)):
+                raise DenyConnection("Unauthenticated User")
+            
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+            await self.accept()
+        
+        except DenyConnection as f:
+            raise f
+        
+        except Exception as e:
+            raise DenyConnection("Invalid URL found!")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    # Receive message from WebSocket
+    async def receive(self, text_data: str):
+        try:
+            data: ConfirmJson = ConfirmJson(**json.loads(text_data)) # type: ignore
+
+            await self.channel_layer.group_send(
+                self.room_group_name, {"type": "card.write", **data}
+            )
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=e))
+    
+    async def card_write(self, event: ConfirmJson):
+        status = event.get("status",'none')
+        message = event.get("message", DEFAULT_ERROR)
+        context = setSwalAlert(title="Card Write")
+        
+        match(status):
+            case "true":
+                setSwalAlert(context, message, "success")
+            case "false":
+                setSwalAlert(context, message, "warning")
+            case _:
+                setSwalAlert(context, message)
+                
+        await self.send(text_data=render_to_string('Report/HTMX/write/end.html',context=context), close=True)

@@ -33,15 +33,17 @@ header .hamburger {
   border: 1px solid black;
   height: 50px;
   transition: 300ms;
+  background-color: #5256ba;
+
 }
 
 header .hamburger:hover {
+  background-color: #f5f5f5;
   border-radius: 8px;
-  background-color: grey;
 }
 
 header .hamburger.open {
-  background-color: grey;
+  background-color: #f5f5f5;
 }
 
 
@@ -80,6 +82,11 @@ svg path {
   fill: #f5f5f5;
   stroke: #f5f5f5;
   transition: 300ms;
+}
+
+header .hamburger.open svg path, header .hamburger:hover svg path {
+  fill: #5256ba;
+  stroke: #5256ba;
 }
 
 header .header-left,
@@ -347,6 +354,11 @@ dialog.loading::backdrop {
   transition:
     background-color 0.3s ease,
     transform 0.2s ease;
+}
+
+.next-button:hover {
+  background-color: #367b39;
+  transform: translateY(-2px);
 }
 
 [data-title]:hover:after {

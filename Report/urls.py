@@ -1,6 +1,5 @@
 from django.urls import path
 from Report.views import *
-from .sockets import CardWriteExeConsumer
 
 app_name = "Report"
 urlpatterns = [
@@ -14,10 +13,4 @@ urlpatterns = [
     path("htmx/<int:id>/<int:idx>/<int:rowID>/feed", sem_feed_view, name="htmxSemFeedBack"),
     path("htmx/<int:id>/<int:idx>/<int:rowID>/", sem_report_view, name="htmxSemIndex"),
     path("htmx/schema/", htmx_schema, name="htmxSchema"),
-    
-
-]
-
-websocket_urlpatterns = [
-    path("report/<str:id>/<int:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
 ]

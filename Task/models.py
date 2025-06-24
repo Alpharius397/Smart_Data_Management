@@ -57,7 +57,7 @@ class TaskTable(Model):
     )
     
     groupByColumn = CharField(
-        verbose_name="Group By Column", max_length=255, null=True, blank=True
+        verbose_name="Group By Column", max_length=255, null=False, blank=True, default=""
     )
     
     data: "Data"

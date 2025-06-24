@@ -10,7 +10,7 @@ from tools.errors import (
     ImageExpansionFailed,
 )
 
-REDUCE_FACTOR: int = 4
+REDUCE_FACTOR: int = 5
 
 
 def get_image_data(
@@ -22,21 +22,20 @@ def get_image_data(
         width, height = img.width, img.height
         default_size = 200
         
-        if width > height:
-            height = int((height / width) * default_size) 
-            width = default_size
-        else:
-            width = int((width / height) * default_size)
-            height = default_size
+        if max(width, height) > 200:
+            if width > height:
+                height = int((height / width) * default_size) 
+                width = default_size
+            else:
+                width = int((width / height) * default_size)
+                height = default_size
 
         temp = img.resize((width, height), Image.Resampling.BILINEAR)
 
         with BytesIO() as b:
             temp.save(b, format=img.format, quality=95)
-            print(1)
-            images[(image.anchor._from.row, image.anchor._from.col)] = (
-                f"{temp.width}:{temp.height}:{b64encode(b.getvalue()).decode()}"
-            )
+            images[(image.anchor._from.row, image.anchor._from.col)] = b64encode(b.getvalue()).decode()
+            
 
     return images
 
@@ -44,13 +43,17 @@ def get_image_data(
 def compress_image(img_data: str) -> str:
     try:
         image = Image.open(BytesIO(b64decode(img_data)))
-        width, height = image.width, image.height
         compressed = image.reduce(REDUCE_FACTOR)
-
         image_data = BytesIO()
-
         compressed.save(image_data, format=image.format, quality=75, optimize=True)
-        return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
+        
+        with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/compressed_image.txt", "w") as f:
+            f.write(b64encode(image_data.getvalue()).decode())
+            
+        with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/image.txt", "w") as f:
+            f.write(img_data)
+            
+        return b64encode(image_data.getvalue()).decode()
 
     except Exception:
         raise ImageCompressionFailed()
@@ -63,7 +66,7 @@ def expand_image(img_data: str, width: int, height: int) -> str:
         temp = image.resize((width, height), Image.Resampling.BILINEAR)
         image_data = BytesIO()
         temp.save(image_data, format=image.format, quality=95)
-        return f"{width}:{height}:{b64encode(image_data.getvalue()).decode()}"
+        return b64encode(image_data.getvalue()).decode()
     except Exception:
         raise ImageExpansionFailed()
 

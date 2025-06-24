@@ -25,6 +25,7 @@ from tools.url_auth import (
 )
 from Table.errors import (
     ColumnDoesNotExist,
+    GroupByColumnDoesNotExist,
     OnlyImageAllowed,
     OnlyTextAllowed,
     RowLocked,
@@ -157,6 +158,10 @@ def get_context(
     
     try:
         task: TaskTable = req.__getattribute__("task")
+        
+        if not task.groupByColumn:
+            raise GroupByColumnDoesNotExist()
+        
         groupBy = Literal(task.groupByColumn)
         pageOffset = Literal(page)
         column = bytes.fromhex(column).decode()
@@ -202,10 +207,10 @@ def get_context(
             )
 
             cursor.execute(sql_query)
-            print(sql_query.as_string(cursor.connection))            
+
             for col in cursor.fetchall():
                 ID, Data, Locked, Issued, Status = col
-                records.append(Context(ID, json.loads(Data), Locked, Issued, Status))
+                records.append(Context(ID or "", json.loads(Data), Locked, Issued, Status))
 
         pd_data = {
             (row.ID): {
@@ -229,7 +234,10 @@ def get_context(
                 "isAdmin": is_admin(user)
             }
         )
-        
+    
+    except GroupByColumnDoesNotExist as f:
+        context['error'] = f.get_error()
+    
     except Exception as e:
         print(e)
         APP_LOG.write_error(

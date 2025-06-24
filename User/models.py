@@ -79,9 +79,6 @@ class Student(Model):
     pass
 
 
-class UserObject(_User):
-    pass
-
 
 class Role(Model):
     id = AutoField(verbose_name="roleID", primary_key=True, null=False, blank=False)

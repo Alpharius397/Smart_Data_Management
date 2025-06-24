@@ -70,5 +70,5 @@
         {% endfor %}
 </div>
 
-<a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}">Print this report</a>
+<a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}" target="_blank">Print this report</a>
 {% endif %}

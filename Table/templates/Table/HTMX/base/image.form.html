@@ -4,7 +4,7 @@
 {% with IMAGE=value|img %}
     {% if locked is False %}
         <div class="row-data image column-{{ column }}">
-            <img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" id="img_{{rowID}}_{{column}}" loading="lazy">
+            <img src="{{IMAGE.img}}" id="img_{{rowID}}_{{column}}" loading="lazy">
 
             <div hx-put="{% url 'Table:htmxSemEditImage' id=id idx=idx rowID=rowID %}" hx-vals='{"column":"{{ column }}"}' hx-swap="outerHTML" hx-target="closest div" hx-trigger="click from:find img">
 
@@ -14,7 +14,7 @@
 
     {% else %}
 
-        <div class="row-data column-{{ column }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" loading="lazy"></div>
+        <div class="row-data image column-{{ column }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}" loading="lazy"></div>
 
     {% endif %}
 

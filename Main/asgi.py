@@ -7,11 +7,11 @@ import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Main.settings")
 asgi = get_asgi_application()
 
-import Report.urls
+import Card.urls
 import Dash.urls
 
 websocket_urlpatterns = [
-    *Report.urls.websocket_urlpatterns,
+    *Card.urls.websocket_urlpatterns,
     *Dash.urls.websocket_urlpatterns,
 ]
 

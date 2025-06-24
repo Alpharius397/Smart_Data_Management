@@ -1,10 +1,11 @@
 from typing import NamedTuple, TypedDict
+import zlib
 from django.contrib import messages
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, FileResponse  # type: ignore
 from Report.errors import DataNotLocked, InvalidSchema, RedisFailed
-from University.models import SemMeta, Subject, Schema
+from University.models import SemMeta, Subject, Schema, SubjectMeta
 from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
 from User.models import (
@@ -15,6 +16,7 @@ from User.models import (
     get_post,
     User,
 )
+from tools.encrypt import b64decode, b64encode
 from tools.url_auth import (
     htmx_response,
     is_auth_get,
@@ -28,16 +30,50 @@ from tools.url_auth import (
 from Report.forms import CompleteFeedBack, FeedBackForm, FeedBackView, CompleteFeedBackView
 from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.utils import get_2_value, get_3_value, get_string_value, get_string_value, setSwalAlert
+from tools.get_image import compress_image
 from tools.token import hash_token, get_token
 from django.db import transaction # type: ignore
 from constants.constants import DEFAULT_ERROR, WRITE_TOKEN
 from Main.models import RedisConnection, WriteToken
 
+########### TYPES #############
+class ReportData(TypedDict):
+    images: dict[str, str]
+    personal: dict[str, str]
+    sem_data: dict[int, dict[str, tuple[int, int]]]
+
 ########### UTILS #############
+
 def writeBegin(user: User, token: str) -> bool:
     with RedisConnection() as redis: 
         return redis.set(token, WriteToken(ID=user.id, processing=True))
     return False
+
+def writeEnd(user: User, token: str) -> bool:
+    with RedisConnection() as redis: 
+        return redis.set(token, WriteToken(ID=user.id, processing=False))
+    return False
+
+def getReport(sem_dict: dict[str, SubjectMeta], task: TaskTable, id: int, idx: str, compress: bool = False) -> ReportData:
+    records = DataTable.get_complete_data(task, id, idx)
+    
+    personal_data: dict[str, str] = {}
+    image_data: dict[str, str] = {}
+    sem_data: dict[int, dict[str, tuple[int, int]]] = {}
+    
+    for column, values in records.data.items():
+        if(column[-1]=='I'):
+            image_data[column[:-1]] = compress_image(values) if compress else values
+        else:
+            if((sub := column[:-1]) in sem_dict):
+                if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
+                sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
+            else:
+                personal_data[sub] = values
+    
+    sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
+    
+    return ReportData(images=image_data, sem_data=sem_data, personal=personal_data)
 
 ########### HTTP Request #############
 @login_needed()
@@ -65,30 +101,14 @@ def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
         try:
             post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
-            records = DataTable.get_complete_data(task, id, idx)
             sem_dict = Subject.getSubjects(schema_id, post["branch"])
-                
-            personal_data: dict[str, str] = {}
-            image_data: dict[str, str] = {}
-            sem_data: dict[int, dict[str, tuple[int, int]]] = {}
             
-            for column, values in records.data.items():
-                if(column[-1]=='I'):
-                    image_data[column[:-1]] = values
-                else:
-                    if((sub := column[:-1]) in sem_dict):
-                        if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
-                        sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
-                    else:
-                        personal_data[sub] = values
-            
-            sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
+            report_data = getReport(sem_dict, task, id, idx)
             
             context.update(get_post(user))
-            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data})
+            context.update(report_data)
             
         except Exception as e:
-            print(e)
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Report/HTML/generated.report.html", context=context)
@@ -138,24 +158,13 @@ def report_view(req: HttpRequest, id: int, idx: str):
 
             sem_dict = Subject.getSubjects(schema_id, post["branch"])
                 
-            personal_data: dict[str, str] = {}
-            image_data: dict[str, str] = {}
-            sem_data: dict[int, dict[str, tuple[int, int]]] = {}
+            report_data = getReport(sem_dict, task, id, idx)
             
-            for column, values in records.data.items():
-                if(column[-1]=='I'):
-                    image_data[column[:-1]] = values
-                else:
-                    if((sub := column[:-1]) in sem_dict):
-                        if(sem_dict[sub].sem not in sem_data): sem_data[sem_dict[sub].sem] = {}
-                        sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks) 
-                    else:
-                        personal_data[sub] = values
-            
-            sem_data = { key: sem_data[key] for key in sorted(sem_data.keys()) }
+            context.update(post)
+            context.update(report_data)
             
             context.update(get_post(user))
-            context.update({"images": image_data, "personal": personal_data, "sem_data": sem_data, "schema":schema_id})
+            context.update({**report_data, "schema":schema_id})
 
         except InvalidSchema as f:
             messages.error(req, f.get_error())
@@ -388,6 +397,7 @@ def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
                 raise RedisFailed()
             
             context["url"] = req.build_absolute_uri(reverse("Card:writeBase", kwargs={"id":id,"idx":idx,"token":token,"schema":schema}))
+            context["ws"] = f"ws://{req.get_host()}/write/{id}/{idx}/{token}/"
             context["path"] = settings.WRITE_REGISTRY
             context["ok"] = True
             

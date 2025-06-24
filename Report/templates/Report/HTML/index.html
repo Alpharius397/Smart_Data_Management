@@ -58,7 +58,7 @@
 
     {% if isManager is True %}
 
-        <div class="tab" hx-get="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-swap="afterend" hx-target="this" hx-trigger="click from:find button" hx-include="find select">
+        <div class="tab" hx-get="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-swap="afterend" hx-target="find #fancy-thing" hx-trigger="click from:find button" hx-include="find select">
             <h2> Schema Options </h2>
         
             <div class="schema-field" hx-get="{% url 'Report:htmxIndex' id=id idx=idx %}" hx-swap="innerHTML" hx-target=".semester-report" hx-trigger="input from:find select" hx-include="select" hx-params="schema" hx-indicator=".semester-report">
@@ -70,6 +70,8 @@
 
                 <button class="click-issue">Issue</button>
             </div>
+
+            <div id="fancy-thing" style="display: none;"></div>
 
         </div>
 
@@ -117,5 +119,6 @@
 {% block script%}
 <script src="{% static 'js/libs/jquery.js' %}"></script>
 <script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/libs/socket.js' %}"></script>
 <script src="{% static 'js/pages/report.js' %}"></script>
 {% endblock %}

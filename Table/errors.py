@@ -34,3 +34,7 @@ class OnlyTextAllowed(MainException):
 class OnlyImageAllowed(MainException):
     def __init__(self, column: str):
         super().__init__(f"Column '{column}' only accepts images not text!")
+        
+class GroupByColumnDoesNotExist(MainException):
+    def __init__(self):
+        super().__init__(f"Group By Column for this task was not chosen!")
