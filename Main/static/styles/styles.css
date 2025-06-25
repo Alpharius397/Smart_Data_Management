@@ -356,6 +356,10 @@ dialog.loading::backdrop {
     transform 0.2s ease;
 }
 
+button {
+  cursor: pointer;
+}
+
 .next-button:hover {
   background-color: #367b39;
   transform: translateY(-2px);

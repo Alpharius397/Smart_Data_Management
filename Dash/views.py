@@ -3,7 +3,7 @@ from django.db.models import Q, QuerySet # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
-from Main.models import RedisConnection
+from Main.models import RedisConnection, ReadToken
 from Main.settings import settingsInterface as settings  # type: ignore
 from User.models import (
     RoleType,
@@ -18,6 +18,7 @@ from tools.url_auth import (
     htmx_response,
     auth_needed,
     get_color,
+    is_hx_put,
     login_needed,
     is_auth_get,
     api_key_required,
@@ -28,6 +29,7 @@ from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from constants.constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
+from tools.utils import setSwalAlert
 from .sockets import cardReadWebSocket
 from django.contrib import messages
 
@@ -102,22 +104,15 @@ def dash_board(req: HttpRequest) -> HttpResponse | None:
 @login_needed(manager_only=True)
 def read_screen(req: HttpRequest) -> HttpResponse | None:
     if is_auth_get(req):
-        Redis = RedisConnection().connect()
-        token = get_token()
         user = get_user(req)
+        token = get_token()
         user_read_token = hash_token(token, user.id)
 
         req.session[READ_TOKEN] = token
-        Redis.set(
-            user_read_token,
-            {"status": LOADING, "data": "", "cardID": ""},
-        )
-
-        get_color(req)
-
+        
         return render(
             req,
-            "Dash/read.html",
+            "Dash/HTML/read.html",
             context={
                 "token": user_read_token,
                 "path": settings.READ_REGISTRY,
@@ -130,68 +125,6 @@ def read_screen(req: HttpRequest) -> HttpResponse | None:
     return None
 
 
-############ API Request ############
-@csrf_exempt
-@api_key_required
-def get_read_data(req: HttpRequest, token: str) -> JsonResponse | None:
-    json_resp = JsonText(
-        data=JsonData(info="Unauthenticated Request", status=False), status=403
-    )
-
-    if req.method == "POST":
-        cardID = req.POST.get("cardID", "")
-        data = req.POST.get("data", "")
-
-        Redis = RedisConnection().connect()
-        redis_data = Redis.get(token)
-
-        status = redis_data.get("status", "")
-        cardStatus = "Invalid"
-
-        try:
-            if status != LOADING:
-                raise ReadTokenExpired()
-
-            if not (data and cardID):
-                raise ReadFailed()
-
-            cardStatus = DONE
-
-            Redis.set(token, {"status": DONE, "data": data, "cardID": cardID})
-            Redis.close()
-
-            json_resp["data"]["info"] = "Data received successfully"
-            json_resp["status"] = True
-
-        except Exception as e:
-            if isinstance(e, ReadTokenExpired):
-                APP_LOG.write_error(
-                    LogStructure()
-                    .set_request(req)
-                    .set_description(
-                        type=Task.INVALID_TOKEN,
-                    )
-                )
-                json_resp["data"]["info"] = e.get_error()
-                json_resp["status"] = 403
-
-            elif isinstance(e, ReadFailed):
-                json_resp["data"]["info"] = e.get_error()
-                json_resp["status"] = 400
-                cardStatus = "Failed"
-
-            else:
-                json_resp["data"]["info"] = DEFAULT_ERROR
-                json_resp["status"] = 500
-                cardStatus = "Failed"
-
-        cardReadWebSocket(token, cardID, data, cardStatus)
-
-        return JsonResponse(**json_resp, safe=False)
-
-    return None
-
-
 ############ HTMX Request ############
 @htmx_response
 @auth_needed()
@@ -199,7 +132,6 @@ def task_fetch(req: HttpRequest) -> HttpResponse | None:
     user = get_user(req)
 
     if is_hx_get(req):
-        error: str = ""
         next_ = 0
         managers: list[FileRecord] = []
 
@@ -239,16 +171,27 @@ def task_fetch(req: HttpRequest) -> HttpResponse | None:
 
     return None
 
-@csrf_exempt
 @htmx_response
 @auth_needed(manager_only=True)
-def read_view(req: HttpRequest) -> HttpResponse | None:
+def read_view(req: HttpRequest):
     user = get_user(req)
-
-    if is_hx_get(req):
+    context = {}
+    
+    if is_hx_put(req):
         read_token = req.session.get(READ_TOKEN, "")
         token = hash_token(read_token, user.id)
-        return render(req, "Dash/HTMX/read/begin.html", context={"token": token})
+        context["token"] = token
+        context["path"] = settings.READ_REGISTRY
+        context["url"] = req.build_absolute_uri(reverse("Card:read", args=(token,)))
+        context["ws"] = f"/read/{token}/"
+        
+        with RedisConnection() as redis:
+            redis.set(
+            token,
+            ReadToken(ID=user.id, processing=True, data=""),
+        )
+        
+        return render(req, "Dash/HTMX/read/begin.html", context=context)
 
     elif is_hx_delete(req):
         return render(req, "Dash/HTMX/read/end.html")

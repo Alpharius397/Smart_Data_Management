@@ -373,6 +373,44 @@ svg.search path {
     fill: #333 !important;
 }   
 
+.retry-read {
+    padding-top: 20px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.retry-read > div {
+    margin: 5px 0;
+}
+
+.retry-read .table-view-again {
+    width: 100%;
+}
+
+.retry-read img.spinner {
+    height: 200px;
+}
+
+.retry-read button {
+    width: 40%;
+    height: 40px;
+    border-radius: 16px;
+    background-color: red;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    transition: 500ms;
+}
+
+.retry-read button:hover {
+    color: red;
+    background-color: white;
+
+}
+
 @media screen and (max-width: 600px) {
     .task-list {
         padding: 10px;

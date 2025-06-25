@@ -1,0 +1,49 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Report/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
+{% endblock %}
+
+{% block title %} Read Dashboard {% endblock %}
+
+{% block customStyle %}
+<style>
+    .retry-read button {
+        color: {{request.session.secColor}};
+        background-color: {{request.session.mainColor}};
+    }
+    .retry-read button:hover {
+        color: {{request.session.mainColor}};
+        background-color: {{request.session.secColor}};
+    }
+</style>
+{% endblock %}
+
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Dash:index' %}">Back To Dashboard</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Read Card</h1>{% endblock %}
+
+
+{% block mainContent %}
+<div class="tab">
+
+        <div class="retry-read" hx-put="{% url 'Dash:card_read' %}" hx-trigger="click from:find button" hx-target="this" hx-swap="outerHTML">
+            <button class="begin-read">Begin Read</button>
+        </div>
+        {% csrf_token %}
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/libs/socket.js' %}"></script>
+<script src="{% static 'js/pages/report.js' %}"></script>
+<script>
+    add_csrf();
+</script>
+{% endblock %}

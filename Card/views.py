@@ -15,6 +15,7 @@ from User.models import (
     User
 )
 from tools.encrypt import encrypt_data, decrypt_data
+from tools.get_image import expand_image
 from tools.url_auth import (
     is_auth_post,
     api_key_required,
@@ -28,7 +29,7 @@ from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
 from django.db import transaction
 from django.utils import timezone
-from constants.constants import DEFAULT_ERROR, WRITE_TOKEN
+from constants.constants import DEFAULT_ERROR, WRITE_TOKEN, READ_TOKEN
 from Main.models import RedisConnection
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore
@@ -36,6 +37,7 @@ from tools.token import hash_token
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string # type: ignore
 from channels.layers import get_channel_layer # type: ignore
+from django.contrib import messages
 
 ############ TYPES ############
 
@@ -60,6 +62,14 @@ class SubjectMeta(TypedDict):
 class SemMeta(NamedTuple):
     marks: int
     total: int
+    
+class EncryptData(TypedDict):
+    university: str
+    institute: str
+    branch: str
+    images: dict[str, str]
+    personal: dict[str, str]
+    sem_data: dict[int, dict[str, tuple[int, int]]]
 
 @csrf_exempt
 @api_key_required
@@ -144,7 +154,14 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
                 
                 return JsonResponse(data={"status": "Feedback updated successfully"}, status=200)
             
+        except CardIdMissing as f:
+            data = ConfirmJson(message=f.get_error(), status='false', card="")
+            cardWriteWebSocket(token, data)
+            return JsonResponse(data={"status": "Feedback updation failed"}, status=401)
+            
         except Exception as e:
+            data = ConfirmJson(message=DEFAULT_ERROR, status='none', card="")
+            cardWriteWebSocket(token, data)
             print(e)
             return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
 
@@ -153,25 +170,33 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 @api_key_required
 @token_check
 @auth_needed(manager_only=True)
-@task_permission_check
-def read_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
-    user = get_user(req)
-    task: TaskTable = req.__getattribute__("task")
-    context: dict = {}
+def read_view(req: HttpRequest, token: str):
+
     if is_auth_post(req):
         
         try:
             data = ReadJson(**req.POST.dict()) # type: ignore
             
+            if(not data["card"]):
+                raise CardIdMissing()
+            
             with RedisConnection() as redis:
                 redis.unset(token)
             
-            
-            return JsonResponse(data={"status": "Feedback updated successfully"}, status=200)
+            cardReadWebSocket(token, data)
+            return JsonResponse(data={"status": "Card Data received successfully"}, status=200)
         
+        except CardIdMissing as f:
+            data = ReadJson(message=f.get_error(), status='false', card="", data="")
+            cardReadWebSocket(token, data)
+            return JsonResponse(data={"status": "Card ID missing"}, status=401)
+            
         except Exception as e:
+            data = ReadJson(message=DEFAULT_ERROR, status='none', card="", data="")
+            cardReadWebSocket(token, data)
             print(e)
-            return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
+            return JsonResponse(data={"status": "Card Data received failed"}, status=500)
+
         
 def cardWriteWebSocket(token: str, data: ConfirmJson):
     try:
@@ -236,15 +261,7 @@ class CardWriteExeConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data: str):
-        try:
-            data: ConfirmJson = ConfirmJson(**json.loads(text_data)) # type: ignore
-
-            await self.channel_layer.group_send(
-                self.room_group_name, {"type": "card.write", **data}
-            )
-            
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=e))
+        APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=Exception("No entry here")))
     
     async def card_write(self, event: ConfirmJson):
         status = event.get("status",'none')
@@ -260,3 +277,101 @@ class CardWriteExeConsumer(AsyncWebsocketConsumer):
                 setSwalAlert(context, message)
                 
         await self.send(text_data=render_to_string('Report/HTMX/write/end.html',context=context), close=True)
+
+def cardReadWebSocket(token: str, data: ReadJson):  # type: ignore
+    try:
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(  # type: ignore
+            token,
+            {"type":  "card.read", **data},
+        )
+    except Exception as e:
+        APP_LOG.write_error(
+            LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e)
+        )
+
+
+class CardReadExeConsumer(AsyncWebsocketConsumer):
+
+    user: User
+    token: str
+
+    async def auth_user(self) -> bool:
+        try:
+            user: User = self.user
+            managerFlag = await sync_to_async(is_manager)(user)
+            authFlag = await sync_to_async(is_authenticated)(user)
+            
+            return bool(managerFlag and authFlag)
+        except Exception as e:
+            return False
+    
+    async def auth_token(self) -> bool:
+        try:
+            sessionToken = self.session.get(READ_TOKEN, "")
+            return bool(hash_token(sessionToken, self.user.id) == self.token)
+        except Exception as e:
+            return False
+
+    async def connect(self) -> None:
+        try:
+            self.token = self.scope["url_route"]["kwargs"]["token"]
+            self.session = self.scope["session"]
+            
+            self.user = self.scope["user"]
+            self.room_group_name = self.token
+            
+            tokenFlags = await self.auth_token()
+            userFlags = await self.auth_user()
+            
+            if(not (tokenFlags and userFlags)):
+                raise DenyConnection("Unauthenticated User")
+            
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+
+            await self.accept()
+        
+        except DenyConnection as f:
+            raise f
+        
+        except Exception as e:
+            raise DenyConnection("Invalid URL found!")
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)  # type: ignore
+
+    async def receive(self, text_data: str):  # type: ignore
+        APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=Exception("No entry here")))
+
+    async def card_read(self, event: ReadJson):
+        status = event["status"]
+        cardID = event["card"]
+        data = event["data"]
+        message = event["data"]
+        context: dict = {}
+        
+        match(status):
+            case "true":
+                
+                try:
+                    decrypted: EncryptData = EncryptData(**decrypt_data(settings.KEY, data)) # type: ignore
+                    
+                    for img, value in decrypted["images"].items():
+                        decrypted["images"][img] = expand_image(value, 0, 0)
+                        
+                    for sem in decrypted["sem_data"].keys():
+                        for column, value in decrypted["sem_data"][sem].items():
+                            decrypted["sem_data"][sem][column] = SemMeta(*decrypted["sem_data"][sem][column])
+                    
+                    context.update(decrypted)
+                    setSwalAlert(context, message, "success")
+                except Exception as e:
+                    context["messages"] = ["Failed to parse card data!"]
+                    
+            case _:
+                context["messages"] = ["Failed to read card data"]
+                
+        await self.send(
+            text_data=render_to_string('Dash/HTMX/report.html',context=context), 
+            close=True
+        )

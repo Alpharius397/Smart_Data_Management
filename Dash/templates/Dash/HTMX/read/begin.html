@@ -1,11 +1,14 @@
 {% load template %}
 {% load static %}
 
-<div class="tableView" hx-ext="ws" ws-connect="/dash/{{token}}/" id="clear-me-after-ws">
+<div class="retry-read" id="change-me">
     <img src="{% static 'images/spinner.gif' %}" alt="Loading" class="spinner">
     <h2> Attempting to Read....</h2>
-    <button class="cancel-read" hx-delete="{% url 'Dash:card_read' %}" hx-trigger="click from:closest button" hx-target="closest div" hx-swap="outerHTML">Cancel Read</button>
-    <script>
-        setTimeout(runCardExe, 1000);
-    </script>
+    <button hx-delete="{% url 'Dash:card_read' %}" hx-trigger="click from:closest button" hx-target="closest div" hx-swap="outerHTML">Cancel Read</button>
+    <div id="fancy-thing" style="display: none;"></div>
+
 </div>
+<script>
+    beginWebSocket("{{ws}}");
+    window.location.href = "{{path}}{{url}}";
+</script>

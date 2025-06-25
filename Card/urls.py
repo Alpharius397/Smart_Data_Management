@@ -18,9 +18,15 @@ urlpatterns = [
         "<int:id>/<str:idx>/<int:schema>/<str:token>/confirm/",
         confirm_view,
         name="confirm",
+    ),
+    path(
+        "<str:token>/read/",
+        read_view,
+        name="read",
     )
 ]
 
 websocket_urlpatterns = [
-    path("write/<int:id>/<str:idx>/<str:token>/", CardWriteExeConsumer.as_asgi())
+    path("write/<int:id>/<str:idx>/<str:token>/", CardWriteExeConsumer.as_asgi()),
+    path("read/<str:token>/", CardReadExeConsumer.as_asgi()),
 ]

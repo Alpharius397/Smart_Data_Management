@@ -397,7 +397,7 @@ def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
                 raise RedisFailed()
             
             context["url"] = req.build_absolute_uri(reverse("Card:writeBase", kwargs={"id":id,"idx":idx,"token":token,"schema":schema}))
-            context["ws"] = f"ws://{req.get_host()}/write/{id}/{idx}/{token}/"
+            context["ws"] = f"/write/{id}/{idx}/{token}/"
             context["path"] = settings.WRITE_REGISTRY
             context["ok"] = True
             

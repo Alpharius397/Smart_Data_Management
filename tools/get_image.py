@@ -10,7 +10,7 @@ from tools.errors import (
     ImageExpansionFailed,
 )
 
-REDUCE_FACTOR: int = 5
+REDUCE_FACTOR: int = 4
 
 
 def get_image_data(
@@ -45,7 +45,7 @@ def compress_image(img_data: str) -> str:
         image = Image.open(BytesIO(b64decode(img_data)))
         compressed = image.reduce(REDUCE_FACTOR)
         image_data = BytesIO()
-        compressed.save(image_data, format=image.format, quality=75, optimize=True)
+        compressed.save(image_data, format=image.format, quality=95, optimize=True)
         
         with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/compressed_image.txt", "w") as f:
             f.write(b64encode(image_data.getvalue()).decode())
@@ -62,10 +62,11 @@ def compress_image(img_data: str) -> str:
 def expand_image(img_data: str, width: int, height: int) -> str:
     try:
         image = Image.open(BytesIO(b64decode(img_data)))
-
-        temp = image.resize((width, height), Image.Resampling.BILINEAR)
+        width = image.width * REDUCE_FACTOR
+        height = image.height * REDUCE_FACTOR
+        temp = image.resize((width, height), Image.Resampling.BICUBIC)
         image_data = BytesIO()
-        temp.save(image_data, format=image.format, quality=95)
+        temp.save(image_data, format=image.format, quality=95, optimize=True)
         return b64encode(image_data.getvalue()).decode()
     except Exception:
         raise ImageExpansionFailed()

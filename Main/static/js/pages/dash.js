@@ -14,4 +14,5 @@ function getTaskHeight(){
     }
 }
 
+
 window.onresize = getTaskHeight;
