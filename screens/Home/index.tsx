@@ -1,144 +1,152 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Image, NativeEventEmitter, TouchableHighlight,  ActivityIndicator, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Button, Image,  ActivityIndicator, Animated, Easing } from 'react-native';
 import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-navigation/drawer';
-import { NavigationIndependentTree, NavigationContext } from '@react-navigation/native';
-import {decrypt_data} from '../scripts/encryption';
-import {generate_image} from '../scripts/image';
+import {decrypt_data} from '../../scripts/encryption';
+import {generate_image} from '../../scripts/image';
 import { ScrollView } from 'react-native-gesture-handler';
-import bad_image from '../scripts/bad_image';
-import { NativeModules } from 'react-native';
-import { beginPayment, generateOption } from '../razorpay/payment';
-import Axios, { SUBSCRIBER } from '../axios';
-import { removeAccessToken, removeRefreshToken } from '../storage';
-import { showAlert } from '../utils/alert';
+import bad_image from '../../scripts/bad_image';
+import { beginPayment, generateOption } from '../../razorpay/payment';
+import Axios, { SUBSCRIBER } from '../../axios';
+import { removeAccessToken, removeRefreshToken } from '../../storage';
+import { showAlert } from '../../utils/alert';
 import { isAxiosError } from 'axios';
-
-const { NfcModule } = NativeModules;
+import { CardJson } from '../../types/card';
+import { HomeNavigator, HomeParam } from '../../types/screens/Home';
+import NfcModule, { isSupported, removeListener, setListener, startNfcScan } from '../../utils/NfcModule';
 
 const Drawer = createDrawerNavigator();
-const emitter = new NativeEventEmitter(NfcModule);
 
-function get_column(jsonData){
-  const {_, data} = jsonData;
+//////////// TYPES ////////////
+type JsTypesString = 'number' | 'string' | 'object'
+type JsTypes = number | string | object | null
 
-  const IMAGE = /^Profile_Image$/;
-  const SEM = /.+Sem_(\d+)$/;
-
-  var profile_col = []
-  var sem_col = []
-  var personal_col = []
-
-  Object.keys(data).forEach((col) => {
-      if(IMAGE.test(col)){
-        profile_col.push(col);
-      }
-      else if(SEM.test(col)){
-        sem_col.push(col);
-      }
-      else{
-        personal_col.push(col);
-      }
-  }); 
-
-  var sem_dict = Object({});
-  profile_col = profile_col[0];
-
-  sem_col.forEach((col) =>{
-
-    const sem = SEM.exec(col);
-
-    if(!sem_dict.hasOwnProperty(sem[1])){
-      sem_dict[sem[1]] = [];
-    }
-
-    sem_dict[sem[1]].push(col);
-
-  });
-
-  return {profile_col,sem_dict,personal_col};
-}
-
-const Logout = (navigation, message) => {
-
-  async function __logout__() {
+function check_value(obj: JsTypes, type: string[]): boolean {
     try{
-      await removeAccessToken();
-      await removeRefreshToken();
+        return type.find((x) => x === typeof(obj)) !== undefined;
+    } catch(error) {
+        return false;
     }
-    catch(e){
-      console.error(e)  
-    }
-    showAlert("Auth Status", message);
-    navigation.navigate("Login");
-  }
-
-  __logout__().then().catch()
 }
 
-// Home Screen Component
-function HomeScreen({ navigation }) {
+function check_object(obj: object, type_list: JsTypesString[][]): boolean {
+    if(type_list.length === 0) return true;
+    
+    try{
+        var res = true;
 
-  const [image,setImage] = useState(null);
-  const [nfcData, setNfcData] = useState(null);
-  const [column, setColumn] = useState(null);
-  const [nfcSupport, setSupport] = useState(null);
-  const [data, setData] = useState(true);
-  const [sub, setSub] = useState(false);
-  const [scan, setScan] = useState(false);
-
-  const eventType = "onNfcScan";
-
-  async function checkNfcSupport() {
-    try {
-        const supported = await NfcModule.isSupported();
-        console.log("NFC Supported:", supported);
-        setSupport(supported);
-    } catch (error) {
-        console.error("Error checking NFC support:", error);
-        setSupport(false);
+        if(typeof(obj) !== 'object'){
+            res = res && check_value(obj, type_list[0]);
+        } else {
+            Object.keys(obj).forEach((key) => {
+                res = res && check_value(key, type_list[0]) && check_object(obj[key], type_list.slice(1,));
+            });
+        }
+        return res;
     }
-  }
-
-  useEffect(() => {
-    checkNfcSupport();
-    isPub();
-  }, [sub]);
-
-  function setListener(){
-    emitter.addListener(eventType, (data) => {
-      
-      try{
-        var res=data.replace(/[\u0000-\u001F]/g, '');
-        msg = JSON.parse(res).msg;
-        setNfcData(msg);
-        scanning(msg);
-        setScan(false);
-        emitter.removeAllListeners(eventType);
-      }
-      catch(error){
-        console.error("Listener Error: ", error)
-      }
-
-    })
-    console.log("Event Attached")
-  }
-
-  function startNfcScan(){
-    try {
-      setScan(true);
-      NfcModule.readyState().then(res => {console.log(res)}).catch(err => console.error(err));
-      NfcModule.startNfcScan();
-      setListener();
-    } catch (error) {
-      console.warn("NFC Error:", error);
+    catch(error) {
+        return false;
     }
-  };
+}
+
+function get_column(jsonData: CardJson): CardJson | null {
+
+    try {
+        const { university, institute, branch, images, sem_data, personal } = jsonData;
+
+        if(!(
+            check_value(university, ["string"]) &&
+            check_value(institute, ["string"]) &&
+            check_value(branch, ["string"]) &&
+            check_object(images, [["string"], ["string"]]) &&
+            check_object(personal, [["string"], ["string"]]) &&
+            check_object(sem_data, [["string"], ["string"], ["string"], ["string", "number"]])
+        )){
+            throw new Error("Invalid Format")
+        }
+
+    }
+    catch {
+        return null;
+    }
+
+}
+
+const Logout = (navigation: HomeNavigator, message: string) => {
+
+    async function __logout__() {
+        await removeAccessToken();
+        await removeRefreshToken();
+        showAlert("Auth Status", message);
+        navigation.navigate("Login");
+    }
+
+    __logout__();
+}
+
+function HomeScreen({ navigation }: HomeParam) {
+
+    const [nfcData, setNfcData] = useState<CardJson | null>(null);
+    const [nfcSupport, setSupport] = useState<boolean>(false);
+    const [scan, setScan] = useState<boolean>(false);
+    const [cardStatus, setCardStatus] = useState<boolean | null>(null);
+
+
+    async function checkNfcSupport() {
+        try {
+            const supported = await isSupported();
+            console.log("NFC Supported:", supported);
+            setSupport(supported);
+        } catch (error) {
+            console.error("Error checking NFC support:", error);
+            setSupport(false);
+        }
+    }
+
+    useEffect(() => {
+        checkNfcSupport();
+    }, []);
+
+    useEffect(() => {
+        if(scan === true ){
+            startNfcScan();
+            setListener(onSuccessScan);
+        } else {
+            removeListener();
+        }
+    }, [scan]);
+
+    useEffect(() => {
+        if(scan === true ){
+            startNfcScan();
+            setListener(onSuccessScan);
+        } else {
+            removeListener();
+        }
+    }, [scan]);
+
+
+    function onSuccessScan(data: CardJson | null){
+
+        if(data == null ){
+            setCardStatus(false); // card scan failed
+        } else {
+            setNfcData(data);
+            setScan(false);
+        }
+    }
+
+    function beginScan(){
+        try {
+            setScan(true);
+        } catch (error) {
+            console.warn("NFC Error:", error);
+        }
+    };
 
 
   function scanning(Data){
     if(Data==null) return
 
-      let nfcdata = decrypt_data(Data,"123456789123456789123456");
       console.log("JSON Data: ",nfcdata);
 
       try{
