@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '../storage/storage'
+import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '../storage'
 
 
 const BASE_URL = 'http://127.0.0.1:8000/';
@@ -21,17 +21,19 @@ Axios.interceptors.request.use(
         try {
             const token = await getAccessToken(); 
             const refresh = await getRefreshToken(); 
-            if (token!==null && config.headers) {
+
+            if ((token !== null) && (refresh !== null) && (config.headers)) {
                 config.headers.Authorization = `Bearer ${token}`;
                 config.headers.Refresh = `Bearer ${refresh}`;
             }
+
         } catch (error) {
             console.error('Error fetching token:', error);
         }
         return config;
     },
 
-    (error) => {
+    async (error) => {
         console.error('Request interceptor error:', error);
         return Promise.reject(error);
     }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
-import Axios, { REGISTER } from '../http/axios';
+import Axios, { REGISTER } from '../axios';
 import { isAxiosError } from 'axios';
 import { showAlert } from '../utils/alert';
 

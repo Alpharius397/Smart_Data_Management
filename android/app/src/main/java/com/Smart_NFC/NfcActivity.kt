@@ -38,16 +38,20 @@ import javax.crypto.NoSuchPaddingException
 import javax.crypto.spec.IvParameterSpec
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import kotlin.text.replace
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
 
-data class Result(var ok: Boolean, var msg: String?, var module: String)
+@Serializable
+data class Result(var ok: Boolean, var msg: String?)
 
 class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext), NfcAdapter.ReaderCallback {
 
     private val stringBuilder = StringBuilder()
+    private val json = Json { ignoreUnknownKeys = true }
     private var libInstance: NxpNfcLib? = null
     private var mCardLogic: CardActionsLogic? = null
     private var context = reactContext
-    private var lock: Boolean = false
+
     companion object {
         var mString: String? = ""
     }
@@ -58,38 +62,35 @@ class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
 
     private fun hexToAscii(hexStr: String?): String {
 
-        if(hexStr==null) return ""
+        if( hexStr==null ) return ""
+
+        var HexStr: String = hexStr
+
+        if((HexStr.length % 2) == 1){
+            HexStr = HexStr.slice(0..(HexStr.length-1))
+        }
 
         val regex = Regex("^(.*?):([0-9A-F]+)$")
-        val output = StringBuilder()
-        var cleanString: String = hexStr.replace("\n", "").replace(" ", "")
-        val matches = regex.findAll(cleanString)
-        var Hex: String = matches.map { it.groupValues[2] }.joinToString()
-
-        for (i in Hex.indices step 2) {
-            val str = Hex.substring(i, i + 2)
-            output.append(str.toInt(16).toChar())
-        }
+        var cleanString: String = HexStr.replace("\n", "").replace(" ", "")
+        var Hex: String = regex.findAll(cleanString).map { it.groupValues[2] }.joinToString()
     
-        return output.toString().replace("\n", "")
+        return Hex.chunked(2).map { it.toInt(16).toChar() }.toString() 
     }
     
 
     private fun JSON(r: Result, hex: Boolean = false): String{
-        var msg: String = if (hex) hexToAscii(r.msg) else r.msg?:"null"
-        return """{"ok":"${r.ok}","msg":"${msg}","module":"${r.module}"}"""
+        r.msg = if (hex) hexToAscii(r.msg) else r.msg
+        return json.encodeToString(r)
     }
 
     @ReactMethod
-    fun ___DESFireCheck(promise: Promise) {
+    fun DESFireCheck(promise: Promise) {
         try{
             DESFireFactory.getInstance()
-            promise.resolve(JSON(Result(true, "okay", "DESFIRE")))
-
-            // promise.resolve(a.toString())
+            promise.resolve(JSON(Result(true, "")))
         }
         catch(e: Exception){
-            promise.resolve(JSON(Result(false, e.toString(), "DESFIRE")))
+            promise.resolve(JSON(Result(false, e.toString())))
         }
     }
 
@@ -99,10 +100,10 @@ class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
             mCardLogic = CardActionsLogic.getInstance() // initialize instance
             initializeLibrary()
             initializeCipherinitVector()
-            promise.resolve(JSON(Result(true, "okay", "readyState")))
+            promise.resolve(JSON(Result(true, "")))
         }
         catch(e: Exception){
-            promise.resolve(JSON(Result(false, e.toString(), "readyState")))
+            promise.resolve(JSON(Result(false, e.toString())))
         }
     }
 
@@ -164,7 +165,6 @@ class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
         val activity = getCurrentActivity()
         val nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(context)
         nfcAdapter?.enableReaderMode(activity, this, NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_NFC_B, null)
-        this.lock = false
     }
 
     @ReactMethod
@@ -212,7 +212,7 @@ class NfcModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaMod
     private fun cardLogic(tag: Tag): Result {
         val type = libInstance!!.getCardType(tag) //Get the type of the card
         val activity: ComponentActivity = getCurrentActivity()!! as ComponentActivity
-        var res: Result = Result(false, null, "cardLogic")
+        var res: Result = Result(false, null)
 
         if (type == CardType.UnknownCard) {
             res.msg = "Unknown Card"
