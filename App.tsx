@@ -3,7 +3,7 @@ import { NavigationIndependentTree, NavigationContainer } from '@react-navigatio
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from './screens/Login';
 import Register from './screens/Register';
-import Main from './screens/Main';
+import Main from './screens/Home/scan';
 import { View } from 'react-native';
 
 
@@ -12,14 +12,16 @@ const Stack = createStackNavigator();
 function AppStack(){
 
   return (
-    <Stack.Navigator screenOptions={{
+    // @ts-ignore
+    <Stack.Navigator 
+      screenOptions={{
       headerTitle:'',
       headerTransparent:true,
       headerLeft: () => {return <View></View>}
     }}>
-      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Login" component={Login}/>
       <Stack.Screen name="Register" component={Register} />
-      <Stack.Screen name="Main" component={Main} />
+      <Stack.Screen name="Home" component={Main} />
   </Stack.Navigator>
   );
 }
