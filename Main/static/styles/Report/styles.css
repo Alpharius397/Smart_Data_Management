@@ -389,3 +389,27 @@ button.click-issue{
 button.click-issue:hover {
     background-color: #367b39;
 }
+
+.print-this {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.print-this a {
+    text-decoration: none;
+    background-color: red;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-weight: 700;
+    border: 1px solid red;
+    transition: 500ms;
+}
+
+.print-this a:hover {
+    background-color: white;
+    color: red;
+    transform: translateZ(-5px);
+}

@@ -1,8 +1,6 @@
 from Main.forms import MainForm
 from django import forms # type: ignore
-from django.urls import reverse # type: ignore
 from University.models import University
-from User.models import RoleType
 
 class RegisterForm(MainForm):
     username = forms.CharField(
@@ -15,12 +13,6 @@ class RegisterForm(MainForm):
         max_length=255,
         required=True,
         help_text='Enter the email'
-    )
-    
-    level = forms.ChoiceField(
-        help_text='Choose the role',
-        required=True,
-        choices=[(RoleType.MANAGER,RoleType.MANAGER),(RoleType.ADMIN,RoleType.ADMIN)]
     )
     
     university = forms.ModelChoiceField(

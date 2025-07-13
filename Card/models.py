@@ -4,8 +4,10 @@ from django.db.models import (
     Model,
     JSONField,
     DateTimeField,
-    ForeignKey
+    ForeignKey,
+    RESTRICT
 )  # type: ignore
+from University.models import Branch
 from User.models import User
 
 
@@ -28,6 +30,10 @@ class Card(Model):
     
     last_write = DateTimeField(
         verbose_name="Time of Last Write", null=True, blank=False, default=None
+    )
+    
+    belongs = ForeignKey(  # type: ignore
+        to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
 
     class Meta:

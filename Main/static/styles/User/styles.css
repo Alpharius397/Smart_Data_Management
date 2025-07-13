@@ -149,3 +149,33 @@ form {
 .confirm:hover {
   background-color: #218838 !important; 
 }
+
+button.upload-button {
+  padding: 5px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+input {
+  border-radius: 16px;
+  padding: 5px;
+}
+
+.upload-button[type="submit"]{
+  background-color: #28a745;
+}
+
+.upload-button[type="submit"]:hover{
+  background-color: #218838;
+}
+
+.upload-button[type="cancel"]{
+  background-color: red;
+}
+
+.upload-button[type="cancel"]:hover{
+  background-color: darkred;
+}

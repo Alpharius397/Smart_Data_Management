@@ -204,8 +204,6 @@ form {
     align-items: center;
 }
 
-
-
 .drop-down:hover{
     background-color: #bababa;
 }
@@ -285,7 +283,7 @@ input[type="text"]::placeholder {
     color:#333;
 }
 
-.assign-form button {
+button {
     margin-left: 10px;
     padding: 5px;
     border-radius: 8px;
@@ -300,20 +298,20 @@ input[type="text"]::placeholder {
     height: min-content;
 }
 
-.assign-form .submit {
+.submit {
     background-color:#4caf50;
 }
 
-.assign-form .submit:hover {
+.submit:hover {
     background-color: #367b39;
 
 }
 
-.assign-form .cancel {
+.cancel {
     background-color: red;
 }
 
-.assign-form .cancel:hover {
+.cancel:hover {
     background-color: darkred;
 }
 
@@ -416,3 +414,33 @@ svg.search path {
         padding: 10px;
     }
 }
+
+.select2-container--default .select2-selection--single {
+    border-radius: 20px;
+  }
+  
+  .select2-container--default .select2-results>.select2-results__options {
+    color: #333;
+    font-style: italic;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #080707 transparent transparent transparent;
+  }
+  
+  .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent #080707 transparent;
+  }
+  
+  .select2-search--dropdown .select2-search__field {
+    padding-left: 8px;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    font-style: italic;
+    font-size: 14px;
+  }
+  
+  .select2-results__option {
+    font-size: 14px;
+  }

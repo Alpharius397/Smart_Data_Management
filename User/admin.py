@@ -1,4 +1,5 @@
-from django.contrib import admin  # type: ignore
+from django.contrib import admin
+from django.forms import ModelChoiceField  # type: ignore
 from User.models import is_admin, get_post_id, User, Role
 from django.db.models import Q, QuerySet  # type: ignore
 from University.models import Branch
@@ -60,31 +61,31 @@ class UniversityFilter(admin.SimpleListFilter):
 
 
 @admin.register(Role)
-class ManagerAdmin(admin.ModelAdmin):
-    list_filter = (UniversityFilter,)
+class RoleAdmin(admin.ModelAdmin):
+    list_filter = ("belongs", "belongs__institute", "belongs__institute__university")
     list_display = ("user", "role", "belongs")
-    search_fields = ("user__username", "role")
-    search_help_text = "Search by username or role"
+    search_fields = ("user__username", "role", "belongs__name")
+    search_help_text = "Search by username or role or branch"
 
-    def get_queryset(self, request):
+    def get_queryset(self, request) -> QuerySet:
         user: User = request.user
 
         if is_admin(user):
             return Role.objects.filter(Q(belongs__id=user.role.belongs.id))
+        
+        elif user.is_superuser:
+            return Role.objects.all()
 
-        return super().get_queryset(request)
-
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        return Role.objects.none()
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs) -> ModelChoiceField:
         user: User = request.user
 
         if db_field.name == "user":
             if is_admin(user):
-                pass
-            """
                 kwargs["queryset"] = User.objects.filter(
-                    (Q(is_staff=False) | Q(is_superuser=False))
-                    & (Q(role__belongs__id=user.role.belongs.id))
-                )"""
+                    Q(role__belongs__id=user.role.belongs.id)
+                )
 
         elif db_field.name == "belongs":
             if is_admin(request.user):
@@ -92,9 +93,7 @@ class ManagerAdmin(admin.ModelAdmin):
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-
 admin.site.unregister(__User)
-
 
 @admin.register(__User)
 class UserAdmin(admin.ModelAdmin):

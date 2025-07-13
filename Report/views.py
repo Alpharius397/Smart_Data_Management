@@ -154,15 +154,14 @@ def report_view(req: HttpRequest, id: int, idx: str):
         try:
             post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
-            records = DataTable.get_complete_data(task, id, idx)
 
             sem_dict = Subject.getSubjects(schema_id, post["branch"])
-                
+            schema_details = Schema.getSchema(schema_id)
             report_data = getReport(sem_dict, task, id, idx)
             
             context.update(post)
             context.update(report_data)
-            
+            context.update(schema_details)
             context.update(get_post(user))
             context.update({**report_data, "schema":schema_id})
 

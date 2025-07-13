@@ -4,6 +4,7 @@
 
 
 {% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/select2.css' %}">
     <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
 {% endblock %}
 
@@ -61,7 +62,8 @@
 {% endblock %}
 
 {% block script %}
-
+    <script src="{% static 'js/libs/jquery.js' %}"></script>
+    <script src="{% static 'js/libs/select2.js' %}"></script>
     <script src="{% static 'js/pages/dash.js' %}"></script>
 
 {% endblock %}

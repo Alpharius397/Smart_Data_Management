@@ -1,13 +1,17 @@
-from typing import Iterator, TypedDict, Literal, NamedTuple
-import typing  # type: ignore
+from typing import Iterator, TypedDict, Literal, NamedTuple, Any
+import typing  
 from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
-from django.forms import forms
-from django.forms.utils import ErrorDict, ErrorList
+from django.http import HttpRequest as __HttpRequest, QueryDict # type: ignore
 from constants.constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
 
 
 ############ TYPES ############
+class HttpRequest(__HttpRequest):
+    PUT: QueryDict | dict[str, Any]
+    DELETE: QueryDict | dict[str, Any]
+
+
 class ReportStructure(NamedTuple):
     personal_info: dict[str, str]
     image_info: dict[str, str]

@@ -254,7 +254,6 @@ def change_image(req: HttpRequest):
             setSwalAlert(context, "Image was deleted successful", "success")
         
         except Exception as e:
-            raise e
             setSwalAlert(context,  DEFAULT_ERROR)
 
         return render(req, "User/HTMX/image/image.html", context=context)

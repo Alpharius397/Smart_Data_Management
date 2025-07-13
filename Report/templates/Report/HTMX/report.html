@@ -12,12 +12,12 @@
 
 <div class="table-view-again">
     <div class="report-header">
-        <img src="{{request.session.universityIcon}}" class="university">
+        <img src="{{university_icon}}" class="university">
         <div class="university-heading">
-            <h2>{{university}}</h2>
-            <h3>{{institute}}</h3>
+            <h2>{{university_heading}}</h2>
+            <h3>{{institute_heading}}</h3>
         </div>
-        <img src="{{request.session.instituteIcon}}" class="institute">
+        <img src="{{institute_icon}}" class="institute">
     </div>
     <div class="personal-header">
         
@@ -70,5 +70,7 @@
         {% endfor %}
 </div>
 
-<a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}" target="_blank">Print this report</a>
+<div class="print-this">
+    <a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}" target="_blank">Print this report</a>
+</div>
 {% endif %}

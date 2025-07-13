@@ -19,7 +19,7 @@
 
                 {% if column|isImage is True %}
                     {% with IMAGE=value|img %}
-                        <div class="row-data column-{{ column|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
+                        <div class="row-data image column-{{ column|encode|hex }}"><img src="{{IMAGE.img}}" width="{{IMAGE.width}}" height="{{IMAGE.height}}"></div>
                     {% endwith %}
 
                 {% elif column|isText is True %}

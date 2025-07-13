@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Q
 from django.contrib.auth.models import User
-from User.models import is_admin
+from User.models import RoleType, get_user, is_admin
 from .models import razorPayment
 from Card.models import Card
 
@@ -12,24 +12,26 @@ class CardAdmin(admin.ModelAdmin):
     list_display = ("user__username", "cardID__cardID","order_id", "payment_id",)
     
     def get_queryset(self, request):
+        user = get_user(request)
         
-        if(is_admin(request.user)):
-            return razorPayment.objects.filter(Q(cardID__user__manager__belongs__id=request.user.admin.belongs.id))
+        if(is_admin(user)):
+            return razorPayment.objects.filter(user__role__belongs__id=user.role.belongs.id)
+        elif user.is_superuser:
+            return razorPayment.objects.all()
         
-        return super().get_queryset(request)
-    
+        return razorPayment.objects.none()
+        
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        user = get_user(request)
         
         if (db_field.name=="user"):
-            
-            if(is_admin(request.user)):
-                
-                kwargs["queryset"] = User.objects.filter((Q(student__isnull=False)))
+            kwargs["queryset"] = User.objects.filter(role__role = RoleType.STUDENT, role__belongs__id = user.role.belongs.id)
         
         elif(db_field.name=="cardID"):
             if(is_admin(request.user)):
-                user:Admin = request.user.admin.belongs.id
-                kwargs["queryset"] = Card.objects.filter(user__manager__belongs__id=request.user.admin.belongs.id)
-                            
+                kwargs["queryset"] = Card.objects.filter(belongs__id=user.role.belongs.id)
+            elif user.is_superuser:
+                kwargs["queryset"] = Card.objects.all()
+                
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

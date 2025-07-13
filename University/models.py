@@ -65,7 +65,7 @@ class Institute(Model):
         ]
 
     def __str__(self):
-        return f"{self.university}:{self.name}"
+        return f"{self.name}"
 
 
 class Branch(Model):
@@ -91,7 +91,7 @@ class Branch(Model):
         ]
 
     def __str__(self):
-        return f"{self.institute}:{self.name}"
+        return f"{self.name}"
 
 class Schema(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)    
@@ -106,6 +106,11 @@ class Schema(Model):
     
     subject: "subject"
     
+    universityHeading = CharField(max_length=200, null=False, blank=False, verbose_name="University Heading", default="University Heading")
+    instituteHeading = CharField(max_length=200, null=False, blank=False, verbose_name="Institute Heading", default="Institute Heading")
+    universityIcon = ImageField(verbose_name="University Icon", upload_to="schema/university", null=True, default='schema/university/default.icon.png')
+    instituteIcon = ImageField(verbose_name="Institute Icon", upload_to="schema/institute", null=True, default="schema/institute/default.icon.jpeg")
+    
     class Meta:
         verbose_name = "Schema"
         verbose_name_plural = "Schemas"
@@ -113,8 +118,29 @@ class Schema(Model):
         constraints = [
             UniqueConstraint(fields=["branch", "name"], name="unique_schema_for_each_branch"),
         ]
-        
     
+    def __str__(self):
+        return f"{self.branch} - {self.name}"
+    
+    @staticmethod
+    def getSchema(schema_id: int | str) -> 'SchemaMeta':
+        icon = SchemaMeta(
+            university_icon='/media/schema/university/default.icon.png', 
+            institute_icon="/media/schema/institute/default.icon.jpeg", 
+            university_heading="University Heading",
+            institute_heading="Institute Heading" 
+        )
+        
+        try:
+            schema = Schema.objects.get(id=schema_id)
+            icon["university_icon"] = schema.universityIcon.url
+            icon["institute_icon"] = schema.instituteIcon.url
+            icon["university_heading"] = schema.universityHeading
+            icon["institute_heading"] = schema.instituteHeading
+        except Exception as e:
+            print(e)
+            
+        return icon
 class Subject(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore
     
@@ -193,7 +219,6 @@ class Color(Model):
     )  # type: ignore
     
     instituteIcon = ImageField(verbose_name="Institute Icon", upload_to="icon", null=True)
-    universityIcon = ImageField(verbose_name="University Icon", upload_to="icon", null=True)
     
     class Meta:
         verbose_name = "Color Theme"
@@ -216,3 +241,9 @@ class SemMeta(NamedTuple):
 class SubjectMeta(NamedTuple):
     sem: int
     marks: int
+
+class SchemaMeta(TypedDict):
+    university_icon: str
+    institute_icon: str
+    university_heading: str
+    institute_heading: str

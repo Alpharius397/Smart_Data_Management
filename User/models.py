@@ -101,6 +101,9 @@ class Role(Model):
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
     
+    def __str__(self):
+        return f"{self.user} - {self.role}"
+    
     def has_profile_image(self) -> bool:
         try:
             self.profile.file
@@ -113,7 +116,8 @@ class Role(Model):
     def save(self, *args, **kwargs):
         try:
             this = Role.objects.get(id=self.id)
-            if this.profile != self.profile:
+
+            if this.profile != self.profile and this.profile.name != "default.profile.png":
                 this.profile.delete(save=False)  # type: ignore
 
         except Role.DoesNotExist:
@@ -192,6 +196,8 @@ def get_post_id(user: User) -> PostIdDict:
 def is_authenticated(user: User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
+def is_authenticated_student(user: User) -> bool:
+    return bool((user.is_authenticated) and (is_student(user)))
 
 def getID(user: User) -> int:
     return user.id

@@ -8,8 +8,6 @@ import zlib
 import json
 from Main.settings import settingsInterface as settings  # type: ignore
 from tools.token import get_token  # type: ignore
-from Crypto.Random.random import randint
-import gzip
 
 DES_3_IV_LENGTH: int = 8
 AES_IV_LENGTH: int = 16

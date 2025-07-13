@@ -62,6 +62,7 @@ class TaskTable(Model):
     
     data: "Data"
     assigned: "Assign"
+    upload: "UploadTable"
     
     class Meta:
         verbose_name = "Task"
@@ -71,6 +72,9 @@ class TaskTable(Model):
             UniqueConstraint(fields=["name", "branch"], name="unique_task_for_each_branch"),
             
         ]
+        
+    def __str__(self):
+        return f"Task ID: {self.id} - {self.name}"
     
     def clean_creators(self):
         if((self.creator is not None) and (not is_admin(self.creator))):
@@ -79,58 +83,6 @@ class TaskTable(Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
-
-class UploadTable(Model):
-    id = AutoField(
-        verbose_name="FileID", primary_key=True, null=False, blank=False
-    )
-    
-    fileName = CharField(
-        max_length=255, verbose_name="File Name", null=False, blank=False
-    )
-    
-    task = ForeignKey(
-        to=TaskTable,
-        on_delete=RESTRICT,
-        null=False,
-        blank=False,
-        related_name="upload",
-        verbose_name="File Uploader",
-    )
-    
-    semester = IntegerField(
-        verbose_name="Semester",
-        null=False,
-        blank=False,
-        validators=[
-            MinValueValidator(1, "Semester cannot be less than 1!")
-        ]
-    )
-    
-    data: "Data"
-    
-    class Meta:
-        verbose_name = "Upload"
-        verbose_name_plural = "Uploads"
-        
-        constraints = [
-            UniqueConstraint(fields=["fileName", "task"], name="unique_filename_for_each_task"),
-            UniqueConstraint(fields=["task", "semester"], name="one_semester_per_task")
-        ]
-        
-        
-    def clean_semesters(self):
-        try:
-            if self.semester > self.task.semesterLimit:
-                raise forms.ValidationError("Detected more semester than Semester Limit!")
-            
-        except:
-            raise forms.ValidationError("Validation Failed!")
-        
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-    
 
 class AssignTable(Model):
     id = AutoField(
@@ -163,6 +115,9 @@ class AssignTable(Model):
         constraints = [
             UniqueConstraint(fields=["taskID", "manager"], name="unique_manager_for_each_task"),
         ]
+        
+    def __str__(self):
+        return f"{self.taskID.name} - {self.manager}"
 
     def clean_managers(self):
         if not is_manager(self.manager):
@@ -652,7 +607,6 @@ class DataTable(Model):
         return updated
 
 ############ TYPES ############
-type Upload = BaseManager[UploadTable]
 type Assign = BaseManager[AssignTable]
 type Data = BaseManager[DataTable]
 

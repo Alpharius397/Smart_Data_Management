@@ -1,107 +1,61 @@
+{% extends 'HTML/index.html' %}
 {% load template %}
 {% load static %}
 
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Dash/styles.css' %}">
+{% endblock %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block title %} User Task Dashboard {% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'styles/base.css' %}">
-    <title>User Task Dashboard</title>
+{% block cssStyle %}
     <style>
-
-        .task-list {
-            margin: 20px 0;
-        }
-
-        .task-item h3 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-
-        form{
-            display: inline-block;
-            margin-top: 10px;
-        }
-
-        a{
+        a {
             text-decoration: none;
         }
+            
 
-        .arrow {
-            position: relative;
-            margin-left: auto;
-            right: 5px;
-            font-size: 18px;
-            color: #6c757d;
-        }
-        .task-list:hover .arrow {
-            transform: translateX(5px);
-            color: #333;
-        }
 
-        .log-item:hover .arrow {
-            transform: translateX(5px);
-            color: #333;
-        }
-
-        .form-group{
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        label{
-            margin-right: 5px;
-        }
-
-        {% if request.session.mainColor and request.session.secColor %}
-            header{
-                background-color: {{request.session.mainColor}};
-                color: {{request.session.secColor}};
-            }
-
-            body{
-                color: {{request.session.mainColor}};
-            }
-
-            header .user-log, header .add-task{
-                color: {{request.session.mainColor}};
-            }
-
-        {% endif %}
-    
-    </style>
-</head>
-
-<body>
-    <header>
-        <a href="{% url 'Dash:dash' %}"><button class="user-log">Back to Dashboard</button></a>
-        <h1>Log Dashboard</h1>
-    </header>
-
-    <div class="container">
-        <h2>Search Log</h2>
         
-        <form hx-post="{% url 'Logs:logs' %}" hx-target="#task-list" hx-swap="innerHTML" hx-trigger="input from:find #id_date,load,input from:#id_query" hx-vals="js:{query: get_select('id_query')}">
-            {% csrf_token %}
-            {% for field in form %}
-            <div class="form-group">
-                <label for='{{ field.name }}'>{{ field.label }}: </label>
-                {{ field }}
-                
+    </style>
+{% endblock %}
+
+{% block customStyle %}
+{% endblock %}
+
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Logout:index' %}" onclick="confirmPrompt(event)">Logout</a>
+    {% block manager_button%}{% endblock %}
+    {% block uploader_button%}{% endblock %}
+{% endblock %}
+
+{% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
+
+
+{% block mainContent %}
+<div class="tab">
+    <h2>Tasks List</h2>
+
+    <div class="sub-tab">
+
+        <form hx-get="{% url 'Dash:taskFetch' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:find input, load" onsubmit="event.preventDefault()">
+            <div class="search-bar">
+                    <svg height="20px" width="20px" viewBox="0 0 2000 2000" class="search"><path d="m1152 832c0-247-201-448-448-448s-448 201-448 448 201 448 448 448 448-201 448-448zm512 832c0 70-58 128-128 128-34 0-67-14-90-38l-343-342c-117 81-257 124-399 124-389 0-704-315-704-704s315-704 704-704 704 315 704 704c0 142-43 282-124 399l343 343c23 23 37 56 37 90z"/></svg>
+                <input type="text" placeholder="Search for Task by Name or ID" name="value" />
+                <span></span>
             </div>
-        {% endfor %}
         </form>
-
-        <div class="task-list" id="task-list">
-
+        <div class="task-list">
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                <h2>Loading...</h2>
+            </div>
         </div>
     </div>
-</body>
-<script src="{% static 'js/htmx.js' %}"></script>
-<script src="{% static 'js/script.js' %}"></script>
-</html>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'js/pages/dash.js' %}"></script>
+{% endblock %}

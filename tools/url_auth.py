@@ -1,7 +1,7 @@
 import datetime
 import json
 import typing
-from django.http import HttpRequest, HttpResponse, JsonResponse  # type: ignore
+from django.http import HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Main.models import RedisConnection
 from Task.models import TaskTable  # type: ignore
@@ -13,7 +13,9 @@ from User.models import (  # type: ignore
     get_user,
     is_admin,
     is_authenticated,
+    is_authenticated_student,
     is_manager,
+    is_student,
 )
 from django.db.models import Q  # type: ignore
 from Main.settings import settingsInterface as settings  # type: ignore
@@ -24,6 +26,7 @@ from functools import wraps  # type: ignore
 from django.utils import timezone # type: ignore
 from tools.errors import TokenExpired  # type: ignore
 from Main.models import WriteToken, ReadToken
+from tools.utils import HttpRequest
 
 
 def is_hx_get(req: HttpRequest) -> bool:
@@ -57,6 +60,18 @@ def is_hx_delete(req: HttpRequest) -> bool:
 def is_auth_delete(req: HttpRequest) -> bool:
     return bool(is_authenticated(req.user) and req.method == "DELETE")
 
+def is_auth_get_student(req: HttpRequest) -> bool:
+    return bool(is_authenticated_student(req.user) and req.method == "GET")
+
+def is_auth_post_student(req: HttpRequest) -> bool:
+    return bool(is_authenticated_student(req.user) and req.method == "POST")
+
+def is_auth_put_student(req: HttpRequest) -> bool:
+    return bool(is_authenticated_student(req.user) and req.method == "PUT")
+
+def is_auth_delete_student(req: HttpRequest) -> bool:
+    return bool(is_authenticated_student(req.user) and req.method == "DELETE")
+
 
 def auth_page(req: HttpRequest) -> HttpResponse:
     return redirect(
@@ -72,11 +87,9 @@ def get_color(req: HttpRequest):
         main_color = color.main_color
         sec_color = color.sec_color
         instituteIcon = color.instituteIcon.url
-        universityIcon = color.universityIcon.url
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
         req.session["instituteIcon"] = instituteIcon
-        req.session["universityIcon"] = universityIcon
     except Exception:
         pass
 
@@ -142,7 +155,7 @@ class PayLoad:
             "type": self.type,
             "expire": (
                 (self.expire if (not newToken) else timezone.now())
-                + datetime.timedelta(seconds=self.expire_minutes)
+                + datetime.timedelta(minutes=self.expire_minutes)
             ).isoformat(),
         }
 
@@ -286,6 +299,21 @@ def auth_needed(manager_only=False, admin_only=False):
 
     return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
+def student_auth_needed(view_func: typing.Callable[..., HttpResponse | None],):
+    """Wrapper for views that need authenticated users (JSON Version)"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+
+        if is_authenticated_student(request.user):
+            return view_func(request, *args, **kwargs) or JsonResponse(
+                data={"error": DEFAULT_ERROR},
+                status=403
+            )
+        return JsonResponse(data={"error": DEFAULT_ERROR},status=403)
+
+    return _wrapped_view
+
 
 def htmx_response(
     view_func: typing.Callable[..., HttpResponse | None],
@@ -362,7 +390,7 @@ def jwt_required(
     view_func: typing.Callable[..., HttpResponse | None],
 ):
     @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+    def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
         auth_header = request.headers.get("Authorization", "")
         refresh_header = request.headers.get("Refresh", "")
 
@@ -405,10 +433,10 @@ def jwt_required(
             request.user = user
             request.headers.__setattr__("access", access_token)
             request.headers.__setattr__("refresh", refresh_token)
-            return view_func(request, *args, **kwargs)
+            return view_func(request, *args, **kwargs) or JsonResponse({"error": DEFAULT_ERROR}, status=403)
 
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"error": "Token expireired"}, status=401)
+            return JsonResponse({"error": "Token expired"}, status=401)
 
         except jwt.InvalidTokenError:
             return JsonResponse({"error": "Invalid token"}, status=401)
@@ -417,13 +445,14 @@ def jwt_required(
             return JsonResponse({"error": "User not found"}, status=401)
 
         except Exception as e:
-            print(e)
-            return JsonResponse({"error": DEFAULT_ERROR}, status=404)
+            import traceback
+            print(traceback.print_exc(e))
+            return JsonResponse({"error": DEFAULT_ERROR}, status=500)
 
     return _wrapped_view
 
 
-def api_key_required(view_func):
+def api_key_required(view_func: typing.Callable[..., HttpResponse | None]):
     @wraps(view_func)
     def _wrapped_view(
         request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
@@ -451,7 +480,7 @@ def api_key_required(view_func):
 
     return _wrapped_view
 
-def token_check(view_func):
+def token_check(view_func: typing.Callable[..., HttpResponse | None]):
     """ Checks the token issuer and adds appropriate users for auth """
     
     @wraps(view_func)
@@ -480,9 +509,49 @@ def token_check(view_func):
         
     return _wrapped_view
 
+def read_body_as_json(view_func: typing.Callable[..., HttpResponse | None]):
+    
+    @wraps(view_func)
+    def _wrapped_view(
+        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
+    ):
+        
+        try:
+            if(request.method not in ['GET', 'POST', 'PUT', 'DELETE']):
+                raise ValueError("Invalid Request Method")
+            request.__setattr__(request.method, json.loads(request.body))
+        except Exception as e:
+            pass
+        
+        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+    
+    return _wrapped_view
+
+def read_body_as_form(view_func: typing.Callable[..., HttpResponse | None]):
+    
+    @wraps(view_func)
+    def _wrapped_view(
+        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
+    ):
+        
+        try:
+            if(request.method not in ['GET', 'POST', 'PUT', 'DELETE']):
+                raise ValueError("Invalid Request Method")
+            request.__setattr__(request.method, QueryDict(request.body))
+        except Exception as e:
+            pass
+        
+        return view_func(request, *args, **kwargs)
+    
+    return _wrapped_view
+
+
+class JwtToken(typing.TypedDict):
+    access: str
+    refresh: str
 
 def getRequestToken(req: HttpRequest):
-    return {
+    return JwtToken(**{
         "access": req.headers.__getattribute__("access"),
         "refresh": req.headers.__getattribute__("refresh"),
-    }
+    })

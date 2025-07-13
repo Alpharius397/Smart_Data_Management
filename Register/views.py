@@ -1,9 +1,9 @@
 from django.shortcuts import render # type: ignore
-from django.http import HttpRequest # type: ignore
+from django.http import HttpRequest, JsonResponse # type: ignore
 from Register.errors import UserExists 
 from Register.forms import RegisterForm
 from django.contrib.auth.models import Group # type: ignore
-from tools.url_auth import htmx_response, is_hx_post, is_hx_get
+from tools.url_auth import htmx_response, is_auth_get, is_hx_post, is_hx_get, jwt_required
 from User.models import User, Role, RoleType
 from University.models import Institute, Branch
 from constants.constants import DEFAULT_ERROR, WARNING
@@ -11,6 +11,7 @@ from django.db.models import Q # type: ignore
 from django.urls import reverse # type: ignore
 from django.db import transaction # type: ignore
 from tools.utils import setSwalAlert
+from django.views.decorators.csrf import csrf_exempt  # type: ignore
 
 def register_view(req:HttpRequest):
     
@@ -38,12 +39,10 @@ def htmx_register_view(req: HttpRequest):
 
                     if(exists): raise UserExists()
                     
-                    branchID = Branch.objects.filter(id=branch)
-                    
-                    if not branchID.exists(): raise Branch.DoesNotExist
+                    branchID = Branch.objects.get(id=branch)
 
                     user = User.objects.create_user(user,email,password,is_active=False)
-                    role = Role(user=user, belongs=branchID.first(), role=level)
+                    role = Role(user=user, belongs=branchID, role=level)
                     
                     if(level==RoleType.ADMIN):
                         group = Group.objects.get(name='Admin')
@@ -98,4 +97,40 @@ def branch_change(req: HttpRequest):
             pass
         
         return render(req,'Register/HTMX/option.html',{'option':branch})
+
+@csrf_exempt
+@jwt_required
+def insti_change(req: HttpRequest):
+    
+    if(is_auth_get(req)):
+        university = req.GET.get("university",'')
+        institute = []
+        
+        try:            
+            if(university): 
+                institute = Institute.objects.filter(university__id=university).values_list("id", "name")
+            else: 
+                institute = Institute.objects.none().values_list("id", "name")
+        except:
+            pass
+        
+        return JsonResponse(data={"options": list(institute)}, safe=False)
+
+@csrf_exempt
+@jwt_required
+def branch_change(req: HttpRequest):
+
+    if(is_hx_get(req)):
+        institute = req.GET.get("institute",'')
+        branch = []
+        
+        try:
+            if(institute): 
+                branch = Branch.objects.filter(institute__id=institute)
+            else:
+                branch = Branch.objects.none()
+        except:
+            pass
+        
+        return JsonResponse(data={"options": list(branch)}, safe=False)
 

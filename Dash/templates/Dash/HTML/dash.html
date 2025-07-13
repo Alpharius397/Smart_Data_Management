@@ -24,9 +24,9 @@
 {% endblock %}
 
 {% block headerOption %}
-    <a class="next-button logout" href="{% url 'Logout:index' %}" onclick="confirmPrompt(event)">Logout</a>
-    {% block manager_button%}{% endblock %}
-    {% block uploader_button%}{% endblock %}
+{% block manager_button%}{% endblock %}
+{% block uploader_button%}{% endblock %}
+<a class="next-button" href="{% url 'Logout:index' %}" onclick="confirmPrompt(event)">Logout</a>
 {% endblock %}
 
 {% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}

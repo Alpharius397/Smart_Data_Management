@@ -1,150 +1,241 @@
 import json
-from django.http import HttpRequest, JsonResponse
+from typing import TypedDict # type: ignore
+from django.http import HttpRequest, JsonResponse, QueryDict # type: ignore
+from Register.errors import UserExists
+from Mobile.forms import RegisterForm
+from University.models import Branch
 from constants.constants import DEFAULT_ERROR
 from Mobile.models import razorPayment
-from User.models import is_student, Student
-from django.db.models.expressions import Q
-from tools.url_auth import AccessPayLoad, RefreshPayLoad, getRequestToken, jwt_required, noneCheck
-from django.contrib.auth.models import User
-from django.db.models import Q
-from django.views.decorators.csrf import csrf_exempt
-from django.forms import ValidationError
+from tools.url_auth import AccessPayLoad, RefreshPayLoad, auth_needed, getRequestToken, is_auth_get_student, is_auth_post_student, jwt_required, noneCheck, read_body_as_json, student_auth_needed # type: ignore
+from django.contrib.auth.models import User # type: ignore
+from django.db.models import Q # type: ignore
+from django.views.decorators.csrf import csrf_exempt # type: ignore
+from django.forms import ValidationError # type: ignore
+from django.db import transaction # type: ignore
+from User.models import User, Role, RoleType, is_student
 
-def getTokens(req: HttpRequest) -> dict[str, str]:
-    return {'access': req.headers.get("access", ''), 'refresh': req.headers.get("refresh", '')}
+
+class LoginResponse(TypedDict):
+    status: bool
+    error: str | None
+    access: str | None
+    refresh: str | None
+
+class RegisterResponse(TypedDict):
+    status: bool
+    error: str | None
+
+class SubscriberResponse(TypedDict):
+    status: bool
+    error: str | None
+    access: str
+    refresh: str
+    
+
+class SubscriberResponse(TypedDict):
+    status: bool
+    error: str | None
+    access: str
+    refresh: str
+
+class CardData(TypedDict):
+    cardID: str
+    timestamp: str
+    
+
+class CardResponse(TypedDict):
+    status: bool
+    error: str | None
+    cards: list[CardData]
+    access: str
+    refresh: str
+
 
 @csrf_exempt
+@read_body_as_json
 def mobile_login(req: HttpRequest) -> JsonResponse:
     if(req.method=="POST"):
         
-        response = {'status':False, 'error':None, 'access':None, 'refresh':None}
+        response = LoginResponse(status=False, error=None, access=None, refresh=None)
+        status: int = 500
         
         try:
-            body:dict[str, str] = json.loads(req.body)
-            username = req.POST.get('user',body.get('user',None))
-            password = req.POST.get('password',body.get('password',None))
-
+            username = req.POST.get('user')
+            password = req.POST.get('password')
             user = User.objects.get(username=username)
             
             if(is_student(user) and user.check_password(password)):
                 response['access'] = AccessPayLoad(user).getToken()
                 response['refresh'] = RefreshPayLoad(user).getToken()
                 response['status'] = True
-                return JsonResponse(data=response, safe=False, status=200)
+                status = 200
             
             else:
                 response['error'] = 'Incorrect Credentials'
-                return JsonResponse(data=response, safe=False, status=401)
+                status = 403
+                
 
         except User.DoesNotExist:
+            status = 401
             response['error'] = 'Invalid credentials'
-            return JsonResponse(data=response, safe=False, status=401)
 
         except Exception as e:
-            print(e)
+            status = 500
             response['error'] = DEFAULT_ERROR
-            return JsonResponse(data=response, safe=False, status=500)
     
-    return JsonResponse(data={'error':DEFAULT_ERROR}, safe=False, status=403)
+        return JsonResponse(data=response, safe=False, status=status)
 
 @csrf_exempt
+@read_body_as_json
 def mobile_register(req: HttpRequest) -> JsonResponse:
     if(req.method == "POST"):
 
+        response = RegisterResponse(status=False, error=None)
+        status = 500
+        f = RegisterForm(req.POST)
+        
         try:
-            body:dict[str, str] = json.loads(req.body)
+            with transaction.atomic():
+                if f.is_valid():
+                    user = f.cleaned_data.get("username", "")
+                    email = f.cleaned_data.get("email", "")
+                    password = f.cleaned_data.get("password", "")
+                    branch = f.cleaned_data.get("branch", "")
+                    
+                    exists = User.objects.filter(Q(username=user)|Q(email=email)).exists()
 
-            username = req.POST.get('user', body.get('user', None))
-            email = req.POST.get('email', body.get('email', None))
-            password = req.POST.get('password_1', body.get('password_1', None))
-            confirm_password = req.POST.get('password_2', body.get('password_2', None))
-            response = {'status': False, 'error': None}
-            
-            if(noneCheck(username, email, password, confirm_password)):
-                response['error'] = "All fields must not be empty"
-                return JsonResponse(data=response, safe=False, status=401)
-            
-            if(confirm_password != password):
-                response['error'] = "Passwords don't match"
+                    if(exists): raise UserExists()
+                    
+                    branchID = Branch.objects.get(id=branch)
 
-                return JsonResponse(data=response, safe=False, status=401)
-            
-            userExists = User.objects.filter(Q(username=username)|Q(email=email)).exists()
-            
-            if(userExists):
-                response['error'] = 'User exists with same username or email'
-                return JsonResponse(data=response, safe=False, status=422)
-                
-            user = User.objects.create_user(username, email,password)
-            
-            user.clean_fields()
-            
-            user.save()
-            
-            Student(user=user).save()
-
-            response['status'] = True
-            return JsonResponse(data=response, safe=False, status=200)
-
-        except ValidationError as v:
-            errorMsg = ", ".join(v.messages)
-            response['error'] = errorMsg
-            return JsonResponse(data=response, safe=False, status=401)
-            
-        except Exception as e:
+                    user = User.objects.create_user(user,email,password,is_active=False)
+                    role = Role(user=user, belongs=branchID, role=RoleType.STUDENT)
+                    role.save()
+                    response['status'] = True
+                else:
+                    response['error'] = f.getErrors()
+                    
+        except UserExists as f:
+            status = 403
+            response['error'] = "Username or Email is already registered!"
+        
+        except Branch.DoesNotExist as g:
+            status = 401
+            response['error'] = "Branch was not found!"
+        
+        except Exception:
+            status = 500
             response['error'] = DEFAULT_ERROR
-            return JsonResponse(data=response, safe=False, status=500)
+            
 
-    return JsonResponse(data={'error': DEFAULT_ERROR}, safe=False, status=403)
+        return JsonResponse(data=response, safe=False, status=status)
 
 @csrf_exempt
 @jwt_required
-def subscriber(req: HttpRequest):
-    if(is_student(req.user) and req.method=="GET"): # Check if user has paid money
-        response = {'status':False, 'error': None, **getRequestToken(req)}
+@read_body_as_json
+@student_auth_needed
+def subscriber_check(req: HttpRequest):
+    
+    response = SubscriberResponse(**{'status':False, 'error': None, **getRequestToken(req)})
+    status = 500
+    
+    if(is_auth_get_student(req)): # Check if user has paid money
         
         try:
-            paymentDone = razorPayment.objects.filter(user=req.user).exists()
+            
+            cardID = req.GET.get("cardID")
+            paymentDone = razorPayment.objects.filter(Q(user=req.user) | Q(cardID__cardID = cardID)).exists()
             
             if(paymentDone):
                 response['status'] = True
-                return JsonResponse(data=response, safe=False, status=200)
+                status = 200
             else:
-                response['error'] = "Payment is missing..."
-                return JsonResponse(data=response, safe=False, status=403)
-            
+                response['error'] = "Payment is missing for this card!"
+                status = 403
+                
         except Exception as e:
+            print(e)
             response['error'] = DEFAULT_ERROR
-            return JsonResponse(data=response, safe=False, status=500)
         
-    if(is_student(req.user) and req.method=="PUT"): # Change payment status
-        
-        response = {'status':False, 'error': None}
+        return JsonResponse(data=response, safe=False, status=status)
+    
+    elif(is_auth_post_student(req)): # Change payment status
         
         try:
-            data:dict[str, str] = json.loads(req.body)
-            order_id = data.get("order_id", None)
-            payment_id = data.get("payment_id", None)
+            order_id = req.POST.get("order_id")
+            payment_id = req.POST.get("payment_id")
             
-            if(order_id is None or payment_id is None):
+            if(not (order_id or payment_id)):
                 response['error'] = "Payment was unsuccessful"
-                return JsonResponse(data=response, safe=False, status=422)
+                status = 422
             
             paymentDone = razorPayment.objects.filter(user=req.user).exists()
             
             if(paymentDone):
                 response['error'] = "Payment is Already Done"
                 response['status'] = True
-                return JsonResponse(data=response, safe=False, status=409)
+                status = 409
             else:
-                
                 payment = razorPayment(order_id=order_id, payment_id=payment_id, user = req.user)
                 payment.save()
                 
                 response['status'] = True
-                return JsonResponse(data=response, safe=False, status=200)
         
         except Exception as e:
-            print(e)
             response['error'] = DEFAULT_ERROR
-            return JsonResponse(data=response, safe=False, status=500)
+
+        return JsonResponse(data=response, safe=False, status=status)
+    
+    
+@csrf_exempt
+@jwt_required
+@read_body_as_json
+@student_auth_needed
+def available_card(req: HttpRequest):
+    
+    if(is_auth_get_student(req)): # Check if user has paid money
+        
+        response = CardResponse(**{'status':False, 'error': None,  "cards": [], **getRequestToken(req)})
+        status = 500
+        try:
+            cards: list[CardData] = []
+            available_card = razorPayment.objects.filter(Q(user=req.user)).defer("cardID", "timestamp")
+            
+            for card in available_card.iterator():
+                cards.append(CardData(cardID=card.cardID.cardID, timestamp=card.timestamp.isoformat()))
+            
+            response['cards'] = cards
+            response['status'] = True
+            status = 200
+                
+        except Exception as e:
+            response['error'] = DEFAULT_ERROR
+        
+        return JsonResponse(data=response, safe=False, status=status)
+    
+    elif(is_auth_post_student(req)): # Change payment status
+        
+        try:
+            order_id = req.POST.get("order_id")
+            payment_id = req.POST.get("payment_id")
+            
+            if(not (order_id or payment_id)):
+                response['error'] = "Payment was unsuccessful"
+                status = 422
+            
+            paymentDone = razorPayment.objects.filter(user=req.user).exists()
+            
+            if(paymentDone):
+                response['error'] = "Payment is Already Done"
+                response['status'] = True
+                status = 409
+            else:
+                payment = razorPayment(order_id=order_id, payment_id=payment_id, user = req.user)
+                payment.save()
+                
+                response['status'] = True
+        
+        except Exception as e:
+            response['error'] = DEFAULT_ERROR
+
+        return JsonResponse(data=response, safe=False, status=status)
