@@ -14,7 +14,7 @@
 
         <div class="login-container">
             <h2>Login</h2>
-            <form hx-post="{% url 'Login:htmxLogin' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" hx-target="this" hx-swap="afterend" onsubmit="return false;" hx-trigger="click from:.login-button">
+            <form hx-post="{% url 'Login:htmxLogin' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()" hx-trigger="click from:.login-button">
                 {% csrf_token %}
 
                 {% for field in form %}

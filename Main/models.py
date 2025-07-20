@@ -1,19 +1,12 @@
 from copy import copy
 import pandas as pd
-import pymongo
-import pymongo.collection
 from typing import NamedTuple, ParamSpec, Union, Iterator, TypedDict
-from User.models import is_manager
 from tools.typesCauseWhyNot import *
-from Main.settings import settingsInterface as settings # type: ignore
+from Main.settings import settingsInterface as settings
 from Logs.loggers import MONGO_LOG, REDIS_LOG
 import redis
 import json
-from django.db.models import Model, CharField, IntegerField, BooleanField, DateTimeField, ForeignKey, RESTRICT, AutoField, TextField, JSONField
-from User.models import _User as User
-from .validators import AdminValidator, ManagerValidator, MinValueValidator
-from django.contrib.postgres.fields import ArrayField
-from django.forms.forms import ValidationError
+
 
 type Condition = dict[str, list | str | int | dict]
 type Filter = dict[str, dict[str, list | str | bool | dict] | str | int | bool | list]
@@ -794,7 +787,6 @@ class RedisConnection:
         try:
             self.r = redis.Redis(**settings.REDIS,decode_responses=True) # type: ignore
             self.log.write_info("Connecting to Redis Database")
-            
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
             

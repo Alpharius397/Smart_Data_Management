@@ -31,7 +31,7 @@ def login_view(req: HttpRequest) -> HttpResponse:
 
 @htmx_response
 def htmx_login_view(req: HttpRequest):
-    context = {"error": False, "redirect":req.build_absolute_uri(), **setSwalAlert(title="Login Process")}
+    context = {"error": False, **setSwalAlert(title="Login Process")}
     
     if is_hx_post(req):
         try:

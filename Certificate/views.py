@@ -9,7 +9,6 @@ from tools.get_image import expand_image
 import typing
 import re
 from Card.models import Card
-from pymongo.collection import ObjectId
 import json
 from Crypto.Hash import SHA256
 import pandas as pd
@@ -93,7 +92,7 @@ def certificate_check(req: HttpRequest, certificate: str, cardID: str) -> HttpRe
         try:
             conditions, filters = MongoTemplate.merge_everything(
                 MongoTemplate.get_buffer_query(
-                    {"$and": [{"_id": ObjectId(mongoID), "$or": auth_view(req.user)}]},
+                    {"$and": [{"_id": id(mongoID), "$or": auth_view(req.user)}]},
                     idx,
                 )
             )

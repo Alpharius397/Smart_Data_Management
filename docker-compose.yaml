@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/test
+    env_file:
+      - .env
+
+  redis:
+    image: redis:8.0.3-alpine
+    ports:
+      - '6379:6379'
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes: 
+      - redis_data:/var/lib/redis/test
+    env_file:
+      - .env
+
+  django-web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      -  redis
+
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: ./app/
+        - action: rebuild
+          path: require.txt
+
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  redis_data:

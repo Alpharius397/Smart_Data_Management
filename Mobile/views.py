@@ -6,7 +6,7 @@ from Mobile.forms import RegisterForm
 from University.models import Branch
 from constants.constants import DEFAULT_ERROR
 from Mobile.models import razorPayment
-from tools.url_auth import AccessPayLoad, RefreshPayLoad, auth_needed, getRequestToken, is_auth_get_student, is_auth_post_student, jwt_required, noneCheck, read_body_as_json, student_auth_needed # type: ignore
+from tools.url_auth import AccessPayLoad, RefreshPayLoad, auth_needed, getRequestToken, is_auth_get_student, is_auth_post_student, is_auth_put_student, jwt_required, noneCheck, read_body_as_json, student_auth_needed # type: ignore
 from django.contrib.auth.models import User # type: ignore
 from django.db.models import Q # type: ignore
 from django.views.decorators.csrf import csrf_exempt # type: ignore
@@ -112,6 +112,7 @@ def mobile_register(req: HttpRequest) -> JsonResponse:
                     role = Role(user=user, belongs=branchID, role=RoleType.STUDENT)
                     role.save()
                     response['status'] = True
+                    status=200
                 else:
                     response['error'] = f.getErrors()
                     
@@ -139,7 +140,7 @@ def subscriber_check(req: HttpRequest):
     response = SubscriberResponse(**{'status':False, 'error': None, **getRequestToken(req)})
     status = 500
     
-    if(is_auth_get_student(req)): # Check if user has paid money
+    if(is_auth_post_student(req)): # Check if user has paid money
         
         try:
             
@@ -159,7 +160,7 @@ def subscriber_check(req: HttpRequest):
         
         return JsonResponse(data=response, safe=False, status=status)
     
-    elif(is_auth_post_student(req)): # Change payment status
+    elif(is_auth_put_student(req)): # Change payment status
         
         try:
             order_id = req.POST.get("order_id")

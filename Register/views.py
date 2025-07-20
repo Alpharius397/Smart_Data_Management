@@ -99,8 +99,7 @@ def branch_change(req: HttpRequest):
         return render(req,'Register/HTMX/option.html',{'option':branch})
 
 @csrf_exempt
-@jwt_required
-def insti_change(req: HttpRequest):
+def insti_change_mobile(req: HttpRequest):
     
     if(is_auth_get(req)):
         university = req.GET.get("university",'')
@@ -117,8 +116,7 @@ def insti_change(req: HttpRequest):
         return JsonResponse(data={"options": list(institute)}, safe=False)
 
 @csrf_exempt
-@jwt_required
-def branch_change(req: HttpRequest):
+def branch_change_mobile(req: HttpRequest):
 
     if(is_hx_get(req)):
         institute = req.GET.get("institute",'')

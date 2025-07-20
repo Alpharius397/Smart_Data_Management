@@ -28,10 +28,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0"
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", False)
 
 ALLOWED_HOSTS = ["*"]
 
@@ -72,7 +74,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.gzip.GZipMiddleware"
+    "django.middleware.gzip.GZipMiddleware",
 ]
 
 ROOT_URLCONF = "Main.urls"
@@ -118,15 +120,16 @@ PASSWORD_HASHERS = [
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "smart",
-        "USER": "postgres",
-        "PASSWORD": "1234",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "ENGINE": os.environ.get("ENGINE", "django.db.backends.postgresql"),
+        "NAME": os.environ.get("POSTGRES_DB", "smart"),
+        "USER": os.environ.get("POSTGRES_USER", "postgres"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "1234"),
+        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
 
+REDIS = {"host": os.environ.get("REDIS_HOST", "localhost"), "port": 6379, "password": os.environ.get("REDIS_PASSWORD", "1234")}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -179,24 +182,24 @@ MEDIA_ROOT = os.path.join(
     "media",
 )  # Directory for storing media files
 
-MEDIA_URL = "media/"  # URL prefix for accessing media files
+MEDIA_URL = os.environ.get(
+    "MEDIA_URL", "media/"
+)  # URL prefix for accessing media files
 APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
 DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")
 LOGIN_URL = "Login:index"
-MONGO_URL = "mongodb://127.0.0.1:27017/"
-MONGO_CRED = MongoDB("smart", "excel")
-KEY = b"123456789123456789123456"
+KEY = os.environ.get("KEY", "123456789123456789123456").encode()
 WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
 CREATE_REGISTRY = "createExe://"
 
-AES_KEY_1 = b"5XpBavCf2rB0g4QD"
-AES_KEY_2 = b"dpI56CKiEN8R0Lcx"
-CERTIFICATE_KEY = b"123456789123456789123456"
-REDIS = {"host": "localhost", "port": 6379}
+AES_KEY_1 = os.environ.get("AES_KEY_1", "b5XpBavCf2rB0g4QD").encode()
+AES_KEY_2 = os.environ.get("AES_KEY_2", "dpI56CKiEN8R0Lcx").encode()
+CERTIFICATE_KEY = os.environ.get("KEY", "123456789123456789123456").encode()
 
-JWT_SECRET = "manvtv88gtmc2yg87ticeyvm4e2f1viu"
-JWT_ALGORITHM = "HS256"
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "manvtv88gtmc2yg87ticeyvm4e2f1viu")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 JWT_EXP_DELTA_MINUTES = 30
 REFRESH_EXP_DELTA_MINUTES = 360
 
@@ -210,8 +213,7 @@ class settingsInterface:
     APP_LOG = APP_LOG
     DATA_LOG = DATA_LOG
     LOGIN_URL = LOGIN_URL
-    MONGO_URL = MONGO_URL
-    MONGO_CRED = MONGO_CRED
+
     KEY = KEY
     WRITE_REGISTRY = WRITE_REGISTRY
     READ_REGISTRY = READ_REGISTRY
