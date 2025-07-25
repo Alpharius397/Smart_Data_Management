@@ -150,16 +150,6 @@ def get_post(user: User) -> PostNameDict:
 def get_user(req: HttpRequest) -> User:
     return req.user  # type: ignore
 
-def get_user_from_session(req: HttpRequest) -> User | None:
-    
-    try:
-        email = req.session.get(EMAIL_KEY, None)
-        
-        return User.objects.get(email=email)
-        
-    except:
-        return None
-
 def get_post_id(user: User) -> PostIdDict:
     role: Role = user.role
 

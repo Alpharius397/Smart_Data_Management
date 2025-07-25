@@ -3,9 +3,9 @@ from django.urls import reverse
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest, HttpResponse  # type: ignore
 from User.errors import EmailAlreadyExists, OTPWrong, UserNameAlreadyExists
-from Change.forms import UsernameChange, PasswordChange, EmailChange
+from Change.forms import ForgotEmail, UsernameChange, PasswordChange, EmailChange
 from User.models import User, get_user, is_manager, is_admin
-from tools.url_auth import auth_needed, htmx_response, is_auth_get, is_auth_get, is_hx_get, is_hx_post, login_needed, set_otp_response
+from tools.url_auth import auth_needed, get_user_from_session, htmx_response, is_auth_get, is_auth_get, is_hx_get, is_hx_post, is_hx_put, login_needed, read_body_as_form, set_otp_response
 from constants import EMAIL_KEY, OTP_KEY, OTP_MESSAGE, OTP_SUBJECT, SUCCESS, SUCCESS_MESSAGE, SUCCESS_SUBJECT, WARNING, DEFAULT_ERROR
 from tools.utils import setSwalAlert
 from tools.mails import email_send, send_mail
@@ -29,7 +29,8 @@ def username_form(req: HttpRequest):
 def email_form(req: HttpRequest):
     if is_auth_get(req):
         return render(req, "Change/HTML/email.html", context={'form': EmailChange()})
-    
+
+@get_user_from_session
 @login_needed()
 @set_otp_response
 def password_form(req: HttpRequest):
@@ -129,6 +130,7 @@ def htmx_email_form(req: HttpRequest):
         return render(req, "Change/HTMX/messages.html", context=context)
     
 @htmx_response
+@get_user_from_session
 @auth_needed()
 def htmx_password_form(req: HttpRequest):
     
@@ -167,8 +169,9 @@ def htmx_password_form(req: HttpRequest):
             
         return render(req, "Change/HTMX/messages.html", context=context)
     
-@auth_needed()
 @htmx_response
+@get_user_from_session
+@auth_needed()
 def send_otp_mail(req: HttpRequest, type: Literal['username', 'email', 'password']):
     if is_hx_post(req):
         context = setSwalAlert(title="OTP Mail")
@@ -187,8 +190,13 @@ def send_otp_mail(req: HttpRequest, type: Literal['username', 'email', 'password
         
         return render(req, "Change/HTMX/messages.html", context=context)
     
+def forgot_password(req: HttpRequest):
+    if(req.method == "GET"):
+        return render(req, "Change/HTML/forgot.password.html", context={'form': ForgotEmail()})
+
 @htmx_response
-def send_otp_mail_password(req: HttpRequest, type: Literal['password']):
+@read_body_as_form
+def send_otp_mail_password(req: HttpRequest):
     if is_hx_post(req):
         context = setSwalAlert(title="OTP Mail")
         otp = req.session.get(OTP_KEY)
@@ -197,7 +205,7 @@ def send_otp_mail_password(req: HttpRequest, type: Literal['password']):
         send_ok = False
         
         if otp:
-            send_ok = email_send(OTP_SUBJECT.format(type.capitalize()), user.email, OTP_MESSAGE.format(type.capitalize(), otp))
+            send_ok = email_send(OTP_SUBJECT.format('Password'), user.email, OTP_MESSAGE.format('Password', otp))
 
         if send_ok:
             setSwalAlert(context, 'OTP has been send to your email', 'success')
@@ -205,4 +213,31 @@ def send_otp_mail_password(req: HttpRequest, type: Literal['password']):
             setSwalAlert(context, "Failed to send email. Please try again!")
         
         return render(req, "Change/HTMX/messages.html", context=context)
-
+    
+    elif is_hx_put(req):
+        context = setSwalAlert(title="Email Status")
+        
+        f = ForgotEmail(req.PUT)
+        
+        if f.is_valid():
+            try:
+                email = f.cleaned_data.get("Email")
+                
+                user = User.objects.get(email=email)
+                
+                req.session[EMAIL_KEY] = user.email
+                context['redirect'] = req.build_absolute_uri(reverse("Change:passChange"))
+                
+                setSwalAlert(text="Email was found!", icon='success')
+                
+            except User.DoesNotExist:
+                setSwalAlert(context, text="Email is not registered")
+                
+            except Exception as e:
+                print(e)
+                setSwalAlert(context, DEFAULT_ERROR)
+                
+        else:
+            setSwalAlert(context, text=f.getErrors())
+            
+        return render(req, "Change/HTMX/messages.html", context=context)

@@ -335,6 +335,27 @@ def htmx_response(
 
     return _wrapped_view
 
+def get_user_from_session(
+    view_func: typing.Callable[..., HttpResponse | None],
+):
+    """Wrapper for views that are session auth response"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+
+        try:
+            email = request.session.get(EMAIL_KEY, None)
+            
+            if(email is not None):
+                request.user = User.objects.get(email=email)
+                
+        except Exception as e:
+            print(e)
+                
+        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+
+    return _wrapped_view
+
 def set_otp_response(
     view_func: typing.Callable[..., HttpResponse | None],
 ):

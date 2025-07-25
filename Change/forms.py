@@ -4,6 +4,14 @@ from django.core.validators import RegexValidator, validate_email # type: ignore
 
 OTP_VALID = RegexValidator(r'^[0-9]{6}$')
 
+class ForgotEmail(MainForm):
+    Email = forms.CharField(
+        max_length=100, 
+        required=True,
+        help_text='Enter the email', 
+        validators=[validate_email],
+        label="Email"
+    )
 
 class UsernameChange(MainForm):
     OTP = forms.CharField(
