@@ -8,7 +8,7 @@ from tools.token import hash_token
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string
 from typing import TypedDict
-from constants.constants import DEFAULT_ERROR, READ_TOKEN
+from constants import DEFAULT_ERROR, READ_TOKEN
 from channels.layers import get_channel_layer  # type: ignore
 from tools.utils import ReportStructure, deconstructSubjects, processSubjects
 

@@ -1,0 +1,10 @@
+<script>
+    {% if redirect %}
+        setTimeout(()=>{
+            window.location.replace(`{{redirect}}`);
+        }, 1000);
+    {% endif %}
+    
+</script>
+
+{% include "HTMX/swal.html" %}

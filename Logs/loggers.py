@@ -11,7 +11,7 @@ from django.contrib.auth.models import User #type: ignore
 from User.models import is_admin, is_manager #type: ignore
 from Logs.models import LogMessage 
 from django.conf import settings #type: ignore
-from constants.constants import *
+from constants import *
 
 P = ParamSpec("P")
 

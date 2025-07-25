@@ -9,12 +9,11 @@ from django.db.models import (  # type: ignore
     ImageField,
     AutoField
 )
-from django.core.files import File
 from django.http import HttpRequest # type: ignore
 from University.models import Branch, University, Institute
+from constants import EMAIL_KEY
 from tools.typesCauseWhyNot import NullStr, NullInt
 from typing import Iterator, TypedDict
-from Main.settings import settingsInterface as settings
 
 ############ TYPES ############
 class PostNameDict(TypedDict):
@@ -93,41 +92,12 @@ class Role(Model):
         blank=False
     )
     
-    profile = ImageField(
-        verbose_name="Profile Image", upload_to="profile", null=False, default="profile/default.profile.png"
-    )  # type: ignore
-    
     belongs = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
     
     def __str__(self):
         return f"{self.user} - {self.role}"
-    
-    def has_profile_image(self) -> bool:
-        try:
-            self.profile.file
-            return True
-        except Exception as e:
-            print("Error", e)
-        
-        return False
-
-    def save(self, *args, **kwargs):
-        try:
-            this = Role.objects.get(id=self.id)
-
-            if this.profile != self.profile and this.profile.name != "default.profile.png":
-                this.profile.delete(save=False)  # type: ignore
-
-        except Role.DoesNotExist:
-            pass
-
-        except Exception as e:
-            raise e
-
-        super().save(*args, **kwargs)
-
 
 ############ TOOLS ############
 def is_manager(user: User) -> bool:
@@ -180,6 +150,15 @@ def get_post(user: User) -> PostNameDict:
 def get_user(req: HttpRequest) -> User:
     return req.user  # type: ignore
 
+def get_user_from_session(req: HttpRequest) -> User | None:
+    
+    try:
+        email = req.session.get(EMAIL_KEY, None)
+        
+        return User.objects.get(email=email)
+        
+    except:
+        return None
 
 def get_post_id(user: User) -> PostIdDict:
     role: Role = user.role

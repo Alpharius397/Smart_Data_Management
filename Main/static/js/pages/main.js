@@ -46,7 +46,7 @@ function add_csrf() {
 function formCheck(event, id){
   const form = document.querySelector(id);
   
-  if(form.checkValidity() === false){
+  if((form != null) && (form.checkValidity() === false)){
     form.reportValidity(); 
     event.stopImmediatePropagation(); 
   }

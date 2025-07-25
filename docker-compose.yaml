@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/test
     env_file:
-      - .env
+      - .env.prod
 
   redis:
     image: redis:8.0.3-alpine
@@ -39,7 +39,7 @@ services:
           path: require.txt
 
     env_file:
-      - .env
+      - .env.prod
 
 volumes:
   postgres_data:

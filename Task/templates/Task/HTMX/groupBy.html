@@ -11,7 +11,7 @@
         Chosen Group By Column: 
 
         <div class="current-group" hx-put="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click from:find img" hx-swap="outerHTML" hx-target="closest div">
-            <b> {{ column|rstrip:1 }} </b>
+            <b> {% if column %} {{ column|rstrip:1 }} {% else %} None {% endif %}</b>
             <img class="edit-button" src="{% static 'images/edit.svg' %}" title="Change the column">
         </div>
         <div class="help-icon" 

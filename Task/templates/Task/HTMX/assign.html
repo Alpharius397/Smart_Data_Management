@@ -2,58 +2,59 @@
 
 <div class="tab">
 
-<div class="assign">
+    <div class="assign">
 
-    <h2> Assign Task </h2>
+        <h2> Assign Task </h2>
 
-    <div class="assign-form">
-        <h3>Assigned Manager: {% for i in all_managers %} {{i.1}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h3>
+        <div class="assign-form">
+            <h3 id="list-manager">Assigned Manager: {% for i in all_managers %} {{i.1}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}</h3>
 
-        <form style="margin-left:0px;" hx-put="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="click from:find button" hx-target="closest .tab" hx-swap="outerHTML" onsubmit="event.preventDefault()">
-            {% csrf_token %}
-            <div class="form-field">
-                <label for="assign-user">Add a user: </label>
-                <select name="user" id="assign-user" required>
-                    <option value>--------</option>
+            <form style="margin-left:0px;" hx-put="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="click from:find button" hx-target="closest .tab" hx-swap="afterend" onsubmit="event.preventDefault()">
+                {% csrf_token %}
+                <div class="form-field">
+                    <label for="assign-user">Add a user: </label>
+                    <select name="user" id="assign-user" required>
+                        <option value>--------</option>
 
-                    {% for i in managers %}
-                        <option value="{{i.0}}">{{i.1}}</option>
-                    {% endfor %}
+                        {% for i in managers %}
+                            <option value="{{i.0}}">{{i.1}}</option>
+                        {% endfor %}
 
-                </select>
-            </div>
-
-
-            <button class="submit">Assign User</button>
-        </form>
-
-        <form style="margin-left:0px;" hx-delete="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="click from:find button" hx-target="closest .tab" hx-swap="outerHTML" onsubmit="event.preventDefault()">
-
-            <div class="form-field">
-
-                <label for="unassign-user">Delete a user: </label>
-
-                <select name="user" id="unassign-user" required>
-                    <option value>--------</option>
-
-                    {% for i in all_managers %}
-                        <option value="{{i.0}}">{{i.1}}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                    </select>
+                </div>
 
 
-            <button type='cancel' class="cancel">Unassign User</button>
-        </form>
+                <button class="submit">Assign User</button>
+            </form>
+
+            <form style="margin-left:0px;" hx-delete="{% url 'Task:htmxAssignForm' id=id %}" hx-trigger="click from:find button" hx-target="closest .tab" hx-swap="afterend" onsubmit="event.preventDefault()">
+
+                <div class="form-field">
+
+                    <label for="unassign-user">Delete a user: </label>
+
+                    <select name="user" id="unassign-user" required>
+                        <option value>--------</option>
+
+                        {% for i in all_managers %}
+                            <option value="{{i.0}}">{{i.1}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <button type='cancel' class="cancel">Unassign User</button>
+            </form>
+        </div>
     </div>
-</div>
+    <script>
+        add_csrf();
+
+        $("#unassign-user").select2();
+        $("#assign-user").select2();
+    </script>
 </div>
 
-<script>
-    add_csrf();
-    $("#unassign-user").select2();
-    $("#assign-user").select2();
-</script>
 
 {% include "HTMX/swal.html" %}
 

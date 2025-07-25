@@ -11,4 +11,5 @@ tempCodeRunnerFile.*
 .*
 *media/*
 dump
-.env
+.env*
+app/

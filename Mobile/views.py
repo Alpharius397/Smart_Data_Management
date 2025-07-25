@@ -4,7 +4,7 @@ from django.http import HttpRequest, JsonResponse, QueryDict # type: ignore
 from Register.errors import UserExists
 from Mobile.forms import RegisterForm
 from University.models import Branch
-from constants.constants import DEFAULT_ERROR
+from constants import DEFAULT_ERROR
 from Mobile.models import razorPayment
 from tools.url_auth import AccessPayLoad, RefreshPayLoad, auth_needed, getRequestToken, is_auth_get_student, is_auth_post_student, is_auth_put_student, jwt_required, noneCheck, read_body_as_json, student_auth_needed # type: ignore
 from django.contrib.auth.models import User # type: ignore

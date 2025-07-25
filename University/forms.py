@@ -3,8 +3,7 @@ from django.forms import CharField, ValidationError, Widget, ModelForm, ModelCho
 from django.db import transaction  # type: ignore
 from django.core.exceptions import ValidationError # type: ignore
 import pandas as pd
-
-from constants.constants import DEFAULT_ERROR # type: ignore
+from constants import DEFAULT_ERROR # type: ignore
 from .models import ColorRegex, Schema, Subject
 from django.core.files.uploadedfile import UploadedFile
 

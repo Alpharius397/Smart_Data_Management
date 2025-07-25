@@ -33,7 +33,7 @@ from Table.errors import (
 from tools.utils import get_string_value, get_2_value, get_3_value, setSwalAlert
 from Logs.loggers import APP_LOG, LogStructure, Task
 from django.http import QueryDict
-from constants.constants import DEFAULT_ERROR, MAX_RECORD
+from constants import DEFAULT_ERROR, MAX_RECORD
 from Main.models import *
 from psycopg2.sql import SQL, Identifier, Literal, Composable  # type: ignore
 from tools.get_image import b64encode

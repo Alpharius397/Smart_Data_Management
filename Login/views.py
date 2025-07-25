@@ -6,7 +6,7 @@ from django.urls import reverse  # type: ignore
 from django.contrib.auth import login, authenticate  # type: ignore
 from User.models import is_manager, is_admin
 from tools.url_auth import is_hx_post, htmx_response
-from constants.constants import SUCCESS, WARNING, DEFAULT_ERROR
+from constants import SUCCESS, WARNING, DEFAULT_ERROR
 from tools.utils import setSwalAlert
 
 

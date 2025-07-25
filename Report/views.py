@@ -33,7 +33,7 @@ from tools.utils import get_2_value, get_3_value, get_string_value, get_string_v
 from tools.get_image import compress_image
 from tools.token import hash_token, get_token
 from django.db import transaction # type: ignore
-from constants.constants import DEFAULT_ERROR, WRITE_TOKEN
+from constants import DEFAULT_ERROR, WRITE_TOKEN
 from Main.models import RedisConnection, WriteToken
 
 ########### TYPES #############

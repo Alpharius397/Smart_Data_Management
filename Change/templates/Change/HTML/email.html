@@ -5,16 +5,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Form</title>
+    <title>Email Change Form</title>
     <link rel="stylesheet" href="{% static 'styles/Login/styles.css' %}">
     <style>
     </style>
 </head>
 <body>
-
+    <div hx-post="{% url 'Change:otpSend' type='email' %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML"></div>
         <div class="login-container">
-            <h2>Login</h2>
-            <form hx-post="{% url 'Login:htmxLogin' %}{% if request.GET.next %}?next={{request.GET.next}}{% endif %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()" hx-trigger="click from:.login-button">
+            <h2>Email Change</h2>
+
+            <form hx-post="{% url 'Change:htmxEmailChange' %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()" hx-trigger="click from:.login-button">
                 {% csrf_token %}
 
                 {% for field in form %}
@@ -31,20 +32,17 @@
                         
                     </div>
                 {% endfor %}
-                <button class="login-button">Login</button>
+                <button class="login-button" onclick="formCheck(event, 'form')">Change</button>
             </form>
-            <div class="form-footer">
-                <p>Don't have an account? <a href="{% url 'Register:index' %}">Sign up</a></p>
-                <p>Forgot Password? <a href="{% url 'Change:passChange' %}">Click Here</a></p>
-                <p>Are a Admin? <a href="{% url 'admin:login' %}">Sign In as Admin</a></p>
-            </div>
         </div>
 
 </body>
 <script src="{% static 'js/pages/main.js' %}"></script>
 <script src="{% static 'js/libs/htmx.js' %}"></script>
 <script src="{% static 'js/libs/swal.js' %}"></script>
-
+<script>
+    add_csrf();
+</script>
 {% include "HTMX/swal.html" %}
 
 </html>

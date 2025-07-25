@@ -1,0 +1,30 @@
+{% load template %}
+
+
+<h3 id="list-manager" hx-swap-oob="innerHTML">
+    Assigned Manager: {% for i in all_managers %} {{i.1}} {% if not forloop.last %}, {% endif %} {% empty %} None Assigned {% endfor %}
+</h3>
+
+<select name="user" id="assign-user" required hx-swap-oob="innerHTML">
+    <option value>--------</option>
+
+    {% for i in managers %}
+        <option value="{{i.0}}">{{i.1}}</option>
+    {% endfor %}
+
+</select>
+
+<select name="user" id="unassign-user" required hx-swap-oob="innerHTML">
+    <option value>--------</option>
+
+    {% for i in all_managers %}
+        <option value="{{i.0}}">{{i.1}}</option>
+    {% endfor %}
+</select>
+<script>
+    $("#unassign-user").select2();
+    $("#assign-user").select2();
+</script>
+{% include "HTMX/swal.html" %}
+
+

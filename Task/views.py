@@ -16,7 +16,7 @@ from Task.models import TaskTable
 from django.db import transaction  # type: ignore
 from django.db.models import QuerySet  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
-from constants.constants import DEFAULT_ERROR, MAX_RECORD
+from constants import DEFAULT_ERROR, MAX_RECORD
 from tools.get_image import image_load
 from tools.url_auth import (
     htmx_response,
@@ -646,7 +646,7 @@ def assign_form(req: HttpRequest, id: int):
             )
             setSwalAlert(context, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/assign.html", context=context)
+        return render(req, "Task/HTMX/assign.update.html", context=context)
 
     elif is_hx_delete(req):
         value = req.GET  # type: ignore
@@ -686,7 +686,7 @@ def assign_form(req: HttpRequest, id: int):
 
             setSwalAlert(context, DEFAULT_ERROR)
 
-        return render(req, "Task/HTMX/assign.html", context=context)
+        return render(req, "Task/HTMX/assign.update.html", context=context)
 
 
 @htmx_response

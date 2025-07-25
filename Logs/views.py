@@ -4,7 +4,7 @@ from django.db.models import Q
 from User.models import get_post_id, is_authenticated
 from tools.url_auth import *
 from Main.models import *
-from constants.constants import * 
+from constants import * 
 from Logs.models import LogMessage
 from datetime import datetime
 from User.models import Manager, Admin

@@ -3,7 +3,7 @@ from Main.settings import settingsInterface as settings
 from django.shortcuts import redirect # type: ignore
 from django.contrib.auth import logout # type: ignore
 from django.http import HttpRequest, HttpResponse # type: ignore
-from constants.constants import SUCCESS
+from constants import SUCCESS
 
 def logout_view(req:HttpRequest) -> HttpResponse:
     logout(req)

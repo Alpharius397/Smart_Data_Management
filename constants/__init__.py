@@ -1,6 +1,7 @@
 import typing
 import re
 
+OTP_SIZE: int = 6
 MAX_RECORD: int = 5
 LOADING: str = "Loading"
 DONE: str = "Done"
@@ -19,6 +20,15 @@ WRONG_SEM: str = "Incorrect Semester Format Detected"
 SUCCESS: str = "success"
 ERROR: str = "error"
 WARNING: str = "warning"
+OTP_SUBJECT = "OTP Required to Confirm Your {0} Change"
+""" use .format to add custom change header """
+OTP_MESSAGE = "Your OTP for {0} Change is {1}"
+""" use .format to add custom change header """
+OTP_KEY = "OTP"
+EMAIL_KEY = "EMAIL"
+
+SUCCESS_SUBJECT = "Request for {0} change"
+SUCCESS_MESSAGE = "{0} change was successfully changed"
 
 class ReportStructure(typing.NamedTuple):
     profile_img: list[str]

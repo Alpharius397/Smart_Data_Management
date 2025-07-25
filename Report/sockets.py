@@ -4,7 +4,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection
 from tools.token import hash_token
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string
-from constants.constants import WRITE_TOKEN
+from constants import WRITE_TOKEN
 from channels.layers import get_channel_layer
 from Logs.loggers import APP_LOG, LogStructure, Task
 

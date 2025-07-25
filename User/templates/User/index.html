@@ -15,8 +15,6 @@
             color: {{request.session.secColor}};
         }
         
-
-
     </style>
 {% endblock %}
 {% block headerOption %}
@@ -28,73 +26,31 @@
 {% block mainContent %}
 
     <div class="tab">
-        <div class="profile-image-tab">
-            <div class="profile-image">
-                <img src="{{profile}}" height="50px" id="profile-image">
-                <div class="profile-image-edit"><img src="{% static 'images/edit.svg' %}" ></div>
-                <form class="image-change"
-                    hx-encoding='multipart/form-data'
-                    hx-post="{% url 'User:imageChange' %}"
-                    hx-swap="afterend" hx-target="this"
-                    hx-trigger="click from:find button"
-                    onsubmit="event.preventDefault()">
-                    {% csrf_token %}
-                    <input type="file" name="image" />
-                    <button class="submit">Click Me</button>
-                </form>
-                <form class="image-delete"
-                style="display:none;"
-                hx-delete="{% url 'User:imageChange' %}"
-                hx-swap="afterend" hx-target="this"
-                hx-trigger="click"
-                onsubmit="event.preventDefault()">
-            </form>
-            </div>
-        </div>
-
         <div class="personal-details">
             <div class="heading"> Personal Details </div>
 
             <div class="info">
-                Username:
-                <div hx-get="{% url 'User:userChange' %}"
-                     hx-swap="outerHTML"
-                     hx-target="this"
-                     hx-target="click from:find button"
-                     class="edit-form">
+                Username: {{username}}
 
-                    {{username}}
-
-                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
-                </div>
+                <a href="{% url 'Change:userChange' %}">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field" onclick="holdIt(event)">
+                </a>
 
             </div>
             <div class="info">
-                Email:
-                <div hx-get="{% url 'User:mailChange' %}"
-                     hx-swap="outerHTML"
-                     hx-target="this"
-                     hx-target="click from:find button"
-                     class="edit-form">
+                Email: {{email}}
 
-                    {{email}}
-
-                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
-                </div>
+                <a href="{% url 'Change:mailChange' %}">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field" onclick="holdIt(event)">
+                </a>
 
             </div>
             <div class="info">
-                Password:
-                <div hx-get="{% url 'User:passChange' %}"
-                     hx-swap="outerHTML"
-                     hx-target="this"
-                     hx-target="click from:find button"
-                     class="edit-form">
+                Password: {{password}}
 
-                    {{password}}
-
-                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field">
-                </div>
+                <a href="{% url 'Change:passChange' %}">
+                    <img src="{% static 'images/edit.svg' %}" class="edit" data-title="Edit this field" onclick="holdIt(event)">
+                </a>
 
             </div>
             <div class="info">
@@ -129,49 +85,37 @@
     <script>
         add_csrf();
 
-        const edit_image = document.querySelector(".profile-image-edit");
-        const file_input = document.querySelector(".image-change input[type='file']");
-        const edit_form = document.querySelector(".image-change button");
-        const delete_image = document.querySelector(".image-delete");
+        function holdIt(event){
+            event.stopImmediatePropagation();
+            event.preventDefault();
 
-        edit_image.addEventListener("click", async function(event){
-            event.stopPropagation();
-            let a = await swal({
+            swal({
                 title:"Are you sure?",
-                text: "Are you sure you want to change your profile image?",
+                text: "Are you sure you want to change your credentials?",
                 icon: "warning",
-                buttons: {
-                    1: {
-                        text: "Change the Image",
-                        value: true,
-                        className: 'confirm'
-                    },
-                    danger: {
-                        text: "Delete The Image",
-                        value: false,
-
-                    },
-                    warning:{
-                        text: "Cancel",
-                        value: null,
-                    }
-                },
                 dangerMode: true,
+                buttons: true,
                 closeModal: false
-                });
-            
-            switch(a){
-                case true: file_input?.click(); break;
-                case false: delete_image?.click(); break;
-            }
-            
-        });
+            }).then((ok) => {
+                if(ok === true){
 
-        file_input.addEventListener("change", function(event){
-            if(this.files.length==1){
-                edit_form.click();
-            }
-        })
+                    try{
+                        window.location.href = event.target.parentNode.href
+
+                    } catch(err) {
+                        swal({
+                            title: "Redirect Failed",
+                            text: "Failed to redirect to the page",
+                            icon: "error"
+                        })
+                    }
+                }
+
+            });
+
+        
+        }
+
     </script>
 
 {% endblock %}

@@ -13,7 +13,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 import typing
+from dotenv import load_dotenv
 
+load_dotenv(".env.dev")
 
 class MongoDB(typing.NamedTuple):
     database: str
@@ -63,6 +65,7 @@ INSTALLED_APPS = [
     "Card",
     "Certificate",
     "Mobile",
+    "Change"
 ]
 
 MIDDLEWARE = [
@@ -206,6 +209,13 @@ REFRESH_EXP_DELTA_MINUTES = 360
 CERTIFICATE_EXPIRE_DAYS = 30
 CARD_TOKEN_EXPIRE_MINUTES = 30
 
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
 
 class settingsInterface:
     MEDIA_ROOT = MEDIA_ROOT
@@ -223,6 +233,8 @@ class settingsInterface:
     AES_KEY_2 = AES_KEY_2
     CERTIFICATE_KEY = CERTIFICATE_KEY
     REDIS = REDIS
+    EMAIL_HOST_USER = EMAIL_HOST_USER
+    DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
 
     JWT_SECRET = JWT_SECRET
     JWT_ALGORITHM = JWT_ALGORITHM

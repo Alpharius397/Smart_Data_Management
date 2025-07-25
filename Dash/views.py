@@ -28,7 +28,7 @@ from Task.models import TaskTable
 from Logs.loggers import APP_LOG, LogStructure, Task
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
-from constants.constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
+from constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
 from tools.utils import setSwalAlert
 from .sockets import cardReadWebSocket
 from django.contrib import messages

@@ -3,7 +3,7 @@ import typing
 from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
 from django.http import HttpRequest as __HttpRequest, QueryDict # type: ignore
-from constants.constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
+from constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
 
 
 ############ TYPES ############

@@ -14,3 +14,7 @@ class EmailAlreadyExists(MainException):
 class PasswordMismatch(MainException):
     def __init__(self) -> None:
         super().__init__("Previous Password is incorrect! Please try again")
+
+class OTPWrong(MainException):
+    def __init__(self) -> None:
+        super().__init__("Provided OTP is incorrect! Please try again")

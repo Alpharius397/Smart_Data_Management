@@ -3,7 +3,7 @@ from User.models import is_authenticated, is_manager
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string # type: ignore
-from constants.constants import WRITE_TOKEN
+from constants import WRITE_TOKEN
 from channels.layers import get_channel_layer # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, Task
 

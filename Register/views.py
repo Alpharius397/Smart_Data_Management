@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group # type: ignore
 from tools.url_auth import htmx_response, is_auth_get, is_hx_post, is_hx_get, jwt_required
 from User.models import User, Role, RoleType
 from University.models import Institute, Branch
-from constants.constants import DEFAULT_ERROR, WARNING
+from constants import DEFAULT_ERROR, WARNING
 from django.db.models import Q # type: ignore
 from django.urls import reverse # type: ignore
 from django.db import transaction # type: ignore

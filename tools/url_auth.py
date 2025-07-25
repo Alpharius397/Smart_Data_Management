@@ -1,11 +1,12 @@
 import datetime
 import json
+from random import choices
 import typing
 from django.http import HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Main.models import RedisConnection
 from Task.models import TaskTable  # type: ignore
-from constants.constants import DEFAULT_ERROR
+from constants import DEFAULT_ERROR, EMAIL_KEY, OTP_KEY, OTP_SIZE
 from tools.encrypt import authTokenCheck  # type: ignore
 from User.models import (  # type: ignore
     Role,
@@ -27,7 +28,11 @@ from django.utils import timezone # type: ignore
 from tools.errors import TokenExpired  # type: ignore
 from Main.models import WriteToken, ReadToken
 from tools.utils import HttpRequest
+from random import choices
 
+############ UTILS ############
+def getOTP():
+    return "".join(map(str, choices(list(range(10)), k=OTP_SIZE)))    
 
 def is_hx_get(req: HttpRequest) -> bool:
     return bool((req.method == "GET") and req.META.get("HTTP_HX_REQUEST"))
@@ -327,6 +332,18 @@ def htmx_response(
             return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
+
+    return _wrapped_view
+
+def set_otp_response(
+    view_func: typing.Callable[..., HttpResponse | None],
+):
+    """Wrapper for views that generates OTP"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+        request.session[OTP_KEY] = getOTP()
+        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
     return _wrapped_view
 

@@ -29,7 +29,7 @@ from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
 from django.db import transaction
 from django.utils import timezone
-from constants.constants import DEFAULT_ERROR, WRITE_TOKEN, READ_TOKEN
+from constants import DEFAULT_ERROR, WRITE_TOKEN, READ_TOKEN
 from Main.models import RedisConnection
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore

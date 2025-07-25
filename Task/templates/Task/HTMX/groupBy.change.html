@@ -10,6 +10,6 @@
         {% endfor %}
 
     </select>
-    <button class="submit">Change</button>
+    <button type="submit" class="submit">Change</button>
     <button hx-delete="{% url 'Task:htmxGroupBy' id=id %}" hx-trigger="click" hx-target="closest form" hx-swap="outerHTML" class="cancel">Cancel</button>
 </div>
