@@ -483,8 +483,6 @@ def jwt_required(
             return JsonResponse({"error": "User not found"}, status=401)
 
         except Exception as e:
-            import traceback
-            print(traceback.print_exc(e))
             return JsonResponse({"error": DEFAULT_ERROR}, status=500)
 
     return _wrapped_view
@@ -533,8 +531,12 @@ def token_check(view_func: typing.Callable[..., HttpResponse | None]):
                 
                 processing = data.get("processing", None)
                 ID = data.get("ID", -1)
+                
                 if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
                     raise TokenExpired()
+                
+                data["processing"] = False
+                redis.set(token, data)
 
                 request.user = User.objects.get(id=ID)
                 return view_func(request, *args, **kwargs) or HttpResponse(status=403)

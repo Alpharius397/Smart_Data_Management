@@ -15,7 +15,7 @@ from Task.forms import (
 from Task.models import TaskTable
 from django.db import transaction  # type: ignore
 from django.db.models import QuerySet  # type: ignore
-from Logs.loggers import APP_LOG, LogStructure, Task
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from constants import DEFAULT_ERROR, MAX_RECORD
 from tools.get_image import image_load
 from tools.url_auth import (
@@ -122,11 +122,6 @@ def task_edit(req: HttpRequest, id: int):
             )
 
         except Exception as f:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=user, exception=f)
-            )
             setSwalAlert(context, DEFAULT_ERROR, title=TASK_EDIT)
 
         return render(req, "Task/HTML/task.edit.html", context=context)
@@ -149,11 +144,6 @@ def task_delete(req: HttpRequest, id: int):
             )
 
         except Exception as f:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=f)
-            )
             setSwalAlert(context, DEFAULT_ERROR, title=TASK_DELETE)
 
         return render(req, "Task/HTML/task.delete.html", context=context)
@@ -233,18 +223,24 @@ def htmx_task_create(req: HttpRequest):
             try:
                 name = f.cleaned_data.get("fileName")
                 semesterLimit = f.cleaned_data.get("semesterLimit")
+                
                 task = TaskTable(
                     name=name,
                     semesterLimit=semesterLimit,
                     creator=user,
                     branch=user.role.belongs,
                 )
+                
                 task.save()
+                
                 setSwalAlert(
                     context,
                     "Task was successfully created!",
                     "success",
                 )
+                
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_CREATE).set_meta(req))
+                
             except forms.ValidationError as g:  # type: ignore
                 setSwalAlert(context, getErrors(g))
             except Exception:
@@ -275,15 +271,12 @@ def htmx_task_edit(req: HttpRequest, id: int):
                 setSwalAlert(
                     context, "Task Edited Successfully", "success"
                 )
+                
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_EDIT).set_meta(req))
             else:
                 setSwalAlert(context, f.getErrors())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html", context=context)
@@ -306,13 +299,9 @@ def htmx_task_delete(req: HttpRequest, id: int):
             )
 
             context["redirect"] = req.build_absolute_uri(reverse("Dash:index"))
-
+            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_DELETE).set_meta(req))
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(
@@ -377,6 +366,9 @@ def htmx_sem_create(req: HttpRequest, id: int):
                         "Semester Data Uploaded Successfully",
                         "success",
                     )
+                    
+                    APP_LOG.write_info(LogStructure().set_request(req, LogType.SEM_CREATE, semester=sem).set_meta(req))
+                    
                 else:
                     setSwalAlert(
                         context, form.getErrors()
@@ -395,11 +387,6 @@ def htmx_sem_create(req: HttpRequest, id: int):
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(
@@ -458,6 +445,8 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
                         "Semester Data Updated Successfully",
                         "success",
                     )
+                    
+                    APP_LOG.write_info(LogStructure().set_request(req, LogType.SEM_EDIT, semester=idx).set_meta(req))
 
                 else:
                     setSwalAlert(
@@ -476,11 +465,6 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html", context=context)
@@ -510,6 +494,8 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
                     context["redirect"] = req.build_absolute_uri(
                         reverse("Task:index", args=(id,))
                     )
+                    
+                    APP_LOG.write_info(LogStructure().set_request(req, LogType.SEM_DELETE, semester=idx).set_meta(req))
 
                 else:
                     setSwalAlert(
@@ -528,11 +514,6 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/message.html", context=context)
@@ -557,7 +538,7 @@ def htmx_get_task(req: HttpRequest, id: int):
                 .only("semester")
                 .distinct("semester")
                 .order_by("semester")[start : start + MAX_RECORD]
-            ):
+            ).iterator():
                 count = task.data.filter(semester=sems.semester).count()
                 semList.append(SemData(id=sems.semester, count=count))
 
@@ -569,11 +550,6 @@ def htmx_get_task(req: HttpRequest, id: int):
             elif (not semList) and (start == 0):
                 messages.error(req, "No Semesters Found!")
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=req.user, exception=e)
-            )
             
             messages.error(req, DEFAULT_ERROR)
 
@@ -593,13 +569,6 @@ def assign_form(req: HttpRequest, id: int):
             context.update(getAssignForm(user, task))
             context["error"] = False
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
 
             setSwalAlert(context, DEFAULT_ERROR, title=ASSIGN_FORM)
 
@@ -629,6 +598,8 @@ def assign_form(req: HttpRequest, id: int):
                 f"Manager ID: {managerID} is added to the Task ID: {id}",
                 "success",
             )
+            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_ASSIGN, manager=managerID).set_meta(req))
         except User.DoesNotExist:
             setSwalAlert(
                 context, f"Manager ID: {managerID} does not exists!"
@@ -637,13 +608,6 @@ def assign_form(req: HttpRequest, id: int):
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/assign.update.html", context=context)
@@ -668,6 +632,8 @@ def assign_form(req: HttpRequest, id: int):
             setSwalAlert(
                 context, f"Manager ID: {managerID} is removed from Task ID: {id}", "success"
             )
+            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_UNASSIGN, manager=managerID).set_meta(req))
 
         except User.DoesNotExist:
             setSwalAlert(context, "Manager ID: {managerID} does not exists!")
@@ -676,14 +642,8 @@ def assign_form(req: HttpRequest, id: int):
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
+            import traceback
+            print(''.join(traceback.format_tb(e.__traceback__)))
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/assign.update.html", context=context)
@@ -702,14 +662,6 @@ def groupBy_form(req: HttpRequest, id: int):
             context["column"] = task.groupByColumn
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.html", context=context)
@@ -719,13 +671,6 @@ def groupBy_form(req: HttpRequest, id: int):
             context["column"] = DataTable.getCommonColumn(id)
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
 
             setSwalAlert(context, DEFAULT_ERROR)
 
@@ -737,14 +682,6 @@ def groupBy_form(req: HttpRequest, id: int):
             context["column"] = task.groupByColumn
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.view.html", context=context)
@@ -753,6 +690,7 @@ def groupBy_form(req: HttpRequest, id: int):
         column: str = req.POST.get("column", "")
         context["column"] = column
         setSwalAlert(context, title="Group By Form")
+        
         try:
             _column = bytes.fromhex(column).decode()
             columns = set(DataTable.getCommonColumn(id))
@@ -764,21 +702,14 @@ def groupBy_form(req: HttpRequest, id: int):
             task.save()
             context["column"] = _column
             setSwalAlert(context, "Group By Column changed successfully", "success")
-
+            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.GROUP_BY, groupBy=_column).set_meta(req))
         except ColumnNotFound as f:
             setSwalAlert(context, f.get_error())
             
         except ValueError:
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/groupBy.view.html", context=context)

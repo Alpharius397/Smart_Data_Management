@@ -1,16 +1,31 @@
 {% load template %}
+{% load static %}
 
-{% if error %}
-    <ul class="messages">
-        <li class="error">{{error}}</li>
+{% if messages %}
+    <ul class="messages" id="messages">
+        {% for message in messages %}
+            <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+        {% endfor %}
     </ul>
 {% endif %}
 
 {% for i in logs %}
     <div class="task-item">
-        <span>Log of {{ i|date }}</span>
-        <a href="{% url 'Logs:one_day' date=i|date %}" class="log-item">
+        <span>Log of {{ i.day }}-{{ i.month }}-{{ i.year }} </span>
+        <a href="{% url 'Logs:oneDay' day=i.day month=i.month year=i.year %}" class="log-item">
             <span class="arrow">&#9654;</span>
         </a>
     </div>
+
+    {% if forloop.last %}
+
+        <div hx-get="{% url 'Logs:htmxLogs' %}" hx-vals= '{"page": "{{ page }}", "query": "{{ request.GET.query }}", "date": "{{ request.GET.date }}"}' hx-trigger="intersect once">
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Fetching data...</h2>
+            </div>
+        </div>
+
+    {% endif %}
+
 {% endfor %}

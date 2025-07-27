@@ -31,7 +31,7 @@ from Table.errors import (
     RowLocked,
 )
 from tools.utils import get_string_value, get_2_value, get_3_value, setSwalAlert
-from Logs.loggers import APP_LOG, LogStructure, Task
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from django.http import QueryDict
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Main.models import *
@@ -124,13 +124,6 @@ def get_sem_context(
         )
         
     except Exception as e:
-        APP_LOG.write_error(
-            LogStructure()
-            .set_request(req)
-            .set_description(
-                type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-            )
-        )
         context["error"] = DEFAULT_ERROR
 
     return context
@@ -238,16 +231,7 @@ def get_context(
     except GroupByColumnDoesNotExist as f:
         context['error'] = f.get_error()
     
-    except Exception as e:
-        print(e)
-        APP_LOG.write_error(
-            LogStructure()
-            .set_request(req)
-            .set_description(
-                type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-            )
-        )
-        
+    except Exception as e:        
         context["error"] = DEFAULT_ERROR
 
     return context
@@ -307,14 +291,6 @@ def get_row_context(
         )
         
     except Exception as e:
-        APP_LOG.write_error(
-            LogStructure()
-            .set_request(req)
-            .set_description(
-                type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-            )
-        )
-        print(e)
         context["error"] = DEFAULT_ERROR
 
     return context
@@ -371,9 +347,8 @@ def sem_column_view(req: HttpRequest, id: int, idx: int) -> HttpResponse | None:
             context["count"] = count
 
         except Exception as e:
-            print(e)
-
             messages.error(req, DEFAULT_ERROR)
+            
         return render(req, "Table/HTMX/column.html", context=context)
 
     return None
@@ -396,14 +371,6 @@ def sem_row_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         except Exception as e:
             page = 0
             
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
-            
         context = get_sem_context(req, id, idx, column, value, issue, status, lock, page)
 
         return render(req, "Table/HTMX/sem.row.html", context=context)
@@ -425,14 +392,8 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
             context["option"] = suggestions
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
-                )
-            )
-
+            pass
+        
         return render(req, "Table/HTMX/suggests.html", context=context)
 
 @htmx_response
@@ -462,14 +423,6 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
             )
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
-                )
-            )
-
             context["error"] = DEFAULT_ERROR
 
         return render(req, "Table/HTMX/sem.refresh.html", context=context)
@@ -580,6 +533,8 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
             context["updated"] = updated
             context["locked"] = locked
             context["value"] = value
+            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx).set_meta(req))
 
             if updated:
                 setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
@@ -720,6 +675,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
 
             if updated:
                 setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx).set_meta(req))
 
             else:
                 setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!")
@@ -778,14 +734,7 @@ def complete_row_view(req: HttpRequest, id: int) -> HttpResponse:
             page = int(req.GET.get("page", "0"))
         except Exception as e:
             page = 0
-            
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=str(id), user=user, exception=e
-                )
-            )
+        
         context = get_context(req, id, column, value ,issue ,status ,lock, page)
 
         return render(req, "Table/HTMX/row.html", context=context)
@@ -818,13 +767,7 @@ def suggest_view(req: HttpRequest, id: int) -> HttpResponse:
             context["option"] = suggestions
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION, taskID=id, user=req.user, exception=e
-                )
-            )
-
+            pass
+        
         return render(req, "Table/HTMX/suggests.html", context=context)
 

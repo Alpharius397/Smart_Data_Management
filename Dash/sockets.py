@@ -1,6 +1,6 @@
 import json
 from Main.settings import settingsInterface as settings
-from Logs.loggers import LogStructure, APP_LOG, Task
+from Logs.loggers import LogStructure, APP_LOG
 from tools.encrypt import decrypt_data, certificateHash
 from User.models import is_authenticated, is_manager, User
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  # type: ignore
@@ -21,9 +21,7 @@ def cardReadWebSocket(token: str, cardID: str, data: str, status: str):  # type:
             {"type": "cardRead", "status": status, "cardID": cardID, "data": data},
         )
     except Exception as e:
-        APP_LOG.write_error(
-            LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e)
-        )
+        pass
 
 
 class CardReadExeConsumer(AsyncWebsocketConsumer):

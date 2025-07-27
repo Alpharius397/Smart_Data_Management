@@ -1,0 +1,62 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/Logs/styles.css' %}">
+{% endblock %}
+
+{% block title %} Logs Dashboard {% endblock %}
+
+{% block customStyle %}
+    <style>
+        a {
+            text-decoration: none;
+        }
+
+    </style>
+{% endblock %}
+
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Dash:index' %}">Back to Dashboard</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Logs Dashboard</h1>{% endblock %}
+
+
+{% block mainContent %}
+<div class="tab">
+    <h2>Tasks List</h2>
+
+    <div class="sub-tab">
+
+        <form hx-get="{% url 'Logs:htmxLogs' %}" hx-target="next .task-list" hx-swap="innerHTML" hx-trigger="input from:select, input from:input, load" onsubmit="event.preventDefault()">
+            {% for field in form %}
+                <div class="form-group">
+                    <label for='{{ field.name }}'>{{ field.label }}: </label>
+                    {{ field }}
+
+                    {% if field.errors %}
+                        {{ field.errors }}
+                    {% else %}
+                        <p class="help_text">{{ field.help_text }} </p>
+                    
+                    {% endif %}
+                    
+                </div>
+            {% endfor %}
+        </form>
+        <div class="task-list">
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading Data">
+                <h2>Loading...</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'js/pages/dash.js' %}"></script>
+{% endblock %}

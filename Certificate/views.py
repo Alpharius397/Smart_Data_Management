@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import HttpRequest, HttpResponse
-from Main.models import Document, MongoConnection, MongoTemplate
 from Logs.loggers import APP_LOG
 from constants import ReportStructure
 from User.models import is_authenticated

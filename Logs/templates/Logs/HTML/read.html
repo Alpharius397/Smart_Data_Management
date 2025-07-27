@@ -1,0 +1,120 @@
+{% extends 'HTML/index.html' %}
+{% load template %}
+{% load static %}
+
+{% block styleSheet %}
+    <link rel="stylesheet" href="{% static 'styles/select2.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/Table/styles.css' %}">
+{% endblock %}
+
+{% block cssStyle %}
+    <style>
+        :root {
+            --column-size: {{ columns|len }};
+        }
+
+        .rows {
+            display: grid;
+            grid-template-columns: repeat(var(--column-size),250px);
+        }
+
+        .full-flex-row {
+            width: calc(var(--column-size)* 250px);
+            padding: 5px 0 5px 0;
+        }
+
+    </style>
+{% endblock %}
+
+{% block title %} Logs Dashboard {% endblock %}
+
+{% block headerOption %}
+    <a class="next-button" href="{% url 'Logs:index' %}">Back to Logs Dashboard</a>
+{% endblock %}
+
+{% block headerCenter %}<h1>Task Dashboard</h1>{% endblock %}
+
+
+{% block mainContent %}
+<div class="tab" >
+
+    <div class="searchQuery">
+        <h2>Search Logs: </h2>
+        <form class="htmx-form" hx-get="{% url 'Logs:htmxOneDay' day=day month=month year=year %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input from:#search" >
+
+            <div class="form-field">
+                <label for="search">Search For: </label>
+                <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" data-title="Enter a word to search" class="searchSelect">
+                <datalist id="suggests" autocomplete="false">
+                </datalist>
+            </div>
+
+            <div class="form-field">
+                <label for="column">in Column: </label>
+                <select name="column" id="column" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="userID">User ID</option>
+                    <option value="branchID">Branch ID</option>
+                    <option value="action">Action</option>
+                </select>
+            </div>
+
+            <h3> Additional Search: </h3>
+
+            <div class="form-field">
+
+                <label for="level">Auth Level: </label>
+                <select name="level" id="level" class="searchSelect">
+                    <option value="">----------</option>
+                    <option value="Unknown">Unknown</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Student">Student</option>
+                </select>
+            </div>
+
+            <div class="form-field">
+
+                <label for="logType">Action Type: </label>
+                <select name="logType" id="logType" class="searchSelect">
+                    <option value="">----------</option>
+
+                    {% for i in types %}
+                        <option value="{{ i.0 }}">{{ i.1 }}</option>
+                    {% endfor %}
+
+                </select>
+            </div>
+
+        </form>
+    </div>
+
+
+    <div class="table-view">
+        <div class="rows first" id="row-first">
+            {% for column in columns %}
+                <p class="column-heading">{{ column }}</p>
+            {% endfor %}
+        </div>
+        <div class="change-me">
+            <div class="full-flex-row"
+                hx-get="{% url 'Logs:htmxOneDay' day=day month=month year=year %}"
+                hx-vals= '{"page": "0", "search": "{{ request.GET.search }}", "column": "{{ request.GET.column }}", "level": "{{ request.GET.level }}", "logType": "{{ request.GET.logType }}"}'
+                hx-target='this' hx-swap="outerHTML settle:500ms" hx-trigger="intersect once">
+                <div class="loading">
+                    <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                    <h2>Fetching data...</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block assignForm %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/libs/jquery.js' %}"></script>
+<script src="{% static 'js/libs/select2.js' %}"></script>
+<script src="{% static 'js/pages/logs.js' %}"></script>
+{% endblock %}

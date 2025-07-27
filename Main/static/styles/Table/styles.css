@@ -161,6 +161,7 @@ input::placeholder {
   justify-content: center;
   border-collapse: collapse;
   transition: 1s;
+  color: #333;
   text-align: center;
 }
 

@@ -7,9 +7,12 @@ const htmxForm = document.querySelector(".htmx-form");
 var firstTime = true;
 
 function centerDiv(){
-    var b = document.querySelector(".loading");
-    let left = a.scrollLeft + ((a.offsetWidth - b.offsetWidth) / 2);
-    b.style.left = left + 'px';
+    var b = document.querySelectorAll(".loading");
+
+    for(let node of b){
+        let left = a.scrollLeft + ((a.offsetWidth - node.offsetWidth) / 2);
+        node.style.left = left + 'px';
+    }
 }
 
 document.addEventListener("DOMContentLoaded", centerDiv);

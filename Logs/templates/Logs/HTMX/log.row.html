@@ -1,10 +1,41 @@
 {% load template %}
+{% load static %}
 
-{% for i in logs %}
-    <tr {% if forloop.last %} hx-get="{% url 'Logs:search_row' date=date %}" hx-vals= '{"page": "{{ max_record }}", "query": "{{ request.GET.query }}", "search": "{{ request.GET.search }}"}'  hx-trigger="intersect once" hx-swap="afterend" {% endif %}>
+{% if messages %}
+    <div class="full-flex-row">
+        <div class="loading">
+            <ul class="messages" id="messages">
+                {% for message in messages %}
+                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %} >{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endif %}
 
-        {% for j in i.values %}
-            <td>{{j|str}}</td>
+{% for log in logs %}
+
+    <div class="rows" id="row-first">
+        {% for data in log %}
+            <p class="row-data">{{ data }}</p>
         {% endfor %}
-    </tr>
+    </div>
+
+    {% if forloop.last %}
+        <div class="full-flex-row"
+            hx-get="{% url 'Logs:htmxOneDay' day=day month=month year=year %}"
+            hx-vals= '{"page": "{{page}}", "search": "{{ request.GET.search }}", "column": "{{ request.GET.column }}", "level": "{{ request.GET.level }}", "logType": "{{ request.GET.logType }}"}'
+            hx-target='this' hx-swap="outerHTML settle:500ms" hx-trigger="intersect once">
+            <div class="loading">
+                <img src="{% static 'images/spinner.png' %}" alt="Loading">
+                <h2>Fetching data...</h2>
+            </div>
+        </div>
+    {% endif %}
+
 {% endfor %}
+
+<script>
+    centerDiv();
+</script>
+

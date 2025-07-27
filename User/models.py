@@ -17,23 +17,23 @@ from typing import Iterator, TypedDict
 
 ############ TYPES ############
 class PostNameDict(TypedDict):
-    university: str
-    institute: str
-    branch: str
+    university: NullStr
+    institute: NullStr
+    branch: NullStr
 
 
 class PostIdDict(TypedDict):
-    university: int
-    institute: int
-    branch: int
+    university: NullInt
+    institute: NullInt
+    branch: NullInt
 
 
 ############ UTILS ############
 class RoleType:
-    UNKNOWN: str = "Unknown"
-    STUDENT: str = "Student"
-    MANAGER: str = "Manager"
-    ADMIN: str = "Admin"
+    UNKNOWN = "Unknown"
+    STUDENT = "Student"
+    MANAGER = "Manager"
+    ADMIN = "Admin"
 
     @staticmethod
     def getRole() -> Iterator[tuple[str, str]]:
@@ -136,14 +136,24 @@ def get_user_id(name: str) -> NullInt:
 
 
 def get_post(user: User) -> PostNameDict:
-    role: Role = user.role
+    
+    university, institute, branch = None, None, None
+    try:
+        role: Role = user.role
 
-    branch = role.belongs
-    insti = branch.institute
-    uni = insti.university
+        bra = role.belongs
+        insti = bra.institute
+        uni = insti.university
+        
+        university = uni.name
+        institute = uni.name
+        branch = uni.name
+        
+    except:
+        pass
 
     return PostNameDict(
-        **{"university": uni.name, "institute": insti.name, "branch": branch.name}
+        **{"university": university, "institute": institute, "branch": branch}
     )
 
 
@@ -151,14 +161,23 @@ def get_user(req: HttpRequest) -> User:
     return req.user  # type: ignore
 
 def get_post_id(user: User) -> PostIdDict:
-    role: Role = user.role
+    university, institute, branch = None, None, None
+    try:
+        role: Role = user.role
 
-    branch = role.belongs
-    insti = branch.institute
-    uni = insti.university
+        bra = role.belongs
+        insti = bra.institute
+        uni = insti.university
+        
+        university = uni.id
+        institute = uni.id
+        branch = uni.id
+        
+    except:
+        pass
 
     return PostIdDict(
-        **{"university": uni.id, "institute": insti.id, "branch": branch.id}
+        **{"university": university, "institute": institute, "branch": branch}
     )
 
 

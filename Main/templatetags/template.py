@@ -112,7 +112,7 @@ def timestamp(obj):
 @register.filter(name="date")
 def url_date(obj: datetime):
     try:
-        return obj.strftime("%Y-%m-%d")
+        return obj.strftime("%d-%m-%Y")
     except:
         return "Incorrect Time Format"
 

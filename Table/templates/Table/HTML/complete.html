@@ -9,76 +9,6 @@
 
 {% block title %} Table View {% endblock %}
 
-{% block cssStyle %}
-    <style>
-
-        #verify{
-            color:#4CAF50;
-            display:inline;
-        }
-
-        #unchecked{
-            color:#555;
-            display:inline;
-        }
-
-        #reject{
-            color: red;
-            display:inline;
-        }
-
-        #feed-text{
-            font-style: italic;
-            display:inline;
-        }
-
-        #correct{
-            display: inline-block;
-            padding: 10px;
-            color: white;
-            background-color: green;
-        }
-
-        #wrong{
-            display: inline-block;
-            padding: 10px;
-            color: white;
-            background-color: red;
-        }
-
-        #none{
-            display: inline-block;
-
-            padding: 10px;
-            color: white;
-            background-color: grey;
-        }
-
-        th.next-button, td.next-button{
-            position: sticky;
-            right: 0px;
-            z-index: 10;
-            overflow-x:auto;
-            padding: 0;
-        }
-
-        th.next-button{
-            z-index: 20;
-        }
-
-        .view-icon button, a{
-            background-color: #4CAF50;
-            border-radius: 50px;
-        }
-
-        td.next-button button{
-            width: 100px;
-            height: 50px;
-        }
-
-    </style>
-{% endblock %}
-
 {% block customStyle %}
 {% endblock %}
 
@@ -105,7 +35,7 @@
             <h2>Search Columns: </h2>
             <form class="htmx-form" hx-get="{% url 'Table:htmxRows' id=id %}" hx-target=".change-me" hx-swap="innerHTML" hx-trigger="input from:.searchSelect, input from:#search" onsubmit="event.preventDefault();">
 
-                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="find input,find select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="input from:.searchSelect, input from:#search">
+                <div class="here-cause-htmx" hx-swap="innerHTML" hx-target="#suggests" hx-include="input, select" hx-get="{% url 'Table:htmxSuggest' id=id %}" hx-trigger="input from:.searchSelect, input from:#search">
                     <div class="form-field">
                         <label for="search">Search For: </label>
                         <input type="search" list="suggests" autocomplete="off" name="search" id="search" placeholder="Enter search keyword" value="{{request.GET.search}}" data-title="Enter a word to search">
@@ -163,11 +93,11 @@
             </div>
             <div class="change-me">
                 <div class="full-flex-row"
-                     hx-get="{% url 'Table:htmxRows' id=id %}"
-                     hx-vals= '{"page": "0", "column": "{{ request.GET.column }}",
-                               "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}",
-                               "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}'
-                     hx-trigger="load" hx-target='this' hx-swap="outerHTML settle:500ms">
+                    hx-get="{% url 'Table:htmxRows' id=id %}"
+                    hx-vals= '{"page": "0", "column": "{{ request.GET.column }}",
+                                "issue": "{{ request.GET.issue }}", "lock": "{{ request.GET.lock }}",
+                                "search": "{{ request.GET.search }}", "status": "{{ request.GET.status }}"}'
+                    hx-trigger="load" hx-target='this' hx-swap="outerHTML settle:500ms">
                     <div class="loading">
                         <img src="{% static 'images/spinner.png' %}" alt="Loading">
                         <h2>Fetching data...</h2>

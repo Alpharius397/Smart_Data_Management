@@ -71,8 +71,8 @@ def htmx_username_form(req: HttpRequest):
             except OTPWrong as e:
                 setSwalAlert(context, e.get_error())
                 
-            except UserNameAlreadyExists as f:
-                setSwalAlert(context, f.get_error())
+            except UserNameAlreadyExists as g:
+                setSwalAlert(context, g.get_error())
                 
             except Exception as e:
                 setSwalAlert(context, DEFAULT_ERROR)
@@ -117,8 +117,8 @@ def htmx_email_form(req: HttpRequest):
             except OTPWrong as e:
                 setSwalAlert(context, e.get_error())
                 
-            except EmailAlreadyExists as f:
-                setSwalAlert(context, f.get_error())
+            except EmailAlreadyExists as g:
+                setSwalAlert(context, g.get_error())
                 
             except Exception as e:
                 setSwalAlert(context, DEFAULT_ERROR)

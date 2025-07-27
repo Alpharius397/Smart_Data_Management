@@ -28,7 +28,7 @@ from tools.url_auth import (
     task_permission_check,
 )
 from Report.forms import CompleteFeedBack, FeedBackForm, FeedBackView, CompleteFeedBackView
-from Logs.loggers import APP_LOG, LogStructure, Task
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from tools.utils import get_2_value, get_3_value, get_string_value, get_string_value, setSwalAlert
 from tools.get_image import compress_image
 from tools.token import hash_token, get_token
@@ -101,7 +101,7 @@ def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
         try:
             post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
-            sem_dict = Subject.getSubjects(schema_id, post["branch"])
+            sem_dict = Subject.getSubjects(schema_id, post["branch"]) # post is NullStr cause logging, but don't worry it's int in this context
             
             report_data = getReport(sem_dict, task, id, idx)
             
@@ -135,7 +135,6 @@ def htmx_schema(req: HttpRequest):
             context['options'] = options
             
         except Exception as e:
-            print(e)
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/schema.html", context=context)
@@ -225,6 +224,8 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     
                     updated = DataTable.set_complete_feed(task, id, idx, locked=get_2_value(locked), status=get_3_value(status), issued=get_2_value(issued)) 
                     setSwalAlert(context, f"Status of {updated} records was updated successfully", "success")
+                    APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, rowID=idx).set_meta(req))
+                    
                 else:
                     setSwalAlert(context, form.getErrors())
                 
@@ -279,6 +280,8 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
                 data.save()
 
                 messages.success(req, f"Status for Row ID: {rowID} was updated successfully")
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, semester=idx, rowID=rowID).set_meta(req))
+                
             else:
                 for field, error in f.errors.items(): 
                     messages.error(req, "{}: {}".format(FeedBackForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
@@ -287,17 +290,6 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
             messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION,
-                    taskID=id,
-                    index=idx,
-                    user=req.user,
-                    exception=e,
-                )
-            )
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/message.html")
@@ -317,17 +309,6 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
             messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION,
-                    taskID=id,
-                    index=idx,
-                    user=req.user,
-                    exception=e,
-                )
-            )
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/sem/manager.form.html", context=context)
@@ -347,17 +328,6 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
             messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(
-                    type=Task.EXCEPTION,
-                    taskID=id,
-                    index=idx,
-                    user=req.user,
-                    exception=e,
-                )
-            )
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/sem/admin.form.html", context=context)
@@ -415,7 +385,6 @@ def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
             setSwalAlert(context,f.get_error())
             
         except Exception as e:
-            print(e)
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/write/begin.html", context=context)

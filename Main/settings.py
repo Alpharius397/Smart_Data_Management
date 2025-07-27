@@ -188,8 +188,8 @@ MEDIA_ROOT = os.path.join(
 MEDIA_URL = os.environ.get(
     "MEDIA_URL", "media/"
 )  # URL prefix for accessing media files
-APP_LOG = os.path.join(BASE_DIR, "Logs", "app_log", "")
-DATA_LOG = os.path.join(BASE_DIR, "Logs", "data_log", "")
+APP_LOG = Path(BASE_DIR, "app_log")
+DATA_LOG = Path(BASE_DIR, "data_log")
 LOGIN_URL = "Login:index"
 KEY = os.environ.get("KEY", "123456789123456789123456").encode()
 WRITE_REGISTRY = "writeExe://"

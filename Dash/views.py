@@ -25,7 +25,7 @@ from tools.url_auth import (
 )
 from Dash.errors import ReadFailed, ReadTokenExpired
 from Task.models import TaskTable
-from Logs.loggers import APP_LOG, LogStructure, Task
+from Logs.loggers import APP_LOG, LogStructure
 from tools.token import get_token, hash_token
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from constants import DEFAULT_ERROR, DONE, MAX_RECORD, READ_TOKEN, LOADING
@@ -156,11 +156,6 @@ def task_fetch(req: HttpRequest) -> HttpResponse | None:
             next_ = start + MAX_RECORD
 
         except Exception as e:
-            APP_LOG.write_error(
-                LogStructure()
-                .set_request(req)
-                .set_description(type=Task.EXCEPTION, user=user, exception=e)
-            )
             messages.error(req, DEFAULT_ERROR)
 
         return render(

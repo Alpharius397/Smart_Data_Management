@@ -23,7 +23,7 @@ from tools.url_auth import (
     task_permission_check,
     token_check,
 )
-from Logs.loggers import APP_LOG, LogStructure, Task
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from tools.utils import get_2_value, setSwalAlert
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
@@ -107,11 +107,14 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             
             with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/decompress.txt", "w") as f:
                 f.write(json.dumps(context))
-            
+                
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx).set_meta(req))
             
             return JsonResponse(data=FetchJson(data=encrypted), safe=True, status=200)
+        
+        except DataNotLocked as f:
+            return JsonResponse(data=FetchJson(data=f.get_error()), safe=True, status=401)
         except Exception as e:
-            print(e)
             return JsonResponse(data=FetchJson(data=DEFAULT_ERROR), safe=True, status=500)
 
 @csrf_exempt
@@ -151,6 +154,7 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
                 card.done_by = user
                 card.save()
                 cardWriteWebSocket(token, data)
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx).set_meta(req))
                 
                 return JsonResponse(data={"status": "Feedback updated successfully"}, status=200)
             
@@ -162,7 +166,6 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
         except Exception as e:
             data = ConfirmJson(message=DEFAULT_ERROR, status='none', card="")
             cardWriteWebSocket(token, data)
-            print(e)
             return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
 
 
@@ -203,8 +206,8 @@ def cardWriteWebSocket(token: str, data: ConfirmJson):
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(token, {"type": "card.write", **data})
     except Exception as e:
-        APP_LOG.write_error(LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e))
-
+        pass
+    
 class CardWriteExeConsumer(AsyncWebsocketConsumer):
     
     user: User
@@ -261,7 +264,7 @@ class CardWriteExeConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data: str):
-        APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=Exception("No entry here")))
+        APP_LOG.write_error(LogStructure().set_error(Exception("No Entry Here")))
     
     async def card_write(self, event: ConfirmJson):
         status = event.get("status",'none')
@@ -286,9 +289,7 @@ def cardReadWebSocket(token: str, data: ReadJson):  # type: ignore
             {"type":  "card.read", **data},
         )
     except Exception as e:
-        APP_LOG.write_error(
-            LogStructure().set_description(type=Task.WEBSOCKET_FAILED, exception=e)
-        )
+        pass
 
 
 class CardReadExeConsumer(AsyncWebsocketConsumer):
@@ -341,8 +342,8 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)  # type: ignore
 
     async def receive(self, text_data: str):  # type: ignore
-        APP_LOG.write_error(LogStructure().set_description(Task.WEBSOCKET_FAILED, taskID=str(self.taskID), manager=self.user, exception=Exception("No entry here")))
-
+        APP_LOG.write_error(LogStructure().set_error(Exception("No Entry Here")))
+        
     async def card_read(self, event: ReadJson):
         status = event["status"]
         cardID = event["card"]
