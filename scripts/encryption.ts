@@ -39,7 +39,31 @@ export default function decrypt_data(data: string, encryptionKey: string): CardJ
         ).toString(CryptoJS.enc.Base64)
 
         const decompress = pako.inflate(Buffer.from(decrypt, 'base64'),{ raw:false, to:"string"});
+        function check_format(jsonData: CardJson): boolean {
 
+        try {
+                const { university, institute, branch, images, sem_data, personal } = jsonData;
+        
+                if(!(
+                    check_value(university, ["string"]) &&
+                    check_value(institute, ["string"]) &&
+                    check_value(branch, ["string"]) &&
+                    check_object(images, [["string"], ["string"]]) &&
+                    check_object(personal, [["string"], ["string"]]) &&
+                    check_object(sem_data, [["string"], ["string"], ["string"], ["string", "number"]])
+                )){
+                    throw new Error("Invalid Format")
+                }
+        
+                return true;
+        
+            }
+            catch(err) {
+                console.warn(err);
+                return false;
+            }
+        
+        }
         return JSON.parse(decompress);
     } catch(err) {
         console.warn(err);

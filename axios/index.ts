@@ -6,7 +6,8 @@ const BASE_URL = 'http://127.0.0.1:8000/';
 
 export const LOGIN = 'mobile/auth/login/';
 export const REGISTER = 'mobile/auth/register/';
-export const SUBSCRIBER = 'mobile/subscriber/'
+export const SUBSCRIBER = 'mobile/subscriber/';
+export const CARDS = 'mobile/cards/';
 
 const Axios = axios.create({
     baseURL: BASE_URL,

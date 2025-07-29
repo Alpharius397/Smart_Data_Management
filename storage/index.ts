@@ -1,12 +1,18 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getGenericPassword, setGenericPassword, resetGenericPassword } from 'react-native-keychain';
 
 const ACCESS_TOKEN = 'access';
 const REFRESH_TOKEN = 'refresh';
 
 export async function getAccessToken(): Promise<string | null> {
     try{
-        const token =  await AsyncStorage.getItem(ACCESS_TOKEN); 
-        return token;
+
+        const token =  await getGenericPassword({ service: ACCESS_TOKEN}); 
+        
+        if(token === false) throw new Error("Failed to retrieve token");
+        else {
+            return token.password;
+        }
+
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
@@ -16,8 +22,12 @@ export async function getAccessToken(): Promise<string | null> {
 
 export async function getRefreshToken(): Promise<string | null> {
     try{
-        const token =  await AsyncStorage.getItem(REFRESH_TOKEN); 
-        return token;
+        const token =  await getGenericPassword({ service: REFRESH_TOKEN }); 
+        
+        if(token === false) throw new Error("Failed to retrieve token");
+        else {
+            return token.password;
+        }
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
@@ -25,10 +35,10 @@ export async function getRefreshToken(): Promise<string | null> {
     }
 }
 
-export async function removeRefreshToken(): Promise<boolean> {
+export async function removeAccessToken(): Promise<boolean> {
     try{
-        const token =  await AsyncStorage.removeItem(REFRESH_TOKEN); 
-        return true;
+        const token =  await resetGenericPassword({ service: ACCESS_TOKEN }); 
+        return token 
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
@@ -36,22 +46,27 @@ export async function removeRefreshToken(): Promise<boolean> {
     }
 }
 
-export async function removeAccessToken(): Promise<boolean> {
+export async function removeRefreshToken(): Promise<boolean> {
     try{
-        const token =  await AsyncStorage.removeItem(ACCESS_TOKEN); 
-        return true;
+        const token =  await resetGenericPassword({ service: REFRESH_TOKEN }); 
+        return token        
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
         return false;
     }
 }
+
 
 export async function setAccessToken(value: string): Promise<boolean> {
     try{
-        await AsyncStorage.setItem(ACCESS_TOKEN, value); 
+        const token =  await setGenericPassword(ACCESS_TOKEN, value, { service: ACCESS_TOKEN }); 
         console.log("Saving Value: ",value);
-        return true;
+
+        if(token === false) throw new Error("Failed to retrieve token");
+        else {
+            return true;
+        }
     }
     catch(error){
         console.warn("Async Storage Error: ",error);
@@ -61,9 +76,13 @@ export async function setAccessToken(value: string): Promise<boolean> {
 
 export async function setRefreshToken(value: string): Promise<boolean> {
     try{
-        await AsyncStorage.setItem(REFRESH_TOKEN, value); 
+        const token =  await setGenericPassword(REFRESH_TOKEN, value, { service: REFRESH_TOKEN }); 
         console.log("Saving Value: ",value);
-        return true;
+        
+        if(token === false) throw new Error("Failed to retrieve token");
+        else {
+            return true;
+        }
     }
     catch(error){
         console.warn("Async Storage Error: ",error);

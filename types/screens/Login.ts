@@ -19,3 +19,10 @@ export type LoginResponse = {
     access: string | null
     refresh: string | null
 }
+
+export type subscriberCheckResponse = {
+    status: boolean
+    error: string | null
+    access: string | null
+    refresh: string | null
+}

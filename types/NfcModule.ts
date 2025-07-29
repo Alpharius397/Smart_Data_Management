@@ -1,5 +1,3 @@
-import { CardJson } from "./card"
-
 export type NfcJson = {
     ok: boolean,
     msg: string,
@@ -7,7 +5,8 @@ export type NfcJson = {
 
 export type NfcCardJson = {
     ok: boolean,
-    msg: CardJson,
+    data: string,
+    uid: string
 }
 
 export interface NfcModuleType {

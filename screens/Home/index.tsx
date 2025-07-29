@@ -64,6 +64,8 @@ function get_column(jsonData: CardJson): CardJson | null {
             throw new Error("Invalid Format")
         }
 
+        return jsonData;
+
     }
     catch {
         return null;
@@ -109,7 +111,7 @@ function HomeScreen({ navigation }: HomeParam) {
     useEffect(() => {
         if(scan === true ){
             startNfcScan();
-            setListener(onSuccessScan);
+            setListener(onSuccessScan, );
         } else {
             removeListener();
         }
@@ -134,32 +136,6 @@ function HomeScreen({ navigation }: HomeParam) {
             setScan(false);
         }
     }
-
-    function beginScan(){
-        try {
-            setScan(true);
-        } catch (error) {
-            console.warn("NFC Error:", error);
-        }
-    };
-
-
-  function scanning(Data){
-    if(Data==null) return
-
-      console.log("JSON Data: ",nfcdata);
-
-      try{
-        let col = get_column(nfcdata);
-        setData(nfcdata);
-        setImage(generate_image(nfcdata.data[col.profile_col])||bad_image);
-        setColumn(col);
-      }
-      catch(e){
-        console.warn(e);
-        showAlert("NFC Card", "Data cannot be parsed")
-      }
-  }
 
   function HeaderRender(){
       return (

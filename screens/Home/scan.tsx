@@ -9,102 +9,23 @@ import { removeAccessToken, removeRefreshToken } from '../../storage';
 import { showAlert } from '../../utils/alert';
 import { isAxiosError } from 'axios';
 import { CardJson, Dictionary } from '../../types/card';
-import { HomeNavigator, HomeParam } from '../../types/screens/Home';
+import { HomeNavigator, HomeParam, LoadingParams } from '../../types/screens/Home';
 import { isSupported, isEnabled, removeListener, setListener, startNfcScan } from '../../utils/NfcModule';
 import { OptionJson, SuccessCallback, CheckoutJson, CheckoutError, ErrorJsonType } from '../../types/razorpay';
 import { NavigationIndependentTree } from '@react-navigation/native';
 import data from './data';
+import { useLoadingText, useNFC, usePage, usePurchaser, useScan } from '../../hooks/screens/Home';
+import { HeaderType, RowData, SemData, SubjectData } from '../../types/Home';
+import { error } from 'console';
 
 const Drawer = createDrawerNavigator();
-const NFC_SCAN_DURATION: number = 1000 * 60; // 1 minute
-
-//////////// TYPES ////////////
-type JsTypesString = 'number' | 'string' | 'object'
-
-type JsTypes = number | string | object | null
-
-type HeaderType = {
-    university: string,
-    institute: string,
-    branch: string,
-}
-
-type RowData = {
-    column: string,
-    value: string
-}
-
-type SubjectData = {
-    subject: string
-    value: string
-    maxValue: string | number
-}
-
-type SemData = {
-    semester: string,
-    subjects: Array<SubjectData>
-}
-
-
-function check_value(obj: JsTypes, type: string[]): boolean {
-    try{
-        return type.find((x) => x === typeof(obj)) !== undefined;
-    } catch(error) {
-        return false;
-    }
-}
-
-function check_object(obj: object, type_list: JsTypesString[][]): boolean {
-    if(type_list.length === 0) return true;
-    
-    try{
-        var res = true;
-
-        if(typeof(obj) !== 'object'){
-            res = res && check_value(obj, type_list[0]);
-        } else {
-            Object.keys(obj).forEach((key) => {
-                res = res && check_value(key, type_list[0]) && check_object(obj[key], type_list.slice(1,));
-            });
-        }
-        return res;
-    }
-    catch(error) {
-        return false;
-    }
-}
-
-function check_format(jsonData: CardJson): boolean {
-
-    try {
-        const { university, institute, branch, images, sem_data, personal } = jsonData;
-
-        if(!(
-            check_value(university, ["string"]) &&
-            check_value(institute, ["string"]) &&
-            check_value(branch, ["string"]) &&
-            check_object(images, [["string"], ["string"]]) &&
-            check_object(personal, [["string"], ["string"]]) &&
-            check_object(sem_data, [["string"], ["string"], ["string"], ["string", "number"]])
-        )){
-            throw new Error("Invalid Format")
-        }
-
-        return true;
-
-    }
-    catch {
-        return false;
-    }
-
-}
 
 function HeaderRender({ university, institute, branch }: HeaderType){
     return (
         <View style={styles.headerBox}>
-        <Text style={styles.headerText}>
-            {university} - {institute} - {branch}
-        </Text>
+            <Text style={styles.headerText}>
+                {university} - {institute} - {branch}
+            </Text>
         </View>
     );
 }
@@ -117,7 +38,7 @@ function ImageRender(images: Dictionary<string, string>){
     });
 
     return (
-        imageData.map(({column, value}, idx) => (
+        imageData.map(({column, value}, _) => (
             (
                 <View style={styles.imageRow}>
                     <Image
@@ -140,11 +61,12 @@ function PersonalRender(data: Dictionary<string, string>){
 
     return (
             dataMap.map(({ column, value } , index) => (
-            <View style={styles.tableRow} key={index}>
-                <Text style={styles.tableCell}>{column}</Text>
-                <Text style={styles.tableCell}>{value}</Text>
-            </View>
-            ))
+                <View style={styles.tableRow} key={index}>
+                    <Text style={styles.tablePersonal}>{column}</Text>
+                    <Text style={styles.tablePersonal}>{value}</Text>
+                </View>
+                )
+            )
     );
 }
 
@@ -171,16 +93,16 @@ function SemRender(data: Dictionary<number, Dictionary<string, [string, string |
                             <ScrollView contentContainerStyle={styles.scroll} horizontal={true}>
                             
                                 <View key={index} style={styles.tableCol}>
-                                    <View key={"it's me mario"} style={styles.tableRow}>
+                                    <View key={`it's me mario -- ${index}`} style={styles.tableRow}>
                                         <Text style={styles.tableCell}> Subject Name </Text>
                                         <Text style={styles.tableCell}> Marks Obtained </Text>
                                         <Text style={styles.tableCell}> Max. Marks </Text>
                                     </View> 
                                     {subjects.map(({subject, value, maxValue }, idx) => (
-                                        <View key={idx} style={styles.tableRow}>
-                                            <Text style={styles.tableCell}>{subject}</Text>
-                                            <Text style={styles.tableCell}> {value}</Text>
-                                            <Text style={styles.tableCell}> {maxValue}</Text>
+                                        <View key={`${index}_${idx}`} style={styles.tableRow}>
+                                            <Text style={{...styles.tableCell, textAlign: 'left'}}>{subject}</Text>
+                                            <Text style={{...styles.tableCell, textAlign: 'left'}}> {value}</Text>
+                                            <Text style={{...styles.tableCell, textAlign: 'left'}}> {maxValue}</Text>
                                         </View> 
                                     ))}
                                 </View>
@@ -194,104 +116,57 @@ function SemRender(data: Dictionary<number, Dictionary<string, [string, string |
 
 function HomeScreen({ navigation }: HomeParam) {
 
-    const [nfcData, setNfcData] = useState<CardJson | null>(null);
-    const [nfcSupport, setSupport] = useState<boolean>(false);
-    const [scan, setScan] = useState<boolean>(false);
-    const [cardStatus, setCardStatus] = useState<boolean | null>(null);
-    const [sub, setSub] = useState<boolean>(null);
-    var scanTimer: NodeJS.Timeout | null = null;
+    const [isScanning, isPurchasing, setScanning, setPurchasing] = usePage(true);
+    const [nfcData, setNfcData] = useState<CardJson | null>(data);
+    const nfcSupport = useNFC();
+    const [loadingState, cardFoundCallBack, validityCallBack, decryptCallBack] = useLoadingText();
+    const [isScanningNFC, startScan, endScan] = useScan(okCallBack, errorCallBack, paymentNeeded, timeoutCallback, cardFoundCallBack, validityCallBack, decryptCallBack);
+    const [isLoading, purchaseCard] = usePurchaser();
 
-    async function checkNfcSupport() {
-        try {
-            const supported = await isSupported();
-            console.log("NFC Supported:", supported);
-            setSupport(supported);
-        } catch (error) {
-            console.error("Error checking NFC support:", error);
-            setSupport(false);
-        }
-    }
-
-    useEffect(() => {
-        checkNfcSupport(); // check for support
-    }, []);
-
-    useEffect(() => {
-
-        if(scan === true ){
-            startNfcScan();
-            setListener(onSuccessScan);
-
-            scanTimer = setTimeout(() => {
-                onTimeout(); // cleaning up your mess
-            }, NFC_SCAN_DURATION);
-
-        } else {
-            removeListener();
-        }
-
-        return () => {
-            clearTimeout(scanTimer);
-        }
-
-    }, [scan]);
-
-    function onTimeout() {
-        removeListener();
-        setScan(false);
+    function timeoutCallback() {
         showAlert("NFC Scan", "NFC Scan Timeout. Please try again!");
     }
 
-
-    function onSuccessScan(data: CardJson | null){
-
-        if(data == null ){
-            setCardStatus(false); // card scan failed
-        } else {
-            if(check_format(data)){
-                setNfcData(data);
-                setScan(false);
-                setCardStatus(true);
-            } else {
-                setCardStatus(false);
-            }
-        }
+    function okCallBack(data: CardJson){
+        setNfcData(data);
     }
 
-    function beginScan(){
-        setScan(true);
-    };
+    function errorCallBack(error: string){
+        showAlert("NFC Scan", `NFC Scan Failed! ${error}`);
+    }
 
-    function endScan(){
-        setScan(false);
+    function paymentNeeded(message: string){
+        showAlert("Payment Needed", message);
+        setPurchasing();
     }
 
     const NfcScanButton = () => {
 
-        if(scan){
-            return (<><WaitingForNFC/><Button onPress={endScan} title='End Scan' /></>)
-        } else if(nfcSupport){
+        if(isScanningNFC){
             return (
-                <Button onPress={beginScan} title='Scan NFC Card' />
+            <WaitingForNFC loadingText={loadingState}>
+                <Button onPress={endScan} title='End Scan' />
+            </WaitingForNFC>
+            )
+
+        } else if(nfcSupport && (!isScanningNFC)){
+            return (
+                <Button onPress={scanState} title='Scan NFC Card' />
             );
         } else {
             return (<Text>This Device doesn't support NFC scanning or NFC scanning is not enabled</Text>)
         }
     }
 
-    const PaymentScan = () => {
-        
-        if( sub === true ){
-            return null;
-        } else {
+    const PaymentScan = () => {        
             //@ts-expect-error
             return (<Button onPress={() => beginPayment(generateOption(), paymentSuccess, paymentError)} title='Payment' />)
-        }
     }
 
-    const completeView = () => {
+    const TableView = () => {
         return (
             <ScrollView contentContainerStyle={styles.scroll}>
+
                 <View style={styles.table}>
                     {(
                         nfcData && 
@@ -303,97 +178,69 @@ function HomeScreen({ navigation }: HomeParam) {
                     {(nfcData && nfcData.images) ? ImageRender(nfcData.images) : null}
                     {(nfcData && nfcData.personal) ? PersonalRender(nfcData.personal) : null}
                 </View>
+
                 {(nfcData && nfcData.sem_data) ? SemRender(nfcData.sem_data) : null}
-                <NfcScanButton/>
-                <PaymentScan/>
 
             </ScrollView>
         );
     }
 
+    function scanState(){
+        setNfcData(null);
+        startScan();
+    }
 
-    const initialView = () => {
+    const NfcScan = () => {
         return (
-            <ScrollView contentContainerStyle={styles.centeredContainer}>
-                <View style={styles.buttonWrapper}>
-                    <NfcScanButton/>
-                </View>
-            </ScrollView>
+            <View style={styles.buttonWrapper}>
+                <NfcScanButton/>
+            </View>
         );
     }
 
-
-    const dataAvailable = () => {
-        return check_format(nfcData);
+    const Payment = () => {
+        return (
+            <View style={styles.buttonWrapper}>
+                <PaymentScan/>
+            </View>
+        );
     }
 
-    function paymentSuccess(order_id: string, payment_id: string){
+    function paymentSuccess(cardID:string, order_id: string, payment_id: string){
+        const paymentOk = () => {
+            showAlert("Payment Status", "Payment Successful! Please re-scan the card");
+        } 
 
-        async function success() {
-
-            try{
-                const response = await Axios.put(SUBSCRIBER, 
-                    {
-                    order_id: order_id,
-                    payment_id: payment_id
-                    }
-                )
-
-                const { status, error } = response.data;
-
-                if(status){
-                    showAlert("Payment Success", (error==null)?"Payment was successful":error)
-                    setSub(true);
-                }
-            }
-            catch(error){
-                if(isAxiosError(error)){
-
-                    if(error.status==409){
-                        showAlert("Payment Status", error.response.data.error)
-                    }
-                    else if(error.status==500){
-                        showAlert("Payment Status", "Server Error Occurred")
-                    }
-                    else if(error.status==422){
-                        showAlert("Payment Status", "Payment was unsuccessful")
-                    }
-                    else if(error.status==401){
-                        
-                    }
-                    else if(error.status==403){
-                        showAlert("Payment Status", error.response.data.error)
-                    }
-
-                console.warn(error);
-
-                }
-            }
+        const paymentFailed = (error: string) => {
+            showAlert("Payment Status", "Payment Unsuccessful! "+error);
 
         }
-    
-        success();
+        
+        const paymentError = (error: string) => {
+            showAlert("Payment Status", "Failed to send Payment Status! "+error);
+        }
 
+        purchaseCard(cardID, order_id, payment_id, paymentOk, paymentFailed, paymentError);
     }
 
     function paymentError(error_data: ErrorJsonType){
-        showAlert(`Payment Failed, Reason: ${error_data.reason}, By: ${error_data.source}, Step: ${error_data.step}`,"");
+        console.log(error_data)
+        showAlert("Payment Failed", `Payment Failed, Reason: ${error_data.reason}, By: ${error_data.source}, Step: ${error_data.step}`);
     }
 
-    async function isPub(){
-        try{
-            const response = await Axios.get(SUBSCRIBER);
-            const { status, error } = response.data;
-
-            if(status && error==null){
-                setSub(true);
+    return (
+        <ScrollView contentContainerStyle={styles.centeredContainer}>
+            {
+                (nfcData !== null) && TableView()
             }
-        } catch(e){
-            console.warn(e);
-        }
-    }
-
-    return (dataAvailable()?completeView():initialView());
+            {
+                (isScanning === true) && NfcScan()
+            }
+            {
+                (isPurchasing === true) && Payment()
+            }
+        </ScrollView>
+    )
 
 }
 
@@ -484,6 +331,14 @@ const styles = StyleSheet.create({
         flexDirection:'row',
         borderColor: '#ccc',
         alignItems: "stretch",
+        textAlign: "left",
+        justifyContent: "flex-start",
+    },
+    tableRowFirst: {
+        flex:1,
+        flexDirection:'row',
+        borderColor: '#ccc',
+        alignItems: "stretch",
         justifyContent: "space-around",
     },
     tableRowLast:{
@@ -497,6 +352,18 @@ const styles = StyleSheet.create({
         padding: 10,
         maxWidth:200,
         minWidth:200,
+        borderRightWidth: 1,
+        borderLeftWidth: 1,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: '#ccc',
+        textAlign: 'center',
+        textAlignVertical:'center',
+    },
+    tablePersonal: {
+        flex: 1,
+        padding: 10,
+        maxWidth:200,
         borderRightWidth: 1,
         borderLeftWidth: 1,
         borderTopWidth: 1,
@@ -582,41 +449,42 @@ const styles = StyleSheet.create({
 });
 
 
-const WaitingForNFC = () => {
-const pulseAnim = React.useRef(new Animated.Value(1)).current;
+function WaitingForNFC({ loadingText, children}: LoadingParams ){
+    const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
-React.useEffect(() => {
-    Animated.loop(
-        Animated.sequence([
-        Animated.timing(pulseAnim, {
-            toValue: 1.1,
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+            Animated.timing(pulseAnim, {
+                toValue: 1.1,
+                duration: 800,
+                easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+            }),
+            Animated.timing(pulseAnim, {
+            toValue: 1,
             duration: 800,
             easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [pulseAnim]);
+            useNativeDriver: true,
+            }),
+        ])
+        ).start();
+    }, [pulseAnim]);
 
-  return (
-    <View style={styles.container}>
-      <Animated.View style={[styles.circle, { transform: [{ scale: pulseAnim }] }]} />
-      <Text style={styles.text}>Waiting for NFC card...</Text>
-      <ActivityIndicator size="large" color="#4A90E2" />
-    </View>
-  );
+    return (
+        <View style={waitStyles.container}>
+            <Animated.View style={[waitStyles.circle, { transform: [{ scale: pulseAnim }] }]} />
+            <Text style={waitStyles.text}> {loadingText} </Text>
+            <ActivityIndicator size="large" color="#4A90E2" style={{marginBottom: 15}} />
+
+            {children}
+        </View>
+    );
 };
 
 const waitStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f4f6f8',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,

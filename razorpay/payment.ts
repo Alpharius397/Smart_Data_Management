@@ -41,6 +41,6 @@ export function beginPayment(option: OptionJson, successCallback: SuccessCallbac
             successCallback(data.razorpay_order_id, data.razorpay_payment_id);
         })
         .catch((error: CheckoutError) => {
-            errorCallback(JSON.parse(error.description));
+            errorCallback(JSON.parse(error.description).error);
     });
 }
