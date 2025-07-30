@@ -8,8 +8,8 @@ import { DEFAULT_ERROR } from '../../constants';
 import { LoginParam, LoginResponse } from '../../types/screens/Login';
 
 export default function Login({ navigation }: LoginParam): React.JSX.Element {
-    const [user, setUser] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
+    const [user, setUser] = useState<string>('Student');
+    const [password, setPassword] = useState<string>('asd');
 
     const handleLogin = () => {
 
@@ -19,7 +19,7 @@ export default function Login({ navigation }: LoginParam): React.JSX.Element {
                 const { status, error }: LoginResponse = response.data;
             
                 if( status === true && error === null){
-                    showAlert("Login Success", "Login was successful! Redirecting to Home");
+                    showAlert("Login Success", "Login was successful!");
                     navigation.navigate('Home', { user: user });
                 } else if (error !== null ) {
                     showAlert("Login Failed", `Login was unsuccessful! ${error}`);

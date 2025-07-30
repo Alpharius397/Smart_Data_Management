@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { isSupported, removeListener, setListener, startNfcScan } from '../../utils/NfcModule';
+import { endNfcScan, isSupported, removeListener, setListener, startNfcScan } from '../../utils/NfcModule';
 import { CardJson, useLoadingTextType, usePageType, usePurchaseType, useScanType } from '../../types/card';
 import Axios, { SUBSCRIBER } from '../../axios';
 import { isAxiosError } from 'axios';
@@ -42,6 +42,8 @@ export function useScan(
 
     useEffect(() => {
 
+        startNfcScan();
+
         if(isScanning){
             setListener(okCallBack, errorCallBack, paymentNeeded, decryptCallBack, cardFoundCallBack, validityCallBack);
 
@@ -52,6 +54,7 @@ export function useScan(
 
         } else {
             removeListener();
+            endNfcScan();
         }
 
         return () => {

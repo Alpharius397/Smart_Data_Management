@@ -4,19 +4,13 @@ import { createDrawerNavigator, DrawerItem, DrawerItemList } from '@react-naviga
 import generate_image from '../../scripts/image';
 import { ScrollView } from 'react-native-gesture-handler';
 import { beginPayment, generateOption } from '../../razorpay/payment';
-import Axios, { SUBSCRIBER } from '../../axios';
-import { removeAccessToken, removeRefreshToken } from '../../storage';
 import { showAlert } from '../../utils/alert';
-import { isAxiosError } from 'axios';
 import { CardJson, Dictionary } from '../../types/card';
-import { HomeNavigator, HomeParam, LoadingParams } from '../../types/screens/Home';
-import { isSupported, isEnabled, removeListener, setListener, startNfcScan } from '../../utils/NfcModule';
-import { OptionJson, SuccessCallback, CheckoutJson, CheckoutError, ErrorJsonType } from '../../types/razorpay';
-import { NavigationIndependentTree } from '@react-navigation/native';
+import { HomeParam, LoadingParams } from '../../types/screens/Home';
+import { ErrorJsonType } from '../../types/razorpay';
 import data from './data';
 import { useLoadingText, useNFC, usePage, usePurchaser, useScan } from '../../hooks/screens/Home';
 import { HeaderType, RowData, SemData, SubjectData } from '../../types/Home';
-import { error } from 'console';
 
 const Drawer = createDrawerNavigator();
 
@@ -61,7 +55,7 @@ function PersonalRender(data: Dictionary<string, string>){
 
     return (
             dataMap.map(({ column, value } , index) => (
-                <View style={styles.tableRow} key={index}>
+                <View style={styles.tableRow} key={index + column}>
                     <Text style={styles.tablePersonal}>{column}</Text>
                     <Text style={styles.tablePersonal}>{value}</Text>
                 </View>
@@ -88,12 +82,12 @@ function SemRender(data: Dictionary<number, Dictionary<string, [string, string |
             <Text style={styles.semPart}>Semester Info</Text>
                 <ScrollView contentContainerStyle={styles.scroll}>
                     {semData.map(({ semester, subjects}, index) => (
-                        <View key={index} style={styles.semTable}>
+                        <View key={index + "Header"} style={styles.semTable}>
                             <Text style={styles.semHead}>Semester {semester}</Text>
                             <ScrollView contentContainerStyle={styles.scroll} horizontal={true}>
                             
-                                <View key={index} style={styles.tableCol}>
-                                    <View key={`it's me mario -- ${index}`} style={styles.tableRow}>
+                                <View key={index + "Cell"} style={styles.tableCol}>
+                                    <View key={index + "Col"} style={styles.tableRow}>
                                         <Text style={styles.tableCell}> Subject Name </Text>
                                         <Text style={styles.tableCell}> Marks Obtained </Text>
                                         <Text style={styles.tableCell}> Max. Marks </Text>
@@ -114,10 +108,67 @@ function SemRender(data: Dictionary<number, Dictionary<string, [string, string |
     );
 }
 
-function HomeScreen({ navigation }: HomeParam) {
+function WaitingForNFC({ loadingText, children}: LoadingParams ){
+    const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+            Animated.timing(pulseAnim, {
+                toValue: 1.1,
+                duration: 800,
+                easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+            }),
+            Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+            }),
+        ])
+        ).start();
+    }, [pulseAnim]);
+
+    return (
+        <View style={waitStyles.container}>
+            <Animated.View style={[waitStyles.circle, { transform: [{ scale: pulseAnim }] }]} />
+            <Text style={waitStyles.text}> {loadingText} </Text>
+            <ActivityIndicator size="large" color="#4A90E2" style={{marginBottom: 15}} />
+
+            {children}
+        </View>
+    );
+}
+
+const waitStyles = StyleSheet.create({
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    text: {
+        fontSize: 18,
+        marginTop: 20,
+        marginBottom: 10,
+        color: '#333',
+        fontWeight: '500',
+    },
+    circle: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#4A90E2',
+        opacity: 0.2,
+        marginBottom: 30,
+    },
+});
+
+export function ScanScreen() {
 
     const [isScanning, isPurchasing, setScanning, setPurchasing] = usePage(true);
-    const [nfcData, setNfcData] = useState<CardJson | null>(data);
+    const [nfcData, setNfcData] = useState<CardJson | null>(null);
     const nfcSupport = useNFC();
     const [loadingState, cardFoundCallBack, validityCallBack, decryptCallBack] = useLoadingText();
     const [isScanningNFC, startScan, endScan] = useScan(okCallBack, errorCallBack, paymentNeeded, timeoutCallback, cardFoundCallBack, validityCallBack, decryptCallBack);
@@ -209,6 +260,7 @@ function HomeScreen({ navigation }: HomeParam) {
     function paymentSuccess(cardID:string, order_id: string, payment_id: string){
         const paymentOk = () => {
             showAlert("Payment Status", "Payment Successful! Please re-scan the card");
+            setScanning()
         } 
 
         const paymentFailed = (error: string) => {
@@ -224,7 +276,6 @@ function HomeScreen({ navigation }: HomeParam) {
     }
 
     function paymentError(error_data: ErrorJsonType){
-        console.log(error_data)
         showAlert("Payment Failed", `Payment Failed, Reason: ${error_data.reason}, By: ${error_data.source}, Step: ${error_data.step}`);
     }
 
@@ -242,50 +293,6 @@ function HomeScreen({ navigation }: HomeParam) {
         </ScrollView>
     )
 
-}
-
-// Custom Drawer Content Component
-function CustomDrawerContent({props,params}) {
-
-    const userName = params.user;
-    const closeDrawer = () => {props.navigation.closeDrawer()}
-
-    return (
-        <View style={{ flex: 1, padding: 20 }}>
-        <TouchableHighlight onPress={closeDrawer} style={styles.close_style}>
-        <Image source={require('../../assets/images/close.png')} style={styles.close_style}/>
-        </TouchableHighlight>
-
-        <View style={{flexDirection:'row', alignItems:'center'}}>
-            <Image source={require('../../assets/images/default.profile.png')} style={styles.user_image} />
-            <Text style={styles.userName}>{`Hello User,\n${userName}`}</Text>
-
-        </View>
-
-
-        <DrawerItemList {...props} />
-
-        {/* <DrawerItem 
-                label="Log out"
-                onPress={()=>{ Logout(props.navigation,"Logout Successfully"); }}
-        /> */}
-
-        </View>
-    );
-}
-
-// Main App Component
-export default function App({navigation,route}) {
-    return (
-        <NavigationIndependentTree>
-        {/**@ts-ignore*/}
-        <Drawer.Navigator
-            drawerContent={(props) => <CustomDrawerContent props={{...props}} params={route.params} />}
-        >
-            <Drawer.Screen name="Home" children={(props) => <HomeScreen navigation={navigation} />} props options={{drawerItemStyle: {marginBottom:10}}}/>
-        </Drawer.Navigator>
-        </NavigationIndependentTree>
-    );
 }
 
 // Styles
@@ -449,59 +456,6 @@ const styles = StyleSheet.create({
 });
 
 
-function WaitingForNFC({ loadingText, children}: LoadingParams ){
-    const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
-    useEffect(() => {
-        Animated.loop(
-            Animated.sequence([
-            Animated.timing(pulseAnim, {
-                toValue: 1.1,
-                duration: 800,
-                easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-            }),
-            Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-            }),
-        ])
-        ).start();
-    }, [pulseAnim]);
 
-    return (
-        <View style={waitStyles.container}>
-            <Animated.View style={[waitStyles.circle, { transform: [{ scale: pulseAnim }] }]} />
-            <Text style={waitStyles.text}> {loadingText} </Text>
-            <ActivityIndicator size="large" color="#4A90E2" style={{marginBottom: 15}} />
 
-            {children}
-        </View>
-    );
-};
-
-const waitStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 18,
-    marginTop: 20,
-    marginBottom: 10,
-    color: '#333',
-    fontWeight: '500',
-  },
-  circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#4A90E2',
-    opacity: 0.2,
-    marginBottom: 30,
-  },
-});
