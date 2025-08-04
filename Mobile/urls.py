@@ -7,6 +7,7 @@ urlpatterns = [
 	path('auth/register/',mobile_register,name='mobRegister'),
 	path('subscriber/',subscriber_check,name='subscribe'),
 	path('cards/',available_card,name='cards'),
+	path('user/', user_info, name="userInfo")
 ]
 
 

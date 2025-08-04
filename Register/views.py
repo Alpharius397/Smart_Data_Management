@@ -44,7 +44,7 @@ def htmx_register_view(req: HttpRequest):
                     user = User.objects.create_user(user,email,password,is_active=False)
                     role = Role(user=user, belongs=branchID, role=level)
                     
-                    if(level==RoleType.ADMIN):
+                    if(level==RoleType.ADMIN.value):
                         group = Group.objects.get(name='Admin')
                         user.groups.add(group)
                         

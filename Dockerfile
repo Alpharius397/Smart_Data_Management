@@ -1,5 +1,5 @@
 # Use the official Python runtime image
-FROM python:3.13.5-alpine3.21 
+FROM python:3.13-slim
 
 # Create the app directory
 RUN mkdir /app
@@ -10,8 +10,14 @@ WORKDIR /app
 # Set environment variables 
 # Prevents Python from writing pyc files to disk
 ENV PYTHONDONTWRITEBYTECODE=1
+
 #Prevents Python from buffering stdout and stderr
 ENV PYTHONUNBUFFERED=1 
+
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+# Gunicorn Socket
+RUN mkdir -p /run && chmod 777 /run
 
 # Upgrade pip
 RUN pip3 install --upgrade pip 
@@ -22,8 +28,10 @@ COPY require.txt  /app/
 # run this command to install all dependencies 
 RUN pip3 install --no-cache-dir -r require.txt
 
+COPY ./entry.bash .
+RUN chmod +x ./entry.bash
+
 # Copy the Django project to the container
 COPY . /app/
 
-# Expose the Django port
-EXPOSE 8000
+ENTRYPOINT ["./entry.bash"]

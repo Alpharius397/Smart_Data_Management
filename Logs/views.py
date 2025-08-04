@@ -1,16 +1,15 @@
-from django.contrib import messages
-from django.shortcuts import render
-from django.http import HttpRequest, HttpResponse
-from django.db.models import Q
+from django.contrib import messages # type: ignore
+from django.shortcuts import render # type: ignore
+from django.http import HttpRequest # type: ignore
+from django.db.models import Q # type: ignore
 from Logs.loggers import LogType
-from User.models import get_post_id, is_authenticated
+from User.models import get_post_id
 from tools.url_auth import *
 from Main.models import *
 from constants import * 
 from Logs.models import LogMessage
-from User.models import Manager, Admin
 from Logs.forms import DateForm
-from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay # type: ignore
 
 COLUMNS_VALUE = ("timestamp", "taskID", "userID", "authLevel", "logType", "action")
 COLUMNS_HEADING = ("Timestamp", "Task ID", "User ID", "Auth Level", "Log Type", "Description")
@@ -28,15 +27,15 @@ def get_logs(req: HttpRequest):
 
         _page = req.GET.get("page", "0")
         page = 0
-        
+        user = get_user(req)        
         f = DateForm(req.GET)
-        post = get_post_id(req.user)
+        post = get_post_id(user)
         
         context: dict[str, str | int | list] = {}
         query = Q(branchID=post["branch"])
 
         if(f.is_valid()):
-            order: typing.Literal["after", "on", "before"] = f.cleaned_data.get("query",None)
+            order: typing.Literal["after", "on", "before"] | str = str(f.cleaned_data.get("query",None))
             date_log = f.cleaned_data.get("date",None)
 
             if(order and date_log):
@@ -63,7 +62,7 @@ def get_logs(req: HttpRequest):
             if(all_records.count() == 0):
                 if(page == 0): messages.error(req, "No Logs Found!")
             else:
-                logs = all_records.values("day", "month", "year")
+                logs = all_records.values_list("year", "month", "day")
                 context['logs'] = sorted(logs, reverse=True)
             
         except Exception as e:
@@ -72,7 +71,7 @@ def get_logs(req: HttpRequest):
         return render(req,'Logs/HTMX/log.list.html',context=context)
 
 @login_needed()
-def single_log(req: HttpRequest, year: int, month: int, day: int) -> HttpResponse:
+def single_log(req: HttpRequest, year: int, month: int, day: int)  :
     
     if(is_auth_get(req)):
 
@@ -87,27 +86,27 @@ def single_log(req: HttpRequest, year: int, month: int, day: int) -> HttpRespons
 
 @auth_needed()
 @htmx_response
-def search_log(req: HttpRequest, year: int, month: int, day: int) -> HttpResponse:
+def search_log(req: HttpRequest, year: int, month: int, day: int):
     
     if(is_hx_get(req)):
-
-        post = get_post_id(req.user)
+        user = get_user(req)
+        post = get_post_id(user)
         _page = req.GET.get("page",'0')
         
-        post = get_post_id(req.user)
+        post = get_post_id(user)
         
         try:
             page = int(_page)
         except:
             page = 0
         
-        context = { "day": day, "month": month, "year": year, "page": page+MAX_RECORD }
+        context = { "day": day, "month": month, "year": year, "page": page+MAX_RECORD, "logs": [] }
 
         query = Q(branchID=post["branch"]) & Q(timestamp__day=day) & Q(timestamp__month=month) & Q(timestamp__year=year)
 
         search = req.GET.get("search",None)
-        column: typing.Literal['userID', 'action', 'branchID'] = req.GET.get("column",None)
-        level: typing.Literal["Unknown", "Student", "Manager", "Admin"] = req.GET.get("level", None)
+        column: typing.Literal['userID', 'action', 'branchID'] | str = str(req.GET.get("column",None))
+        level: typing.Literal["Unknown", "Student", "Manager", "Admin"] | str = str(req.GET.get("level", None))
         logType = req.GET.get("logType", None)
         
         match(column):
@@ -138,7 +137,6 @@ def search_log(req: HttpRequest, year: int, month: int, day: int) -> HttpRespons
                 context['logs'] = logs
 
         except Exception as e:
-            print(e)
             messages.error(req, DEFAULT_ERROR)
     
         return render(req,'Logs/HTMX/log.row.html',context=context)

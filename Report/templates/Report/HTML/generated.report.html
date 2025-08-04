@@ -9,102 +9,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
     <link rel="stylesheet" href="{% static 'styles/Report/styles.css' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.jpeg' %}">
+    <title>Generated Report</title>
     <style>
         
-        body {
-            color: {{request.session.mainColor}};
+        .report-header {
+            padding-top: 0px;
         }
 
-        .semester{
-            background-color: {{request.session.mainColor|rgb:0.7 }};
+        @media print {
+            .text, .image, .semester-heading {
+                break-inside: auto;
+                page-break-inside: auto;
+            }
         }
+        
+        {% if request.session.mainColor and request.session.secColor %}
 
-        .header-box{
-            background-color: {{request.session.mainColor}};
-            color: {{request.session.secColor}};
-        }
+            body {
+                background-color: white;
+                color: {{request.session.mainColor}};
+            }
+        
+            .semester{
+                background-color: {{request.session.mainColor|rgb:0.7 }};
+            }
 
-        .semester h3 {
-            border-color: {{request.session.secColor}};
-            color: {{request.session.secColor}};
-        }
+            .header-box{
+                background-color: {{request.session.mainColor}};
+                color: {{request.session.secColor}};
+            }
 
-        .semester p {
-            color: {{request.session.secColor}};
-        }
+            .semester h3 {
+                border-color: {{request.session.secColor}};
+                color: {{request.session.secColor}};
+            }
 
-        header .user-log{
-            color: {{request.session.mainColor}};
-        }
+            .semester p {
+                color: {{request.session.secColor}};
+            }
 
-        .personal-info p{
-            color: {{request.session.mainColor}};
-        }
+            header .user-log{
+                color: {{request.session.mainColor}};
+            }
+
+            .personal-info p{
+                color: {{request.session.mainColor}};
+            }
+
+        {% endif %}
 
     </style>
 </head>
 <body>
-    <div class="table-view-again">
-        <div class="report-header">
-            <img src="{{request.session.universityIcon}}" class="university">
-            <div class="university-heading">
-                <h2>{{university}}</h2>
-                <h3>{{institute}}</h3>
-            </div>
-            <img src="{{request.session.instituteIcon}}" class="institute">
+   <div class="table-view-again">
+    <div class="report-header">
+        <img src="{{university_icon}}" class="university">
+        <div class="university-heading">
+            <h2>{{university_heading}}</h2>
+            <h3>{{institute_heading}}</h3>
+            <h4>{{branch_heading}}</h4>
         </div>
-        <div class="personal-header">
-            
-            <div class="text">
-                {% for column, value in personal.items %}
-                    <div class="big-text">
-                        <h3>{{column}}</h3><h3>:</h3><p class="report-text">{{value}}</p>
-                    </div>
-                {% endfor %}
-
-            </div>
-            <div class="image">
-                {% for column, image in images.items %}
-                <div class="big-image">
-                    {% with IMAGE=image|img%}
-                        <img src="{{IMAGE.img}}">
-                    {% endwith %}
+        <img src="{{institute_icon}}" class="institute">
+    </div>
+    <div class="personal-header">
+        
+        <div class="text">
+            {% for column, value in personal.items %}
+                <div class="big-text">
+                    <h3>{{column}}</h3><h3>:</h3><p class="report-text">{{value}}</p>
                 </div>
-                {% endfor %}
+            {% endfor %}
 
+        </div>
+        <div class="image">
+            {% for column, image in images.items %}
+            <div class="big-image">
+                {% with IMAGE=image|img%}
+                    <img src="{{IMAGE.img}}">
+                {% endwith %}
             </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+    <div class="semester-heading">
+        
+        {% for sem, subs in sem_data.items %}
+        <div class="semester-cell">
+            
+            <table class="semester-data">
+                <tr>
+                    <th colspan="3" class='semester-title'>Semester {{sem}}</th>
+                </tr>
+                <tr>
+                    <th class="column">Subject Name</th>
+                    <th class="column">Marks Obtained</th>
+                    <th class="column">Total Marks</th>
+                </tr>
+
+                {% for sub, marks in subs.items %}
+                <tr>
+                    <td>{{sub}}</td>
+                    <td>{{marks.marks}}</td>
+                    <td>{{marks.total}}</td>
+                </tr>
+                {% endfor %}
+        
+            </table>
         </div>
 
-        <div class="semester-heading">
-            
-            {% for sem, subs in sem_data.items %}
-            <div class="semester-cell">
-                
-                <table class="semester-data">
-                    <tr>
-                        <th colspan="3" class='semester-title'>Semester {{sem}}</th>
-                    </tr>
-                    <tr>
-                        <th class="column">Subject Name</th>
-                        <th class="column">Marks Obtained</th>
-                        <th class="column">Total Marks</th>
-                    </tr>
-
-                    {% for sub, marks in subs.items %}
-                    <tr>
-                        <td>{{sub}}</td>
-                        <td>{{marks.marks}}</td>
-                        <td>{{marks.total}}</td>
-                    </tr>
-                    {% endfor %}
-            
-                </table>
-            </div>
-
-            {% endfor %}
+        {% endfor %}
     </div>
 </body>
-<script>
-    print()
-</script>
 </html>

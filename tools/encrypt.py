@@ -104,8 +104,8 @@ def certificateDecrypt(certificate: str) -> tuple[str, str]:
         jsonHash = decrypt[-SHA256_LENGTH:].decode()
 
     except Exception as e:
-        print(e)
-
+        pass
+    
     return token, jsonHash
 
 
@@ -146,5 +146,4 @@ def authTokenCheck(token: str):
             return True
 
     except Exception as e:
-        print(f"Auth Token Check failed {e}")
         return False

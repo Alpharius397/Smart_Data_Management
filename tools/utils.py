@@ -1,13 +1,13 @@
 from typing import Iterator, TypedDict, Literal, NamedTuple, Any
-import typing  
+import typing
+from django.http import HttpRequest, QueryDict # type: ignore
 from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
-from django.http import HttpRequest as __HttpRequest, QueryDict # type: ignore
 from constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
 
 
 ############ TYPES ############
-class HttpRequest(__HttpRequest):
+class SpecialHttpRequest(HttpRequest):
     PUT: QueryDict | dict[str, Any]
     DELETE: QueryDict | dict[str, Any]
 

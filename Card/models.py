@@ -1,4 +1,4 @@
-from django.db.models import (
+from django.db.models import ( # type: ignore
     SET_NULL,
     CharField,
     Model,
@@ -6,7 +6,7 @@ from django.db.models import (
     DateTimeField,
     ForeignKey,
     RESTRICT
-)  # type: ignore
+)  
 from University.models import Branch
 from User.models import User
 

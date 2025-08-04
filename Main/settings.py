@@ -14,8 +14,10 @@ from pathlib import Path
 import os
 import typing
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 
-load_dotenv(".env.dev")
+# TODO: Rotate Keys
+load_dotenv(".env.prod")
 
 class MongoDB(typing.NamedTuple):
     database: str
@@ -43,6 +45,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "daphne",
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.staticfiles",
@@ -50,7 +53,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.postgres",
-    "corsheaders",
     "Main",
     "Login",
     "Register",
@@ -63,15 +65,15 @@ INSTALLED_APPS = [
     "Report",
     "Logs",
     "Card",
-    "Certificate",
     "Mobile",
     "Change"
 ]
 
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -105,9 +107,11 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [{
+                "address": f"redis://:{os.environ.get("REDIS_PASSWORD", "1234")}@127.0.0.1:6379/0",
+            }],
         },
-    },
+    }
 }
 
 PASSWORD_HASHERS = [
@@ -155,9 +159,29 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_REPLACE_HTTP_REFERER = True
+# CORS_ORIGIN_ALLOW_ALL = True
 
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8081",
+    "http://localhost:8081",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
+
+
+CORS_ALLOW_HEADERS = [
+    *default_headers,
+    "Authorization",
+    "Refresh",
+    "request-origin",
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -167,7 +191,6 @@ USE_I18N = True
 
 USE_TZ = False
 TIME_ZONE = "Asia/Kolkata"
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
@@ -179,7 +202,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 MEDIA_ROOT = os.path.join(
     BASE_DIR,
     "media",
@@ -188,6 +210,7 @@ MEDIA_ROOT = os.path.join(
 MEDIA_URL = os.environ.get(
     "MEDIA_URL", "media/"
 )  # URL prefix for accessing media files
+
 APP_LOG = Path(BASE_DIR, "app_log")
 DATA_LOG = Path(BASE_DIR, "data_log")
 LOGIN_URL = "Login:index"
@@ -196,10 +219,9 @@ WRITE_REGISTRY = "writeExe://"
 READ_REGISTRY = "readExe://"
 CREATE_REGISTRY = "createExe://"
 
-AES_KEY_1 = os.environ.get("AES_KEY_1", "b5XpBavCf2rB0g4QD").encode()
+AES_KEY_1 = os.environ.get("AES_KEY_1", "5XpBavCf2rB0g4QD").encode()
 AES_KEY_2 = os.environ.get("AES_KEY_2", "dpI56CKiEN8R0Lcx").encode()
 CERTIFICATE_KEY = os.environ.get("KEY", "123456789123456789123456").encode()
-
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "manvtv88gtmc2yg87ticeyvm4e2f1viu")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
@@ -216,6 +238,8 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
+
+ACCESS_PDF = os.environ.get("ACCESS_PDF", "3RvdpstRTj0HZWBvpFzF0fDScBjLFKzX")
 
 class settingsInterface:
     MEDIA_ROOT = MEDIA_ROOT
@@ -235,7 +259,7 @@ class settingsInterface:
     REDIS = REDIS
     EMAIL_HOST_USER = EMAIL_HOST_USER
     DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
-
+    
     JWT_SECRET = JWT_SECRET
     JWT_ALGORITHM = JWT_ALGORITHM
     JWT_EXP_DELTA_MINUTES = JWT_EXP_DELTA_MINUTES
@@ -243,3 +267,5 @@ class settingsInterface:
 
     CERTIFICATE_EXPIRE_DAYS = CERTIFICATE_EXPIRE_DAYS
     CARD_TOKEN_EXPIRE_MINUTES = CARD_TOKEN_EXPIRE_MINUTES
+    
+    ACCESS_PDF = ACCESS_PDF

@@ -25,7 +25,7 @@ class TaskAdmin(admin.ModelAdmin):
         user = get_user(request)
         
         if db_field.name == "creator":
-            kwargs["queryset"] = User.objects.filter(role__belongs = user.role.belongs, role__role = RoleType.ADMIN)
+            kwargs["queryset"] = User.objects.filter(role__belongs = user.role.belongs, role__role = RoleType.ADMIN.value)
         
         elif db_field.name == "branch":
             kwargs["queryset"] = Branch.objects.filter(id = user.role.belongs.id)
@@ -55,6 +55,6 @@ class AssignAdmin(admin.ModelAdmin):
             kwargs["queryset"] = TaskTable.objects.filter(branch = user.role.belongs)
         
         elif db_field.name == "manager":
-            kwargs["queryset"] = User.objects.filter(role__belongs = user.role.belongs, role__role = RoleType.MANAGER)
+            kwargs["queryset"] = User.objects.filter(role__belongs = user.role.belongs, role__role = RoleType.MANAGER.value)
         
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

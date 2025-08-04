@@ -1,16 +1,28 @@
 from typing import Literal
-from django.urls import reverse
+from django.urls import reverse # type: ignore
 from django.shortcuts import render  # type: ignore
-from django.http import HttpRequest, HttpResponse  # type: ignore
+from django.http import HttpRequest  # type: ignore
 from User.errors import EmailAlreadyExists, OTPWrong, UserNameAlreadyExists
 from Change.forms import ForgotEmail, UsernameChange, PasswordChange, EmailChange
-from User.models import User, get_user, is_manager, is_admin
-from tools.url_auth import auth_needed, get_user_from_session, htmx_response, is_auth_get, is_auth_get, is_hx_get, is_hx_post, is_hx_put, login_needed, read_body_as_form, set_otp_response
-from constants import EMAIL_KEY, OTP_KEY, OTP_MESSAGE, OTP_SUBJECT, SUCCESS, SUCCESS_MESSAGE, SUCCESS_SUBJECT, WARNING, DEFAULT_ERROR
+from User.models import User, get_user
+from tools.url_auth import (
+    auth_needed,
+    check_otp_response,
+    get_user_from_session,
+    htmx_response,
+    is_auth_get,
+    is_auth_get,
+    is_hx_post,
+    is_hx_put,
+    login_needed,
+    read_body_as_form,
+    set_otp_response
+)
+from constants import EMAIL_KEY, OTP_MESSAGE, OTP_SUBJECT, SUCCESS_MESSAGE, SUCCESS_SUBJECT, DEFAULT_ERROR
 from tools.utils import setSwalAlert
-from tools.mails import email_send, send_mail
-from django.contrib.auth import logout
-from Main.settings import settingsInterface as settings
+from tools.mails import email_send
+from django.contrib.auth import logout # type: ignore
+from tools.utils import SpecialHttpRequest
 
 ############ UTILS ############
 def send_success_mail(req: HttpRequest, type: Literal['username', 'email', 'password']):
@@ -39,6 +51,7 @@ def password_form(req: HttpRequest):
     
 @htmx_response
 @auth_needed()
+@check_otp_response
 def htmx_username_form(req: HttpRequest):
     
     if is_hx_post(req):
@@ -47,15 +60,14 @@ def htmx_username_form(req: HttpRequest):
         
         if f.is_valid():
             try:
-                username = f.cleaned_data.get("Username")
-                otp = f.cleaned_data.get("OTP")
+                username = str(f.cleaned_data.get("Username"))
                 
                 if User.objects.filter(username=username).exists():
                     raise UserNameAlreadyExists(username)
                 
-                OTP = req.session.get(OTP_KEY)
+                otpOk: bool = req.__getattribute__("ok")
                 
-                if (not (OTP and (OTP == otp))):
+                if (not otpOk):
                     raise OTPWrong()
                 
                 user = get_user(req)
@@ -85,6 +97,7 @@ def htmx_username_form(req: HttpRequest):
 
 @htmx_response
 @auth_needed()
+@check_otp_response
 def htmx_email_form(req: HttpRequest):
     
     if is_hx_post(req):
@@ -93,15 +106,13 @@ def htmx_email_form(req: HttpRequest):
         
         if f.is_valid():
             try:
-                email = f.cleaned_data.get("Email")
-                otp = f.cleaned_data.get("OTP")
+                email = str(f.cleaned_data.get("Email"))
                 
                 if User.objects.filter(email=email).exists():
                     raise EmailAlreadyExists(email)
                 
-                OTP = req.session.get(OTP_KEY)
-                
-                if (not (OTP and (OTP == otp))):
+                otpOk: bool = req.__getattribute__("ok")
+                if (not otpOk):
                     raise OTPWrong()
                 
                 user = get_user(req)
@@ -132,6 +143,7 @@ def htmx_email_form(req: HttpRequest):
 @htmx_response
 @get_user_from_session
 @auth_needed()
+@check_otp_response
 def htmx_password_form(req: HttpRequest):
     
     if is_hx_post(req):
@@ -141,11 +153,9 @@ def htmx_password_form(req: HttpRequest):
         if f.is_valid():
             try:
                 password = f.cleaned_data.get("Password")
-                otp = f.cleaned_data.get("OTP")
                 
-                OTP = req.session.get(OTP_KEY)
-                
-                if (not (OTP and (OTP == otp))):
+                otpOk: bool = req.__getattribute__("ok")
+                if (not otpOk):
                     raise OTPWrong()
                 
                 user = get_user(req)
@@ -172,10 +182,11 @@ def htmx_password_form(req: HttpRequest):
 @htmx_response
 @get_user_from_session
 @auth_needed()
+@check_otp_response
 def send_otp_mail(req: HttpRequest, type: Literal['username', 'email', 'password']):
     if is_hx_post(req):
         context = setSwalAlert(title="OTP Mail")
-        otp = req.session.get(OTP_KEY, None)
+        otp = req.__getattribute__("otp")
         user = get_user(req)
         
         send_ok = False
@@ -196,10 +207,11 @@ def forgot_password(req: HttpRequest):
 
 @htmx_response
 @read_body_as_form
-def send_otp_mail_password(req: HttpRequest):
+@check_otp_response
+def send_otp_mail_password(req: SpecialHttpRequest):
     if is_hx_post(req):
         context = setSwalAlert(title="OTP Mail")
-        otp = req.session.get(OTP_KEY)
+        otp = req.__getattribute__("otp")
         user = get_user(req)
         
         send_ok = False
@@ -234,7 +246,6 @@ def send_otp_mail_password(req: HttpRequest):
                 setSwalAlert(context, text="Email is not registered")
                 
             except Exception as e:
-                print(e)
                 setSwalAlert(context, DEFAULT_ERROR)
                 
         else:

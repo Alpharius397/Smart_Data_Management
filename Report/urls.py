@@ -6,6 +6,7 @@ urlpatterns = [
     path("<int:id>/<int:idx>/<int:rowID>/", sem_view, name="semIndex"),
     path("<int:id>/<str:idx>", index_view, name="index"),
     path("<int:id>/<str:idx>/report", generate_report, name="report"),
+    path("<int:id>/<str:idx>/<str:token>/pdf", pdf_report, name="pdf"),
     path("htmx/<int:id>/<str:idx>/", report_view, name="htmxIndex"),
     path("htmx/<int:id>/<str:idx>/feed/", htmx_feedBack, name="htmxFeed"),
     path("htmx/<int:id>/<str:idx>/issue", issue_view, name="htmxIssue"),

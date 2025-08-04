@@ -186,7 +186,7 @@ def get_context(
         records: list[Context] = []
         
         with connection.cursor() as cursor:
-            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} group by "ID" order by {data_column}::jsonb ->>{groupBy}) as "A" where {searchQuery} limit 5 offset {pageOffset};').format(
+            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} group by "ID") as "A" where {searchQuery} order by "A"."ID" limit 5 offset {pageOffset};').format(
                 data_column=data_column,
                 groupBy=groupBy,
                 locked_column=locked_column,
@@ -198,8 +198,8 @@ def get_context(
                 taskID=taskID,
                 pageOffset=pageOffset,
             )
-
-            cursor.execute(sql_query)
+            
+            cursor.execute(sql_query) # type: ignore
 
             for col in cursor.fetchall():
                 ID, Data, Locked, Issued, Status = col
@@ -271,8 +271,9 @@ def get_row_context(
                 rowID=rowID
             )
 
-            cursor.execute(sql_query)            
-            ID, Data, Locked, Issued, Status = cursor.fetchone()
+            cursor.execute(sql_query) # type: ignore
+            
+            ID, Data, Locked, Issued, Status = cursor.fetchone() # type: ignore
             record = Context(ID, json.loads(Data), Locked, Issued, Status)
             
             pd_data = {
@@ -298,7 +299,7 @@ def get_row_context(
 ########### HTTP Request #############
 @login_needed()
 @semester_permission_check
-def sem_view(req: HttpRequest, id: int, idx: int) -> HttpResponse | None:
+def sem_view(req: HttpRequest, id: int, idx: int):
     user = get_user(req)
     context: dict[str, int] = {"id": id, "idx": idx}
     if is_auth_get(req):
@@ -314,7 +315,7 @@ def sem_view(req: HttpRequest, id: int, idx: int) -> HttpResponse | None:
 
 @login_needed()
 @task_permission_check
-def complete_view(req: HttpRequest, id: int) -> HttpResponse | None:
+def complete_view(req: HttpRequest, id: int):
     user = get_user(req)
     context: dict[str, int] = {"id": id}
     if is_auth_get(req):
@@ -332,7 +333,7 @@ def complete_view(req: HttpRequest, id: int) -> HttpResponse | None:
 @htmx_response
 @auth_needed()
 @semester_permission_check
-def sem_column_view(req: HttpRequest, id: int, idx: int) -> HttpResponse | None:
+def sem_column_view(req: HttpRequest, id: int, idx: int):
     if is_hx_get(req):
         context = {"search": [], "column": [], "count": 0}
 
@@ -356,7 +357,7 @@ def sem_column_view(req: HttpRequest, id: int, idx: int) -> HttpResponse | None:
 @htmx_response
 @auth_needed()
 @semester_permission_check
-def sem_row_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
+def sem_row_view(req: HttpRequest, id: int, idx: int):
     user = get_user(req)
     
     if is_hx_get(req):
@@ -371,7 +372,7 @@ def sem_row_view(req: HttpRequest, id: int, idx: int) -> HttpResponse:
         except Exception as e:
             page = 0
             
-        context = get_sem_context(req, id, idx, column, value, issue, status, lock, page)
+        context = get_sem_context(req, id, idx, column, value, issue, status, lock, page) # type: ignore
 
         return render(req, "Table/HTMX/sem.row.html", context=context)
 
@@ -399,7 +400,7 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
 @htmx_response
 @auth_needed()
 @semester_permission_check
-def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_hx_get(req):
         context: dict[str, Any] = {"id": id, "idx": idx}
 
@@ -418,7 +419,7 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
             context.update(
                 {
                     "result": pd_data,
-                    "isAdmin": is_admin(req.user),
+                    "isAdmin": is_admin(get_user(req)),
                 }
             )
 
@@ -430,7 +431,7 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
 @htmx_response
 @auth_needed(admin_only=True)
 @semester_permission_check
-def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_hx_put(req):
         body = QueryDict(req.body)
         column: str = body.get("column", "")
@@ -559,7 +560,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
 @htmx_response
 @auth_needed(admin_only=True)
 @semester_permission_check
-def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_hx_put(req):
         column: str = QueryDict(req.body).get("column", "")
 
@@ -721,7 +722,7 @@ def column_view(req: HttpRequest, id: int):
 @htmx_response
 @auth_needed()
 @task_permission_check
-def complete_row_view(req: HttpRequest, id: int) -> HttpResponse:
+def complete_row_view(req: HttpRequest, id: int):
     if is_hx_get(req):
         column = req.GET.get("column", "")
         value = req.GET.get("search", "")
@@ -735,7 +736,7 @@ def complete_row_view(req: HttpRequest, id: int) -> HttpResponse:
         except Exception as e:
             page = 0
         
-        context = get_context(req, id, column, value ,issue ,status ,lock, page)
+        context = get_context(req, id, column, value ,issue ,status ,lock, page) # type: ignore
 
         return render(req, "Table/HTMX/row.html", context=context)
 
@@ -744,7 +745,7 @@ def complete_row_view(req: HttpRequest, id: int) -> HttpResponse:
 @htmx_response
 @auth_needed()
 @task_permission_check
-def refresh_row(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+def refresh_row(req: HttpRequest, id: int, idx: str):
     if is_hx_get(req):
         context = get_row_context(req, id, idx)
 
@@ -755,7 +756,7 @@ def refresh_row(req: HttpRequest, id: int, idx: str) -> HttpResponse:
 @htmx_response
 @auth_needed()
 @task_permission_check
-def suggest_view(req: HttpRequest, id: int) -> HttpResponse:
+def suggest_view(req: HttpRequest, id: int):
     if is_hx_get(req):
         column = req.GET.get("column", "")
         value = req.GET.get("search", "")

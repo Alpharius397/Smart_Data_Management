@@ -1,14 +1,14 @@
 import datetime
 import json
-from random import choices
 import typing
-from django.http import HttpResponse, JsonResponse, QueryDict  # type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
-from Main.models import RedisConnection
-from Task.models import TaskTable  # type: ignore
-from constants import DEFAULT_ERROR, EMAIL_KEY, OTP_KEY, OTP_SIZE
-from tools.encrypt import authTokenCheck  # type: ignore
-from User.models import (  # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
+from Main.models import RedisConnection, WriteToken, ReadToken, RedisDataBase, PdfToken
+from Task.models import TaskTable
+from constants import DEFAULT_ERROR, EMAIL_KEY, OTP_SIZE
+from tools.encrypt import authTokenCheck
+from User.models import (
     Role,
     User,
     get_user,
@@ -16,30 +16,32 @@ from User.models import (  # type: ignore
     is_authenticated,
     is_authenticated_student,
     is_manager,
-    is_student,
 )
 from django.db.models import Q  # type: ignore
-from Main.settings import settingsInterface as settings  # type: ignore
+from Main.settings import settingsInterface as settings 
 from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
-from University.models import Color  # type: ignore
-from functools import wraps  # type: ignore
+from University.models import Color
+from functools import wraps 
 from django.utils import timezone # type: ignore
-from tools.errors import TokenExpired  # type: ignore
-from Main.models import WriteToken, ReadToken
-from tools.utils import HttpRequest
-from random import choices
+from tools.errors import TokenExpired
+from Crypto.Random.random import randint
+from asgiref.sync import sync_to_async
+
+REQUEST_PARAMS = typing.ParamSpec("REQUEST_PARAMS")
 
 ############ UTILS ############
 def getOTP():
-    return "".join(map(str, choices(list(range(10)), k=OTP_SIZE)))    
+    return "".join(map(str, [randint(0, 9) for _ in range(OTP_SIZE)]))
+
+def compareOTP(otp: str, verify: str):
+    return (otp == verify)
 
 def is_hx_get(req: HttpRequest) -> bool:
     return bool((req.method == "GET") and req.META.get("HTTP_HX_REQUEST"))
 
-
 def is_auth_get(req: HttpRequest) -> bool:
-    return bool(is_authenticated(req.user) and req.method == "GET")
+    return bool(is_authenticated(get_user(req)) and req.method == "GET")
 
 
 def is_hx_post(req: HttpRequest) -> bool:
@@ -47,7 +49,7 @@ def is_hx_post(req: HttpRequest) -> bool:
 
 
 def is_auth_post(req: HttpRequest) -> bool:
-    return bool(is_authenticated(req.user) and req.method == "POST")
+    return bool(is_authenticated(get_user(req)) and req.method == "POST")
 
 
 def is_hx_put(req: HttpRequest) -> bool:
@@ -55,7 +57,7 @@ def is_hx_put(req: HttpRequest) -> bool:
 
 
 def is_auth_put(req: HttpRequest) -> bool:
-    return bool(is_authenticated(req.user) and req.method == "PUT")
+    return bool(is_authenticated(get_user(req)) and req.method == "PUT")
 
 
 def is_hx_delete(req: HttpRequest) -> bool:
@@ -63,19 +65,23 @@ def is_hx_delete(req: HttpRequest) -> bool:
 
 
 def is_auth_delete(req: HttpRequest) -> bool:
-    return bool(is_authenticated(req.user) and req.method == "DELETE")
+    return bool(is_authenticated(get_user(req)) and req.method == "DELETE")
+
 
 def is_auth_get_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(req.user) and req.method == "GET")
+    return bool(is_authenticated_student(get_user(req)) and req.method == "GET")
+
 
 def is_auth_post_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(req.user) and req.method == "POST")
+    return bool(is_authenticated_student(get_user(req)) and req.method == "POST")
+
 
 def is_auth_put_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(req.user) and req.method == "PUT")
+    return bool(is_authenticated_student(get_user(req)) and req.method == "PUT")
+
 
 def is_auth_delete_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(req.user) and req.method == "DELETE")
+    return bool(is_authenticated_student(get_user(req)) and req.method == "DELETE")
 
 
 def auth_page(req: HttpRequest) -> HttpResponse:
@@ -95,6 +101,10 @@ def get_color(req: HttpRequest):
         req.session["mainColor"] = main_color
         req.session["secColor"] = sec_color
         req.session["instituteIcon"] = instituteIcon
+        
+        req.session["university_heading"] = role.belongs.institute.university.name
+        req.session["institute_heading"] = role.belongs.institute.name
+        req.session["branch_heading"] = role.belongs.name
     except Exception:
         pass
 
@@ -112,12 +122,30 @@ def taskCheck(user: User, id: int):
             )
             
     except Exception as e:
-        print("Task Error: ", e)
+        pass
+            
     return None
 
+async def ataskCheck(user: User, id: int):
+    try:
+        if is_admin(user):
+            return await TaskTable.objects.aget(
+                Q(id=id) & Q(branch=user.role.belongs)
+            )
+            
+        elif is_manager(user):
+            return await TaskTable.objects.aget(
+                Q(id=id) & Q(assigned__manager__id=user.id)
+            )
+            
+    except Exception as e:
+        pass
+            
+    return None
 
 def semesterCheck(user: User, id: int, idx: int):
     try:
+        
         if is_admin(user):
             return TaskTable.objects.filter(
                 Q(id=id) & Q(data__semester=idx) & Q(branch=user.role.belongs)
@@ -127,15 +155,11 @@ def semesterCheck(user: User, id: int, idx: int):
             return TaskTable.objects.filter(
                 Q(id=id) & Q(data__semester=idx) & Q(assigned__manager__id=user.id)
             ).distinct()[0]
+            
     except Exception as e:
-        print(e)
-        
+        pass
+            
     return None
-
-
-def noneCheck(*args: typing.Any) -> bool:
-    return not all(args)
-
 
 class PayLoad:
     __type: str = "Base"
@@ -239,10 +263,6 @@ class RefreshPayLoad(PayLoad):
         self.type = type if (type is not None) else self.__type
         self.expire = expire if (expire is not None) else timezone.now()
 
-
-ReqParams = typing.ParamSpec("ReqParams")
-
-
 def login_needed(manager_only=False, admin_only=False):
     """Wrapper for views that need authenticated users"""
 
@@ -254,14 +274,15 @@ def login_needed(manager_only=False, admin_only=False):
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
             get_color(request)
-            if is_authenticated(request.user):
+            user = get_user(request)
+            if is_authenticated(user):
                 if not (manager_only or admin_only):  # both false
                     return view_func(request, *args, **kwargs) or HttpResponse(
                         status=403
                     )
 
-                if (manager_only and is_manager(request.user)) or (
-                    admin_only and is_admin(request.user)
+                if (manager_only and is_manager(user)) or (
+                    admin_only and is_admin(user)
                 ):  # one of them is true
                     return view_func(request, *args, **kwargs) or HttpResponse(
                         status=403
@@ -273,7 +294,6 @@ def login_needed(manager_only=False, admin_only=False):
 
     return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
-
 def auth_needed(manager_only=False, admin_only=False):
     """Wrapper for views that need authenticated users (HTMX Version)"""
 
@@ -284,17 +304,51 @@ def auth_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
-
-            if is_authenticated(request.user):
-                if (not manager_only) and (not admin_only):
+            user = get_user(request)
+            
+            if (is_authenticated(user)):
+                if not (manager_only or admin_only):  # both false
                     return view_func(request, *args, **kwargs) or HttpResponse(
                         status=403
                     )
 
-                if (manager_only and is_manager(request.user)) or (
-                    admin_only and is_admin(request.user)
-                ):
+                if (manager_only and is_manager(user)) or (
+                    admin_only and is_admin(user)
+                ):  # one of them is true
                     return view_func(request, *args, **kwargs) or HttpResponse(
+                        status=403
+                    )
+
+            return HttpResponse(status=403)
+
+        return _wrapped_view
+
+    return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
+
+def aauth_needed(manager_only=False, admin_only=False):
+    """Wrapper for views that need authenticated users (HTMX Version)"""
+
+    def wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper(
+        view_func: typing.Callable[..., typing.Awaitable[HttpResponse | None]],
+    ):
+        """*It's the wrap-ception of decorators — a wrap that's wrapped by a wrapper that wraps wrappers.*"""
+
+        @wraps(view_func)
+        async def _wrapped_view(request: HttpRequest, *args, **kwargs):
+            
+            get_color(request)
+            user = get_user(request)
+            
+            if (await sync_to_async(is_authenticated)(user)):
+                if not (manager_only or admin_only):  # both false
+                    return await view_func(request, *args, **kwargs) or HttpResponse(
+                        status=403
+                    )
+
+                if (manager_only and is_manager(user)) or (
+                    admin_only and is_admin(user)
+                ):  # one of them is true
+                    return await view_func(request, *args, **kwargs) or HttpResponse(
                         status=403
                     )
 
@@ -310,7 +364,7 @@ def student_auth_needed(view_func: typing.Callable[..., HttpResponse | None],):
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
 
-        if is_authenticated_student(request.user):
+        if is_authenticated_student(get_user(request)):
             return view_func(request, *args, **kwargs) or JsonResponse(
                 data={"error": DEFAULT_ERROR},
                 status=403
@@ -328,7 +382,6 @@ def htmx_response(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         if request.META.get("HTTP_HX_REQUEST"):
-            request.user = get_user(request)
             return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
@@ -350,7 +403,7 @@ def get_user_from_session(
                 request.user = User.objects.get(email=email)
                 
         except Exception as e:
-            print(e)
+            pass
                 
         return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
@@ -363,11 +416,46 @@ def set_otp_response(
 
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
-        request.session[OTP_KEY] = getOTP()
-        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+        user = get_user(request)
+        
+        try:
+            with RedisConnection(RedisDataBase.OTP_TOKEN) as redis:
+                redis.setText(str(user.id), getOTP())
+                
+            return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+        except:
+            return HttpResponse(status=403)
 
     return _wrapped_view
 
+def check_otp_response(
+    view_func: typing.Callable[..., HttpResponse | None],
+):
+    """Wrapper for views that makes uses of OTP (Note: request object gets a `otp` attr that has OTP and `ok` attr that checks if otp is ok)"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+        
+        request.__setattr__("otp", "Error sending OTP")
+        request.__setattr__("ok", False)
+        
+        user = get_user(request)
+        
+        try:
+            queryDict: QueryDict = request.__getattribute__(str(request.method))
+            otp = queryDict.get("OTP", "######")
+            
+            with RedisConnection(RedisDataBase.OTP_TOKEN) as redis:
+                verify = redis.getText(str(user.id))
+                request.__setattr__("ok", compareOTP(verify, otp))
+                request.__setattr__("otp", verify)
+                
+        except Exception as e:
+            pass
+        
+        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+
+    return _wrapped_view
 
 def task_permission_check(
     view_func: typing.Callable[..., HttpResponse | None],
@@ -386,6 +474,22 @@ def task_permission_check(
 
     return _wrapped_view
 
+
+def async_task_permission_check(
+    view_func: typing.Callable[..., typing.Awaitable[HttpResponse | None]],
+) -> typing.Callable[..., typing.Awaitable[HttpResponse]]:
+
+    @wraps(view_func)
+    async def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
+        user = get_user(request)
+
+        if (task := await ataskCheck(user, id)) != None:
+            request.__setattr__("task", task)
+            return await view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
+
+        return HttpResponse(status=403)
+
+    return _wrapped_view
 
 def semester_permission_check(
     view_func: typing.Callable[..., HttpResponse | None],
@@ -425,7 +529,7 @@ def file_permission_check(
 
 
 def jwt_required(
-    view_func: typing.Callable[..., HttpResponse | None],
+    view_func: typing.Callable[..., JsonResponse | None],
 ):
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
@@ -468,6 +572,7 @@ def jwt_required(
             user = User.objects.get(
                 id=access_payload.userID, username=access_payload.username
             )
+            
             request.user = user
             request.headers.__setattr__("access", access_token)
             request.headers.__setattr__("refresh", refresh_token)
@@ -488,11 +593,10 @@ def jwt_required(
     return _wrapped_view
 
 
-def api_key_required(view_func: typing.Callable[..., HttpResponse | None]):
+def api_key_required(view_func: typing.Callable[..., JsonResponse | None]):
+    
     @wraps(view_func)
-    def _wrapped_view(
-        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
-    ):
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:
             auth_header = request.headers.get("Authorization", "")
 
@@ -512,48 +616,72 @@ def api_key_required(view_func: typing.Callable[..., HttpResponse | None]):
                 )
 
         except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(request, LogType.EXCEPTION).set_error(e))
             return JsonResponse({"error": DEFAULT_ERROR}, status=404)
 
     return _wrapped_view
 
-def token_check(view_func: typing.Callable[..., HttpResponse | None]):
-    """ Checks the token issuer and adds appropriate users for auth """
+def pdf_access(view_func: typing.Callable[..., HttpResponse | None]):
     
     @wraps(view_func)
-    def _wrapped_view(
-        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
-    ) -> HttpResponse:
-        
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:
-            token = kwargs.get("token", "")
-            with RedisConnection() as redis:
-                data: WriteToken | ReadToken = redis.get(token)
-                
-                processing = data.get("processing", None)
-                ID = data.get("ID", -1)
-                
-                if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
-                    raise TokenExpired()
-                
-                data["processing"] = False
-                redis.set(token, data)
+            auth_header = request.headers.get("Access-PDF", "")
 
-                request.user = User.objects.get(id=ID)
-                return view_func(request, *args, **kwargs) or HttpResponse(status=403)
-        
-        except User.DoesNotExist:
-            return HttpResponse(status=401)
-        
+            if not (auth_header == settings.ACCESS_PDF):
+                return HttpResponse(status=404)
+
+            return view_func(request, *args, **kwargs) or HttpResponse(status=404)
+
         except Exception as e:
             return HttpResponse(status=404)
         
     return _wrapped_view
 
+def token_check(database: RedisDataBase, close_after: bool = True):
+    """ Checks the token issuer and adds appropriate users for auth """
+    
+    def __check__(view_func: typing.Callable[..., HttpResponse | None]):
+    
+        @wraps(view_func)
+        def _wrapped_view(
+            request: HttpRequest, *args, **kwargs
+        ) -> HttpResponse:
+            
+            try:
+                token = kwargs.get("token", "")
+                with RedisConnection(database) as redis:
+                    data: WriteToken | ReadToken | PdfToken = redis.getDict(token) # type: ignore
+                    
+                    processing = data.get("processing", None)
+                    ID = data.get("ID", -1)
+                    
+                    if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
+                        raise TokenExpired()
+                    
+                    request.user = User.objects.get(id=ID)
+                    response = view_func(request, *args, **kwargs) or HttpResponse(status=403)
+                    
+                    if(close_after): redis.unset(str(token))
+                    
+                    return response
+            
+            except User.DoesNotExist:
+                return HttpResponse(status=401)
+            
+            except Exception as e:
+                APP_LOG.write_error(LogStructure().set_request(request, LogType.EXCEPTION).set_error(e))
+                return HttpResponse(status=404)
+        
+        return _wrapped_view
+
+    return __check__
+
 def read_body_as_json(view_func: typing.Callable[..., HttpResponse | None]):
     
     @wraps(view_func)
     def _wrapped_view(
-        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
+        request: HttpRequest, *args, **kwargs
     ):
         
         try:
@@ -571,7 +699,7 @@ def read_body_as_form(view_func: typing.Callable[..., HttpResponse | None]):
     
     @wraps(view_func)
     def _wrapped_view(
-        request: HttpRequest, *args: ReqParams.args, **kwargs: ReqParams.kwargs
+        request: HttpRequest, *args, **kwargs
     ):
         
         try:

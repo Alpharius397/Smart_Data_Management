@@ -1,9 +1,10 @@
-from typing import NamedTuple, TypedDict
-import zlib
-from django.contrib import messages
+from django.utils import timezone
+import io
+from typing import Any, TypedDict
+from django.contrib import messages # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
-from django.http import HttpRequest, HttpResponse, FileResponse  # type: ignore
+from django.http import FileResponse, HttpRequest, StreamingHttpResponse  # type: ignore
 from Report.errors import DataNotLocked, InvalidSchema, RedisFailed
 from University.models import SemMeta, Subject, Schema, SubjectMeta
 from Task.models import DataTable, TaskTable
@@ -16,16 +17,21 @@ from User.models import (
     get_post,
     User,
 )
-from tools.encrypt import b64decode, b64encode
+from tools.signer import addSign
 from tools.url_auth import (
+    aauth_needed,
+    async_task_permission_check,
     htmx_response,
     is_auth_get,
+    is_hx_delete,
     is_hx_get,
     is_hx_post,
     login_needed,
     auth_needed,
+    pdf_access,
     semester_permission_check,
     task_permission_check,
+    token_check,
 )
 from Report.forms import CompleteFeedBack, FeedBackForm, FeedBackView, CompleteFeedBackView
 from Logs.loggers import APP_LOG, LogStructure, LogType
@@ -34,7 +40,9 @@ from tools.get_image import compress_image
 from tools.token import hash_token, get_token
 from django.db import transaction # type: ignore
 from constants import DEFAULT_ERROR, WRITE_TOKEN
-from Main.models import RedisConnection, WriteToken
+from Main.models import AsyncRedisConnection, PdfToken, RedisConnection, RedisDataBase, WriteToken
+from playwright.async_api import async_playwright
+from asgiref.sync import async_to_sync
 
 ########### TYPES #############
 class ReportData(TypedDict):
@@ -45,13 +53,13 @@ class ReportData(TypedDict):
 ########### UTILS #############
 
 def writeBegin(user: User, token: str) -> bool:
-    with RedisConnection() as redis: 
-        return redis.set(token, WriteToken(ID=user.id, processing=True))
+    with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis: 
+        return redis.setDict(token, WriteToken(ID=user.id, processing=True)) # type: ignore
     return False
 
 def writeEnd(user: User, token: str) -> bool:
-    with RedisConnection() as redis: 
-        return redis.set(token, WriteToken(ID=user.id, processing=False))
+    with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis: 
+        return redis.unset(token)
     return False
 
 def getReport(sem_dict: dict[str, SubjectMeta], task: TaskTable, id: int, idx: str, compress: bool = False) -> ReportData:
@@ -78,41 +86,93 @@ def getReport(sem_dict: dict[str, SubjectMeta], task: TaskTable, id: int, idx: s
 ########### HTTP Request #############
 @login_needed()
 @semester_permission_check
-def sem_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
+def sem_view(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_auth_get(req):
         return render(req, "Report/HTML/sem.index.html", { "id": id, "idx": idx, "rowID": rowID})
     
 @login_needed()
 @task_permission_check
-def index_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+def index_view(req: HttpRequest, id: int, idx: str):
     if is_auth_get(req):
-        return render(req, "Report/HTML/index.html", { "id": id, "idx": idx, **get_post(req.user), "isManager": is_manager(req.user) })
+        return render(req, "Report/HTML/index.html", { "id": id, "idx": idx, **get_post(get_user(req)), "isManager": is_manager(get_user(req)) })
 
+@aauth_needed()
+@async_task_permission_check # type: ignore
+async def generate_report(req: HttpRequest, id: int, idx: str):
+    
+    if is_auth_get(req):
+
+        schema_id = req.GET.get("schema", "")
+        pdf_bytes = io.BytesIO()
+        user = get_user(req)
+        
+        try:
+            async with AsyncRedisConnection(RedisDataBase.PDF_TOKEN) as redis, async_playwright() as p:
+                token = hash_token(get_token(), user.id)
+                await redis.setDict(token, dict(PdfToken(ID=user.id, processing=True)))
+                
+                browser = await p.chromium.launch()
+                page = await browser.new_page()
+
+                await page.set_extra_http_headers(dict(req.headers.items()))
+                await page.set_extra_http_headers({"Access-PDF": settings.ACCESS_PDF})
+                await page.goto(req.build_absolute_uri(f"{reverse("Report:pdf", kwargs={"id": id, "idx": idx, "token": token})}?schema={schema_id}"))
+                
+                _pdf_bytes = await page.pdf(
+                    format="A4",
+                    print_background=True,
+                    margin={
+                        "top": "10mm",
+                        "bottom": "10mm",
+                        "left": "10mm",
+                        "right": "10mm",
+                    },
+                    display_header_footer=False,
+                    scale=1.0
+                )
+                pdf_bytes.write(_pdf_bytes)
+                
+                pdf_bytes = await addSign(pdf_bytes, get_user(req))
+            
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(req, LogType.EXCEPTION).set_error(e))
+        
+        return FileResponse(pdf_bytes, as_attachment=True, filename=f"Report-{id}-{idx}-{(schema_id or "default")}.pdf")
+
+@pdf_access
+@token_check(RedisDataBase.PDF_TOKEN)
 @login_needed()
 @task_permission_check
-def generate_report(req: HttpRequest, id: int, idx: str) -> FileResponse:
+def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
     context = {"id": id, "idx": idx}
     user = get_user(req)
     
     if is_auth_get(req):
 
         schema_id = req.GET.get("schema", "")
-        
+
         try:
             post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
-            sem_dict = Subject.getSubjects(schema_id, post["branch"]) # post is NullStr cause logging, but don't worry it's int in this context
+            sem_dict = Subject.getSubjects(schema_id, post["branch"]) # type: ignore
+            """ post is NullStr cause logging, but don't worry it's int in this context """
             
             report_data = getReport(sem_dict, task, id, idx)
             
-            context.update(get_post(user))
+            schema_details = Schema.getSchema(schema_id)
+            report_data = getReport(sem_dict, task, id, idx)
+            context.update(post)
             context.update(report_data)
+            context.update(schema_details)
+            context.update(get_post(user))
+            context.update({**report_data, "schema":schema_id})
+            context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
             
         except Exception as e:
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Report/HTML/generated.report.html", context=context)
-
+    
 ############ HTMX Request ############
 @auth_needed()
 @htmx_response
@@ -154,7 +214,8 @@ def report_view(req: HttpRequest, id: int, idx: str):
             post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
 
-            sem_dict = Subject.getSubjects(schema_id, post["branch"])
+            sem_dict = Subject.getSubjects(schema_id, post["branch"]) # type: ignore
+            
             schema_details = Schema.getSchema(schema_id)
             report_data = getReport(sem_dict, task, id, idx)
             
@@ -163,12 +224,12 @@ def report_view(req: HttpRequest, id: int, idx: str):
             context.update(schema_details)
             context.update(get_post(user))
             context.update({**report_data, "schema":schema_id})
+            context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
 
         except InvalidSchema as f:
             messages.error(req, f.get_error())
 
         except Exception as e:
-            print(e)
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/report.html", context=context)
@@ -222,7 +283,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     status = form.cleaned_data.get("status")
                     issued = form.cleaned_data.get("issued")
                     
-                    updated = DataTable.set_complete_feed(task, id, idx, locked=get_2_value(locked), status=get_3_value(status), issued=get_2_value(issued)) 
+                    updated = DataTable.set_complete_feed(task, id, idx, locked=get_2_value(locked), status=get_3_value(status), issued=get_2_value(issued))  # type: ignore
                     setSwalAlert(context, f"Status of {updated} records was updated successfully", "success")
                     APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, rowID=idx).set_meta(req))
                     
@@ -230,6 +291,8 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     setSwalAlert(context, form.getErrors())
                 
         except Exception as e:
+            import traceback
+            traceback.print_tb(e.__traceback__)
             setSwalAlert(context, DEFAULT_ERROR)
         
         return render(req, "Report/HTMX/message.html", context=context)
@@ -237,8 +300,8 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
 @htmx_response
 @auth_needed()
 @task_permission_check
-def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
-    context = {"id": id, "idx": idx, "rowID": rowID}
+def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int):
+    context: dict[str, Any] = {"id": id, "idx": idx, "rowID": rowID}
     
     if is_hx_get(req):
 
@@ -257,11 +320,11 @@ def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResp
 @htmx_response
 @auth_needed()
 @semester_permission_check
-def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpResponse:
-    context = {"id": id, "idx": idx, "rowID": rowID}
+def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
+    context: dict[str, Any] = {"id": id, "idx": idx, "rowID": rowID, **setSwalAlert(title="Feedback status")}
     user = get_user(req)
     
-    if is_hx_post(req) and is_manager(req.user):
+    if is_hx_post(req) and is_manager(get_user(req)):
 
         f = FeedBackForm(req.POST)
 
@@ -273,26 +336,25 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
                 issued = f.cleaned_data.get("issued")
                 
                 data = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
-                data.status = get_3_value(status)
+                data.status = get_3_value(status) # type: ignore
                 data.feed = feedBack
-                data.locked = get_2_value(locked)
-                data.issued = get_2_value(issued)
+                data.locked = get_2_value(locked) # type: ignore
+                data.issued = get_2_value(issued) # type: ignore
                 data.save()
 
-                messages.success(req, f"Status for Row ID: {rowID} was updated successfully")
+                setSwalAlert(context, f"Status for Row ID: {rowID} was updated successfully", 'success')
                 APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, semester=idx, rowID=rowID).set_meta(req))
                 
             else:
-                for field, error in f.errors.items(): 
-                    messages.error(req, "{}: {}".format(FeedBackForm.declared_fields.get(field).label, ",".join([','.join(i) for i in error.data])))
+                setSwalAlert(context, f.getErrors())
 
         except DataTable.DoesNotExist:
-            messages.error(req, f"RowID: '{rowID}' does not exits")
-
+            setSwalAlert(context, f"RowID: '{rowID}' does not exits")
+            
         except Exception as e:
-            messages.error(req, DEFAULT_ERROR)
-
-        return render(req, "Report/HTMX/message.html")
+            setSwalAlert(context, DEFAULT_ERROR)
+            
+        return render(req, "Report/HTMX/message.html", context)
 
     elif is_hx_get(req) and is_manager(user):
 
@@ -312,8 +374,8 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/sem/manager.form.html", context=context)
-
-    elif is_hx_get(req) and is_admin(req.user):
+    
+    elif is_hx_get(req) and is_admin(get_user(req)):
 
         try:
             data = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
@@ -335,9 +397,9 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int) -> HttpRespon
 @htmx_response
 @auth_needed(manager_only=True)
 @task_permission_check
-def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
+def issue_view(req: HttpRequest, id: int, idx: str):
     user = get_user(req)
-    context = setSwalAlert(title="Card Issue Request")
+    context = { "id":id, "idx": idx, **setSwalAlert(title="Card Issue Request")}
     
     if is_hx_get(req):
         schema = req.GET.get("schema", "")
@@ -364,11 +426,11 @@ def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
 
             if not setFlag:
                 raise RedisFailed()
-            
+
             context["url"] = req.build_absolute_uri(reverse("Card:writeBase", kwargs={"id":id,"idx":idx,"token":token,"schema":schema}))
-            context["ws"] = f"/write/{id}/{idx}/{token}/"
+            context["ws"] = f"/ws/write/{id}/{idx}/{token}/"
             context["path"] = settings.WRITE_REGISTRY
-            context["ok"] = True
+            context["ok"] = True # type: ignore
             
             setSwalAlert(context, "Issuing of Card is possible. Would you like to proceed?", 'info')
     
@@ -388,3 +450,25 @@ def issue_view(req: HttpRequest, id: int, idx: str) -> HttpResponse:
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/write/begin.html", context=context)
+
+    elif is_hx_delete(req):
+        try:
+            
+            writeToken = req.session[WRITE_TOKEN]
+            token = hash_token(writeToken, user.id)
+            setFlag = writeEnd(user, token)
+
+            if not setFlag:
+                raise RedisFailed()
+            
+            setSwalAlert(context, "Issuing of Card is stopped", 'info')
+    
+        except RedisFailed as r:
+            setSwalAlert(context, r.get_error())
+            
+        except Exception as e:
+            setSwalAlert(context, DEFAULT_ERROR)
+            
+        return render(req, "Report/HTMX/write/end.html", context=context)
+        
+

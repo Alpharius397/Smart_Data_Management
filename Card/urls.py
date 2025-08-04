@@ -27,6 +27,6 @@ urlpatterns = [
 ]
 
 websocket_urlpatterns = [
-    path("write/<int:id>/<str:idx>/<str:token>/", CardWriteExeConsumer.as_asgi()),
-    path("read/<str:token>/", CardReadExeConsumer.as_asgi()),
+    path("ws/write/<int:id>/<str:idx>/<str:token>/", CardWriteExeConsumer.as_asgi()),
+    path("ws/read/<str:token>/", CardReadExeConsumer.as_asgi()),
 ]

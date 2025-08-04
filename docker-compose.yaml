@@ -19,16 +19,19 @@ services:
     volumes: 
       - redis_data:/var/lib/redis/test
     env_file:
-      - .env
+      - .env.prod
 
   django-web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     depends_on:
       - db
-      -  redis
+      - redis
+    volumes:
+      - gunicorn_socket:/run/
+      - static_volume:/app/static
+      - media_volume:/app/media
 
     develop:
       watch:
@@ -41,6 +44,20 @@ services:
     env_file:
       - .env.prod
 
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - gunicorn_socket:/run/
+    depends_on:
+      - django-web
+
 volumes:
   postgres_data:
   redis_data:
+  static_volume:
+  media_volume:
+  gunicorn_socket:

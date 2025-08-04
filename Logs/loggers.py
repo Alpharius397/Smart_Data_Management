@@ -197,14 +197,14 @@ class LogStructure:
     METHODS: list[typing.Literal['GET', 'POST', 'PUT', 'DELETE']] = ['GET', 'POST', 'PUT', 'DELETE']
     
     def __init__(self) -> None:
-        self.meta: DataLog = {}
-        self.request: RequestLog = {}
-        self.error: ErrorLog = {}
+        self.meta: DataLog | dict= {}
+        self.request: RequestLog | dict = {}
+        self.error: ErrorLog | dict= {}
     
     @staticmethod
-    def get_data(req: HttpRequest) -> DataLog:
+    def get_data(req: HttpRequest) -> DataLog | dict:
         
-        data: DataLog = {}
+        data: DataLog | dict= {}
         
         for method in LogStructure.METHODS:
             try:
@@ -227,9 +227,9 @@ class LogStructure:
         return data
     
     @staticmethod
-    def get_request_data(req: HttpRequest, logType: str, taskId: NullInt = None, **kwargs: typing.Any) -> RequestLog:
+    def get_request_data(req: HttpRequest, logType: str, taskId: NullInt = None, **kwargs: typing.Any) -> RequestLog | dict:
         
-        data: RequestLog = {}
+        data: RequestLog | dict = {}
         user = get_user(req)
         
         def task_dump(req: HttpRequest):
@@ -244,9 +244,9 @@ class LogStructure:
         data["url"] = req.get_full_path()
         data["timestamp"] = timezone.now()
         data["meta"] = { i: req.META.get(i) for i in LogStructure.META }
-        data["userID"] = req.user.id
+        data["userID"] = user.id
         data["taskID"] = task_dump(req)
-        data['authLevel'] = LogStructure.get_auth(req)
+        data['authLevel'] = LogStructure.get_auth(user).value
         data["logType"] = logType
         data['action'] = LogStructure.get_action(req, logType, **kwargs)
         
@@ -269,7 +269,10 @@ class LogStructure:
         return self
     
     @staticmethod
-    def get_auth(user: User | None = None) -> typing.Literal["Unknown", "Student", "Manager", "Admin"]:
+    def get_auth(user: User | None = None) -> RoleType:
+        
+        if(user is None):
+            return RoleType.UNKNOWN
         
         if(is_admin(user)):
             return RoleType.ADMIN # type: ignore
@@ -347,8 +350,8 @@ class LogStructure:
         error = deepcopy(self.error)
         
         try:
-            request["timestamp"] = request["timestamp"].isoformat()
-            error["timestamp"] = error["timestamp"].isoformat()
+            request["timestamp"] = request["timestamp"].isoformat() # type: ignore
+            error["timestamp"] = error["timestamp"].isoformat() # type: ignore
         except:
             pass
         

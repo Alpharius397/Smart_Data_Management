@@ -31,11 +31,12 @@
 
 {% block mainContent %}
 <div class="tab">
+        <div id="fancy-thing" style="display: none;"></div>
+        {% csrf_token %}
 
         <div class="retry-read" hx-put="{% url 'Dash:card_read' %}" hx-trigger="click from:find button" hx-target="this" hx-swap="outerHTML">
             <button class="begin-read">Begin Read</button>
         </div>
-        {% csrf_token %}
 </div>
 
 {% endblock %}

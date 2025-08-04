@@ -6,7 +6,7 @@ urlpatterns = [
     path("username/", username_form, name="userChange"),
     path("email/", email_form, name="mailChange"),
     path("password/", password_form, name="passChange"),
-    path("forgotPassword/", forgot_password, name="forgotPassChange"),
+    path("forgotPassword/", forgot_password, name="forgotPassChange"), # type: ignore
     
     path("htmx/username/", htmx_username_form, name="htmxUserChange"),
     path("htmx/email/", htmx_email_form, name="htmxEmailChange"),

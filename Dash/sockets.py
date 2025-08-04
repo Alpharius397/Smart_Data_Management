@@ -1,16 +1,15 @@
 import json
 from Main.settings import settingsInterface as settings
-from Logs.loggers import LogStructure, APP_LOG
 from tools.encrypt import decrypt_data, certificateHash
 from User.models import is_authenticated, is_manager, User
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  # type: ignore
 from tools.token import hash_token
 from asgiref.sync import sync_to_async, async_to_sync
-from django.template.loader import render_to_string
+from django.template.loader import render_to_string # type: ignore
 from typing import TypedDict
 from constants import DEFAULT_ERROR, READ_TOKEN
 from channels.layers import get_channel_layer  # type: ignore
-from tools.utils import ReportStructure, deconstructSubjects, processSubjects
+from tools.utils import deconstructSubjects
 
 
 def cardReadWebSocket(token: str, cardID: str, data: str, status: str):  # type: ignore
@@ -57,7 +56,7 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-    async def disconnect(self, close_code):
+    async def disconnect(self, code):
         # Leave room group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)  # type: ignore
 
@@ -109,7 +108,6 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
                     )
 
                 except Exception as e:
-                    print(e)
                     context["error"] = "Data cannot be parsed"
 
             case "Failed":

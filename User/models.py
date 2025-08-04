@@ -1,3 +1,4 @@
+from enum import Enum
 from PIL import Image
 from django.contrib.auth.models import User as _User  # type: ignore
 from django.db.models import (  # type: ignore
@@ -29,7 +30,7 @@ class PostIdDict(TypedDict):
 
 
 ############ UTILS ############
-class RoleType:
+class RoleType(Enum):
     UNKNOWN = "Unknown"
     STUDENT = "Student"
     MANAGER = "Manager"
@@ -37,21 +38,21 @@ class RoleType:
 
     @staticmethod
     def getRole() -> Iterator[tuple[str, str]]:
-        yield (RoleType.STUDENT, RoleType.STUDENT)
-        yield (RoleType.MANAGER, RoleType.MANAGER)
-        yield (RoleType.ADMIN, RoleType.ADMIN)
+        yield (RoleType.STUDENT.value, RoleType.STUDENT.value)
+        yield (RoleType.MANAGER.value, RoleType.MANAGER.value)
+        yield (RoleType.ADMIN.value, RoleType.ADMIN.value)
 
     @staticmethod
     def isStudent(roleID: str) -> bool:
-        return RoleType.STUDENT == roleID
+        return RoleType.STUDENT.value == roleID
 
     @staticmethod
     def isManager(roleID: str) -> bool:
-        return RoleType.MANAGER == roleID
+        return RoleType.MANAGER.value == roleID
 
     @staticmethod
     def isAdmin(roleID: str) -> bool:
-        return RoleType.ADMIN == roleID
+        return RoleType.ADMIN.value == roleID
 
 
 ############ MODEL ############
@@ -65,22 +66,8 @@ class User(_User):
     class Meta:
         proxy = True
 
-
-class Admin(Model):
-    pass
-
-
-class Manager(Model):
-    pass
-
-
-class Student(Model):
-    pass
-
-
-
 class Role(Model):
-    id = AutoField(verbose_name="roleID", primary_key=True, null=False, blank=False)
+    id = AutoField(verbose_name="roleID", primary_key=True, null=False, blank=True)
     
     user = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
     
@@ -88,7 +75,7 @@ class Role(Model):
         verbose_name="Role ID",
         max_length=10,
         choices=list(RoleType.getRole()),
-        default=RoleType.UNKNOWN,
+        default=RoleType.UNKNOWN.value,
         blank=False
     )
     

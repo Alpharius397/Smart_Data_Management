@@ -13,20 +13,20 @@ from django.db.models import ( # type: ignore
     SET_NULL,
     UniqueConstraint
 )
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator # type: ignore
 from University.models import Branch
 from User.models import User, is_admin, is_manager, RoleType
 from django import forms # type: ignore
 import typing
 from django.db.models.manager import BaseManager # type: ignore
-from django.db import connection
-from psycopg2.sql import SQL, Identifier, Literal, Composable
+from django.db import connection # type: ignore
+from psycopg2.sql import SQL, Identifier, Literal, Composable # type: ignore
 from tools.utils import ColumnType, get_SQL_boolean, segregateColumns
 
 ############ MODEL ############
 class TaskTable(Model):
     id = AutoField(
-        verbose_name="Task ID", primary_key=True, null=False, blank=False
+        verbose_name="Task ID", primary_key=True, null=False, blank=True
     )
     
     name = CharField(
@@ -62,7 +62,6 @@ class TaskTable(Model):
     
     data: "Data"
     assigned: "Assign"
-    upload: "UploadTable"
     
     class Meta:
         verbose_name = "Task"
@@ -86,7 +85,7 @@ class TaskTable(Model):
 
 class AssignTable(Model):
     id = AutoField(
-        verbose_name="AssignID", primary_key=True, null=False, blank=False
+        verbose_name="AssignID", primary_key=True, null=False, blank=True
     )
     
     taskID = ForeignKey(
@@ -105,7 +104,7 @@ class AssignTable(Model):
         blank=False,
         related_name="manager",
         verbose_name="Assigned User",
-        limit_choices_to={"role__role": RoleType.MANAGER},
+        limit_choices_to={"role__role": RoleType.MANAGER.value},
     )
     
     class Meta:
@@ -134,7 +133,7 @@ class AssignTable(Model):
 
 class DataTable(Model):
     id = AutoField(
-        verbose_name="DataID", primary_key=True, null=False, blank=False
+        verbose_name="DataID", primary_key=True, null=False, blank=True
     )
     
     taskID = ForeignKey(
@@ -194,11 +193,11 @@ class DataTable(Model):
     
     @staticmethod
     def getCommonColumn(id: int):
-        data_column = Identifier(DataTable.data.field.column)
+        data_column = Identifier(DataTable.data.field.column) # type: ignore
         taskID = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column)
+        semester_column = Identifier(DataTable.semester.field.column) # type: ignore
         data_table = Identifier(DataTable._meta.db_table)
-        id = Literal(id)
+        id = Literal(id) # type: ignore
         
         common_columns: list[str] = []
         
@@ -214,10 +213,9 @@ class DataTable(Model):
                                 semester_column=semester_column,
                                 data_table=data_table,
                                 taskID=taskID,
-                                id=id
+                                id=id # type: ignore
                             ).as_string(cursor.connection)
                             
-            print(sql_query)
             cursor.execute(sql_query)
             
             common_columns = [col[0] for col in cursor.fetchall()]
@@ -227,9 +225,9 @@ class DataTable(Model):
     @staticmethod
     def availableSems(id: int):
         task_table = TaskTable._meta.db_table
-        semesterLimit = TaskTable.semesterLimit.field.column
+        semesterLimit = TaskTable.semesterLimit.field.column # type: ignore
         task_id = DataTable.taskID.field.column
-        semester_column = DataTable.semester.field.column
+        semester_column = DataTable.semester.field.column # type: ignore
         data_table = DataTable._meta.db_table
         options: list[int] = []
         
@@ -246,7 +244,7 @@ class DataTable(Model):
                                 task_id = Identifier(task_id)
                             )
                             
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
             options = [int(col[0]) for col in cursor.fetchall()]
 
         return options     
@@ -257,11 +255,11 @@ class DataTable(Model):
         
         try:
             table_name = Identifier(DataTable._meta.db_table)
-            column=Literal(column)
-            data_column = Identifier(DataTable.data.field.column)
+            column=Literal(column) # type: ignore
+            data_column = Identifier(DataTable.data.field.column) # type: ignore
             task_column = Identifier(DataTable.taskID.field.column)
-            semester_column = Identifier(DataTable.semester.field.column)
-            rowID=Literal(rowID)
+            semester_column = Identifier(DataTable.semester.field.column) # type: ignore
+            rowID=Literal(rowID) # type: ignore
             semester = Literal(idx)
             taskID = Literal(id)
 
@@ -272,25 +270,24 @@ class DataTable(Model):
                                 where {task_column}={taskID} and "id"={rowID} and {semester_column}={semester} limit 1;
                             ''').format(
                                 data_column=data_column,
-                                column=column,
+                                column=column, # type: ignore
                                 table_name=table_name,
                                 task_column=task_column,
-                                rowID=rowID,
+                                rowID=rowID, # type: ignore
                                 taskID=taskID,
                                 semester_column=semester_column,
                                 semester=semester,
                             )
 
-                cursor.execute(sql_query)
+                cursor.execute(sql_query) # type: ignore
 
-                value = cursor.fetchone() or value
+                value = RowStatus(*cursor.fetchone()) or value # type: ignore
 
             return value
 
         except Exception as e:
-            print(e)
             pass
-
+        
         return value
 
     @staticmethod
@@ -303,12 +300,12 @@ class DataTable(Model):
             raise ValueError("Invalid values detected")
 
         table_name = Identifier(DataTable._meta.db_table)
-        rowColumn = Identifier(DataTable.data.field.column)
+        rowColumn = Identifier(DataTable.data.field.column) # type: ignore
         task_column = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column)
-        locked = Identifier(DataTable.locked.field.column)
+        semester_column = Identifier(DataTable.semester.field.column) # type: ignore
+        locked = Identifier(DataTable.locked.field.column) # type: ignore
         _column = Literal(column)
-        rowID=Literal(rowID)
+        rowID=Literal(rowID) # type: ignore
         semester = Literal(idx)
         taskID = Literal(id)
         _value = Literal(value)
@@ -328,14 +325,14 @@ class DataTable(Model):
                             _value=_value,
                             task_column=task_column,
                             taskID=taskID,
-                            rowID=rowID,
+                            rowID=rowID, # type: ignore
                             semester_column=semester_column,
                             semester=semester,
                             locked=locked,
                             _column=_column,
                         )
 
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
             result = (cursor.rowcount == 1) or result
 
         return result
@@ -347,9 +344,9 @@ class DataTable(Model):
         _value = Literal(f"%{value}%")
         task_column = Identifier(DataTable.taskID.field.column)
         taskID = Literal(id)
-        sem_column = Identifier(DataTable.semester.field.column)
+        sem_column = Identifier(DataTable.semester.field.column) # type: ignore
         semID = Literal(idx)
-        data_column = Identifier(DataTable.data.field.column)
+        data_column = Identifier(DataTable.data.field.column) # type: ignore
         suggests: list[str] = []
 
         with connection.cursor() as cursor:
@@ -373,7 +370,7 @@ class DataTable(Model):
                 value=_value,
             )
 
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
 
             suggests = [col[0] for col in cursor.fetchall()]        
             
@@ -386,8 +383,8 @@ class DataTable(Model):
         _value = Literal(f"%{value}%")
         task_column = Identifier(DataTable.taskID.field.column)
         taskID = Literal(id)
-        sem_column = Identifier(DataTable.semester.field.column)
-        data_column = Identifier(DataTable.data.field.column)
+        sem_column = Identifier(DataTable.semester.field.column) # type: ignore
+        data_column = Identifier(DataTable.data.field.column) # type: ignore
         suggests: list[str] = []
 
         with connection.cursor() as cursor:
@@ -410,7 +407,7 @@ class DataTable(Model):
                 value=_value,
             )
 
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
 
             suggests = [col[0] for col in cursor.fetchall()]        
             
@@ -448,7 +445,7 @@ class DataTable(Model):
                 )
             )
 
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
             columns = [col[0] for col in cursor.fetchall()]
             count = cursor.rowcount
 
@@ -480,9 +477,8 @@ class DataTable(Model):
                     taskID=taskID,
                 )
             
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
 
-            cursor.execute(sql_query)
             columns = [col[0] for col in cursor.fetchall()]
             count = cursor.rowcount
 
@@ -491,11 +487,11 @@ class DataTable(Model):
     @staticmethod
     def get_complete_data(task: TaskTable, id: int, idx: str):
         table_name = Identifier(DataTable._meta.db_table)
-        data_column = Identifier(DataTable.data.field.column)  # type: ignore
-        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
-        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
-        status_column = Identifier(DataTable.status.field.column)  # type: ignore
-        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        data_column = Identifier(DataTable.data.field.column) # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
+        status_column = Identifier(DataTable.status.field.column) # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column) # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
         
@@ -515,8 +511,8 @@ class DataTable(Model):
                 identifier=identifier
             )
 
-            cursor.execute(sql_query)
-            (ID, data) = cursor.fetchone()
+            cursor.execute(sql_query) # type: ignore
+            (ID, data) = cursor.fetchone() # type: ignore
             records = CompleteMeta(ID, json.loads(data))
 
         return records
@@ -525,11 +521,11 @@ class DataTable(Model):
     def get_complete_feed(task: TaskTable, id: int, idx: str):
         
         table_name = Identifier(DataTable._meta.db_table)
-        data_column = Identifier(DataTable.data.field.column)  # type: ignore
-        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
-        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
-        status_column = Identifier(DataTable.status.field.column)  # type: ignore
-        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
+        data_column = Identifier(DataTable.data.field.column) # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
+        status_column = Identifier(DataTable.status.field.column) # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column) # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
         
@@ -549,21 +545,21 @@ class DataTable(Model):
                 identifier=identifier
             )
 
-            cursor.execute(sql_query)
-            (ID, locked, issued, status) = cursor.fetchone()
+            cursor.execute(sql_query) # type: ignore
+            (ID, locked, issued, status) = cursor.fetchone() # type: ignore
             records = CompleteFeed(ID, locked, issued, status)
 
         return records
 
     @staticmethod
-    def set_complete_feed(task: TaskTable, id: int, idx: str, locked: bool = None, issued: bool = None, status: bool | None = None) -> int:
+    def set_complete_feed(task: TaskTable, id: int, idx: str, locked: bool | None = None, issued: bool | None = None, status: bool | None = None) -> int:
         
         table_name = Identifier(DataTable._meta.db_table)
-        locked_column = Identifier(DataTable.locked.field.column)
-        issued_column = Identifier(DataTable.issued.field.column)
-        status_column = Identifier(DataTable.status.field.column)
+        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
+        status_column = Identifier(DataTable.status.field.column) # type: ignore
         taskID_column = Identifier(DataTable.taskID.field.column)
-        rowColumn = Identifier(DataTable.data.field.column)
+        rowColumn = Identifier(DataTable.data.field.column) # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
         
@@ -601,7 +597,7 @@ class DataTable(Model):
                                 identifier=identifier
                             )
 
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # type: ignore
             updated = cursor.rowcount
 
         return updated

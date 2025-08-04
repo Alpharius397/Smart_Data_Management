@@ -1,17 +1,31 @@
 {% if ok is True %}
+
+    <button class="cancel-issue" id="here-i-am" hx-delete="{% url 'Report:htmxIssue' id=id idx=idx %}" hx-trigger="click from:closest button" hx-swap-oob="true" hx-target="this">
+        Cancel Issue
+    </button>
+
     <script>
-        swal({
-            text:`{{ text|escapejs }}`,
-            title: `{{ title|escapejs }}`,
-            icon: `{{ icon|escapejs }}`,
-            buttons: true
-        }).then((ok) => {
-            if(ok){
-                beginWebSocket("{{ws}}");
-                window.location.href = "{{path}}{{url}}";
-            }
-        });
+        {
+
+            swal({
+                text:`{{ text|escapejs }}`,
+                title: `{{ title|escapejs }}`,
+                icon: `{{ icon|escapejs }}`,
+                buttons: true
+            }).then((ok) => {
+                if(ok){
+                    beginWebSocket("{{ws}}");
+                    window.location.href = "{{path}}{{url}}";
+                } else {
+                    document.querySelector("#here-i-am").dispatchEvent(new Event("click"));
+                }
+            });
+        }
     </script>
+
+
+
+
 {% else %}
     {% include "HTMX/swal.html" %}
 {% endif %}

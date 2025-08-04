@@ -7,5 +7,4 @@ def email_send(subject: str, to_email: str, message: str) -> bool:
         ok_send = send_mail(subject=subject, message=message, from_email=None, recipient_list=[to_email], fail_silently=False)
         return (ok_send == 1)
     except Exception as e:
-        print(e)
         return False

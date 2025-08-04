@@ -74,16 +74,16 @@ def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
     try:
         managers: list[ManagerList] = task.assigned.distinct().values_list(
             "manager__id", "manager__username"
-        )
+        ) # type: ignore
 
         all_managers: list[ManagerList] = (
             User.objects.filter(
-                role__role=RoleType.MANAGER, role__belongs=user.role.belongs
+                role__role=RoleType.MANAGER.value, role__belongs=user.role.belongs
             )
             .exclude(id__in=[i[0] for i in managers])
             .distinct()
             .values_list("id", "username")
-        )
+        ) # type: ignore
 
         context["managers"] = all_managers
         context["all_managers"] = managers
@@ -113,7 +113,7 @@ def task_edit(req: HttpRequest, id: int):
         context = {"id": id}
         try:
             task: TaskTable = req.__getattribute__("task")
-            context["form"] = TaskUpdateForm(
+            context["form"] = TaskUpdateForm( # type: ignore
                 initial={
                     "taskID": task.id,
                     "fileName": task.name,
@@ -135,7 +135,7 @@ def task_delete(req: HttpRequest, id: int):
         
         try:
             task: TaskTable = req.__getattribute__("task")
-            context["form"] = TaskDeleteForm(
+            context["form"] = TaskDeleteForm( # type: ignore
                 initial={
                     "taskID": task.id,
                     "fileName": task.name,
@@ -160,7 +160,7 @@ def sem_create(req: HttpRequest, id: int):
                 map(lambda x: (x, x), DataTable.availableSems(id))
             )
 
-            form.setChoice(sems)
+            form.setChoice(sems) # type: ignore
 
         except Exception:
             setSwalAlert(context, DEFAULT_ERROR, title=SEMESTER_CREATE)
@@ -261,10 +261,10 @@ def htmx_task_edit(req: HttpRequest, id: int):
         try:
             task: TaskTable = req.__getattribute__("task")
             if f.is_valid():
-                name = f.cleaned_data.get("fileName")
+                name = str(f.cleaned_data.get("fileName"))
                 semesterLimit = f.cleaned_data.get("semesterLimit")
 
-                task.semesterLimit = semesterLimit
+                task.semesterLimit = int(semesterLimit) # type: ignore
                 task.name = name
 
                 task.save()
@@ -326,7 +326,8 @@ def htmx_sem_create(req: HttpRequest, id: int):
             semesterChoice = [("", "------")] + list(
                 map(lambda x: (x, x), DataTable.availableSems(id))
             )
-            form.setChoice(semesterChoice)
+            
+            form.setChoice(semesterChoice) # type: ignore
             
             with transaction.atomic():
                 if form.is_valid():
@@ -414,7 +415,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
 
                     with excel_file.open() as file:
                         image_id, pd_data = image_load(file.read())
-                        print(pd_data)
+
                         if pd_data.empty:
                             raise FileProcessFailed()
 
@@ -586,7 +587,7 @@ def assign_form(req: HttpRequest, id: int):
             assignFlag = task.assigned.filter(manager__id=managerID).exists()  # type: ignore
 
             if assignFlag:
-                raise ManagerAlreadyAssigned(managerID, id)
+                raise ManagerAlreadyAssigned(int(managerID), id)
 
             assignee = AssignTable(taskID=task, manager=manager)
             assignee.save()
@@ -623,7 +624,7 @@ def assign_form(req: HttpRequest, id: int):
             notAssignFlag = task.assigned.filter(manager__id=managerID).exists()  # type: ignore
 
             if not notAssignFlag:
-                raise ManagerNeverAssigned(managerID, id)
+                raise ManagerNeverAssigned(int(managerID), id)
 
             assignee = AssignTable.objects.get(taskID=task, manager=manager)
             assignee.delete()
@@ -636,14 +637,12 @@ def assign_form(req: HttpRequest, id: int):
             APP_LOG.write_info(LogStructure().set_request(req, LogType.TASK_UNASSIGN, manager=managerID).set_meta(req))
 
         except User.DoesNotExist:
-            setSwalAlert(context, "Manager ID: {managerID} does not exists!")
+            setSwalAlert(context, f"Manager ID: {managerID} does not exists!")
 
         except ManagerNeverAssigned as f:
             setSwalAlert(context, f.get_error())
 
         except Exception as e:
-            import traceback
-            print(''.join(traceback.format_tb(e.__traceback__)))
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Task/HTMX/assign.update.html", context=context)

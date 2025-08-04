@@ -1,3 +1,8 @@
+
 <div class="retry-read" hx-put="{% url 'Dash:card_read' %}" hx-trigger="click from:find button" hx-target="this" hx-swap="outerHTML">
     <button class="begin-read">Begin Read</button>
 </div>
+
+<script>
+    endWebSocket();
+</script>

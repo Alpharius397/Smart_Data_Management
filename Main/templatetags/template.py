@@ -127,7 +127,6 @@ def rgb(obj: str, opacity: int = 1):
 
     except Exception:
         pass
-    print(f"rgb({r},{g},{b},{opacity})")
     return f"rgb({r},{g},{b},{opacity})"
 
 @register.filter(name="encode")

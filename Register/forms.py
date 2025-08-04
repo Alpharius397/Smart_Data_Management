@@ -20,7 +20,7 @@ class RegisterForm(MainForm):
     level = forms.ChoiceField(
         help_text='Choose the role',
         required=True,
-        choices=[(RoleType.MANAGER,RoleType.MANAGER),(RoleType.ADMIN,RoleType.ADMIN)]
+        choices=[(RoleType.MANAGER.value,RoleType.MANAGER.value),(RoleType.ADMIN.value,RoleType.ADMIN.value)]
     )
     
     university = forms.ModelChoiceField(

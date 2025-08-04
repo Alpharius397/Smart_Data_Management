@@ -10,11 +10,11 @@ from django.db.models import ( # type: ignore
     AutoField,
     ImageField,
     DateTimeField,
-    UniqueConstraint
+    UniqueConstraint,
 )
+from django.db.models.fields.files import ImageFieldFile # type: ignore
 from django.core.validators import MinValueValidator, RegexValidator, MaxValueValidator # type: ignore
 from django.utils import timezone # type: ignore
-from django.db.models.manager import BaseManager # type: ignore
 
 ColorRegex = RegexValidator(r"^#[a-fA-F0-9]{6}$", message="Invalid Hex color")
 
@@ -25,7 +25,7 @@ class University(Model):
         max_length=200, null=False, blank=False, verbose_name="University Name", unique=True
     )  # type: ignore
     
-    institute: "institute"
+    institute: "Institute"
 
     class Meta:
         verbose_name = "University"
@@ -54,7 +54,7 @@ class Institute(Model):
         max_length=200, null=False, blank=False, verbose_name="Location"
     )  # type: ignore
     
-    color: "color"
+    color: "Color"
         
     class Meta:
         verbose_name = "Institute"
@@ -79,7 +79,7 @@ class Branch(Model):
         to=Institute, null=False, on_delete=RESTRICT, related_name="branch"
     )  # type: ignore
 
-    schema: "schema"
+    schema: "Schema"
     
             
     class Meta:
@@ -94,7 +94,7 @@ class Branch(Model):
         return f"{self.name}"
 
 class Schema(Model):
-    id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)    
+    id = AutoField(verbose_name="id", null=False, blank=True, primary_key=True)    
     
     name = CharField(max_length=200, null=False, unique=True, blank=False, verbose_name="Scheme Name")
     
@@ -104,10 +104,12 @@ class Schema(Model):
         to=Branch, null=False, blank=False, on_delete=RESTRICT, related_name="schema"
     )  # type: ignore
     
-    subject: "subject"
+    subject: "Subject"
     
     universityHeading = CharField(max_length=200, null=False, blank=False, verbose_name="University Heading", default="University Heading")
     instituteHeading = CharField(max_length=200, null=False, blank=False, verbose_name="Institute Heading", default="Institute Heading")
+    branchHeading = CharField(max_length=200, null=False, blank=False, verbose_name="Branch Heading", default="Branch Heading")
+    
     universityIcon = ImageField(verbose_name="University Icon", upload_to="schema/university", null=True, default='schema/university/default.icon.png')
     instituteIcon = ImageField(verbose_name="Institute Icon", upload_to="schema/institute", null=True, default="schema/institute/default.icon.jpeg")
     
@@ -119,6 +121,33 @@ class Schema(Model):
             UniqueConstraint(fields=["branch", "name"], name="unique_schema_for_each_branch"),
         ]
     
+    @staticmethod
+    def check_file(obj: "ImageFieldFile"):
+        try:
+            obj.file
+            return True
+        except:
+            return False
+    
+    def save(self, *args, **kwargs):
+        
+        try:
+            this = Schema.objects.get(id=self.id)
+
+            if(Schema.check_file(this.universityIcon) and (this.universityIcon != self.universityIcon)):
+                this.universityIcon.delete(False)
+                    
+            if(Schema.check_file(this.instituteIcon) and (this.instituteIcon != self.instituteIcon)):
+                this.instituteIcon.delete(False)
+    
+        except Schema.DoesNotExist:
+            pass
+        
+        except Exception as e:
+            raise e
+        
+        super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"{self.branch} - {self.name}"
     
@@ -128,7 +157,8 @@ class Schema(Model):
             university_icon='/media/schema/university/default.icon.png', 
             institute_icon="/media/schema/institute/default.icon.jpeg", 
             university_heading="University Heading",
-            institute_heading="Institute Heading" 
+            institute_heading="Institute Heading",
+            branch_heading="Branch Heading"
         )
         
         try:
@@ -137,8 +167,9 @@ class Schema(Model):
             icon["institute_icon"] = schema.instituteIcon.url
             icon["university_heading"] = schema.universityHeading
             icon["institute_heading"] = schema.instituteHeading
+            icon["branch_heading"] = schema.branchHeading
         except Exception as e:
-            print(e)
+            pass
             
         return icon
 class Subject(Model):
@@ -191,15 +222,15 @@ class Subject(Model):
                 sem_dict[name] = SubjectMeta(sem=semester, marks=marks)
                 
         except Exception as e:
-            print(e)
-            
+            pass
+                    
         return sem_dict
 
 class Color(Model):
     id = AutoField(verbose_name="id", null=False, blank=False, primary_key=True)  # type: ignore
     
     institute = OneToOneField(
-        to=Institute, null=True, blank=False, related_name="color", on_delete=CASCADE
+        to=Institute, null=False, blank=False, related_name="color", on_delete=CASCADE
     )  # type: ignore
     
     main_color = CharField(
@@ -224,16 +255,34 @@ class Color(Model):
         verbose_name = "Color Theme"
         verbose_name_plural = "Color Themes"
 
+    @staticmethod
+    def check_file(obj: "ImageFieldFile"):
+        try:
+            obj.file
+            return True
+        except:
+            return False
+    
+    def save(self, *args, **kwargs):
+        
+        try:
+            this = Color.objects.get(id=self.id)
+
+            if(Color.check_file(this.instituteIcon) and (this.instituteIcon != self.instituteIcon)):
+                this.instituteIcon.delete(False)
+    
+        except Color.DoesNotExist:
+            pass
+        
+        except Exception as e:
+            raise e
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Color Theme: {self.institute.name}"
 
 ############ TYPES ############
-type institute = BaseManager[Institute]
-type branch = BaseManager[Branch]
-type color = BaseManager[Color]
-type schema = BaseManager[Schema]
-type subject = BaseManager[Subject]
-
 class SemMeta(NamedTuple):
     marks: int
     total: int
@@ -247,3 +296,4 @@ class SchemaMeta(TypedDict):
     institute_icon: str
     university_heading: str
     institute_heading: str
+    branch_heading: str

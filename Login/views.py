@@ -4,7 +4,7 @@ from django.http import HttpRequest, HttpResponse  # type: ignore
 from Login.forms import LoginForm
 from django.urls import reverse  # type: ignore
 from django.contrib.auth import login, authenticate  # type: ignore
-from User.models import is_manager, is_admin
+from User.models import User, is_manager, is_admin
 from tools.url_auth import is_hx_post, htmx_response
 from constants import SUCCESS, WARNING, DEFAULT_ERROR
 from tools.utils import setSwalAlert
@@ -23,8 +23,6 @@ def login_view(req: HttpRequest) -> HttpResponse:
         elif success:
             setSwalAlert(context, success, "success", title="Authentication Process")
             
-        print(context)
-
         return render(req, "Login/HTML/index.html", context)
     
     return HttpResponse(status=403)
@@ -42,7 +40,7 @@ def htmx_login_view(req: HttpRequest):
                 username = f.cleaned_data.get("username")
                 password = f.cleaned_data.get("password")
 
-                user = authenticate(req, username=username, password=password)
+                user: User = authenticate(req, username=username, password=password) # type: ignore
 
                 if (user is not None) and (is_manager(user) or is_admin(user)):
                     login(req, user)

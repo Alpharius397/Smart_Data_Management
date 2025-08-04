@@ -16,6 +16,7 @@
         <div class="university-heading">
             <h2>{{university_heading}}</h2>
             <h3>{{institute_heading}}</h3>
+            <h4>{{branch_heading}}</h4>
         </div>
         <img src="{{institute_icon}}" class="institute">
     </div>
@@ -68,9 +69,11 @@
         </div>
 
         {% endfor %}
+
+    </div>
 </div>
 
 <div class="print-this">
-    <a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}" target="_blank">Print this report</a>
+    <a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}">Print this report</a>
 </div>
 {% endif %}

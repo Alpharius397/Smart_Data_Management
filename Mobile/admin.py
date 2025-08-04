@@ -1,7 +1,5 @@
-from django.contrib import admin
-from django.db.models import Q
-from django.contrib.auth.models import User
-from User.models import RoleType, get_user, is_admin
+from django.contrib import admin # type: ignore
+from User.models import RoleType, get_user, is_admin, User
 from .models import razorPayment
 from Card.models import Card
 
@@ -23,13 +21,13 @@ class CardAdmin(admin.ModelAdmin):
         
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        user = get_user(request)
+        user = get_user(request) # type: ignore
         
         if (db_field.name=="user"):
-            kwargs["queryset"] = User.objects.filter(role__role = RoleType.STUDENT, role__belongs__id = user.role.belongs.id)
+            kwargs["queryset"] = User.objects.filter(role__role = RoleType.STUDENT.value, role__belongs__id = user.role.belongs.id)
         
         elif(db_field.name=="cardID"):
-            if(is_admin(request.user)):
+            if(is_admin(request.user)): # type: ignore
                 kwargs["queryset"] = Card.objects.filter(belongs__id=user.role.belongs.id)
             elif user.is_superuser:
                 kwargs["queryset"] = Card.objects.all()

@@ -2,12 +2,13 @@
 {% load static %}
 
 <div class="retry-read" id="change-me">
+
     <img src="{% static 'images/spinner.gif' %}" alt="Loading" class="spinner">
     <h2> Attempting to Read....</h2>
     <button hx-delete="{% url 'Dash:card_read' %}" hx-trigger="click from:closest button" hx-target="closest div" hx-swap="outerHTML">Cancel Read</button>
-    <div id="fancy-thing" style="display: none;"></div>
 
 </div>
+
 <script>
     beginWebSocket("{{ws}}");
     window.location.href = "{{path}}{{url}}";

@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError # type: ignore
 import pandas as pd
 from constants import DEFAULT_ERROR # type: ignore
 from .models import ColorRegex, Schema, Subject
-from django.core.files.uploadedfile import UploadedFile
+from django.core.files.uploadedfile import UploadedFile # type: ignore
 
 class ColorPick(Widget):
     input_type = "color"
@@ -30,17 +30,20 @@ class SubjectUpload(ModelForm):
     schemaChoice = ModelChoiceField(queryset=Schema.objects.none(), label="Choose a Schema", required=False)
     excel_file = FileField(label="Excel File with semester data", required=False)
     
-    def clean(self) -> None:
+    def clean(self):
         cleaned_data = super().clean()
         
         try:
-            schema: Schema = cleaned_data.get("schema", "")
-            excel_file: UploadedFile = cleaned_data.get("excel_file")
+            schema: Schema = cleaned_data.get("schemaChoice", "")
+            excel_file: UploadedFile = cleaned_data.get("excel_file") # type: ignore
             
             has_any = schema or excel_file
             has_all = schema and excel_file
+            
+            if(not (has_any or has_all)):
+                return cleaned_data
 
-            if has_any and not has_all:
+            if has_any and (not has_all):
                 raise ValidationError(
                     "If you fill any of the optional fields (Schema Choice, Excel File), you must fill both."
                 )
@@ -60,18 +63,18 @@ class SubjectUpload(ModelForm):
 
                 for idx, column in enumerate(data.columns):
                     if(column in NEEDED): mapping[column] = idx
-            
-                for row in data.itertuples():
+
+                for row in data.itertuples(index=False):
                     name = row[mapping["name"]]
                     semester = row[mapping["semester"]]
                     marks = row[mapping["marks"]]
-                    
+
                     subjectList.append(Subject(schema=schema, semester=semester, name=name, marks=marks))
                 
                 Subject.objects.bulk_create(subjectList)
             
         except AssertionError as e:
-            raise ValidationError(e)
+            raise ValidationError(str(e))
         
         except Schema.DoesNotExist:
             raise ValidationError("Schema does not exists")
