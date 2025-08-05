@@ -1,9 +1,8 @@
-from django.forms import ModelChoiceField
+from django.forms import ModelChoiceField # type: ignore
 from User.models import User, is_admin
 from .models import Card
 from django.contrib import admin # type: ignore
 from django.db.models import Q, QuerySet # type: ignore
-from University.models import Branch
 
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):

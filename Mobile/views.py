@@ -1,5 +1,6 @@
 from typing import TypedDict # type: ignore
 from django.http import HttpRequest, JsonResponse # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from Register.errors import UserExists
 from Mobile.forms import RegisterForm
 from University.models import Branch
@@ -83,6 +84,7 @@ def mobile_login(req: HttpRequest):
             response['error'] = 'Invalid credentials'
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             status = 500
             response['error'] = DEFAULT_ERROR
     
@@ -127,7 +129,8 @@ def mobile_register(req: HttpRequest):
             status = 401
             response['error'] = "Branch was not found!"
         
-        except Exception:
+        except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             status = 500
             response['error'] = DEFAULT_ERROR
             
@@ -157,6 +160,7 @@ def subscriber_check(req: HttpRequest):
                 status = 403
                 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             response['error'] = DEFAULT_ERROR
         
         return JsonResponse(data=response, safe=False, status=status)
@@ -195,6 +199,7 @@ def subscriber_check(req: HttpRequest):
                     status = 404
         
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             response['error'] = DEFAULT_ERROR
 
         return JsonResponse(data=response, safe=False, status=status)
@@ -237,6 +242,7 @@ def available_card(req: HttpRequest):
             status = 200
                 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             response['error'] = DEFAULT_ERROR
         
         return JsonResponse(data=response, safe=False, status=status)
@@ -258,6 +264,7 @@ def user_info(req: HttpRequest):
             response['status'] = True
             status = 200                
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             response['error'] = DEFAULT_ERROR
         
         return JsonResponse(data=response, safe=False, status=status)

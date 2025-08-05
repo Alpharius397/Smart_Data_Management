@@ -292,9 +292,9 @@ class LogStructure:
         def user_detail_dump(req: HttpRequest):
             try:
                 user = get_user(req)
-                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(user), user.username, user.id)
+                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(user).value, user.username, user.id)
             except:
-                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(), None, None)
+                return "{0} {1} (ID: {2})".format(LogStructure.get_auth().value, None, None)
                 
 
         def task_detail_dump(req: HttpRequest):
@@ -308,9 +308,9 @@ class LogStructure:
         def manager_detail_dump(manager: int | str):
             try:
                 user = User.objects.get(id = int(manager))
-                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(user), user.username, user.id)
+                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(user).value, user.username, user.id)
             except:
-                return "{0} {1} (ID: {2})".format(LogStructure.get_auth(), None, None)
+                return "{0} {1} (ID: {2})".format(LogStructure.get_auth().value, None, None)
 
         match(logType):
             case LogType.TASK_CREATE: return f"{user_detail_dump(req)} uploaded a new {task_detail_dump(req)}"
@@ -350,8 +350,8 @@ class LogStructure:
         error = deepcopy(self.error)
         
         try:
-            request["timestamp"] = request["timestamp"].isoformat() # type: ignore
-            error["timestamp"] = error["timestamp"].isoformat() # type: ignore
+            if("timestamp" in request): request["timestamp"] = request["timestamp"].isoformat() # type: ignore
+            if("timestamp" in error): error["timestamp"] = error["timestamp"].isoformat() # type: ignore
         except:
             pass
         

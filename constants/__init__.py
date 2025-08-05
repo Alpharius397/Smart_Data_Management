@@ -26,6 +26,8 @@ OTP_MESSAGE = "Your OTP for {0} Change is {1}"
 """ use .format to add custom change header """
 OTP_KEY = "OTP"
 EMAIL_KEY = "EMAIL"
+ACCESS_PDF = "Access-PDF"
+ACCESS_TOKEN = "Access-Token"
 
 SUCCESS_SUBJECT = "Request for {0} change"
 SUCCESS_MESSAGE = "{0} change was successfully changed"

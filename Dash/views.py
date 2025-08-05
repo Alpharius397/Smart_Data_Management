@@ -3,6 +3,7 @@ from django.db.models import Q, QuerySet # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest  # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from Main.models import RedisConnection, ReadToken, RedisDataBase
 from Main.settings import settingsInterface as settings  # type: ignore
 from User.models import (
@@ -141,11 +142,12 @@ def task_fetch(req: HttpRequest):
 
             elif flag and start == 0:
                 if is_admin(user):  messages.error(req, "No Tasks Present!")
-                else : error =  messages.error(req, "No Tasks Assigned")
+                else: messages.error(req, "No Tasks Assigned")
 
             next_ = start + MAX_RECORD
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(
@@ -163,16 +165,20 @@ def read_view(req: HttpRequest):
     if is_hx_put(req):
         read_token = req.session.get(READ_TOKEN, "")
         token = hash_token(read_token, user.id)
+        
         context["token"] = token
         context["path"] = settings.READ_REGISTRY
         context["url"] = req.build_absolute_uri(reverse("Card:read", args=(token,)))
         context["ws"] = f"/ws/read/{token}/"
         
-        with RedisConnection(RedisDataBase.CARD_READ_TOKEN) as redis:
-            redis.setDict(
-                token,
-                ReadToken(ID=user.id, processing=True, data=""), # type: ignore
-            )
+        try:
+            with RedisConnection(RedisDataBase.CARD_READ_TOKEN) as redis:
+                redis.setDict(
+                    token,
+                    ReadToken(ID=user.id, processing=True, data=""), # type: ignore
+                )
+        except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
         
         return render(req, "Dash/HTMX/read/begin.html", context=context)
 

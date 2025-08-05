@@ -856,7 +856,7 @@ class RedisConnection:
         try:
             value = self.r.get(key)
             
-            assert (isinstance(value, str)), f"Value must be string. Got {type(value)}"
+            assert (isinstance(value, str)), f"For key {key}: Value must be string. Got {type(value)}"
             
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return value
@@ -874,7 +874,7 @@ class RedisConnection:
         try:
             value = self.r.get(key)
             
-            assert (isinstance(value, str)), f"Value must be string. Got {type(value)}"
+            assert (isinstance(value, str)), f"For key {key}: Value must be string. Got {type(value)}"
             
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return json.loads(value)

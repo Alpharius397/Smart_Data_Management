@@ -2,6 +2,7 @@ from typing import Literal
 from django.urls import reverse # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest  # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from User.errors import EmailAlreadyExists, OTPWrong, UserNameAlreadyExists
 from Change.forms import ForgotEmail, UsernameChange, PasswordChange, EmailChange
 from User.models import User, get_user
@@ -87,6 +88,7 @@ def htmx_username_form(req: HttpRequest):
                 setSwalAlert(context, g.get_error())
                 
             except Exception as e:
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
                 setSwalAlert(context, DEFAULT_ERROR)
             
         else:
@@ -132,6 +134,7 @@ def htmx_email_form(req: HttpRequest):
                 setSwalAlert(context, g.get_error())
                 
             except Exception as e:
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
                 setSwalAlert(context, DEFAULT_ERROR)
             
         else:
@@ -172,6 +175,7 @@ def htmx_password_form(req: HttpRequest):
                 setSwalAlert(context, e.get_error())
                 
             except Exception as e:
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
                 setSwalAlert(context, DEFAULT_ERROR)
             
         else:
@@ -246,6 +250,7 @@ def send_otp_mail_password(req: SpecialHttpRequest):
                 setSwalAlert(context, text="Email is not registered")
                 
             except Exception as e:
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
                 setSwalAlert(context, DEFAULT_ERROR)
                 
         else:

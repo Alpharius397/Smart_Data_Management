@@ -2,12 +2,12 @@ from pathlib import Path
 import posixpath
 from typing import Optional
 from django.http import HttpRequest, HttpResponse # type: ignore
-from tools.url_auth import auth_needed
+from tools.url_auth import media_access
 from django.utils.translation import gettext as _ # type: ignore
 from django.http import Http404
 from django.utils._os import safe_join # type: ignore
 
-@auth_needed()
+@media_access
 def serve_media(request: HttpRequest, path: str, document_root: Optional[str | bytes] = None, *args, **kwargs):
     
     path = posixpath.normpath(path).lstrip("/")

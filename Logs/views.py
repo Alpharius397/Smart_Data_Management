@@ -66,6 +66,7 @@ def get_logs(req: HttpRequest):
                 context['logs'] = sorted(logs, reverse=True)
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(req,'Logs/HTMX/log.list.html',context=context)
@@ -79,7 +80,8 @@ def single_log(req: HttpRequest, year: int, month: int, day: int)  :
         try:            
             context["columns"] = COLUMNS_HEADING
             context["types"] = sorted(LogType())
-        except Exception as e:
+        except Exception as e:           
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             context['error'] = DEFAULT_ERROR
     
         return render(req,'Logs/HTML/read.html',context=context)
@@ -137,6 +139,7 @@ def search_log(req: HttpRequest, year: int, month: int, day: int):
                 context['logs'] = logs
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
     
         return render(req,'Logs/HTMX/log.row.html',context=context)

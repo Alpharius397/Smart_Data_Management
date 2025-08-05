@@ -134,10 +134,10 @@ class Schema(Model):
         try:
             this = Schema.objects.get(id=self.id)
 
-            if(Schema.check_file(this.universityIcon) and (this.universityIcon != self.universityIcon)):
+            if(Schema.check_file(this.universityIcon) and (this.universityIcon != self.universityIcon) and (this.universityIcon.name == 'default.icon.png')):
                 this.universityIcon.delete(False)
                     
-            if(Schema.check_file(this.instituteIcon) and (this.instituteIcon != self.instituteIcon)):
+            if(Schema.check_file(this.instituteIcon) and (this.instituteIcon != self.instituteIcon) and (this.universityIcon.name == 'default.icon.jpeg')):
                 this.instituteIcon.delete(False)
     
         except Schema.DoesNotExist:
@@ -154,7 +154,7 @@ class Schema(Model):
     @staticmethod
     def getSchema(schema_id: int | str) -> 'SchemaMeta':
         icon = SchemaMeta(
-            university_icon='/media/schema/university/default.icon.png', 
+            university_icon="/media/schema/university/default.icon.png", 
             institute_icon="/media/schema/institute/default.icon.jpeg", 
             university_heading="University Heading",
             institute_heading="Institute Heading",

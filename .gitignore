@@ -8,8 +8,6 @@ tempCodeRunnerFile.*
 *data_log*
 .venv
 .vscode
-media/icon/*
-media/schema/*
 .*cache*
 dump
 .env*

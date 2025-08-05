@@ -74,6 +74,6 @@
 </div>
 
 <div class="print-this">
-    <a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}">Print this report</a>
+    <a href="{% url 'Report:report' id=id idx=idx %}?schema={{schema}}" download>Print this report</a>
 </div>
 {% endif %}

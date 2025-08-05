@@ -17,7 +17,6 @@ from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
 # TODO: Rotate Keys
-load_dotenv(".env.prod")
 
 class MongoDB(typing.NamedTuple):
     database: str
@@ -31,15 +30,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.environ.get("DEBUG", False)
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0"
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", False)
-
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "nginx"
+]
 
 # Application definition
 
@@ -164,15 +167,15 @@ AUTH_PASSWORD_VALIDATORS = [
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8081",
-    "http://localhost:8081",
+    "https://nginx:80",
+    "https://127.0.0.1:81",
+    "https://127.0.0.1:80",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
+    "https://nginx:80",
+    "https://127.0.0.1:81",
+    "https://127.0.0.1:80",
 ]
 
 

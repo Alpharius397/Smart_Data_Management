@@ -28,8 +28,10 @@ COPY require.txt  /app/
 # run this command to install all dependencies 
 RUN pip3 install --no-cache-dir -r require.txt
 
-COPY ./entry.bash .
-RUN chmod +x ./entry.bash
+RUN playwright install --with-deps chromium
+
+COPY entry.bash .
+RUN chmod +x entry.bash
 
 # Copy the Django project to the container
 COPY . /app/

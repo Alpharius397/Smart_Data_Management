@@ -232,6 +232,7 @@ def get_context(
         context['error'] = f.get_error()
     
     except Exception as e:        
+        APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
         context["error"] = DEFAULT_ERROR
 
     return context
@@ -292,6 +293,7 @@ def get_row_context(
         )
         
     except Exception as e:
+        APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
         context["error"] = DEFAULT_ERROR
 
     return context
@@ -348,17 +350,16 @@ def sem_column_view(req: HttpRequest, id: int, idx: int):
             context["count"] = count
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
             
         return render(req, "Table/HTMX/column.html", context=context)
 
-    return None
 
 @htmx_response
 @auth_needed()
 @semester_permission_check
 def sem_row_view(req: HttpRequest, id: int, idx: int):
-    user = get_user(req)
     
     if is_hx_get(req):
         column = req.GET.get("column", "")
@@ -376,8 +377,6 @@ def sem_row_view(req: HttpRequest, id: int, idx: int):
 
         return render(req, "Table/HTMX/sem.row.html", context=context)
 
-    return HttpResponse(status=403)
-
 @htmx_response
 @auth_needed()
 @task_permission_check
@@ -393,7 +392,7 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
             context["option"] = suggestions
 
         except Exception as e:
-            pass
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
         
         return render(req, "Table/HTMX/suggests.html", context=context)
 
@@ -425,7 +424,8 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
 
         except Exception as e:
             context["error"] = DEFAULT_ERROR
-
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            
         return render(req, "Table/HTMX/sem.refresh.html", context=context)
 
 @htmx_response
@@ -471,7 +471,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             
         except Exception as e:
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
-            
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
 
         return render(req, "Table/HTMX/edit/edit_form.html", context=context)
 
@@ -513,6 +513,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Text) Updation")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
 
         return render(req, "Table/HTMX/normal/normal.html", context=context)
@@ -553,6 +554,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Table/HTMX/update/text.html", context=context)
@@ -600,6 +602,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/edit/edit_image_form.html", context=context)
@@ -642,6 +645,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/normal/normal_image.html", context=context)
@@ -694,6 +698,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, "Invalid Image Uploaded! Request Aborted")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Table/HTMX/update/image.html", context=context)
@@ -714,6 +719,7 @@ def column_view(req: HttpRequest, id: int):
             context["count"] = count
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
         
         return render(req, "Table/HTMX/column.html", context=context)
@@ -768,7 +774,7 @@ def suggest_view(req: HttpRequest, id: int):
             context["option"] = suggestions
 
         except Exception as e:
-            pass
-        
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+
         return render(req, "Table/HTMX/suggests.html", context=context)
 

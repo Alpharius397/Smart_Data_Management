@@ -6,7 +6,7 @@ import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Main.models import RedisConnection, WriteToken, ReadToken, RedisDataBase, PdfToken
 from Task.models import TaskTable
-from constants import DEFAULT_ERROR, EMAIL_KEY, OTP_SIZE
+from constants import ACCESS_TOKEN, DEFAULT_ERROR, EMAIL_KEY, OTP_SIZE
 from tools.encrypt import authTokenCheck
 from User.models import (
     Role,
@@ -118,23 +118,6 @@ def taskCheck(user: User, id: int):
             
         elif is_manager(user):
             return TaskTable.objects.get(
-                Q(id=id) & Q(assigned__manager__id=user.id)
-            )
-            
-    except Exception as e:
-        pass
-            
-    return None
-
-async def ataskCheck(user: User, id: int):
-    try:
-        if is_admin(user):
-            return await TaskTable.objects.aget(
-                Q(id=id) & Q(branch=user.role.belongs)
-            )
-            
-        elif is_manager(user):
-            return await TaskTable.objects.aget(
                 Q(id=id) & Q(assigned__manager__id=user.id)
             )
             
@@ -325,6 +308,41 @@ def auth_needed(manager_only=False, admin_only=False):
 
     return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
+def media_access(view_func: typing.Callable[..., HttpResponse | None],):
+    """Wrapper for views that need authenticated users using headers (Headless Chrome fix)"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, *args, **kwargs):
+        
+        try:
+            token = request.headers.get(ACCESS_TOKEN, "")
+            
+            with RedisConnection(RedisDataBase.PDF_TOKEN) as redis:
+                data: WriteToken | ReadToken | PdfToken = redis.getDict(token) # type: ignore
+                
+                processing = data.get("processing", None)
+                ID = data.get("ID", -1)
+                
+                if (not isinstance(processing, bool)) or (isinstance(processing, bool) and (processing is not True)):
+                    raise TokenExpired()
+                
+                request.user = User.objects.get(id=ID)
+        
+        except:
+            pass
+        
+        user = get_user(request)
+
+        if (is_authenticated(user)):
+            return view_func(request, *args, **kwargs) or HttpResponse(
+                status=403
+            )
+
+        return HttpResponse(status=403)
+
+    return _wrapped_view
+
+
 def aauth_needed(manager_only=False, admin_only=False):
     """Wrapper for views that need authenticated users (HTMX Version)"""
 
@@ -483,9 +501,9 @@ def async_task_permission_check(
     async def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
         user = get_user(request)
 
-        if (task := await ataskCheck(user, id)) != None:
+        if (task := await sync_to_async(taskCheck)(user, id)) != None:
             request.__setattr__("task", task)
-            return await view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
+            return (await view_func(request, id, *args, **kwargs)) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
 

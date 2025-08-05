@@ -38,7 +38,6 @@ def get_username(req: HttpRequest):
         return render(
             req, "User/HTMX/username/username.html", context={"username": username}
         )
-    return None
 
 @htmx_response
 @auth_needed()
@@ -46,7 +45,6 @@ def get_email(req: HttpRequest):
     user = get_user(req)
     if is_hx_get(req):
         return render(req, "User/HTMX/email/email.html", context={"email": user.email})
-    return None
 
 @htmx_response
 @auth_needed()
@@ -59,7 +57,6 @@ def get_password(req: HttpRequest):
             context={"password": defaultPassword},
         )
 
-    return None
 
 @htmx_response
 @auth_needed()

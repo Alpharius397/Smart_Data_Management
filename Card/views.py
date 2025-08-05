@@ -30,8 +30,8 @@ from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
 from django.db import transaction # type: ignore
 from django.utils import timezone # type: ignore
-from constants import DEFAULT_ERROR, WRITE_TOKEN, READ_TOKEN
-from Main.models import AsyncRedisConnection, ReadToken, RedisConnection, RedisDataBase, WriteToken
+from constants import DEFAULT_ERROR
+from Main.models import AsyncRedisConnection, ReadToken, RedisDataBase, WriteToken
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore
 from tools.token import hash_token
@@ -102,12 +102,6 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             
             encrypted = encrypt_data(settings.KEY, context)
             
-            with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/compress.txt", "w") as f:
-                f.write(encrypted)
-            
-            with open("/home/omnissiah/Project/nodejs/react/Smart_Data_Management/sample/decompress.txt", "w") as f:
-                f.write(json.dumps(context))
-                
             APP_LOG.write_info(LogStructure().set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx).set_meta(req))
             
             return JsonResponse(data=FetchJson(data=encrypted), safe=True, status=200)
@@ -116,6 +110,7 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             return JsonResponse(data=FetchJson(data=f.get_error()), safe=True, status=401)
         
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION, id, rowID=idx).set_meta(req).set_error(e))
             return JsonResponse(data=FetchJson(data=DEFAULT_ERROR), safe=True, status=500)
 
 @csrf_exempt
@@ -163,6 +158,7 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             return JsonResponse(data={"status": "Feedback updation failed"}, status=401)
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION, id, rowID=idx).set_meta(req).set_error(e))
             data = ConfirmJson(message=DEFAULT_ERROR, status='none', card="")
             cardWriteWebSocket(token, data)
             return JsonResponse(data={"status": "Feedback updation failed"}, status=500)
@@ -191,6 +187,7 @@ def read_view(req: HttpRequest, token: str):
             return JsonResponse(data={"status": "Card ID missing"}, status=401)
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             data = ReadJson(message=DEFAULT_ERROR, status='none', card="", data="")
             cardReadWebSocket(token, data)
             return JsonResponse(data={"status": "Card Data received failed"}, status=500)

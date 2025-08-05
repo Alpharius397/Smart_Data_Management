@@ -17,6 +17,10 @@
             padding-top: 0px;
         }
 
+        body {
+            background-color: white;
+        }
+
         @media print {
             .text, .image, .semester-heading {
                 break-inside: auto;
@@ -27,7 +31,6 @@
         {% if request.session.mainColor and request.session.secColor %}
 
             body {
-                background-color: white;
                 color: {{request.session.mainColor}};
             }
         

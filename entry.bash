@@ -9,7 +9,9 @@ done
 echo "PostgreSQL started"
 
 python manage.py collectstatic --noinput
+python manage.py makemigrations --noinput
 python manage.py migrate --noinput
+python manage.py createsuperuser --no-input
 
 gunicorn Main.asgi:application \
     --workers 4 \

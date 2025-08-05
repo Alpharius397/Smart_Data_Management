@@ -1,10 +1,10 @@
-from django.utils import timezone
+from django.utils import timezone # type: ignore
 import io
 from typing import Any, TypedDict
 from django.contrib import messages # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
-from django.http import FileResponse, HttpRequest, StreamingHttpResponse  # type: ignore
+from django.http import FileResponse, HttpRequest  # type: ignore
 from Report.errors import DataNotLocked, InvalidSchema, RedisFailed
 from University.models import SemMeta, Subject, Schema, SubjectMeta
 from Task.models import DataTable, TaskTable
@@ -39,10 +39,10 @@ from tools.utils import get_2_value, get_3_value, get_string_value, get_string_v
 from tools.get_image import compress_image
 from tools.token import hash_token, get_token
 from django.db import transaction # type: ignore
-from constants import DEFAULT_ERROR, WRITE_TOKEN
+from constants import ACCESS_PDF, ACCESS_TOKEN, DEFAULT_ERROR, WRITE_TOKEN
 from Main.models import AsyncRedisConnection, PdfToken, RedisConnection, RedisDataBase, WriteToken
 from playwright.async_api import async_playwright
-from asgiref.sync import async_to_sync
+from django.core.files.temp import NamedTemporaryFile
 
 ########### TYPES #############
 class ReportData(TypedDict):
@@ -103,8 +103,8 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
     if is_auth_get(req):
 
         schema_id = req.GET.get("schema", "")
-        pdf_bytes = io.BytesIO()
         user = get_user(req)
+        pdf_bytes = io.BytesIO()
         
         try:
             async with AsyncRedisConnection(RedisDataBase.PDF_TOKEN) as redis, async_playwright() as p:
@@ -114,9 +114,8 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                 browser = await p.chromium.launch()
                 page = await browser.new_page()
 
-                await page.set_extra_http_headers(dict(req.headers.items()))
-                await page.set_extra_http_headers({"Access-PDF": settings.ACCESS_PDF})
-                await page.goto(req.build_absolute_uri(f"{reverse("Report:pdf", kwargs={"id": id, "idx": idx, "token": token})}?schema={schema_id}"))
+                await page.set_extra_http_headers({ACCESS_PDF: settings.ACCESS_PDF, ACCESS_TOKEN: token})
+                await page.goto((f"{req.scheme}://nginx{reverse("Report:pdf", kwargs={"id": id, "idx": idx, "token": token})}?schema={schema_id}"))
                 
                 _pdf_bytes = await page.pdf(
                     format="A4",
@@ -130,9 +129,11 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                     display_header_footer=False,
                     scale=1.0
                 )
-                pdf_bytes.write(_pdf_bytes)
                 
-                pdf_bytes = await addSign(pdf_bytes, get_user(req))
+                pdf_bytes.write(_pdf_bytes)
+                    
+                pdf_bytes = await addSign(pdf_bytes, get_user(req)) # type: ignore
+                pdf_bytes.seek(0)
             
         except Exception as e:
             APP_LOG.write_error(LogStructure().set_request(req, LogType.EXCEPTION).set_error(e))
@@ -140,7 +141,7 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
         return FileResponse(pdf_bytes, as_attachment=True, filename=f"Report-{id}-{idx}-{(schema_id or "default")}.pdf")
 
 @pdf_access
-@token_check(RedisDataBase.PDF_TOKEN)
+@token_check(RedisDataBase.PDF_TOKEN, close_after=False)
 @login_needed()
 @task_permission_check
 def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
@@ -169,6 +170,7 @@ def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
             context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
 
         return render(req, "Report/HTML/generated.report.html", context=context)
@@ -195,6 +197,7 @@ def htmx_schema(req: HttpRequest):
             context['options'] = options
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/schema.html", context=context)
@@ -230,6 +233,7 @@ def report_view(req: HttpRequest, id: int, idx: str):
             messages.error(req, f.get_error())
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/report.html", context=context)
@@ -253,6 +257,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
             messages.error(req, str(f))
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/complete/admin.form.html", context=context)
@@ -267,6 +272,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
             setSwalAlert(context, f.get_error(), title="Feedback Fetch")
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR, title="Feedback Fetch")
 
         return render(req, "Report/HTMX/complete/manager.form.html", context=context)
@@ -291,8 +297,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     setSwalAlert(context, form.getErrors())
                 
         except Exception as e:
-            import traceback
-            traceback.print_tb(e.__traceback__)
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
         
         return render(req, "Report/HTMX/message.html", context=context)
@@ -311,12 +316,11 @@ def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int):
             context.update({"result": records.data})
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, "Data Fetching Failed")
-            return render(req, "Report/HTMX/sem.report.html", context=context)
-
 
         return render(req, "Report/HTMX/sem.report.html", context=context)
-    
+
 @htmx_response
 @auth_needed()
 @semester_permission_check
@@ -352,6 +356,7 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, f"RowID: '{rowID}' does not exits")
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/message.html", context)
@@ -371,6 +376,7 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
             messages.error(req, f"RowID: '{rowID}' does not exits")
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/sem/manager.form.html", context=context)
@@ -387,9 +393,10 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
             context["form"] = FeedBackView(initial={"status": get_string_value(status), "feedBack": feedBack, "locked": get_string_value(locked), "issued": get_string_value(issued)})
             
         except DataTable.DoesNotExist:
-            messages.error(req, f"RowID: '{rowID}' does not exits")
+            messages.error(req, f"RowID: '{rowID}' does not exists")
 
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             messages.error(req, DEFAULT_ERROR)
 
         return render(req, "Report/HTMX/sem/admin.form.html", context=context)
@@ -447,6 +454,7 @@ def issue_view(req: HttpRequest, id: int, idx: str):
             setSwalAlert(context,f.get_error())
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/write/begin.html", context=context)
@@ -467,8 +475,9 @@ def issue_view(req: HttpRequest, id: int, idx: str):
             setSwalAlert(context, r.get_error())
             
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req, "Report/HTMX/write/end.html", context=context)
-        
+
 

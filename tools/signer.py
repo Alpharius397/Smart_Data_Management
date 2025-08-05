@@ -1,21 +1,21 @@
+import typing
 from pyhanko import stamp
-from pyhanko.pdf_utils import images, text
+from pyhanko.pdf_utils import images
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import fields, signers
 from asgiref.sync import sync_to_async
-import io
 
 from User.models import User
 
 SIGNER = signers.SimpleSigner.load(
-    'Signature/key.pem', 'Signature/cert.pem',
+    'signature/key.pem', 'signature/cert.pem',
 )
 
 def signature_header(user: User):
     return f"Signed By: {user.username}\nUniversity: {user.role.belongs.institute.university.name}\nInstitute: {user.role.belongs.institute.name}\nBranch: {user.role.belongs.name}\nTimestamp: %(ts)s"
     
 
-async def addSign(input: io.BytesIO, signer: User):
+async def addSign(input: typing.BinaryIO, signer: User) -> typing.BinaryIO:
     
     w = IncrementalPdfFileWriter(input)
     fields.append_signature_field(
@@ -23,6 +23,8 @@ async def addSign(input: io.BytesIO, signer: User):
             'Signature', on_page=-1, box=(480, 10, 580, 70), 
         )
     )
+    
+    assert isinstance(SIGNER, signers.SimpleSigner), "Signer is not present"
     
     meta = signers.PdfSignatureMetadata(field_name='Signature')
     pdf_signer = signers.PdfSigner(

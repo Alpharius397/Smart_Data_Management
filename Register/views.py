@@ -1,5 +1,6 @@
 from django.shortcuts import render # type: ignore
 from django.http import HttpRequest, JsonResponse # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from Register.errors import UserExists 
 from Register.forms import RegisterForm
 from django.contrib.auth.models import Group # type: ignore
@@ -64,6 +65,7 @@ def htmx_register_view(req: HttpRequest):
             setSwalAlert(context, f"Specified Group (Admin) does not exists")
         
         except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)
             
         return render(req,'Register/HTMX/message.html',context=context)

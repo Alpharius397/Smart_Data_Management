@@ -4,6 +4,7 @@ from django.http import HttpRequest, HttpResponse  # type: ignore
 from Login.forms import LoginForm
 from django.urls import reverse  # type: ignore
 from django.contrib.auth import login, authenticate  # type: ignore
+from Logs.loggers import APP_LOG, LogStructure, LogType
 from User.models import User, is_manager, is_admin
 from tools.url_auth import is_hx_post, htmx_response
 from constants import SUCCESS, WARNING, DEFAULT_ERROR
@@ -55,8 +56,8 @@ def htmx_login_view(req: HttpRequest):
             else:
                 setSwalAlert(context, f.getErrors())                
                 
-        except Exception:
+        except Exception as e:
+            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
             setSwalAlert(context, DEFAULT_ERROR)                
             
-
         return render(req, "Login/HTMX/messages.html", context=context)
