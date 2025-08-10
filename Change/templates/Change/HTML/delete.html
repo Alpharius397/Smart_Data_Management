@@ -1,0 +1,44 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Change Form</title>
+  <link rel="stylesheet" href="{% static 'styles/Login/styles.css' %}" />
+  <style></style>
+</head>
+
+<body>
+  <div hx-post="{% url 'Change:otpSend' type='password' %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML">
+  </div>
+  <div class="login-container">
+    <h2>Password Change</h2>
+    <form hx-post="{% url 'Change:htmxDelete' %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()"
+      hx-trigger="click from:.login-button">
+      {% csrf_token %} {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.name }}">{{ field.label }}: </label>
+        {{ field }} {% if field.errors %} {{ field.errors }} {% else %}
+        <p class="help_text">{{ field.help_text }}</p>
+
+        {% endif %}
+      </div>
+      {% endfor %}
+      <button class="login-button" onclick="formCheck(event, 'form')">
+        Change
+      </button>
+    </form>
+  </div>
+</body>
+<script src="{% static 'js/pages/main.js' %}"></script>
+<script src="{% static 'js/libs/htmx.js' %}"></script>
+<script src="{% static 'js/libs/swal.js' %}"></script>
+<script>
+  add_csrf();
+</script>
+{% include "HTMX/swal.html" %}
+
+</html>

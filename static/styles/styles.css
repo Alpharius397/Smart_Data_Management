@@ -230,6 +230,8 @@ dialog .dialog-button button {
 .messages {
   list-style: none;
   margin: 0px;
+  margin-left: auto;
+  margin-right: auto;
   padding: 0;
   width: 100%;
   max-width: 1000px;

@@ -14,7 +14,7 @@
             background-color: {{request.session.mainColor}};
             color: {{request.session.secColor}};
         }
-        
+
     </style>
 {% endblock %}
 {% block headerOption %}
@@ -74,13 +74,15 @@
             </div>
 
         </div>
+
+        <a class="cancel-issue" href="{% url 'Change:delete' %}" onclick="waitThere(event)">Delete User</a>
     </div>
 
 
 {% endblock %}
 
 {% block script %}
-{% include "HTMX/swal.html" %}
+    {% include "HTMX/swal.html" %}
 
     <script>
         add_csrf();
@@ -113,9 +115,39 @@
 
             });
 
-        
+
         }
 
+        function waitThere(event){
+            event.stopImmediatePropagation();
+            event.preventDefault();
+
+            swal({
+                title:"Are you sure?",
+                text: "Are you sure you want to delete your account?\nThis action is irreversible",
+                icon: "warning",
+                dangerMode: true,
+                buttons: true,
+                closeModal: false
+            }).then((ok) => {
+                if(ok === true){
+
+                    try{
+                        window.location.href = event.target.href;
+
+                    } catch(err) {
+                        swal({
+                            title: "Redirect Failed",
+                            text: "Failed to redirect to the page",
+                            icon: "error"
+                        })
+                    }
+                }
+
+            });
+
+
+        }
     </script>
 
 {% endblock %}

@@ -52,7 +52,7 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: /nginx
+          path: .
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media

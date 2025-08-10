@@ -6,6 +6,7 @@ from django.forms import ValidationError
 class MainForm(Form):
     def getErrors(self) -> str:
         """Helper to generate errors text"""
+
         if not self.errors:
             raise NoErrorInForm()
 
@@ -19,6 +20,9 @@ class MainForm(Form):
             errorText += "\n"
 
         return errorText.rstrip("\n")
+
+    def getJsonErrors(self):
+        return self.getErrors().split("\n")
 
 
 def getErrors(error: ValidationError) -> str:

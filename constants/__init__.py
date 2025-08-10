@@ -32,6 +32,10 @@ ACCESS_TOKEN = "Access-Token"
 SUCCESS_SUBJECT = "Request for {0} change"
 SUCCESS_MESSAGE = "{0} change was successfully changed"
 
+DELETE_SUBJECT = "Account Deleteion Request"
+DELETE_MESSAGE = "Account with username {0} deleted successfully"
+
+
 class ReportStructure(typing.NamedTuple):
     profile_img: list[str]
     personal_info: list[str]

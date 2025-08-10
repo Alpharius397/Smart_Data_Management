@@ -8,12 +8,13 @@ import zlib
 import json
 from Main.settings import settingsInterface as settings  # type: ignore
 from tools.token import get_token  # type: ignore
+from Crypto.Random.random import randint
 
 DES_3_IV_LENGTH: int = 8
 AES_IV_LENGTH: int = 16
 SHA256_LENGTH: int = 32
 BASE_64_LENGTH: int = 3
-
+DES_3_KEY_SIZE = 192
 
 def b64encode(s: bytes):
     return a64encode(pad(s, BASE_64_LENGTH), b"-_")
@@ -22,6 +23,8 @@ def b64encode(s: bytes):
 def b64decode(s: str):
     return unpad(a64decode(s, b"-_"), BASE_64_LENGTH)
 
+def generate_key(size: int) -> bytes:
+    return bytes([randint(0, 256) for _ in range(size)])
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:
@@ -48,6 +51,34 @@ def decrypt_data(key: bytes, encrypted_data: str) -> dict:
     decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
     return json.loads(decompressed.decode())
 
+def encrypt_text(key: bytes, value: str) -> str:
+    data = value.encode()
+    compressed = zlib.compress(data, level=9)
+    padded = pad(compressed, DES3.block_size)
+
+    cipher = DES3.new(key, DES3.MODE_CBC)
+    encrypted = cipher.encrypt(padded)
+    iv = bytes(cipher.iv)  # type: ignore
+
+    iv += encrypted
+
+    return b64encode(iv).decode()
+
+# Decryption Function
+def decrypt_text(key: bytes, encrypted_data: str) -> str:
+    _encrypted = b64decode(encrypted_data)
+    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
+
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    decrypted = cipher.decrypt(encrypted)
+    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
+    return decompressed.decode()
+
+def encrypt_key(key: str):
+    return encrypt_text(settings.DECRYPTION_KEY, key)
+
+def decrypt_key(key: str):
+    return decrypt_text(settings.DECRYPTION_KEY, key)
 
 def certificateToken() -> str:
     nowTime = datetime.now(timezone.get_current_timezone())
@@ -67,51 +98,6 @@ def certificateToken() -> str:
     iv += encryptFinal
 
     return b64encode(iv).decode()
-
-
-def certificateHash(jsonDict: dict) -> str:
-    """certificate (encrypted): {iv = 16 bytes}{certiHash = _ bytes}
-
-    certiHash = {timeToken = _ bytes}{jsonHash = 32 bytes}
-
-
-    """
-
-    cipher = AES.new(settings.CERTIFICATE_KEY, mode=AES.MODE_CBC)
-
-    token = certificateToken()
-    jsonHash = SHA256.new(json.dumps(jsonDict).encode()).hexdigest()
-
-    iv = bytes(cipher.iv)
-
-    certiHash = cipher.encrypt(f"{token}{jsonHash}".encode())
-
-    iv += certiHash
-
-    return b64encode(iv).decode()
-
-
-def certificateDecrypt(certificate: str) -> tuple[str, str]:
-    token, jsonHash = "", ""
-    try:
-        decoded = b64decode(certificate)
-        iv, encrypt = decoded[:AES_IV_LENGTH], decoded[AES_IV_LENGTH:]
-        cipher = AES.new(settings.CERTIFICATE_KEY, mode=AES.MODE_CBC, iv=iv)
-
-        decrypt = cipher.decrypt(encrypt)
-
-        token = decrypt[:-SHA256_LENGTH].decode()
-        jsonHash = decrypt[-SHA256_LENGTH:].decode()
-
-    except Exception as e:
-        pass
-    
-    return token, jsonHash
-
-
-def jsonHash(jsons: dict):
-    return SHA256.new(json.dumps(jsons).encode()).hexdigest()
-
 
 def authTokenCheck(token: str):
     """

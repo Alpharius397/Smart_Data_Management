@@ -10,6 +10,7 @@ from tools.url_auth import (
 from User.models import get_user  # type: ignore
 from Crypto.Random.random import randint
 
+
 ############ HTTP Request ############
 @login_needed()
 def account_view(req: HttpRequest):
@@ -39,12 +40,14 @@ def get_username(req: HttpRequest):
             req, "User/HTMX/username/username.html", context={"username": username}
         )
 
+
 @htmx_response
 @auth_needed()
 def get_email(req: HttpRequest):
     user = get_user(req)
     if is_hx_get(req):
         return render(req, "User/HTMX/email/email.html", context={"email": user.email})
+
 
 @htmx_response
 @auth_needed()

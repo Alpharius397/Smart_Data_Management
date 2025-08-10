@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path # type: ignore
 from Dash.views import (
     dash_board,
     task_fetch,
@@ -6,7 +6,6 @@ from Dash.views import (
     read_view,
 )
 from django.http import HttpResponse  # type: ignore
-from .sockets import CardReadExeConsumer
 
 app_name = "Dash"
 urlpatterns = [
@@ -17,5 +16,3 @@ urlpatterns = [
     path("htmx/read/", read_view, name="card_read"),
     path("<str:token>/read/", (lambda _: HttpResponse(status=404)), name="__base__"),
 ]
-
-websocket_urlpatterns = [path("dash/<str:token>/", CardReadExeConsumer.as_asgi())]  # type: ignore

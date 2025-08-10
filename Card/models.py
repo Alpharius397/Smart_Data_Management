@@ -35,10 +35,17 @@ class Card(Model):
     belongs = ForeignKey(  # type: ignore
         to=Branch, null=False, blank=False, on_delete=RESTRICT
     )
+    
+    decryption_key = CharField(  # type: ignore
+        max_length=200,
+        null=False,
+        blank=False,
+        verbose_name="Key used to decrypt this",
+    )
 
     class Meta:
         verbose_name = "Card"
         verbose_name_plural = "Cards"
-
+        
     def __str__(self) -> str:
         return f"{self.cardID}"

@@ -14,7 +14,7 @@ from User.models import (
     is_manager,
     User
 )
-from tools.encrypt import encrypt_data, decrypt_data
+from tools.encrypt import decrypt_key, decrypt_text, encrypt_data, decrypt_data, encrypt_text
 from tools.errors import TokenExpired
 from tools.get_image import expand_image
 from tools.url_auth import (
@@ -31,7 +31,7 @@ from Card.models import Card
 from django.db import transaction # type: ignore
 from django.utils import timezone # type: ignore
 from constants import DEFAULT_ERROR
-from Main.models import AsyncRedisConnection, ReadToken, RedisDataBase, WriteToken
+from Main.models import AsyncRedisConnection, ReadToken, RedisConnection, RedisDataBase, WriteToken
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection # type: ignore
 from tools.token import hash_token
@@ -100,11 +100,13 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
             context.update(get_post(user))
             context.update(report_data)
             
-            encrypted = encrypt_data(settings.KEY, context)
-            
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx).set_meta(req))
-            
-            return JsonResponse(data=FetchJson(data=encrypted), safe=True, status=200)
+            with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
+                writeToken = WriteToken(**redis.getDict(token))
+                encrypted = encrypt_data(decrypt_key(writeToken["key"]).encode(), context)
+                
+                APP_LOG.write_info(LogStructure().set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx).set_meta(req))
+                
+                return JsonResponse(data=FetchJson(data=encrypted), safe=True, status=200)
         
         except DataNotLocked as f:
             return JsonResponse(data=FetchJson(data=f.get_error()), safe=True, status=401)
@@ -142,9 +144,14 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
                 
                 card, _ = Card.objects.get_or_create(cardID=cardID)
                 
-                card.data = context # type: ignore
-                card.last_write = timezone.now()
-                card.done_by = user
+                with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
+                    writeToken = WriteToken(**redis.getDict(token))
+                    
+                    card.data = context # type: ignore
+                    card.last_write = timezone.now()
+                    card.done_by = user
+                    card.decryption_key = writeToken["key"]
+                    
                 card.save()
                 cardWriteWebSocket(token, data)
                 
@@ -178,7 +185,6 @@ def read_view(req: HttpRequest, token: str):
                 raise CardIdMissing()
             
             cardReadWebSocket(token, data)
-            APP_LOG.write_info(LogStructure().set_error(Exception("ok")))
             return JsonResponse(data={"status": "Card Data received successfully"}, status=200)
         
         except CardIdMissing as f:
@@ -371,7 +377,9 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
             case "true":
                 
                 try:
-                    decrypted: EncryptData = EncryptData(**decrypt_data(settings.KEY, data)) # type: ignore
+                    card = await Card.objects.aget(cardID=cardID)
+                    
+                    decrypted = EncryptData(**decrypt_data(decrypt_key(card.decryption_key).encode(), data))
                     
                     for img, value in decrypted["images"].items():
                         decrypted["images"][img] = expand_image(value, 0, 0)

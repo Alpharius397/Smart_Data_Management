@@ -17,6 +17,7 @@ from User.models import (
     get_post,
     User,
 )
+from tools.encrypt import DES_3_KEY_SIZE, encrypt_key, generate_key
 from tools.signer import addSign
 from tools.url_auth import (
     aauth_needed,
@@ -42,7 +43,6 @@ from django.db import transaction # type: ignore
 from constants import ACCESS_PDF, ACCESS_TOKEN, DEFAULT_ERROR, WRITE_TOKEN
 from Main.models import AsyncRedisConnection, PdfToken, RedisConnection, RedisDataBase, WriteToken
 from playwright.async_api import async_playwright
-from django.core.files.temp import NamedTemporaryFile
 
 ########### TYPES #############
 class ReportData(TypedDict):
@@ -54,7 +54,8 @@ class ReportData(TypedDict):
 
 def writeBegin(user: User, token: str) -> bool:
     with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis: 
-        return redis.setDict(token, WriteToken(ID=user.id, processing=True)) # type: ignore
+        key = encrypt_key(generate_key(DES_3_KEY_SIZE).decode())
+        return redis.setDict(token, dict(WriteToken(ID=user.id, processing=True, key=key)))
     return False
 
 def writeEnd(user: User, token: str) -> bool:

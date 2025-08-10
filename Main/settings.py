@@ -12,16 +12,10 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
-import typing
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
 # TODO: Rotate Keys
-
-class MongoDB(typing.NamedTuple):
-    database: str
-    collection: str
-
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,19 +24,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-
+load_dotenv(".env.dev")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", False)
+DEBUG = bool(os.environ.get("DEBUG", False))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get(
     "SECRET_KEY", "django-insecure-16ky@(lc+@)f(d#*d(sxn9^lya=0$ko2&w%=(=bwsdnt+1m@g0"
 )
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "nginx"
-]
+ALLOWED_HOSTS = ["127.0.0.1", "nginx"]
 
 # Application definition
 
@@ -69,7 +60,7 @@ INSTALLED_APPS = [
     "Logs",
     "Card",
     "Mobile",
-    "Change"
+    "Change",
 ]
 
 
@@ -110,9 +101,11 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [{
-                "address": f"redis://:{os.environ.get("REDIS_PASSWORD", "1234")}@127.0.0.1:6379/0",
-            }],
+            "hosts": [
+                {
+                    "address": f"redis://:{os.environ.get('REDIS_PASSWORD', '1234')}@127.0.0.1:6379/0",
+                }
+            ],
         },
     }
 }
@@ -139,7 +132,11 @@ DATABASES = {
     }
 }
 
-REDIS = {"host": os.environ.get("REDIS_HOST", "localhost"), "port": 6379, "password": os.environ.get("REDIS_PASSWORD", "1234")}
+REDIS = {
+    "host": os.environ.get("REDIS_HOST", "localhost"),
+    "port": 6379,
+    "password": os.environ.get("REDIS_PASSWORD", "1234"),
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -216,15 +213,16 @@ MEDIA_URL = os.environ.get(
 
 APP_LOG = Path(BASE_DIR, "app_log")
 DATA_LOG = Path(BASE_DIR, "data_log")
+SMTP_LOG = Path(BASE_DIR, "smtp_log")
+
 LOGIN_URL = "Login:index"
-KEY = os.environ.get("KEY", "123456789123456789123456").encode()
-WRITE_REGISTRY = "writeExe://"
-READ_REGISTRY = "readExe://"
-CREATE_REGISTRY = "createExe://"
+WRITE_REGISTRY = os.environ.get("WRITE_REGISTRY", "writeExe://")
+READ_REGISTRY = os.environ.get("READ_REGISTRY", "readExe://")
+CREATE_REGISTRY = os.environ.get("CREATE_REGISTRY", "createExe://")
 
 AES_KEY_1 = os.environ.get("AES_KEY_1", "5XpBavCf2rB0g4QD").encode()
 AES_KEY_2 = os.environ.get("AES_KEY_2", "dpI56CKiEN8R0Lcx").encode()
-CERTIFICATE_KEY = os.environ.get("KEY", "123456789123456789123456").encode()
+DECRYPTION_KEY = os.environ.get("KEY", "123456789123456789123456").encode()
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "manvtv88gtmc2yg87ticeyvm4e2f1viu")
 JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
@@ -234,7 +232,7 @@ REFRESH_EXP_DELTA_MINUTES = 360
 CERTIFICATE_EXPIRE_DAYS = 30
 CARD_TOKEN_EXPIRE_MINUTES = 30
 
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
@@ -244,25 +242,27 @@ EMAIL_USE_TLS = True
 
 ACCESS_PDF = os.environ.get("ACCESS_PDF", "3RvdpstRTj0HZWBvpFzF0fDScBjLFKzX")
 
+
 class settingsInterface:
     MEDIA_ROOT = MEDIA_ROOT
     MEDIA_URL = MEDIA_URL
     APP_LOG = APP_LOG
     DATA_LOG = DATA_LOG
+    SMTP_LOG = SMTP_LOG
+
     LOGIN_URL = LOGIN_URL
 
-    KEY = KEY
     WRITE_REGISTRY = WRITE_REGISTRY
     READ_REGISTRY = READ_REGISTRY
     CREATE_REGISTRY = CREATE_REGISTRY
 
     AES_KEY_1 = AES_KEY_1
     AES_KEY_2 = AES_KEY_2
-    CERTIFICATE_KEY = CERTIFICATE_KEY
+    DECRYPTION_KEY = DECRYPTION_KEY
     REDIS = REDIS
     EMAIL_HOST_USER = EMAIL_HOST_USER
     DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL
-    
+
     JWT_SECRET = JWT_SECRET
     JWT_ALGORITHM = JWT_ALGORITHM
     JWT_EXP_DELTA_MINUTES = JWT_EXP_DELTA_MINUTES
@@ -270,5 +270,5 @@ class settingsInterface:
 
     CERTIFICATE_EXPIRE_DAYS = CERTIFICATE_EXPIRE_DAYS
     CARD_TOKEN_EXPIRE_MINUTES = CARD_TOKEN_EXPIRE_MINUTES
-    
+
     ACCESS_PDF = ACCESS_PDF

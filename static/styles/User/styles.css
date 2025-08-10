@@ -142,12 +142,16 @@ form {
   border-radius: 20px;
 }
 
+.institute-details {
+  margin-bottom: 20px;
+}
+
 .confirm {
   background-color: #28a745;
 }
 
 .confirm:hover {
-  background-color: #218838 !important; 
+  background-color: #218838 !important;
 }
 
 button.upload-button {
@@ -164,18 +168,35 @@ input {
   padding: 5px;
 }
 
-.upload-button[type="submit"]{
+.upload-button[type="submit"] {
   background-color: #28a745;
 }
 
-.upload-button[type="submit"]:hover{
+.upload-button[type="submit"]:hover {
   background-color: #218838;
 }
 
-.upload-button[type="cancel"]{
+.upload-button[type="cancel"] {
   background-color: red;
 }
 
-.upload-button[type="cancel"]:hover{
+.upload-button[type="cancel"]:hover {
+  background-color: darkred;
+}
+
+a.cancel-issue {
+  color: white;
+  margin: 10px;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 0px;
+  font-weight: 700;
+  background-color: red;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.cancel-issue:hover {
   background-color: darkred;
 }

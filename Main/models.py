@@ -814,6 +814,7 @@ class RedisDataBase(Enum):
 class WriteToken(TypedDict):
     ID: int
     processing: bool
+    key: str
 
 class PdfToken(TypedDict):
     ID: int

@@ -1,14 +1,8 @@
-from django.urls import path
-from .views import *
+from django.urls import path, re_path, include
 
-app_name = 'Mobile'
+app_name = "Mobile"
 urlpatterns = [
-	path('auth/login/',mobile_login,name='mobLogin'),
-	path('auth/register/',mobile_register,name='mobRegister'),
-	path('subscriber/',subscriber_check,name='subscribe'),
-	path('cards/',available_card,name='cards'),
-	path('user/', user_info, name="userInfo")
+    path("auth/", include("Mobile.Auth.urls")),
+    path("card", include("Mobile.Cards.urls")),
+    path("change/", include("Mobile.Change.urls")),
 ]
-
-
-

@@ -1,7 +1,7 @@
-from channels.auth import AuthMiddlewareStack, SessionMiddleware
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.security.websocket import AllowedHostsOriginValidator
-from django.core.asgi import get_asgi_application
+from channels.auth import AuthMiddlewareStack, SessionMiddleware # type: ignore
+from channels.routing import ProtocolTypeRouter, URLRouter # type: ignore
+from channels.security.websocket import AllowedHostsOriginValidator # type: ignore
+from django.core.asgi import get_asgi_application # type: ignore
 import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Main.settings")
@@ -12,7 +12,6 @@ import Dash.urls
 
 websocket_urlpatterns = [
     *Card.urls.websocket_urlpatterns,
-    *Dash.urls.websocket_urlpatterns,
 ]
 
 application = ProtocolTypeRouter(
