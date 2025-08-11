@@ -14,7 +14,8 @@ DES_3_IV_LENGTH: int = 8
 AES_IV_LENGTH: int = 16
 SHA256_LENGTH: int = 32
 BASE_64_LENGTH: int = 3
-DES_3_KEY_SIZE = 192
+DES_3_KEY_SIZE = 24
+
 
 def b64encode(s: bytes):
     return a64encode(pad(s, BASE_64_LENGTH), b"-_")
@@ -23,8 +24,10 @@ def b64encode(s: bytes):
 def b64decode(s: str):
     return unpad(a64decode(s, b"-_"), BASE_64_LENGTH)
 
+
 def generate_key(size: int) -> bytes:
-    return bytes([randint(0, 256) for _ in range(size)])
+    return bytes([randint(0, 255) for _ in range(size)])
+
 
 # Encryption Function
 def encrypt_data(key: bytes, jsonObject: dict) -> str:
@@ -51,8 +54,9 @@ def decrypt_data(key: bytes, encrypted_data: str) -> dict:
     decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
     return json.loads(decompressed.decode())
 
-def encrypt_text(key: bytes, value: str) -> str:
-    data = value.encode()
+
+def encrypt_text(key: bytes, value: str | bytes) -> str:
+    data = value.encode() if (isinstance(value, str)) else value
     compressed = zlib.compress(data, level=9)
     padded = pad(compressed, DES3.block_size)
 
@@ -64,6 +68,7 @@ def encrypt_text(key: bytes, value: str) -> str:
 
     return b64encode(iv).decode()
 
+
 # Decryption Function
 def decrypt_text(key: bytes, encrypted_data: str) -> str:
     _encrypted = b64decode(encrypted_data)
@@ -74,17 +79,26 @@ def decrypt_text(key: bytes, encrypted_data: str) -> str:
     decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
     return decompressed.decode()
 
-def encrypt_key(key: str):
+
+def encrypt_key(key: str | bytes):
     return encrypt_text(settings.DECRYPTION_KEY, key)
 
+
 def decrypt_key(key: str):
-    return decrypt_text(settings.DECRYPTION_KEY, key)
+    _encrypted = b64decode(key)
+    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
+
+    cipher = DES3.new(settings.DECRYPTION_KEY, DES3.MODE_CBC, iv)
+    decrypted = cipher.decrypt(encrypted)
+    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
+    return decompressed
+
 
 def certificateToken() -> str:
     nowTime = datetime.now(timezone.get_current_timezone())
     nowTime += timedelta(days=settings.CERTIFICATE_EXPIRE_DAYS)
 
-    nowTimeByte: bytes= nowTime.strftime("%H:%M:%d:%m:%Y").encode()
+    nowTimeByte: bytes = nowTime.strftime("%H:%M:%d:%m:%Y").encode()
 
     iv = bytes(AES.new(get_token(AES.block_size).encode(), mode=AES.MODE_CBC).iv)
     cipherA = AES.new(settings.AES_KEY_1, mode=AES.MODE_CBC, iv=iv)
@@ -98,6 +112,7 @@ def certificateToken() -> str:
     iv += encryptFinal
 
     return b64encode(iv).decode()
+
 
 def authTokenCheck(token: str):
     """

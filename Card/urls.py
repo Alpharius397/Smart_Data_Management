@@ -1,6 +1,12 @@
-from django.http import HttpResponse # type: ignore
-from django.urls import path # type: ignore
-from .views import *
+from django.http import HttpResponse  # type: ignore
+from django.urls import path  # type: ignore
+from .views import (
+    fetch_data,
+    confirm_view,
+    read_view,
+    CardReadExeConsumer,
+    CardWriteExeConsumer,
+)
 
 app_name = "Card"
 urlpatterns = [
@@ -23,7 +29,7 @@ urlpatterns = [
         "<str:token>/read/",
         read_view,
         name="read",
-    )
+    ),
 ]
 
 websocket_urlpatterns = [
