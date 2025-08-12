@@ -27,6 +27,8 @@ from django.utils import timezone  # type: ignore
 from tools.errors import TokenExpired
 from Crypto.Random.random import randint
 from asgiref.sync import sync_to_async
+from tools.mails import email_send, validate_email # type: ignore
+from django.core.exceptions import ValidationError
 
 REQUEST_PARAMS = typing.ParamSpec("REQUEST_PARAMS")
 
@@ -434,24 +436,44 @@ def get_user_from_session(
     return _wrapped_view
 
 
-def set_otp_response(
-    view_func: typing.Callable[..., HttpResponse | None],
-):
-    """Wrapper for views that generates OTP"""
+def set_otp_response(subject: str, message: str, type: str):
+    """ Sets an `emailOk` denoting valid email address in request """
+    
+    def __wrapper__(view_func: typing.Callable[..., HttpResponse | None],):
+        """Wrapper for views that generates OTP"""
 
-    @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs):
-        user = get_user(request)
+        @wraps(view_func)
+        def _wrapped_view(request: HttpRequest, *args, **kwargs):
+            user = get_user(request)
+            
+            try:
+                with RedisConnection(RedisDataBase.OTP_TOKEN) as redis:
+                    otp = getOTP()
+                    
+                    validate_email(user.email)
+                    
+                    email_send.delay(
+                        subject.format(type.capitalize()),
+                        user.email,
+                        message.format(type.capitalize(), otp),
+                    )
+                    
+                    request.__setattr__("emailOk", True)
+                    
+                    redis.setText(str(user.id), otp)
 
-        try:
-            with RedisConnection(RedisDataBase.OTP_TOKEN) as redis:
-                redis.setText(str(user.id), getOTP())
+                return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+            
+            except ValidationError as f:
+                request.__setattr__("emailOk", False)
+                return view_func(request, *args, **kwargs) or HttpResponse(status=403)
+            
+            except Exception:
+                return HttpResponse(status=403)
 
-            return view_func(request, *args, **kwargs) or HttpResponse(status=403)
-        except Exception:
-            return HttpResponse(status=403)
-
-    return _wrapped_view
+        return _wrapped_view
+    
+    return __wrapper__
 
 
 def check_otp_response(

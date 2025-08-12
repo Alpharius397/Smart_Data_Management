@@ -41,7 +41,7 @@ from Report.forms import (
     FeedBackView,
     CompleteFeedBackView,
 )
-from Logs.loggers import APP_LOG, LogStructure, LogType
+from Logs.loggers import APP_LOG, SMTP_LOG, LogStructure, LogType
 from tools.utils import (
     get_2_value,
     get_3_value,
@@ -442,11 +442,11 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                     setSwalAlert(context, form.getErrors())
 
         except Exception as e:
-            APP_LOG.write_info(
+            SMTP_LOG.write_info(
                 LogStructure()
                 .set_request(req, LogType.EXCEPTION)
                 .set_meta(req)
-                .set_error(e)
+                .set_error(e).get_log()
             )
             setSwalAlert(context, DEFAULT_ERROR)
 

@@ -9,7 +9,6 @@ from .views import (
     htmx_username_form,
     htmx_email_form,
     htmx_password_form,
-    send_otp_mail,
     send_otp_mail_password,
 )
 
@@ -25,9 +24,4 @@ urlpatterns = [
     path("htmx/delete/", htmx_delete_form, name="htmxDelete"),
     path("htmx/password/", htmx_password_form, name="htmxPasswordChange"),
     path("htmx/forgotPassword", send_otp_mail_password, name="htmxForgotPassChange"),
-    re_path(
-        r"^mail/(?P<type>(username|email|password))/otp/$",
-        send_otp_mail,
-        name="otpSend",
-    ),
 ]

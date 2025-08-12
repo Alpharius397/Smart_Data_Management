@@ -162,6 +162,7 @@ class RedisLogger(BaseLogger):
 
 
 class AppLogger(BaseLogger):
+    
     @BaseLogger.change_decorator
     def write_info(self, msg: "LogStructure", where: str = "APP") -> None:
         try:
@@ -177,14 +178,12 @@ class AppLogger(BaseLogger):
     def write_error(self, msg: "LogStructure") -> None:
         self.log.error(msg=msg.get_log())
 
-
 APP_LOG, SMTP_LOG, REDIS_LOG = (
     AppLogger(settings.APP_LOG),
     SMTPLogger(settings.SMTP_LOG),
     RedisLogger(settings.DATA_LOG),
 )
 """ Shared Log Instance """
-
 
 class DataLog(typing.TypedDict):
     GET: dict[str, typing.Any]

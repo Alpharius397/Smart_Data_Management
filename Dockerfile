@@ -23,17 +23,12 @@ RUN mkdir -p /run && chmod 777 /run
 RUN pip3 install --upgrade pip 
 
 # Copy the Django project  and install dependencies
-COPY require.txt  /app/
+COPY require.txt .
 
 # run this command to install all dependencies 
 RUN pip3 install --no-cache-dir -r require.txt
-
 RUN playwright install --with-deps chromium
 
-COPY entry.bash .
+COPY . .
+
 RUN chmod +x entry.bash
-
-# Copy the Django project to the container
-COPY . /app/
-
-ENTRYPOINT ["./entry.bash"]

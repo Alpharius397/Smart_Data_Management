@@ -804,12 +804,12 @@ class RedisDataBase(Enum):
                 1) Redis Overuse
     """
     
-    USER_TOKEN = 1 # store user-assigned token
-    OTP_TOKEN = 2 # store otp-token
-    EMAIL_TOKEN = 3 # store forgot-password token
-    CARD_READ_TOKEN = 4 #  store card read token
-    CARD_WRITE_TOKEN = 5 #  store card write token
-    PDF_TOKEN = 6 #  store pdf generate token
+    USER_TOKEN = 2 # store user-assigned token
+    OTP_TOKEN = 3 # store otp-token
+    EMAIL_TOKEN = 4 # store forgot-password token
+    CARD_READ_TOKEN = 5 #  store card read token
+    CARD_WRITE_TOKEN = 6 #  store card write token
+    PDF_TOKEN = 7 #  store pdf generate token
 
 class WriteToken(TypedDict):
     ID: int

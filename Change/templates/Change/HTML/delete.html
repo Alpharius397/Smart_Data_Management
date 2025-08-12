@@ -12,10 +12,8 @@
 </head>
 
 <body>
-  <div hx-post="{% url 'Change:otpSend' type='password' %}" hx-trigger="load" hx-target="this" hx-swap="innerHTML">
-  </div>
   <div class="login-container">
-    <h2>Password Change</h2>
+    <h2>Account Deletion</h2>
     <form hx-post="{% url 'Change:htmxDelete' %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()"
       hx-trigger="click from:.login-button">
       {% csrf_token %} {% for field in form %}
@@ -28,7 +26,7 @@
       </div>
       {% endfor %}
       <button class="login-button" onclick="formCheck(event, 'form')">
-        Change
+        Delete Account
       </button>
     </form>
   </div>

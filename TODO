@@ -1,48 +1,50 @@
---- ABANDON List ---
-[X]: Added image compression. (Mongo docs has a max size of 16mB) {Reason: Postgres Migration}
-[X]: Profile Images for Accounts {Reason: No need}
+### ABANDON List
+    [X]: Added image compression. (Mongo docs has a max size of 16mB) {Reason: Postgres Migration}
+    [X]: Profile Images for Accounts {Reason: No need}
 
---- DONE List ---
-[X]: Excel Upload with images
-[X]: Simple Query Interface
-[X]: Log-Record for actions
-[X]: Client Side Card Reader Exe
-[X]: Refactoring MongoDB schema
-[X]: Refactoring Data Pipelines
-[X]: Refactoring Dashboard
-[X]: Refactoring Login / Register Page
-[X]: Refactoring Task View Page
-[X]: Refactoring Single Task Page
-[X]: Simple CSS Transitions
-[X]: Better time-restrained API Tokens
-[X]: Use websockets instead of multiple HTTP requests
-[X]: Refactoring Certificate
-[X]: Multiple Images in excel handled
-[X]: Switch to postgresSQL
-[X]: Header of Company
-[X]: Refactoring Account Settings
-[X]: Customized Header (Title and Icons)
-[X]: PDF (Certificate) Generation and Digital Signature
-[X]: Better GUI
-[X]: Options to enter Semester Subjects and later parse that to group subjects into semester
-[X]: Refactor Login / Register Page
-[X]: Dockerize it
-[X]: HTTPS handover
-[X]: More Logging
-[X]: Add types and wrappers
-[X]: CSS Cleanup
-[X]: Protobuf Added (Good enough)
+### Done List
+    [X]: Excel Upload with images
+    [X]: Simple Query Interface
+    [X]: Log-Record for actions
+    [X]: Client Side Card Reader Exe
+    [X]: Refactoring MongoDB schema
+    [X]: Refactoring Data Pipelines
+    [X]: Refactoring Dashboard
+    [X]: Refactoring Login / Register Page
+    [X]: Refactoring Task View Page
+    [X]: Refactoring Single Task Page
+    [X]: Simple CSS Transitions
+    [X]: Better time-restrained API Tokens
+    [X]: Use websockets instead of multiple HTTP requests
+    [X]: Refactoring Certificate
+    [X]: Multiple Images in excel handled
+    [X]: Switch to postgresSQL
+    [X]: Header of Company
+    [X]: Refactoring Account Settings
+    [X]: Customized Header (Title and Icons)
+    [X]: PDF (Certificate) Generation and Digital Signature
+    [X]: Better GUI
+    [X]: Options to enter Semester Subjects and later parse that to group subjects into semester
+    [X]: Refactor Login / Register Page
+    [X]: Dockerize it
+    [X]: HTTPS handover
+    [X]: More Logging
+    [X]: Add types and wrappers
+    [X]: CSS Cleanup
+    [X]: Protobuf Added (Good enough)
+    [X]: Celery Added
 
---- Partial List ---
+### Partial List
 
---- TODO List ---
+### TODO List
+    []: Update Redis.conf in Redis Image (set database to more)
+    
+### Migration Log
+    [X]: Database Switch
+    [X]: Data Upload Done
+    [X]: Data Display
+    [X]: Data Updation
+    [X]: Massive Data Join
 
---- Migration Log ---
-[X]: Database Switch
-[X]: Data Upload Done
-[X]: Data Display
-[X]: Data Updation
-[X]: Massive Data Join
-
---- Maybe List ---
-[]: Add Test Cases
+### Maybe List
+    []: Add Test Cases

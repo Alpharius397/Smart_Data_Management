@@ -23,8 +23,19 @@ services:
     env_file:
       - .env.prod
 
+  celery:
+    build: .
+    command: celery -A Main worker -l INFO
+    depends_on:
+      - redis
+    volumes:
+      - main:/app/
+    env_file:
+      - .env.prod
+
   django-web:
     build: .
+    entrypoint: ./entry.bash
     ports:
       - "8001:8000"
     depends_on:
@@ -35,6 +46,7 @@ services:
       - static_volume:/app/static
       - media_volume:/app/media
       - ssl_cert:/app/nginx/certificate/
+      - main:/app/
 
     develop:
       watch:
@@ -68,3 +80,4 @@ volumes:
   media_volume:
   gunicorn_socket:
   ssl_cert:
+  main:
