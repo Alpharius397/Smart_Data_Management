@@ -1,8 +1,5 @@
-import datetime
-import json
 import typing
 from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
-import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Main.models import RedisConnection, WriteToken, ReadToken, RedisDataBase, PdfToken
 from Task.models import TaskTable
@@ -14,7 +11,6 @@ from User.models import (
     get_user,
     is_admin,
     is_authenticated,
-    is_authenticated_student,
     is_manager,
 )
 from django.db.models import Q  # type: ignore
@@ -23,11 +19,10 @@ from django.shortcuts import redirect  # type: ignore
 from django.urls import reverse  # type: ignore
 from University.models import Color
 from functools import wraps
-from django.utils import timezone  # type: ignore
 from tools.errors import TokenExpired
 from Crypto.Random.random import randint
 from asgiref.sync import sync_to_async
-from tools.mails import email_send, validate_email # type: ignore
+from tools.mails import email_send, validate_email  # type: ignore
 from django.core.exceptions import ValidationError
 
 REQUEST_PARAMS = typing.ParamSpec("REQUEST_PARAMS")
@@ -74,22 +69,6 @@ def is_auth_delete(req: HttpRequest) -> bool:
     return bool(is_authenticated(get_user(req)) and req.method == "DELETE")
 
 
-def is_auth_get_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(get_user(req)) and req.method == "GET")
-
-
-def is_auth_post_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(get_user(req)) and req.method == "POST")
-
-
-def is_auth_put_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(get_user(req)) and req.method == "PUT")
-
-
-def is_auth_delete_student(req: HttpRequest) -> bool:
-    return bool(is_authenticated_student(get_user(req)) and req.method == "DELETE")
-
-
 def auth_page(req: HttpRequest) -> HttpResponse:
     return redirect(
         reverse(settings.LOGIN_URL)
@@ -124,7 +103,7 @@ def taskCheck(user: User, id: int):
         elif is_manager(user):
             return TaskTable.objects.get(Q(id=id) & Q(assigned__manager__id=user.id))
 
-    except Exception as e:
+    except Exception:
         pass
 
     return None
@@ -142,113 +121,10 @@ def semesterCheck(user: User, id: int, idx: int):
                 Q(id=id) & Q(data__semester=idx) & Q(assigned__manager__id=user.id)
             ).distinct()[0]
 
-    except Exception as e:
+    except Exception:
         pass
 
     return None
-
-
-class PayLoad:
-    __type: str = "Base"
-    expire_minutes: int
-
-    def __init__(
-        self,
-        user: User,
-        expire: datetime.datetime | None = None,
-        type: str | None = None,
-        **kwargs: str | int,
-    ):
-        self.username: str = user.username
-        self.userID: int = user.id
-        self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
-
-    def to_json(self, newToken: bool = False) -> dict[str, str | int]:
-        return {
-            "userID": self.userID,
-            "username": self.username,
-            "type": self.type,
-            "expire": (
-                (self.expire if (not newToken) else timezone.now())
-                + datetime.timedelta(minutes=self.expire_minutes)
-            ).isoformat(),
-        }
-
-    def getToken(self) -> str:
-        return jwt.encode(self.to_json(), settings.JWT_SECRET, settings.JWT_ALGORITHM)
-
-    def getNewToken(self) -> str:
-        return jwt.encode(
-            self.to_json(newToken=True), settings.JWT_SECRET, settings.JWT_ALGORITHM
-        )
-
-    def isCorrectType(self) -> bool:
-        return self.type == self.__type
-
-    def __str__(self):
-        return json.dumps(
-            {
-                "userID": self.userID,
-                "username": self.username,
-                "type": self.type,
-                "expire": (
-                    self.expire + datetime.timedelta(minutes=self.expire_minutes)
-                ).isoformat(),
-            }
-        )
-
-    @staticmethod
-    def from_json(
-        classConstruct: type["PayLoad"],
-        userID: int,
-        username: str,
-        type: str,
-        expire: str,
-    ) -> "PayLoad":
-        user: User = User.objects.get(id=userID, username=username)
-        return classConstruct(
-            user=user, type=type, expire=datetime.datetime.fromisoformat(expire)
-        )
-
-    @staticmethod
-    def decodeToken(classConstruct: type["PayLoad"], token: str) -> "PayLoad":
-        data: dict[str, str] = jwt.decode(
-            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
-        )
-        return classConstruct.from_json(classConstruct, **data)  # type: ignore
-
-
-class AccessPayLoad(PayLoad):
-    __type: str = "access"
-    expire_minutes = settings.JWT_EXP_DELTA_MINUTES
-
-    def __init__(
-        self,
-        user: User,
-        expire: datetime.datetime | None = None,
-        type: str | None = None,
-    ):
-        self.username: str = user.username
-        self.userID: int = user.id
-        self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
-
-
-class RefreshPayLoad(PayLoad):
-    __type: str = "refresh"
-    expire_minutes = settings.REFRESH_EXP_DELTA_MINUTES
-
-    def __init__(
-        self,
-        user: User,
-        expire: datetime.datetime | None = None,
-        type: str | None = None,
-    ):
-        self.username: str = user.username
-        self.userID: int = user.id
-        self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
 
 
 def login_needed(manager_only=False, admin_only=False):
@@ -325,6 +201,12 @@ def media_access(
         try:
             token = request.headers.get(ACCESS_TOKEN, "")
 
+            if not token:
+                raise Exception("Token Not Found")
+
+            if request.user.is_authenticated:
+                raise Exception("Skipping Auth Check")
+
             with RedisConnection(RedisDataBase.PDF_TOKEN) as redis:
                 data: WriteToken | ReadToken | PdfToken = redis.getDict(token)  # type: ignore
 
@@ -338,7 +220,7 @@ def media_access(
 
                 request.user = User.objects.get(id=ID)
 
-        except:
+        except Exception:
             pass
 
         user = get_user(request)
@@ -384,22 +266,6 @@ def aauth_needed(manager_only=False, admin_only=False):
     return wrapper_that_is_wrapped_by_a_wrapper_that_returns_a_wrapper
 
 
-def student_auth_needed(
-    view_func: typing.Callable[..., HttpResponse | None],
-):
-    """Wrapper for views that need authenticated users (JSON Version)"""
-
-    @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs):
-        if is_authenticated_student(get_user(request)):
-            return view_func(request, *args, **kwargs) or JsonResponse(
-                data={"error": DEFAULT_ERROR}, status=403
-            )
-        return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
-
-    return _wrapped_view
-
-
 def htmx_response(
     view_func: typing.Callable[..., HttpResponse | None],
 ):
@@ -423,12 +289,11 @@ def get_user_from_session(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:
-            email = request.session.get(EMAIL_KEY, None)
-
+            email = request.session.pop(EMAIL_KEY, None)
             if email is not None:
                 request.user = User.objects.get(email=email)
 
-        except Exception as e:
+        except Exception:
             pass
 
         return view_func(request, *args, **kwargs) or HttpResponse(status=403)
@@ -436,43 +301,45 @@ def get_user_from_session(
     return _wrapped_view
 
 
-def set_otp_response(subject: str, message: str, type: str):
-    """ Sets an `emailOk` denoting valid email address in request """
-    
-    def __wrapper__(view_func: typing.Callable[..., HttpResponse | None],):
+def set_otp_response(subject: str, message: str, type: str, set_once: bool = True):
+    """Sets an `emailOk` denoting valid email address in request"""
+
+    def __wrapper__(
+        view_func: typing.Callable[..., HttpResponse | None],
+    ):
         """Wrapper for views that generates OTP"""
 
         @wraps(view_func)
         def _wrapped_view(request: HttpRequest, *args, **kwargs):
             user = get_user(request)
-            
+
             try:
                 with RedisConnection(RedisDataBase.OTP_TOKEN) as redis:
                     otp = getOTP()
-                    
-                    validate_email(user.email)
-                    
-                    email_send.delay(
-                        subject.format(type.capitalize()),
-                        user.email,
-                        message.format(type.capitalize(), otp),
-                    )
-                    
-                    request.__setattr__("emailOk", True)
-                    
-                    redis.setText(str(user.id), otp)
 
+                    validate_email(user.email)
+
+                    if not (redis.exists(str(user.id)) and set_once):
+                        email_send.delay(
+                            subject.format(type.capitalize()),
+                            user.email,
+                            message.format(type.capitalize(), otp),
+                        )
+
+                        redis.setText(str(user.id), otp, set_once=set_once)
+
+                    request.__setattr__("emailOk", True)
                 return view_func(request, *args, **kwargs) or HttpResponse(status=403)
-            
-            except ValidationError as f:
+
+            except ValidationError:
                 request.__setattr__("emailOk", False)
                 return view_func(request, *args, **kwargs) or HttpResponse(status=403)
-            
+
             except Exception:
                 return HttpResponse(status=403)
 
         return _wrapped_view
-    
+
     return __wrapper__
 
 
@@ -530,7 +397,7 @@ def async_task_permission_check(
     async def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
         user = get_user(request)
 
-        if (task := await sync_to_async(taskCheck)(user, id)) != None:
+        if (task := await sync_to_async(taskCheck)(user, id)) is not None:
             request.__setattr__("task", task)
             return (await view_func(request, id, *args, **kwargs)) or HttpResponse(
                 status=403
@@ -550,7 +417,7 @@ def semester_permission_check(
     def _wrapped_view(request: HttpRequest, id: int, idx: int, *args, **kwargs):
         user = get_user(request)
 
-        if (task := semesterCheck(user, id, idx)) != None:
+        if (task := semesterCheck(user, id, idx)) is not None:
             request.__setattr__("task", task)
             return view_func(request, id, idx, *args, **kwargs) or HttpResponse(
                 status=403
@@ -574,73 +441,6 @@ def file_permission_check(
             return view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
-
-    return _wrapped_view
-
-
-def jwt_required(
-    view_func: typing.Callable[..., JsonResponse | None],
-):
-    @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
-        auth_header = request.headers.get("Authorization", "")
-        refresh_header = request.headers.get("Refresh", "")
-
-        if not auth_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=401
-            )
-
-        if not refresh_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=401
-            )
-
-        try:
-            access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
-
-            access_payload = AccessPayLoad.decodeToken(AccessPayLoad, access)
-            refresh_payload = RefreshPayLoad.decodeToken(RefreshPayLoad, refresh)
-
-            if (
-                access_payload.expire < timezone.now()
-                and refresh_payload.expire < timezone.now()
-            ):
-                raise jwt.ExpiredSignatureError()
-
-            if access_payload.userID != refresh_payload.userID:
-                raise jwt.InvalidTokenError()
-
-            if access_payload.expire < timezone.now():
-                access_token = access_payload.getNewToken()
-                refresh_token = refresh_payload.getNewToken()
-
-            else:
-                access_token = access_payload.getToken()
-                refresh_token = refresh_payload.getToken()
-
-            user = User.objects.get(
-                id=access_payload.userID, username=access_payload.username
-            )
-
-            request.user = user
-            request.headers.__setattr__("access", access_token)
-            request.headers.__setattr__("refresh", refresh_token)
-            return view_func(request, *args, **kwargs) or JsonResponse(
-                {"error": DEFAULT_ERROR}, status=403
-            )
-
-        except jwt.ExpiredSignatureError:
-            return JsonResponse({"error": "Token expired"}, status=401)
-
-        except jwt.InvalidTokenError:
-            return JsonResponse({"error": "Invalid token"}, status=401)
-
-        except User.DoesNotExist:
-            return JsonResponse({"error": "User not found"}, status=401)
-
-        except Exception as e:
-            return JsonResponse({"error": DEFAULT_ERROR}, status=500)
 
     return _wrapped_view
 
@@ -686,7 +486,7 @@ def pdf_access(view_func: typing.Callable[..., HttpResponse | None]):
 
             return view_func(request, *args, **kwargs) or HttpResponse(status=404)
 
-        except Exception as e:
+        except Exception:
             return HttpResponse(status=404)
 
     return _wrapped_view
@@ -733,45 +533,3 @@ def token_check(database: RedisDataBase, close_after: bool = True):
         return _wrapped_view
 
     return __check__
-
-
-def read_body_as_json(view_func: typing.Callable[..., HttpResponse | None]):
-    @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs):
-        try:
-            if request.method not in ["GET", "POST", "PUT", "DELETE"]:
-                raise ValueError("Invalid Request Method")
-            request.__setattr__(request.method, json.loads(request.body))
-        except Exception:
-            pass
-
-        return view_func(request, *args, **kwargs) or HttpResponse(status=403)
-
-    return _wrapped_view
-
-
-def read_body_as_form(view_func: typing.Callable[..., HttpResponse | None]):
-    @wraps(view_func)
-    def _wrapped_view(request: HttpRequest, *args, **kwargs):
-        try:
-            if request.method not in ["GET", "POST", "PUT", "DELETE"]:
-                raise ValueError("Invalid Request Method")
-            request.__setattr__(request.method, QueryDict(request.body))
-        except Exception as e:
-            pass
-
-        return view_func(request, *args, **kwargs)
-
-    return _wrapped_view
-
-
-class JwtToken(typing.TypedDict):
-    access: str
-    refresh: str
-
-
-def getRequestToken(req: HttpRequest):
-    return JwtToken(
-        access=req.headers.__getattribute__("access"),
-        refresh=req.headers.__getattribute__("refresh"),
-    )

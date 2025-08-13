@@ -3,7 +3,7 @@ from Logs.loggers import APP_LOG, LogStructure, LogType
 from User.models import get_user
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Mobile.models import razorPayment
-from tools.url_auth import (
+from Mobile.url_auth import (
     getRequestToken,
     is_auth_get_student,
     is_auth_post_student,
@@ -28,10 +28,11 @@ def subscriber_check(req: HttpRequest):
 
     if is_auth_get_student(req):  # Check if user has paid money
         try:
-            cardID = req.GET.get("cardID")
+            cardID = str(req.GET.get("cardID"))
+
             paymentDone = razorPayment.objects.filter(
-                Q(user=user) | Q(cardID__cardID=cardID)
-            ).exists()
+                user__id=user.id, cardID__cardID__exact=cardID
+            )
 
             if paymentDone:
                 response["status"] = True

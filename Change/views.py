@@ -1,4 +1,3 @@
-from typing import Literal
 from django.urls import reverse  # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest  # type: ignore
@@ -18,12 +17,13 @@ from tools.url_auth import (
     get_user_from_session,
     htmx_response,
     is_auth_get,
+    is_auth_post,
     is_hx_post,
     is_hx_put,
     login_needed,
-    read_body_as_form,
     set_otp_response,
 )
+from Mobile.url_auth import read_body_as_form
 from constants import (
     EMAIL_KEY,
     OTP_MESSAGE,
@@ -36,82 +36,107 @@ from django.contrib.auth import logout  # type: ignore
 from tools.utils import SpecialHttpRequest
 
 
+############ UTILS ############
+def __dummy__(req: HttpRequest):
+    """
+    Warning: Never use this without auth middleware.
+
+    Fix for resend mail
+
+    """
+    emailOk = bool(req.__getattribute__("emailOk"))
+
+    context = setSwalAlert(title="OTP Mail")
+    if emailOk:
+        setSwalAlert(context, text="OTP has been send to your email", icon="success")
+    else:
+        setSwalAlert(context, text="Failed to send OTP Mail")
+
+    return render(req, "Change/HTMX/messages.html", context=context)
+
+
 ############ HTTP Request ############
 @login_needed()
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Username")
 def username_form(req: HttpRequest):
-    
     emailOk = bool(req.__getattribute__("emailOk"))
-    
+
     context = {"form": UsernameChange(), **setSwalAlert(title="OTP Mail")}
-    
+
     if emailOk:
         setSwalAlert(context, text="OTP has been send to your email", icon="success")
     else:
         setSwalAlert(context, text="Failed to send OTP Mail")
-    
+
     if is_auth_get(req):
-        return render(
-            req, "Change/HTML/username.html", context=context
-        )
+        return render(req, "Change/HTML/username.html", context=context)
+
+    elif is_auth_post(req):
+        return set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Username", set_once=False)(
+            view_func=__dummy__
+        )(req)
 
 
 @login_needed()
-@set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Username")
+@set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Email")
 def email_form(req: HttpRequest):
-    
     emailOk = bool(req.__getattribute__("emailOk"))
-    
+
     context = {"form": EmailChange(), **setSwalAlert(title="OTP Mail")}
-    
+
     if emailOk:
         setSwalAlert(context, text="OTP has been send to your email", icon="success")
     else:
         setSwalAlert(context, text="Failed to send OTP Mail")
-        
+
     if is_auth_get(req):
         return render(req, "Change/HTML/email.html", context=context)
+    elif is_auth_post(req):
+        return set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Email", set_once=False)(
+            view_func=__dummy__
+        )(req)
 
 
 @get_user_from_session
 @login_needed()
-@set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Username")
+@set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Password")
 def password_form(req: HttpRequest):
-    
     emailOk = bool(req.__getattribute__("emailOk"))
-    
+
     context = {"form": PasswordChange(), **setSwalAlert(title="OTP Mail")}
-    
+
     if emailOk:
         setSwalAlert(context, text="OTP has been send to your email", icon="success")
     else:
         setSwalAlert(context, text="Failed to send OTP Mail")
-        
+
     if is_auth_get(req):
-        return render(
-            req, "Change/HTML/password.html", context=context
-        )
+        return render(req, "Change/HTML/password.html", context=context)
+    elif is_auth_post(req):
+        return set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Password", set_once=False)(
+            view_func=__dummy__
+        )(req)
 
 
 @login_needed()
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Account Deletion")
 def delete_form(req: HttpRequest):
-
-    
     emailOk = bool(req.__getattribute__("emailOk"))
-    
+
     context = {"form": DeleteAccount(), **setSwalAlert(title="OTP Mail")}
-    
+
     if emailOk:
         setSwalAlert(context, text="OTP has been send to your email", icon="success")
     else:
         setSwalAlert(context, text="Failed to send OTP Mail")
-    
-    
+
     if is_auth_get(req):
-        return render(
-            req, "Change/HTML/delete.html", context=context
-        )
+        return render(req, "Change/HTML/delete.html", context=context)
+
+    elif is_auth_post(req):
+        return set_otp_response(
+            OTP_SUBJECT, OTP_MESSAGE, "Account Deletion", set_once=False
+        )(view_func=__dummy__)(req)
 
 
 ############ HTMX Request ############
@@ -266,6 +291,7 @@ def forgot_password(req: HttpRequest):
         return render(
             req, "Change/HTML/forgot.password.html", context={"form": ForgotEmail()}
         )
+
 
 @htmx_response
 @read_body_as_form

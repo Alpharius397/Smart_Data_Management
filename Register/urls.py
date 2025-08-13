@@ -1,12 +1,10 @@
 from django.urls import path
-from .views import *
+from .views import register_view, htmx_register_view, insti_change, branch_change
 
-app_name = 'Register'
+app_name = "Register"
 urlpatterns = [
- 	path('',register_view,name='index'),
- 	path('htmx',htmx_register_view,name='htmxRegister'),
-  	path('htmx/institute/',insti_change,name='htmxInstitute'),
-  	path('htmx/branch/',branch_change,name='htmxBranch'),
-	path('htmx/mobile/institute/',insti_change_mobile, name='htmxMobileInstitute'),
-  	path('htmx/mobile/branch/',branch_change_mobile, name='htmxMobileBranch'),
+    path("", register_view, name="index"),
+    path("htmx", htmx_register_view, name="htmxRegister"),
+    path("htmx/institute/", insti_change, name="htmxInstitute"),
+    path("htmx/branch/", branch_change, name="htmxBranch"),
 ]

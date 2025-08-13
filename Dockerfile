@@ -1,34 +1,31 @@
 # Use the official Python runtime image
-FROM python:3.13-slim
+FROM python:3.13.6-slim-trixie
 
 # Create the app directory
-RUN mkdir /app
-
-# Set the working directory inside the container
 WORKDIR /app
 
-# Set environment variables 
-# Prevents Python from writing pyc files to disk
-ENV PYTHONDONTWRITEBYTECODE=1
-
-#Prevents Python from buffering stdout and stderr
-ENV PYTHONUNBUFFERED=1 
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 
 
 RUN apt-get update && apt-get install -y netcat-openbsd
 
-# Gunicorn Socket
+# Gunicorn socket dir
 RUN mkdir -p /run && chmod 777 /run
 
 # Upgrade pip
-RUN pip3 install --upgrade pip 
+RUN pip install --upgrade pip 
 
-# Copy the Django project  and install dependencies
+# Copy requirements and install Python dependencies
 COPY require.txt .
+RUN pip install --no-cache-dir -r require.txt
 
-# run this command to install all dependencies 
-RUN pip3 install --no-cache-dir -r require.txt
-RUN playwright install --with-deps chromium
+# Install Playwright dependencies & Chromium
+RUN pip install playwright \
+    && playwright install --with-deps chromium
 
+# Copy the Django project code
 COPY . .
 
+# Make entry script executable
 RUN chmod +x entry.bash

@@ -6,7 +6,7 @@ from University.models import Branch
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Mobile.models import razorPayment
 from tools.typesCauseWhyNot import NullStr
-from tools.url_auth import (
+from Mobile.url_auth import (
     AccessPayLoad,
     RefreshPayLoad,
     getRequestToken,
@@ -15,21 +15,24 @@ from tools.url_auth import (
     jwt_required,
     read_body_as_json,
     student_auth_needed,
+    set_otp_student_response,
+    check_otp_student_response
 )
 from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from django.db import transaction  # type: ignore
 from User.models import User, Role, RoleType, get_user, is_student
 from Card.models import Card
-from tools.url_auth import check_otp_response, set_otp_response
 from Mobile.types import UserInfoResponse, LoginResponse, RegisterResponse, SubscriberResponse, CardResponse
 from Change.forms import UsernameChange, PasswordChange, EmailChange
+from Register.forms import RegisterForm
+from Login.forms import LoginForm
 
 @csrf_exempt
 @read_body_as_json
 def mobile_login(req: HttpRequest):
     if req.method == "POST":
-        response = LoginResponse(status=False, error=None, access=None, refresh=None)
+        response = LoginResponse(status=False, error=[], access=None, refresh=None)
         status: int = 500
 
         try:
@@ -44,12 +47,12 @@ def mobile_login(req: HttpRequest):
                 status = 200
 
             else:
-                response["error"] = "Incorrect Credentials"
+                response["error"] = ["Incorrect Credentials"]
                 status = 403
 
         except User.DoesNotExist:
             status = 401
-            response["error"] = "Invalid credentials"
+            response["error"] = ["Invalid credentials"]
 
         except Exception as e:
             APP_LOG.write_info(
@@ -58,7 +61,7 @@ def mobile_login(req: HttpRequest):
                 .set_meta(req)
                 .set_error(e)
             )
-            response["error"] = DEFAULT_ERROR
+            response["error"] = [DEFAULT_ERROR]
 
         return JsonResponse(data=response, safe=False, status=status)
 
@@ -67,7 +70,7 @@ def mobile_login(req: HttpRequest):
 @read_body_as_json
 def mobile_register(req: HttpRequest):
     if req.method == "POST":
-        response = RegisterResponse(access=None, refresh=None, status=False, error=None)
+        response = RegisterResponse(access=None, refresh=None, status=False, error=[])
         status = 500
         f = RegisterForm(req.POST)
 

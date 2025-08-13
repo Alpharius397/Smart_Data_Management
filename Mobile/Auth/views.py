@@ -1,9 +1,9 @@
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Register.errors import UserExists
-from University.models import Branch
+from University.models import Branch, University, Institute
 from constants import DEFAULT_ERROR
-from tools.url_auth import (
+from Mobile.url_auth import (
     AccessPayLoad,
     RefreshPayLoad,
     read_body_as_json,
@@ -32,8 +32,8 @@ def mobile_login(req: HttpRequest):
 
         try:
             if f.is_valid():
-                username = f.cleaned_data.get("user")
-                password = f.cleaned_data.get("password")
+                username = str(f.cleaned_data.get("username"))
+                password = str(f.cleaned_data.get("password"))
 
                 user = User.objects.get(username=username)
 
@@ -160,3 +160,69 @@ def user_info(req: HttpRequest):
             response["error"] = [DEFAULT_ERROR]
 
         return JsonResponse(data=response, safe=False, status=status)
+
+
+@csrf_exempt
+@read_body_as_json
+def get_university(req: HttpRequest):
+    if req.method == "GET":
+        uni: list[dict] = []
+
+        try:
+            uni = list(University.objects.all().values("id", "name"))
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+        return JsonResponse(data={"options": list(uni)}, safe=False)
+
+
+@csrf_exempt
+@read_body_as_json
+def get_institute(req: HttpRequest):
+    if req.method == "GET":
+        university = req.GET.get("university", "")
+        institute: list[dict] = []
+
+        try:
+            if university:
+                institute = list(
+                    Institute.objects.filter(university__id=university).values(
+                        "id", "name"
+                    )
+                )
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
+        return JsonResponse(data={"options": list(institute)}, safe=False)
+
+
+@csrf_exempt
+@read_body_as_json
+def get_branch(req: HttpRequest):
+    if req.method == "GET":
+        institute = req.GET.get("institute", "")
+        branch: list[dict] = []
+
+        try:
+            if institute:
+                branch = list(
+                    Branch.objects.filter(institute__id=institute).values("id", "name")
+                )
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
+        return JsonResponse(data={"options": list(branch)}, safe=False)

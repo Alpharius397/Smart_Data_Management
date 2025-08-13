@@ -37,7 +37,7 @@ class EmailChange(MainForm):
     OTP = forms.CharField(
         min_length=6,
         max_length=6,
-        validators=[validate_email],
+        validators=[OTP_VALID],
         required=True,
         help_text="Enter the OTP",
         label="OTP",

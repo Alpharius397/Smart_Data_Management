@@ -2,19 +2,23 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Username Change Form</title>
-    <link rel="stylesheet" href="{% static 'styles/Login/styles.css' %}">
-    <style>
-    </style>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Username Change Form</title>
+        <link rel="stylesheet" href="{% static 'styles/Login/styles.css' %}">
+    </head>
+    <body>
 
         <div class="login-container">
             <h2>Username Change</h2>
-            <form hx-post="{% url 'Change:htmxUserChange' %}" hx-target="this" hx-swap="afterend" onsubmit="event.preventDefault()" hx-trigger="click from:.login-button">
+
+            <form id="changeForm"
+                  hx-post="{% url 'Change:htmxUserChange' %}"
+                  hx-target="this"
+                  hx-swap="afterend"
+                  onsubmit="event.preventDefault()"
+                  hx-trigger="click from:.login-button">
                 {% csrf_token %}
 
                 {% for field in form %}
@@ -26,22 +30,33 @@
                             {{ field.errors }}
                         {% else %}
                             <p class="help_text">{{ field.help_text }} </p>
-                        
                         {% endif %}
-                        
                     </div>
                 {% endfor %}
+
                 <button class="login-button" onclick="formCheck(event, 'form')">Change</button>
             </form>
+
+            <div id="resend-otp-section" style="margin-top: 15px;">
+                <button id="resend-otp-btn"
+                        hx-post=""
+                        hx-target="this"
+                        hx-swap="afterend"
+                        disabled>
+                    Resend OTP (30s)
+                </button>
+            </div>
         </div>
 
-</body>
-<script src="{% static 'js/pages/main.js' %}"></script>
-<script src="{% static 'js/libs/htmx.js' %}"></script>
-<script src="{% static 'js/libs/swal.js' %}"></script>
-<script>
-    add_csrf();
-</script>
-{% include "HTMX/swal.html" %}
+    </body>
+    <script src="{% static 'js/pages/main.js' %}"></script>
+    <script src="{% static 'js/pages/change.js' %}"></script>
+    <script src="{% static 'js/libs/htmx.js' %}"></script>
+    <script src="{% static 'js/libs/swal.js' %}"></script>
+    <script>
+        add_csrf();
 
+
+    </script>
+    {% include "HTMX/swal.html" %}
 </html>

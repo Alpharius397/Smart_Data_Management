@@ -4,57 +4,80 @@ from User.errors import EmailAlreadyExists, OTPWrong, UserNameAlreadyExists
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from constants import DEFAULT_ERROR
-from tools.url_auth import (
+from Mobile.url_auth import (
+    get_user_from_body,
     getRequestToken,
     is_auth_get_student,
     is_auth_post_student,
     jwt_required,
     read_body_as_json,
     student_auth_needed,
+    set_otp_student_response,
+    check_otp_student_response,
 )
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from User.models import User, get_user
-from tools.url_auth import check_otp_response, set_otp_response
-from Change.forms import UsernameChange, PasswordChange, EmailChange, DeleteAccount
-from tools.mails import email_send, send_success_mail, send_delete_mail
+from Change.forms import (
+    ForgotEmail,
+    UsernameChange,
+    PasswordChange,
+    EmailChange,
+    DeleteAccount,
+)
+from tools.mails import send_success_mail, send_delete_mail
 from constants import OTP_MESSAGE, OTP_SUBJECT
 
 
-@csrf_exempt
-@jwt_required  # type: ignore
-@read_body_as_json
-@student_auth_needed
-def send_otp_mail(req: HttpRequest, type: Literal["username", "email", "password"]):
+def __nothing_to_see_here_trust_me__(req: HttpRequest):
     response = OtpResponse(status=False, error=[], **getRequestToken(req))
     status = 500
+    send_ok = req.__getattribute__("emailOk")
 
-    if is_auth_get_student(req):
-        otp = req.__getattribute__("otp")
-        user = get_user(req)
+    if send_ok:
+        response["status"] = True
+        status = 200
+    else:
+        response["error"] = ["Failed to send OTP"]
 
-        send_ok = False
+    return JsonResponse(data=response, status=status)
 
-        if otp:
-            send_ok = email_send(
-                OTP_SUBJECT.format(type.capitalize()),
-                user.email,
-                OTP_MESSAGE.format(type.capitalize(), otp),
-            )
 
-        if send_ok:
-            response["status"] = True
-            status = 200
-        else:
-            response["error"] = ["Failed to send OTP"]
+def __nothing_to_see_here__(req: HttpRequest):
+    response = {"status": False, "error": []}
+    status = 500
+    send_ok = req.__getattribute__("emailOk")
 
-        return JsonResponse(data=response, status=status)
+    if send_ok:
+        response["status"] = True
+        status = 200
+    else:
+        response["error"] = ["Failed to send OTP"]
+
+    return JsonResponse(data=response, status=status)
 
 
 @csrf_exempt
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
-@check_otp_response
+def send_otp_mail(req: HttpRequest, mailType: Literal["username", "email", "password"]):
+    if is_auth_get_student(req):
+        return set_otp_student_response(
+            OTP_SUBJECT, OTP_MESSAGE, mailType.capitalize()
+        )(__nothing_to_see_here_trust_me__)(req)
+
+    elif is_auth_post_student(req):
+        return set_otp_student_response(
+            OTP_SUBJECT, OTP_MESSAGE, mailType.capitalize(), set_once=False
+        )(__nothing_to_see_here_trust_me__)(req)
+
+
+@csrf_exempt
+@jwt_required  # type: ignore
+@read_body_as_json
+@get_user_from_body
+@student_auth_needed
+@check_otp_student_response
 def password_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = PasswordChange(req.POST)
@@ -82,9 +105,6 @@ def password_form(req: HttpRequest):
                 status = 401
                 response["error"] = [e.get_error()]
 
-                status = 403
-                response["error"] = [g.get_error()]
-
             except Exception as e:
                 APP_LOG.write_info(
                     LogStructure()
@@ -105,7 +125,7 @@ def password_form(req: HttpRequest):
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
-@check_otp_response
+@check_otp_student_response
 def email_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = EmailChange(req.POST)
@@ -160,7 +180,7 @@ def email_form(req: HttpRequest):
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
-@check_otp_response
+@check_otp_student_response
 def username_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = UsernameChange(req.POST)
@@ -215,7 +235,7 @@ def username_form(req: HttpRequest):
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
-@check_otp_response
+@check_otp_student_response
 def delete_form(req: HttpRequest):
     if is_auth_post_student(req):
         response = DeleteResponse(status=False, error=[], **getRequestToken(req))
@@ -254,3 +274,27 @@ def delete_form(req: HttpRequest):
             status = 400
 
         return JsonResponse(data=response, status=status)
+
+
+@csrf_exempt
+@read_body_as_json
+def forgot_password(req: HttpRequest):
+    if req.method == "POST":
+        try:
+            email = str(req.POST.get("Email"))
+
+            user = User.objects.get(email=email)
+
+            req.user = user
+
+        except Exception as e:
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
+        return set_otp_student_response(
+            OTP_SUBJECT, OTP_MESSAGE, "password", set_once=False
+        )(__nothing_to_see_here__)(req)

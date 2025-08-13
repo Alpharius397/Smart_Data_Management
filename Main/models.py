@@ -18,31 +18,33 @@ from enum import Enum
 
 P = ParamSpec("P")
 
+
 class BaseDict(TypedDict):
     pass
+
 
 type TypedDictType = type[BaseDict]
 
 # class UniversityHeader:
-    
+
 #     class UniversityDict(TypedDict):
 #         university:int
 #         institute:int
 #         branch:int
-    
+
 #     def __init__(self, university:int, institute:int, branch:int) -> None:
 #         self.university: int = university
 #         self.institute: int = institute
 #         self.branch: int = branch
-    
+
 #     @staticmethod
 #     def get(document:dict) -> 'UniversityHeader':
 #         university:int = Utils.getInt(document, "header", "post", "university")
 #         institute:int = Utils.getInt(document, "header", "post", "institute")
 #         branch:int = Utils.getInt(document, "header", "post", "branch")
-        
+
 #         return UniversityHeader(university, institute, branch)
-    
+
 #     def to_dict(self) -> UniversityDict:
 #         return UniversityHeader.UniversityDict(**{
 #             "university": self.university,
@@ -51,12 +53,12 @@ type TypedDictType = type[BaseDict]
 #         })
 
 # class Header:
-    
+
 #     class HeaderDict(TypedDict):
 #         post: UniversityHeader.UniversityDict
 #         uploader: int
 #         manager: list[int]
-    
+
 #     def __init__(self, post: UniversityHeader, uploader:int, manager:list[int]) -> None:
 #         self.post = post
 #         self.uploader: int = uploader
@@ -69,30 +71,30 @@ type TypedDictType = type[BaseDict]
 #         manager = list(map(int,Utils.getList(document, "header", "manager")))
 
 #         return Header(post,uploader,manager)
-    
+
 #     def to_dict(self) -> HeaderDict:
 #         return Header.HeaderDict(**{
 #             "post": self.post.to_dict(),
 #             "uploader": self.uploader,
 #             "manager": self.manager
 #         })
-    
+
 # class DataHeader:
-    
+
 #     class DataHeaderDict(TypedDict):
 #         columns: list[str]
 #         image_columns: list[int]
 #         file_name: str
-    
+
 #     def __init__(self, columns: list[str], image_columns: list[int], file_name: str) -> None:
 #         self.columns = columns
 #         self.image_columns = image_columns
 #         self.file_name = file_name
-    
+
 #     @staticmethod
-#     def get(columns: list[str], image_columns: list[int], file_name: str, **kwargs) -> 'DataHeader':        
+#     def get(columns: list[str], image_columns: list[int], file_name: str, **kwargs) -> 'DataHeader':
 #         return DataHeader(columns, image_columns, file_name)
-    
+
 #     def to_dict(self) -> DataHeaderDict:
 #         return DataHeader.DataHeaderDict(**{
 #             "columns": self.columns,
@@ -101,7 +103,7 @@ type TypedDictType = type[BaseDict]
 #         })
 
 # class Feed:
-    
+
 #     class FeedDict(TypedDict):
 #         locked:bool
 #         issued:bool
@@ -110,7 +112,7 @@ type TypedDictType = type[BaseDict]
 #         status:bool|None
 #         feed:str|None
 #         index:int
-    
+
 #     def __init__(self, locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int) -> None:
 #         self.locked = locked
 #         self.issued = issued
@@ -119,11 +121,11 @@ type TypedDictType = type[BaseDict]
 #         self.status = status
 #         self.feed = feed
 #         self.index = index
-        
+
 #     @staticmethod
 #     def get(locked:bool, issued:bool, time_of_lock:str|None, time_of_issue:str|None, status:bool|None, feed:str|None, index:int, **kwargs) -> 'Feed':
 #         return Feed(locked, issued, time_of_lock, time_of_issue, status, feed, index)
-    
+
 #     def to_dict(self) -> FeedDict:
 #         return Feed.FeedDict(**{
 #             "locked": self.locked,
@@ -136,45 +138,45 @@ type TypedDictType = type[BaseDict]
 #         })
 
 # class RowData:
-    
+
 #     class RowDataDict(TypedDict):
 #         row: list[str | int]
 #         feed: Feed.FeedDict
-        
+
 #     def __init__(self, row: list[str | int], feed: Feed) -> None:
 #         self.row = row
 #         self.feed = feed
-        
+
 #     @staticmethod
 #     def get(row: list[str | int], feed: dict[str, str] | dict[str, int] | dict[str, None]):
 #         return RowData(row, Feed.get(**feed))
-    
+
 #     def to_dict(self) -> RowDataDict:
 #         return RowData.RowDataDict(**{
 #             "row": self.row,
 #             "feed": self.feed.to_dict()
 #         })
-    
+
 # class DataExcel:
-    
+
 #     class DataExcelDict(TypedDict):
 #         excel: list[RowData.RowDataDict]
 #         header: DataHeader.DataHeaderDict
-        
+
 #     def __init__(self, excel: list[RowData], header: DataHeader):
 #         self.excel = excel
 #         self.header = header
-    
+
 #     @staticmethod
 #     def get(document:dict) -> 'DataExcel':
-        
+
 #         def default_data_row_dict(x: dict[str, str | list], idx:int):
 #             row = {'row':[], 'feed':Feed(False,False,None,None,None,None,idx).to_dict()}
 #             for key,val in x.items():
 #                 if(key in row):
 #                     row[key] = val
 #             return row
-        
+
 #         def default_data_header_dict(x: dict[str, str | list]):
 #             row = {'columns':[], 'image_columns':[], 'file_name':''}
 #             for key,val in x.items():
@@ -188,7 +190,7 @@ type TypedDictType = type[BaseDict]
 #         excel = [RowData.get(**default_data_row_dict(x,idx)) for idx, x in enumerate(rows_of_excel)]
 #         header = DataHeader.get(**default_data_header_dict(data_header))
 #         return DataExcel(excel, header)
-    
+
 #     def to_dict(self) -> DataExcelDict:
 #         return DataExcel.DataExcelDict(**{
 #             "excel": list(map(lambda x: x.to_dict(), self.excel)),
@@ -196,25 +198,25 @@ type TypedDictType = type[BaseDict]
 #         })
 
 # class Document:
-    
+
 #     class DocumentDict(TypedDict):
 #         _id:str
 #         header: Header.HeaderDict
 #         data: DataExcel.DataExcelDict
-        
+
 #     def __init__(self, _id:str, header: Header, data: DataExcel) -> None:
 #         self.header = header
 #         self.data = data
 #         self._id = _id
-    
+
 #     @staticmethod
 #     def get(document: dict) -> 'Document':
 #         header = Header.get(document)
 #         data = DataExcel.get(document)
 #         _id = Utils.getStr(document, "_id")
-        
+
 #         return Document(_id, header, data)
-    
+
 #     def to_dict(self) -> DocumentDict:
 #         return Document.DocumentDict(**{
 #             "_id": self._id,
@@ -225,7 +227,7 @@ type TypedDictType = type[BaseDict]
 # class MongoFindQuery(NamedTuple):
 #     conditions:Condition
 #     filters: Filter
-    
+
 #     def __iter__(self) -> Iterator[Condition | Filter]:
 #         yield self.conditions
 #         yield self.filters
@@ -241,16 +243,16 @@ type TypedDictType = type[BaseDict]
 # class MongoDeleteQuery(NamedTuple):
 #     filters:Condition
 #     updates:Update
-    
+
 #     def __iter__(self) -> Iterator[Condition | Update]:
 #         yield self.filters
 #         yield self.updates
-        
+
 # class MongoPipeline(NamedTuple):
 #     match_pipeline:dict
 #     search_pipeline:dict
 #     slice_pipeline:dict
-    
+
 #     def __iter__(self) -> Iterator[dict]:
 #         yield self.match_pipeline
 #         yield self.search_pipeline
@@ -296,8 +298,8 @@ type TypedDictType = type[BaseDict]
 #         {
 #             header:{
 #                 post:{
-#                     university, 
-#                     institute, 
+#                     university,
+#                     institute,
 #                     branch
 #                 }
 #                 uploader,
@@ -313,7 +315,7 @@ type TypedDictType = type[BaseDict]
 #                                 issued,
 #                                 time_of_issue,
 #                                 status,
-#                                 feed,   
+#                                 feed,
 #                                 index
 #                             }
 #                         }
@@ -328,57 +330,57 @@ type TypedDictType = type[BaseDict]
 #         }
 #     """
 #     def __init__(self) -> None:
-        
+
 #         self.header:dict[str, dict[str, str | int | None] | list | str | int | None] = {'post':{'university':None,'institute':None,'branch':None},'uploader':None,'manager':[]}
 #         self.data_header:dict[str, str | list | None] = {'file_name':None,'image_columns':[],'columns':[]}
 #         self.data_feed:dict[str, str | int | None] = {'index':0,'locked':False,'time_of_lock':None,'status':None,'feed':None,'time_of_issue':None,'issued':False}
 #         self.data:list[dict[str, str | list | dict]]= []
 #         self.feed:dict[str, dict[str,str]] = {}
-    
+
 #     def __generate_feed_idx(self, idx:int) -> dict[str, str | int | None]:
 #         temp = copy(self.data_feed)
 #         temp.update({'index':idx})
 #         return temp
-        
+
 #     def add_post(self, university:int,institute:int, branch:int) -> 'MongoTemplate':
 #         self.header['post'] = {'university':university,'institute':institute,'branch':branch}
 #         return self
-    
+
 #     def add_uploader(self, uploader:int) -> 'MongoTemplate':
 #         self.header['uploader'] = uploader
 #         return self
-    
+
 #     def add_file(self, file_name:str) -> 'MongoTemplate':
 #         self.data_header['file_name'] = file_name
 #         return self
-        
+
 #     def add_image(self, image_col:list[int]) -> 'MongoTemplate':
 #         self.data_header['image_columns'] = image_col
 #         return self
-    
+
 #     def add_excel(self, excel:pd.DataFrame) -> 'MongoTemplate':
 
 #         self.data = [{'row':list(i[1:]), 'feed':self.__generate_feed_idx(i[0])} for i in excel.itertuples()]
 
 #         self.data_header['columns'] = list(excel.columns)
-        
+
 #         return self
-    
+
 #     def add_manager(self, managers:list[int]) -> 'MongoTemplate':
 #         self.header['manager'] = managers
 #         return self
-    
+
 #     def get_json(self) -> dict:
 #         return {'header':self.header,'data':{'excel':self.data,'header':self.data_header}}
-    
+
 #     @staticmethod
 #     def _buffer_find_query_factory(column_name:str, start:int, limit:int) -> MongoFindQuery:
 #         conditions:Condition = {}
 #         filters:Filter = {}
-        
+
 #         if(limit==-1):
 #             filters.update({column_name:{"$slice":[start, 1]}})
-            
+
 #         else:
 #             filters.update({column_name:{"$slice":[start, limit]}})
 
@@ -388,16 +390,16 @@ type TypedDictType = type[BaseDict]
 #     def _full_find_query_factory(column_name:str) -> MongoFindQuery:
 #         conditions:Condition = {}
 #         filters:Filter = {}
-        
+
 #         filters.update({column_name:1})
-        
+
 #         return MongoFindQuery(conditions, filters)
-    
+
 #     @staticmethod
 #     def _single_update_query(values:dict[str, str | dict | list]) -> MongoUpdateQuery:
 #         where:Where = {}
 #         updates:Update = {}
-        
+
 #         where.update({i:{"$exists":True} for i in values.keys()})
 #         updates.update({"$set":{column_name:value for column_name, value in values.items() }})
 #         return MongoUpdateQuery(where=where, updates=updates)
@@ -407,7 +409,7 @@ type TypedDictType = type[BaseDict]
 #         res = MongoTemplate._full_find_query_factory("header")
 #         res.conditions.update(conditions)
 #         return res
-    
+
 #     @staticmethod
 #     def get_file_name_query(conditions:dict = {}) -> MongoFindQuery:
 #         res = MongoTemplate._full_find_query_factory("data.header.file_name")
@@ -425,63 +427,63 @@ type TypedDictType = type[BaseDict]
 #         data_part =  MongoTemplate._buffer_find_query_factory("data.excel", start, limit)
 #         column_part =  MongoTemplate._full_find_query_factory("data.header")
 #         header_part =  MongoTemplate._full_find_query_factory("header")
-        
+
 #         return MongoTemplate.merge_everything(data_part, column_part, header_part,initial_a=conditions)
-    
+
 #     @staticmethod
 #     def update_query(where:dict[str, str | dict | list] = {}, updates:dict[str, str | dict | list] = {}) -> MongoUpdateQuery:
 #         res =  MongoTemplate._single_update_query(updates)
-        
+
 #         res.where.update(where)
-        
+
 #         return res
 
 #     @staticmethod
 #     def image_data_update_query(where:dict[str, str | dict | list] = {}, updates:dict[str, str | dict | list] = {}) -> MongoUpdateQuery:
 #         res =  MongoTemplate._single_update_query(updates)
-        
+
 #         res.where.update(where)
-        
+
 #         return res
-    
+
 #     @staticmethod
 #     def get_dash_search_buffer_query(conditions:dict, project: dict, start:int, limit: int) -> MegaBFG4000Launcher:
 #         match_pipeline = {"$match":conditions}
-        
+
 #         skip_pipeline = {"$skip": start}
-        
+
 #         limit_pipeline = {"$limit": limit}
-        
+
 #         project_pipeline = {"$project":project}
-        
+
 #         return MegaBFG4000Launcher(project_pipeline, match_pipeline, skip_pipeline, limit_pipeline)
 
 #     @staticmethod
 #     def get_search_buffer_query(condition:dict, column_index:str, locked: str, status: str, issued: str, value:str, start:int, limit:int) -> MongoPipeline:
-        
+
 #         MAPPING: dict[str, bool | None] = {'true':True, 'false': False, 'none': None}
-        
+
 #         def state_value(value: str) -> tuple[bool, bool | None]:
 #             if(value in MAPPING):
 #                 return True, MAPPING[value]
 #             else:
 #                 return False, None
-        
+
 #         def int_convert(val: str) -> tuple[bool, int]:
 #             try:
 #                 return True, int(val)
 #             except:
 #                 return False, int()
-        
+
 #         match_pipeline = {"$match":{**condition}}
-        
+
 #         conditions:list[ dict[str, dict[str, dict[str, list[str | int]] | str] | list ]] =[]
-        
+
 #         column_flag, column_state = int_convert(column_index)
 #         locked_flag, locked_state = state_value(locked)
 #         status_flag, status_state = state_value(status)
 #         issued_flag, issued_state = state_value(issued)
-        
+
 #         if(column_flag and value):
 #             conditions.append(
 #                 {
@@ -494,34 +496,34 @@ type TypedDictType = type[BaseDict]
 #                     }
 #                 }
 #             )
-            
+
 #         if(locked_flag):
 #             conditions.append(
 #                 {
 #                     '$eq':[ # locked check
-#                             '$$i.feed.locked', locked_state                                                            
+#                             '$$i.feed.locked', locked_state
 #                         ]
 #                 }
 #             )
-        
+
 #         if(status_flag):
 #             conditions.append(
 #                 {
 #                     '$eq':[ # status check
-#                         '$$i.feed.status', status_state                                                            
+#                         '$$i.feed.status', status_state
 #                     ]
 #                 }
 #             )
-        
+
 #         if(issued_flag):
 #             conditions.append(
 #                 {
 #                     '$eq':[ # issued check
-#                         '$$i.feed.issued', issued_state                                                            
+#                         '$$i.feed.issued', issued_state
 #                     ]
 #                 }
 #             )
-            
+
 #         search_pipeline = {
 #                             '$project':{
 #                                 "header":1,
@@ -537,7 +539,7 @@ type TypedDictType = type[BaseDict]
 #                                 }
 #                             }
 #                         }
-        
+
 #         slice_pipeline = {
 #                             '$project':{
 #                                 "data.header":1,
@@ -547,9 +549,9 @@ type TypedDictType = type[BaseDict]
 #                                 },
 #                             }
 #                         }
-                
+
 #         return MongoPipeline(match_pipeline,search_pipeline,slice_pipeline)
-    
+
 #     @staticmethod
 #     def get_quick_buffer_query(condition: dict, column_index: int, value: str) -> MegaBFG5000Launcher:
 #         match_pipeline = {
@@ -608,474 +610,524 @@ type TypedDictType = type[BaseDict]
 #             }
 #         }
 #         return MegaBFG5000Launcher(match_pipeline,extract_pipeline,sort_pipeline,search_pipeline,slice_pipeline)
-    
+
 #     @staticmethod
 #     def merge_everything(*query:MongoFindQuery|MongoDeleteQuery|MongoUpdateQuery|MergeQuery, initial_a:dict = {}, initial_b:dict = {}) -> MergeQuery:
-        
+
 #         res = MergeQuery(initial_a, initial_b)
-        
+
 #         for a,b in query:
 #             res.first.update(a)
 #             res.second.update(b)
-            
+
 #         return res
 
 # class MongoDB(NamedTuple):
 #     database:str
 #     collection:str
-    
+
 # class MongoConnection:
-    
+
 #     log = MONGO_LOG
-    
+
 #     def __init__(self) -> None:
 #         self.connection:pymongo.MongoClient = pymongo.MongoClient(settings.MONGO_URL)
 #         self.collection:pymongo.collection.Collection | None = None
-    
+
 #     def is_connected(self) -> bool:
 #         return (self.collection is not None)
-    
+
 #     def connect(self) -> 'MongoConnection':
 
 #         try:
 #             self.connection.server_info()
-#             self.collection = self.connection.get_database(settings.MONGO_CRED.database).get_collection(settings.MONGO_CRED.collection)            
+#             self.collection = self.connection.get_database(settings.MONGO_CRED.database).get_collection(settings.MONGO_CRED.collection)
 #             data_url=', '.join([f"mongodb://{host}:{port}/" for host,port in self.connection.nodes])
 #             self.log.write_info(f"Established Connection to {data_url}")
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(msg = self.log.get_error_info(e))
-            
-#         return self            
-    
+
+#         return self
+
 #     def find_one(self, condition:dict, filters:dict = {}) -> Document | None:
 #         res: Document | None = None
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return res
-        
+
 #         try:
 #             val = self.collection.find_one(condition,filters)
 #             self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
-            
+
 #             if(val is None):
 #                 return None
 
 #             res = Document.get(val)
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-        
+
 #         return res
-    
+
 #     def find_all(self, condition:dict, filters:dict = {}) -> list[Document]:
 #         res:list[Document] = []
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return res
-        
+
 #         try:
 #             vals = self.collection.find(condition,filters).to_list()
 #             res = list(map(Document.get, vals))
 #             self.log.write_info(f"Applying search with filters '{condition}' and displaying '{filters}'")
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-        
+
 #         return res
-    
+
 #     def update_one(self, condition:dict, update:dict) -> bool:
 #         success:bool = False
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return success
-        
+
 #         try:
 #             _ = self.collection.update_one(condition,update)
 #             print(_)
 #             success = bool(_.matched_count==1)
 #             self.log.write_info(f"Applying updation '{update}' to document '{condition}'")
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-            
+
 #         return success
-    
-    
+
+
 #     def delete_one(self, condition:dict) -> bool:
 #         success:bool = False
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return success
-        
+
 #         try:
 #             _ = self.collection.delete_one(condition)
-            
+
 #             success = bool(_.deleted_count==1)
 #             self.log.write_info(f"Applying deletion to document '{condition}'")
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-            
+
 #         return success
-    
+
 #     def insert_one(self, doc:MongoTemplate) -> str | None:
-        
+
 #         mongoID:str | None = None
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return mongoID
-        
+
 #         try:
 #             _ = self.collection.insert_one(doc.get_json())
 #             mongoID = _.inserted_id
 #             self.log.write_info(f"Inserting document with mongoID '{mongoID}'")
-            
-#         except Exception as e:            
+
+#         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-            
+
 #         return mongoID
-    
+
 #     def replace_one(self, condition:dict, doc: MongoTemplate) -> bool:
-        
+
 #         success:bool = False
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return success
-        
+
 #         try:
 #             _ = self.collection.replace_one(condition,doc.get_json())
 #             success = bool(_.matched_count==1)
 #             self.log.write_info(f"Replacing document with filters '{condition}'")
-            
+
 #         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-        
+
 #         return success
-    
+
 #     def close(self) -> None:
 #         try:
 #             self.connection.close()
 #             self.log.write_info("Closing MongoDB connection")
 #         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-    
+
 #     def aggregate(self, *pipeline:dict[str, Union[dict,str]],) -> list[dict[str, Any]]:
 #         result:list[dict[str,Any]] = []
-        
+
 #         if(self.collection is None):
 #             self.log.write_error("Mongo Connection Failed")
 #             return result
-        
-#         try: 
+
+#         try:
 #             self.log.write_info(f"Aggregating pipeline with {list(pipeline)}")
 #             result = self.collection.aggregate([*pipeline]).to_list()
-            
+
 #         except Exception as e:
 #             self.log.write_error(self.log.get_error_info(e))
-        
+
 #         return result
 
 
 class RedisDataBase(Enum):
-    """ 
-        Base Idea: 
-
-            USER_TOKEN = Stores all user related token
-            GOLANG_TOKEN = Store golang-exe assigned token
-            OTP_TOKEN = Store otp-token
-            EMAIL_TOKEN = Store forgot-password token
-            CARD_READ_TOKEN = Store card read token
-            CARD_WRITE_TOKEN = Store card write token
-            
-            Adv:
-                1) Token Sharing
-                2) Auto-Refresh Token
-                3) Cross-platform
-                4) Separation of Concern
-                5) Immediate Resource removal on changes
-            Disadvantages:
-                1) Redis Overuse
     """
-    
-    USER_TOKEN = 2 # store user-assigned token
-    OTP_TOKEN = 3 # store otp-token
-    EMAIL_TOKEN = 4 # store forgot-password token
-    CARD_READ_TOKEN = 5 #  store card read token
-    CARD_WRITE_TOKEN = 6 #  store card write token
-    PDF_TOKEN = 7 #  store pdf generate token
+    Base Idea:
+
+        USER_TOKEN = Stores all user related token
+        GOLANG_TOKEN = Store golang-exe assigned token
+        OTP_TOKEN = Store otp-token
+        EMAIL_TOKEN = Store forgot-password token
+        CARD_READ_TOKEN = Store card read token
+        CARD_WRITE_TOKEN = Store card write token
+
+        Adv:
+            1) Token Sharing
+            2) Auto-Refresh Token
+            3) Cross-platform
+            4) Separation of Concern
+            5) Immediate Resource removal on changes
+        Disadvantages:
+            1) Redis Overuse
+    """
+
+    USER_TOKEN = 2  # store user-assigned token
+    OTP_TOKEN = 3  # store otp-token
+    EMAIL_TOKEN = 4  # store forgot-password token
+    CARD_READ_TOKEN = 5  #  store card read token
+    CARD_WRITE_TOKEN = 6  #  store card write token
+    PDF_TOKEN = 7  #  store pdf generate token
+
 
 class WriteToken(TypedDict):
     ID: int
     processing: bool
     key: str
 
+
 class PdfToken(TypedDict):
     ID: int
     processing: bool
+
 
 class ReadToken(TypedDict):
     ID: int
     processing: bool
     data: str
 
+
 class RedisConnection:
-    
-    MAX_DURATION:int = 3
+    MAX_DURATION: int = 3
     """ Default expiry duration in `minutes` """
-    
+
     log = REDIS_LOG
-    
-    @staticmethod        
-    def get_secs_from_minutes(minutes:int) -> int: 
-        return minutes*60
-    
+
+    @staticmethod
+    def get_secs_from_minutes(minutes: int) -> int:
+        return minutes * 60
+
     def __init__(self, dataBase: RedisDataBase) -> None:
         self.r: redis.Redis | None = None
         self.db = dataBase
-        
-    def connect(self) -> 'RedisConnection':
+
+    def connect(self) -> "RedisConnection":
         try:
-            self.r = redis.Redis(**settings.REDIS, decode_responses=True, db=self.db.value)
+            self.r = redis.Redis(
+                **settings.REDIS, decode_responses=True, db=self.db.value
+            )
             self.log.write_info(f"Connecting to Redis Database {self.db.name}")
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return self
-    
-    def getText(self, key:str) -> str:
-        
-        if(self.r is None):
+
+    def getText(self, key: str) -> str:
+        if self.r is None:
             return ""
-        
+
         try:
             value = self.r.get(key)
-            
-            assert (isinstance(value, str)), f"For key {key}: Value must be string. Got {type(value)}"
-            
+
+            assert isinstance(
+                value, str
+            ), f"For key {key}: Value must be string. Got {type(value)}"
+
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return value
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return ""
-    
-    def getDict(self, key:str) -> dict:
-        
-        if(self.r is None):
+
+    def getDict(self, key: str) -> dict:
+        if self.r is None:
             return {}
-        
+
         try:
             value = self.r.get(key)
-            
-            assert (isinstance(value, str)), f"For key {key}: Value must be string. Got {type(value)}"
-            
+
+            assert isinstance(
+                value, str
+            ), f"For key {key}: Value must be string. Got {type(value)}"
+
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return json.loads(value)
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return {}
-    
-    def setDict(self, key:str, value:dict | TypedDictType, duration:int = 0) -> bool:
-        
-        duration = RedisConnection.MAX_DURATION if( duration >= 0 ) else duration
-        
-        if(self.r is None):
+
+    def setDict(
+        self,
+        key: str,
+        value: dict | TypedDictType,
+        duration: int = 0,
+        set_once: bool = False,
+    ) -> bool:
+        duration = RedisConnection.MAX_DURATION if (duration >= 0) else duration
+
+        if self.r is None:
             return False
-        
+
         try:
             jsonText = json.dumps(value)
-            self.r.set(key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration))
-            self.log.write_info(f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}")
+            self.r.set(
+                key,
+                jsonText,
+                ex=RedisConnection.get_secs_from_minutes(duration),
+                nx=set_once,
+            )
+            self.log.write_info(
+                f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}"
+            )
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
         return False
-    
-    def setText(self, key:str, value:str,  duration:int = 0) -> bool:
-        
-        duration = RedisConnection.MAX_DURATION if( duration >= 0 ) else duration
-        
-        if(self.r is None):
+
+    def setText(
+        self, key: str, value: str, duration: int = 0, set_once: bool = False
+    ) -> bool:
+        duration = RedisConnection.MAX_DURATION if (duration >= 0) else duration
+
+        if self.r is None:
             return False
-        
+
         try:
             jsonText = value
-            self.r.set(key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration))
-            self.log.write_info(f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}")
+            self.r.set(
+                key,
+                jsonText,
+                ex=RedisConnection.get_secs_from_minutes(duration),
+                nx=set_once,
+            )
+            self.log.write_info(
+                f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}"
+            )
             return True
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
         return False
-    
+
     def unset(self, key: str) -> bool:
-        
-        if(self.r is None):
+        if self.r is None:
             return False
-        
+
         try:
             self.r.unlink(key)
-            self.log.write_info(f"Unsetting Key: {key} in Database: {self.db.name}")      
+            self.log.write_info(f"Unsetting Key: {key} in Database: {self.db.name}")
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return False
-    
+
     def close(self) -> bool:
-        
-        if(self.r is None):
+        if self.r is None:
             return False
-        
+
         try:
             self.r.close()
-            self.log.write_info(f"Closing Redis connection for Database: {self.db.name}")
+            self.log.write_info(
+                f"Closing Redis connection for Database: {self.db.name}"
+            )
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-        
+
         return False
-    
+
+    def exists(self, key: str) -> bool:
+        if self.r is None:
+            return False
+
+        try:
+            a = bool(self.r.exists(key))
+            self.log.write_error(
+                f"Checking Database: {self.db.name} for key: '{key}'. Found it: {a}"
+            )
+            return a
+        except Exception as e:
+            self.log.write_error(self.log.get_error_info(e))
+
+        return False
+
     def __enter__(self):
         return self.connect()
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-        
+
+
 class AsyncRedisConnection:
-    
-    MAX_DURATION:int = 3
+    MAX_DURATION: int = 3
     """ Default expiry duration in `minutes` """
-    
+
     log = REDIS_LOG
-    
-    @staticmethod        
-    def get_secs_from_minutes(minutes:int) -> int: 
-        return minutes*60
-    
+
+    @staticmethod
+    def get_secs_from_minutes(minutes: int) -> int:
+        return minutes * 60
+
     def __init__(self, dataBase: RedisDataBase) -> None:
         self.r: aRedis.Redis | None = None
         self.db = dataBase
-        
-    async def connect(self) -> 'AsyncRedisConnection':
+
+    async def connect(self) -> "AsyncRedisConnection":
         try:
-            self.r = await aRedis.Redis(**settings.REDIS, decode_responses=True, db=self.db.value)
-            
+            self.r = await aRedis.Redis(
+                **settings.REDIS, decode_responses=True, db=self.db.value
+            )
+
             self.log.write_info(f"Connecting to Redis Database {self.db.name}")
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return self
-    
-    async def getText(self, key:str) -> str:
-        
-        if(self.r is None):
+
+    async def getText(self, key: str) -> str:
+        if self.r is None:
             return ""
-        
+
         try:
             value = await self.r.get(key)
-            
-            assert (isinstance(value, str)), f"Value must be string. Got {type(value)}"
-            
+
+            assert isinstance(value, str), f"Value must be string. Got {type(value)}"
+
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return value
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return ""
-    
-    async def getDict(self, key:str) -> dict:
-        
-        if(self.r is None):
+
+    async def getDict(self, key: str) -> dict:
+        if self.r is None:
             return {}
-        
+
         try:
             value = await self.r.get(key)
-            
-            assert (isinstance(value, str)), f"Value must be string. Got {type(value)}"
-            
+
+            assert isinstance(value, str), f"Value must be string. Got {type(value)}"
+
             self.log.write_info(f"Fetching Key: {key} in Database: {self.db.name}")
             return json.loads(value)
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return {}
-    
-    async def setDict(self, key:str, value:dict | TypedDictType, duration:int = 0) -> bool:
-        
-        duration = RedisConnection.MAX_DURATION if( duration >= 0 ) else duration
-        
-        if(self.r is None):
+
+    async def setDict(
+        self, key: str, value: dict | TypedDictType, duration: int = 0
+    ) -> bool:
+        duration = RedisConnection.MAX_DURATION if (duration >= 0) else duration
+
+        if self.r is None:
             return False
-        
+
         try:
             jsonText = json.dumps(value)
-            await self.r.set(key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration))
-            self.log.write_info(f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}")
+            await self.r.set(
+                key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration)
+            )
+            self.log.write_info(
+                f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}"
+            )
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
         return False
-    
-    async def setText(self, key:str, value:str,  duration:int = 0) -> bool:
-        
-        duration = RedisConnection.MAX_DURATION if( duration >= 0 ) else duration
-        
-        if(self.r is None):
+
+    async def setText(self, key: str, value: str, duration: int = 0) -> bool:
+        duration = RedisConnection.MAX_DURATION if (duration >= 0) else duration
+
+        if self.r is None:
             return False
-        
+
         try:
             jsonText = value
-            await self.r.set(key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration))
-            self.log.write_info(f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}")
+            await self.r.set(
+                key, jsonText, ex=RedisConnection.get_secs_from_minutes(duration)
+            )
+            self.log.write_info(
+                f"Setting Key: {key}, with Value: {jsonText} for duration {RedisConnection.get_secs_from_minutes(duration)} seconds in Database: {self.db.name}"
+            )
             return True
-        
+
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
         return False
-    
+
     async def unset(self, key: str) -> bool:
-        
-        if(self.r is None):
+        if self.r is None:
             return False
-        
+
         try:
             await self.r.unlink(key)
-            self.log.write_info(f"Unsetting Key: {key} in Database: {self.db.name}")      
+            self.log.write_info(f"Unsetting Key: {key} in Database: {self.db.name}")
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-            
+
         return False
-    
+
     async def close(self) -> bool:
-        
-        if(self.r is None):
+        if self.r is None:
             return False
-        
+
         try:
             await self.r.close()
-            self.log.write_info(f"Closing Redis connection for Database: {self.db.name}")
+            self.log.write_info(
+                f"Closing Redis connection for Database: {self.db.name}"
+            )
             return True
         except Exception as e:
             self.log.write_error(self.log.get_error_info(e))
-        
+
         return False
-    
+
     async def __aenter__(self):
         return await self.connect()
-    
+
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
