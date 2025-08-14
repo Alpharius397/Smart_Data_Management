@@ -10,6 +10,7 @@ from University.models import SemMeta, Subject, Schema, SubjectMeta
 from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
 from User.models import (
+    PostIdDict,
     PostNameDict,
     get_post_id,
     get_user,
@@ -60,14 +61,20 @@ from Main.models import (
     WriteToken,
 )
 from playwright.async_api import async_playwright
-from protobuf.build.cardData import v2_pb2
+from protobuf.build.cardData import v3_pb2
 
 
 ########### TYPES #############
+class SubjectProto(TypedDict):
+    id: str
+    total: int
+    other: dict[str, Any]
+
+
 class ReportData(TypedDict):
     images: dict[str, str]
     personal: dict[str, str]
-    sem_data: dict[int, dict[str, tuple[int, int]]]
+    sem_data: dict[int, dict[str, SubjectProto]]
 
 
 ########### UTILS #############
@@ -97,47 +104,57 @@ def getReport(
 
     personal_data: dict[str, str] = {}
     image_data: dict[str, str] = {}
-    sem_data: dict[int, dict[str, tuple[int, int]]] = {}
+    sem_data: dict[int, dict[str, SubjectProto]] = {}
 
     for column, values in records.data.items():
         if column[-1] == "I":
             image_data[column[:-1]] = compress_image(values) if compress else values
         else:
-            if (sub := column[:-1]) in sem_dict:
-                if sem_dict[sub].sem not in sem_data:
-                    sem_data[sem_dict[sub].sem] = {}
-                sem_data[sem_dict[sub].sem][sub] = SemMeta(values, sem_dict[sub].marks)
+            subData = column[:-1].split("_")
+
+            if (sub := subData[0]) in sem_dict and (len(subData) == 2):
+                semester = sem_dict[sub]["sem"]
+                key = subData[1].lower()
+
+                if semester not in sem_data:
+                    sem_data[semester] = {}
+
+                if sub not in sem_data[semester]:
+                    sem_data[semester][sub] = SubjectProto(
+                        id=sem_dict[sub]["id"], total=sem_dict[sub]["marks"], other={}
+                    )
+
+                sem_data[semester][sub]["other"].update({key: values})
             else:
-                personal_data[sub] = values
+                personal_data[column[:-1]] = values
 
     sem_data = {key: sem_data[key] for key in sorted(sem_data.keys())}
 
     return ReportData(images=image_data, sem_data=sem_data, personal=personal_data)
 
 
-def getProtoReport(report: ReportData, header: PostNameDict):
-    headerProto = v2_pb2.Header(**header)
+def getProtoReport(report: ReportData, header: PostIdDict, schema: int):
+    cardData = v3_pb2.CardData()
 
-    personalProto = v2_pb2.Personal(personal={f"{i}P":j for i,j in report["personal"].items()})
-    imageProto = v2_pb2.Image(image={f"{i}I":b64decode(j) for i,j in report["images"].items()})
+    cardData.header.CopyFrom(v3_pb2.Header(**header, schema=schema))
 
-    semDict: dict[str, v2_pb2.Subject] = {}
+    for i, j in report["personal"].items():
+        cardData.personal[i] = j
+
+    for i, j in report["images"].items():
+        cardData.image[i] = b64decode(j)
+
+    semDict: dict[int, v3_pb2.Subject] = {}
 
     for key, val in report["sem_data"].items():
+        if key not in semDict:
+            semDict[key] = v3_pb2.Subject()
 
-        for x, y in val.items():
+        for subject, meta in val.items():
             """key: semester, x: subject, y: [marks, total]"""
-            semDict[f"{x}{hex(key)[2:]}"] = v2_pb2.Subject(row=list(map(str, y)))
+            cardData.semester[key].subject[subject].CopyFrom(v3_pb2.Meta(**meta))
 
-
-    semesterProto = v2_pb2.Semester(semester=semDict)
-
-    return v2_pb2.CardData(
-        semester=semesterProto,
-        personal=personalProto,
-        image=imageProto,
-        header=headerProto,
-    ).SerializeToString()
+    return cardData.SerializeToString()
 
 
 ########### HTTP Request #############
@@ -190,7 +207,7 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                 )
                 await page.goto(
                     (
-                        f"{req.scheme}://nginx{reverse('Report:pdf', kwargs={'id': id, 'idx': idx, 'token': token})}?schema={schema_id}"
+                        f"{req.scheme}://{settings.WEBSITE_HOST}{reverse('Report:pdf', kwargs={'id': id, 'idx': idx, 'token': token})}?schema={schema_id}"
                     )
                 )
 
@@ -236,7 +253,6 @@ def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
         schema_id = req.GET.get("schema", "")
 
         try:
-            post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
             sem_dict = Subject.getSubjects(schema_id, post["branch"])  # type: ignore
             """ post is NullStr cause logging, but don't worry it's int in this context """
@@ -245,12 +261,20 @@ def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
 
             schema_details = Schema.getSchema(schema_id)
             report_data = getReport(sem_dict, task, id, idx)
-            context.update(post)
+            columns: dict[int, set[str]] = {}
+
+            for sem, subs in report_data["sem_data"].items():
+                if sem not in columns:
+                    columns[sem] = set()
+
+                for meta in subs.values():
+                    columns[sem].update(meta["other"].keys())
+
             context.update(report_data)
             context.update(schema_details)
             context.update(get_post(user))
-            context.update({**report_data, "schema": schema_id})
             context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
+            context.update({"columns": columns, "schema": schema_id})
 
         except Exception as e:
             APP_LOG.write_info(
@@ -320,13 +344,21 @@ def report_view(req: HttpRequest, id: int, idx: str):
             schema_details = Schema.getSchema(schema_id)
             report_data = getReport(sem_dict, task, id, idx)
 
+            columns: dict[int, set[str]] = {}
+
+            for sem, subs in report_data["sem_data"].items():
+                if sem not in columns:
+                    columns[sem] = set()
+
+                for meta in subs.values():
+                    columns[sem].update(meta["other"].keys())
+
             context.update(post)
             context.update(report_data)
             context.update(schema_details)
             context.update(get_post(user))
-            context.update({**report_data, "schema": schema_id})
             context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
-
+            context.update({"columns": columns, "schema": schema_id})
         except InvalidSchema as f:
             messages.error(req, f.get_error())
 
@@ -446,7 +478,8 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                 LogStructure()
                 .set_request(req, LogType.EXCEPTION)
                 .set_meta(req)
-                .set_error(e).get_log()
+                .set_error(e)
+                .get_log()
             )
             setSwalAlert(context, DEFAULT_ERROR)
 

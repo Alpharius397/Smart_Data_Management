@@ -166,7 +166,7 @@ def get_post_id(user: User) -> PostIdDict:
         institute = uni.id
         branch = uni.id
 
-    except:
+    except Exception:
         pass
 
     return PostIdDict(
@@ -219,6 +219,21 @@ def get_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict
         uni = University.objects.get(id=university).name
         insti = Institute.objects.get(id=institute).name
         bra = Branch.objects.get(id=branch).name
+    except Exception:
+        pass
+
+    return PostNameDict(**{"university": uni, "institute": insti, "branch": bra})
+
+
+async def aget_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict:
+    uni: str = "University"
+    insti: str = "Institute"
+    bra: str = "Branch"
+
+    try:
+        uni = await (await University.objects.aget(id=university)).name
+        insti = await (await Institute.objects.aget(id=institute)).name
+        bra = await (await Branch.objects.aget(id=branch)).name
     except Exception:
         pass
 

@@ -1,7 +1,7 @@
 import re
 from django import forms, template
 from Main.templatetags.bad_image import bad_image
-from typing import NamedTuple
+from typing import Any, NamedTuple
 from datetime import datetime
 
 
@@ -12,7 +12,12 @@ class Image(NamedTuple):
 register = template.Library()
 
 
-@register.filter(name="getID")
+@register.filter(name="captialize")
+def captialize(obj: Any):
+    return str(obj).capitalize()
+
+
+@register.filter(name="get")
 def get_id(obj, attr):
     return obj.get(attr, None)
 
@@ -52,7 +57,9 @@ def len__(obj) -> int:
 
 @register.filter(name="img")
 def image(obj) -> Image:
-    return Image(f"data:image/png;base64,{str(obj).replace("-","+").replace("_","/")}")
+    return Image(
+        f"data:image/png;base64,{str(obj).replace('-', '+').replace('_', '/')}"
+    )
 
 
 @register.filter(name="in")
@@ -129,6 +136,7 @@ def rgb(obj: str, opacity: int = 1):
         pass
     return f"rgb({r},{g},{b},{opacity})"
 
+
 @register.filter(name="encode")
 def encode(obj: str):
     a = b"if-you-see-this-you-are-screwed"
@@ -147,30 +155,39 @@ def hex(obj: bytes):
     except Exception:
         return a
 
+
 @register.filter(name="rstrip")
 def rstrip(obj: str, index: int):
-    return 'None' if obj is None else obj[:-index]
+    return "None" if obj is None else obj[:-index]
+
 
 @register.filter(name="isImage")
 def isImage(obj: str):
-    return str(obj[-1]) == 'I'
+    return str(obj[-1]) == "I"
+
 
 @register.filter(name="isText")
 def isText(obj: str):
-    return str(obj[-1]) == 'T'
+    return str(obj[-1]) == "T"
+
 
 @register.filter(name="step")
 def step(obj: forms.Form, steps: int = 0):
     fields: list = []
     current: list = []
-    
+
     for idx, field in enumerate(iter(obj)):
-        
-        if idx>0 and idx%steps == 0:
+        if idx > 0 and idx % steps == 0:
             fields.append(current.copy())
             current.clear()
         current.append(field)
-        
-    if current: fields.append(current)
-        
+
+    if current:
+        fields.append(current)
+
     return fields
+
+
+@register.filter(name="getCol")
+def getMe(obj: dict, name: str):
+    return obj.get(name, "-")

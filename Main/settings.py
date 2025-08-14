@@ -138,6 +138,8 @@ REDIS = {
     "password": os.environ.get("REDIS_PASSWORD", "1234"),
 }
 
+WEBSITE_HOST = os.environ.get("HOST", "127.0.0.1:8000")
+
 CELERY_BROKER_URL = f"redis://:{os.environ.get('REDIS_PASSWORD', '1234')}@{os.environ.get('REDIS_HOST', 'localhost')}:6379/1"
 
 CELERY_RESULT_BACKEND = f"redis://:{os.environ.get('REDIS_PASSWORD', '1234')}@{os.environ.get('REDIS_HOST', 'localhost')}:6379/1"
@@ -279,3 +281,5 @@ class settingsInterface:
     CARD_TOKEN_EXPIRE_MINUTES = CARD_TOKEN_EXPIRE_MINUTES
 
     ACCESS_PDF = ACCESS_PDF
+
+    WEBSITE_HOST = WEBSITE_HOST

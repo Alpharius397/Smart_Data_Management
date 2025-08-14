@@ -1,5 +1,5 @@
 from typing import Any, TypedDict
-from django.db.models import Q, QuerySet # type: ignore
+from django.db.models import Q, QuerySet  # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import HttpRequest  # type: ignore
@@ -26,19 +26,22 @@ from tools.url_auth import (
 from Task.models import TaskTable
 from tools.token import get_token, hash_token
 from constants import DEFAULT_ERROR, MAX_RECORD, READ_TOKEN
-from django.contrib import messages # type: ignore
+from django.contrib import messages  # type: ignore
+
 
 ############ TYPES ############
 class FileRecord(TypedDict):
     id: int
     managerCount: int
     semesterCount: int
-    createdBy: str 
+    createdBy: str
     file_name: str
+
 
 class JsonData(TypedDict):
     info: str
     status: bool
+
 
 class JsonText(TypedDict):
     data: JsonData
@@ -67,15 +70,21 @@ def get_data(
     return (not result.exists()), data
 
 
-def get_query(user:User) -> dict[str, Any]:
+def get_query(user: User) -> dict[str, Any]:
     query_dict: dict[str, Any] = {}
-    
+
     if is_admin(user):
-        query_dict.update({"branch":user.role.belongs})
-        
+        query_dict.update({"branch": user.role.belongs})
+
     elif is_manager(user):
-        query_dict.update({"branch":user.role.belongs,"assigned__manager": user, "assigned__manager__role__role": RoleType.MANAGER.value})
-    
+        query_dict.update(
+            {
+                "branch": user.role.belongs,
+                "assigned__manager": user,
+                "assigned__manager__role__role": RoleType.MANAGER.value,
+            }
+        )
+
     return query_dict
 
 
@@ -100,7 +109,7 @@ def read_screen(req: HttpRequest):
         user_read_token = hash_token(token, user.id)
 
         req.session[READ_TOKEN] = token
-        
+
         return render(
             req,
             "Dash/HTML/read.html",
@@ -132,7 +141,7 @@ def task_fetch(req: HttpRequest):
             value = req.GET.get("value", "")
 
             result = TaskTable.objects.filter(
-                (Q(id__icontains=value) | Q(name__icontains=value)), **queryset 
+                (Q(id__icontains=value) | Q(name__icontains=value)), **queryset
             )[start : start + MAX_RECORD]
 
             flag, managers = get_data(result)
@@ -141,45 +150,58 @@ def task_fetch(req: HttpRequest):
                 messages.error(req, "No matching records found!")
 
             elif flag and start == 0:
-                if is_admin(user):  messages.error(req, "No Tasks Present!")
-                else: messages.error(req, "No Tasks Assigned")
+                if is_admin(user):
+                    messages.error(req, "No Tasks Present!")
+                else:
+                    messages.error(req, "No Tasks Assigned")
 
             next_ = start + MAX_RECORD
 
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             messages.error(req, DEFAULT_ERROR)
 
         return render(
             req,
             "Dash/HTMX/task.html",
-            context={"managers": managers,"next": next_},
+            context={"managers": managers, "next": next_},
         )
+
 
 @htmx_response
 @auth_needed(manager_only=True)
 def read_view(req: HttpRequest):
     user = get_user(req)
     context = {}
-    
+
     if is_hx_put(req):
         read_token = req.session.get(READ_TOKEN, "")
         token = hash_token(read_token, user.id)
-        
+
         context["token"] = token
         context["path"] = settings.READ_REGISTRY
         context["url"] = req.build_absolute_uri(reverse("Card:read", args=(token,)))
         context["ws"] = f"/ws/read/{token}/"
-        
+
         try:
             with RedisConnection(RedisDataBase.CARD_READ_TOKEN) as redis:
                 redis.setDict(
                     token,
-                    ReadToken(ID=user.id, processing=True, data=""), # type: ignore
+                    ReadToken(ID=user.id, processing=True, data=""),  # type: ignore
                 )
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
-        
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
         return render(req, "Dash/HTMX/read/begin.html", context=context)
 
     elif is_hx_delete(req):

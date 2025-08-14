@@ -80,6 +80,16 @@ def decrypt_text(key: bytes, encrypted_data: str) -> str:
     return decompressed.decode()
 
 
+def decrypt_bytes(key: bytes, encrypted_data: str) -> bytes:
+    _encrypted = b64decode(encrypted_data)
+    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
+
+    cipher = DES3.new(key, DES3.MODE_CBC, iv)
+    decrypted = cipher.decrypt(encrypted)
+    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
+    return decompressed
+
+
 def encrypt_key(key: str | bytes):
     return encrypt_text(settings.DECRYPTION_KEY, key)
 

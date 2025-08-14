@@ -3,10 +3,11 @@ from typing import Any, NamedTuple, TypedDict, Literal
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Card.errors import CardIdMissing
 from Report.errors import DataNotLocked
-from Report.views import getProtoReport, getReport
-from University.models import Subject
+from Report.views import ReportData, SubjectProto, getProtoReport, getReport
+from University.models import Schema, Subject
 from Task.models import DataTable, TaskTable
 from User.models import (
+    aget_post_by_ID,
     get_post_id,
     get_user,
     get_post,
@@ -16,7 +17,7 @@ from User.models import (
 )
 from tools.encrypt import (
     decrypt_key,
-    decrypt_data,
+    decrypt_bytes,
     encrypt_text,
 )
 from tools.errors import TokenExpired
@@ -46,6 +47,8 @@ from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  #
 from asgiref.sync import sync_to_async, async_to_sync
 from django.template.loader import render_to_string  # type: ignore
 from channels.layers import get_channel_layer  # type: ignore
+from protobuf.build.cardData import v3_pb2
+from base64 import b64encode
 
 ############ TYPES ############
 
@@ -111,7 +114,7 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 
             report_data = getReport(sem_dict, task, id, idx, True)
 
-            data = getProtoReport(report_data, get_post(user))
+            data = getProtoReport(report_data, get_post_id(user), schema=schema)
 
             with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
                 writeToken = WriteToken(**redis.getDict(token))
@@ -123,9 +126,14 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 
                 with open("sample/actual.proto.txt", "wb") as f:
                     f.write(data)
-                    
+
                 with open("sample/compress.txt", "w") as f:
-                    f.write(encrypt_text(decrypt_key(writeToken["key"]), json.dumps({**report_data, **get_post(user)})))
+                    f.write(
+                        encrypt_text(
+                            decrypt_key(writeToken["key"]),
+                            json.dumps({**report_data, **get_post(user)}),
+                        )
+                    )
 
                 with open("sample/decompress.txt", "w") as f:
                     f.write(json.dumps({**report_data, **get_post(user)}))
@@ -443,19 +451,40 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
                 try:
                     card = await Card.objects.aget(cardID=cardID)
 
-                    decrypted = EncryptData(
-                        **decrypt_data(decrypt_key(card.decryption_key).encode(), data)
+                    decrypted_data = decrypt_bytes(
+                        decrypt_key(card.decryption_key), data
                     )
 
-                    for img, value in decrypted["images"].items():
-                        decrypted["images"][img] = expand_image(value, 0, 0)
+                    protobufData = v3_pb2.CardData().FromString(decrypted_data)
 
-                    for sem in decrypted["sem_data"].keys():
-                        for column in decrypted["sem_data"][sem].keys():
-                            decrypted["sem_data"][sem][column] = SemMeta(
-                                *decrypted["sem_data"][sem][column]
+                    decrypted = ReportData(
+                        images={
+                            i: expand_image(b64encode(j).decode())
+                            for i, j in protobufData.image.items()
+                        },
+                        personal=dict(protobufData.personal.items()),
+                        sem_data={
+                            i: {
+                                a: SubjectProto(
+                                    id=b.id, total=b.total, other=dict(b.other.items())
+                                )
+                                for a, b in j.subject.items()
+                            }
+                            for i, j in protobufData.semester.items()
+                        },
+                    )
+                    context.update(
+                        (await Schema.agetSchema(protobufData.header.schema))
+                    )
+                    context.update(
+                        (
+                            await aget_post_by_ID(
+                                protobufData.header.university,
+                                protobufData.header.institute,
+                                protobufData.header.branch,
                             )
-
+                        )
+                    )
                     context.update(decrypted)
                     setSwalAlert(context, message, "success")
                 except Exception as e:

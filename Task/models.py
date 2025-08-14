@@ -1,5 +1,5 @@
 import json
-from django.db.models import ( # type: ignore
+from django.db.models import (  # type: ignore
     CharField,
     Model,
     ForeignKey,
@@ -11,83 +11,77 @@ from django.db.models import ( # type: ignore
     CASCADE,
     RESTRICT,
     SET_NULL,
-    UniqueConstraint
+    UniqueConstraint,
 )
-from django.core.validators import MinValueValidator # type: ignore
+from django.core.validators import MinValueValidator  # type: ignore
 from University.models import Branch
 from User.models import User, is_admin, is_manager, RoleType
-from django import forms # type: ignore
+from django import forms  # type: ignore
 import typing
-from django.db.models.manager import BaseManager # type: ignore
-from django.db import connection # type: ignore
-from psycopg2.sql import SQL, Identifier, Literal, Composable # type: ignore
+from django.db.models.manager import BaseManager  # type: ignore
+from django.db import connection  # type: ignore
+from psycopg2.sql import SQL, Identifier, Literal, Composable  # type: ignore
 from tools.utils import ColumnType, get_SQL_boolean, segregateColumns
+
 
 ############ MODEL ############
 class TaskTable(Model):
-    id = AutoField(
-        verbose_name="Task ID", primary_key=True, null=False, blank=True
-    )
-    
-    name = CharField(
-        verbose_name="Task Name", max_length=255, null=False, blank=False
-    )
-    
+    id = AutoField(verbose_name="Task ID", primary_key=True, null=False, blank=True)
+
+    name = CharField(verbose_name="Task Name", max_length=255, null=False, blank=False)
+
     creator = ForeignKey(
         to=User,
         on_delete=SET_NULL,
         null=True,
         blank=True,
     )
-    
-    branch = ForeignKey(
-        to=Branch,
-        on_delete=RESTRICT,
-        null=False,
-        blank=False
-    )
-    
+
+    branch = ForeignKey(to=Branch, on_delete=RESTRICT, null=False, blank=False)
+
     semesterLimit = IntegerField(
         verbose_name="Semester",
         null=False,
         blank=False,
-        validators=[
-            MinValueValidator(1, "Semester count cannot be less than 1!")
-        ]
+        validators=[MinValueValidator(1, "Semester count cannot be less than 1!")],
     )
-    
+
     groupByColumn = CharField(
-        verbose_name="Group By Column", max_length=255, null=False, blank=True, default=""
+        verbose_name="Group By Column",
+        max_length=255,
+        null=False,
+        blank=True,
+        default="",
     )
-    
+
     data: "Data"
     assigned: "Assign"
-    
+
     class Meta:
         verbose_name = "Task"
         verbose_name_plural = "Tasks"
-        
+
         constraints = [
-            UniqueConstraint(fields=["name", "branch"], name="unique_task_for_each_branch"),
-            
+            UniqueConstraint(
+                fields=["name", "branch"], name="unique_task_for_each_branch"
+            ),
         ]
-        
+
     def __str__(self):
         return f"Task ID: {self.id} - {self.name}"
-    
+
     def clean_creators(self):
-        if((self.creator is not None) and (not is_admin(self.creator))):
+        if (self.creator is not None) and (not is_admin(self.creator)):
             raise forms.ValidationError("Only Admins can create a Task!")
-    
+
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
 
+
 class AssignTable(Model):
-    id = AutoField(
-        verbose_name="AssignID", primary_key=True, null=False, blank=True
-    )
-    
+    id = AutoField(verbose_name="AssignID", primary_key=True, null=False, blank=True)
+
     taskID = ForeignKey(
         to=TaskTable,
         verbose_name="taskID",
@@ -96,7 +90,7 @@ class AssignTable(Model):
         null=False,
         blank=False,
     )
-    
+
     manager = ForeignKey(
         to=User,
         on_delete=RESTRICT,
@@ -106,15 +100,17 @@ class AssignTable(Model):
         verbose_name="Assigned User",
         limit_choices_to={"role__role": RoleType.MANAGER.value},
     )
-    
+
     class Meta:
         verbose_name = "Assign"
         verbose_name_plural = "Assigns"
-        
+
         constraints = [
-            UniqueConstraint(fields=["taskID", "manager"], name="unique_manager_for_each_task"),
+            UniqueConstraint(
+                fields=["taskID", "manager"], name="unique_manager_for_each_task"
+            ),
         ]
-        
+
     def __str__(self):
         return f"{self.taskID.name} - {self.manager}"
 
@@ -132,10 +128,8 @@ class AssignTable(Model):
 
 
 class DataTable(Model):
-    id = AutoField(
-        verbose_name="DataID", primary_key=True, null=False, blank=True
-    )
-    
+    id = AutoField(verbose_name="DataID", primary_key=True, null=False, blank=True)
+
     taskID = ForeignKey(
         to=TaskTable,
         verbose_name="taskID",
@@ -144,16 +138,14 @@ class DataTable(Model):
         null=False,
         blank=False,
     )
-    
+
     semester = IntegerField(
         verbose_name="Semester",
         null=False,
         blank=False,
-        validators=[
-            MinValueValidator(1, "Semester cannot be less than 1!")
-        ]
+        validators=[MinValueValidator(1, "Semester cannot be less than 1!")],
     )
-    
+
     locked = BooleanField(
         verbose_name="Lock Status", default=False, null=False, blank=False
     )
@@ -161,23 +153,23 @@ class DataTable(Model):
     issued = BooleanField(
         verbose_name="Issue Status", default=False, null=False, blank=False
     )
-    
+
     time_of_lock = DateTimeField(
         verbose_name="Time of Lock", null=True, blank=False, default=None
     )
-    
+
     time_of_issue = DateTimeField(
         verbose_name="Time of Issue", null=True, blank=False, default=None
     )
-    
+
     status = BooleanField(
         verbose_name="Feedback Status", default=None, null=True, blank=False
     )
-    
+
     feed = CharField(
         max_length=255, verbose_name="Feedback", null=True, blank=False, default=None
     )
-    
+
     data = JSONField(verbose_name="rowData", null=False, blank=False)
 
     def update_data(self, jsonText: dict[str, typing.Any]) -> "DataTable":
@@ -190,108 +182,118 @@ class DataTable(Model):
         self.feed = None
 
         return self
-    
+
     @staticmethod
     def getCommonColumn(id: int):
-        data_column = Identifier(DataTable.data.field.column) # type: ignore
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
         taskID = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column) # type: ignore
+        semester_column = Identifier(DataTable.semester.field.column)  # type: ignore
         data_table = Identifier(DataTable._meta.db_table)
-        id = Literal(id) # type: ignore
-        
+        id = Literal(id)  # type: ignore
+
         common_columns: list[str] = []
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('''
+            sql_query = (
+                SQL(
+                    """
                             select "B"."data" 
                             from (select distinct "A"."data" as "data", count("A"."semester") as "count" from 
                             (select {semester_column} as "semester", jsonb_object_keys(MAX({data_column}::varchar)::jsonb) as "data" 
                             from {data_table} where {taskID}={id} group by {semester_column}) as "A" group by "A"."data")
                             as "B" where "B"."count"=(select count(distinct {semester_column}) from {data_table} where {taskID}={id});
-                            ''').format(
-                                data_column=data_column,
-                                semester_column=semester_column,
-                                data_table=data_table,
-                                taskID=taskID,
-                                id=id # type: ignore
-                            ).as_string(cursor.connection)
-                            
+                            """
+                )
+                .format(
+                    data_column=data_column,
+                    semester_column=semester_column,
+                    data_table=data_table,
+                    taskID=taskID,
+                    id=id,  # type: ignore
+                )
+                .as_string(cursor.connection)
+            )
+
             cursor.execute(sql_query)
-            
+
             common_columns = [col[0] for col in cursor.fetchall()]
 
         return common_columns
-    
+
     @staticmethod
     def availableSems(id: int):
         task_table = TaskTable._meta.db_table
-        semesterLimit = TaskTable.semesterLimit.field.column # type: ignore
+        semesterLimit = TaskTable.semesterLimit.field.column  # type: ignore
         task_id = DataTable.taskID.field.column
-        semester_column = DataTable.semester.field.column # type: ignore
+        semester_column = DataTable.semester.field.column  # type: ignore
         data_table = DataTable._meta.db_table
         options: list[int] = []
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('''select "a" 
+            sql_query = SQL(
+                """select "a" 
                             from generate_series(1, (select {semesterLimit} from {task_table} where "id" = {id} limit 1)) 
                             as "a" where "a" not in (select distinct({semester_column}) from {data_table} where {task_id}={id});
-                            ''').format(
-                                semesterLimit = Identifier(semesterLimit),
-                                task_table = Identifier(task_table),
-                                id = Literal(id),
-                                semester_column = Identifier(semester_column),
-                                data_table = Identifier(data_table),
-                                task_id = Identifier(task_id)
-                            )
-                            
-            cursor.execute(sql_query) # type: ignore
+                            """
+            ).format(
+                semesterLimit=Identifier(semesterLimit),
+                task_table=Identifier(task_table),
+                id=Literal(id),
+                semester_column=Identifier(semester_column),
+                data_table=Identifier(data_table),
+                task_id=Identifier(task_id),
+            )
+
+            cursor.execute(sql_query)  # type: ignore
             options = [int(col[0]) for col in cursor.fetchall()]
 
-        return options     
-    
+        return options
+
     @staticmethod
     def getColumnValue(id: int, idx: int, rowID: int, column: str) -> "RowStatus":
         value = RowStatus(True, False, "")
-        
+
         try:
             table_name = Identifier(DataTable._meta.db_table)
-            column=Literal(column) # type: ignore
-            data_column = Identifier(DataTable.data.field.column) # type: ignore
+            column = Literal(column)  # type: ignore
+            data_column = Identifier(DataTable.data.field.column)  # type: ignore
             task_column = Identifier(DataTable.taskID.field.column)
-            semester_column = Identifier(DataTable.semester.field.column) # type: ignore
-            rowID=Literal(rowID) # type: ignore
+            semester_column = Identifier(DataTable.semester.field.column)  # type: ignore
+            rowID = Literal(rowID)  # type: ignore
             semester = Literal(idx)
             taskID = Literal(id)
 
             with connection.cursor() as cursor:
-                sql_query = SQL('''
+                sql_query = SQL(
+                    """
                                 select "locked", {data_column}::jsonb?{column} ,{data_column}::json ->> {column} 
                                 from {table_name} 
                                 where {task_column}={taskID} and "id"={rowID} and {semester_column}={semester} limit 1;
-                            ''').format(
-                                data_column=data_column,
-                                column=column, # type: ignore
-                                table_name=table_name,
-                                task_column=task_column,
-                                rowID=rowID, # type: ignore
-                                taskID=taskID,
-                                semester_column=semester_column,
-                                semester=semester,
-                            )
+                            """
+                ).format(
+                    data_column=data_column,
+                    column=column,  # type: ignore
+                    table_name=table_name,
+                    task_column=task_column,
+                    rowID=rowID,  # type: ignore
+                    taskID=taskID,
+                    semester_column=semester_column,
+                    semester=semester,
+                )
 
-                cursor.execute(sql_query) # type: ignore
+                cursor.execute(sql_query)  # type: ignore
 
-                value = RowStatus(*cursor.fetchone()) or value # type: ignore
+                value = RowStatus(*cursor.fetchone()) or value  # type: ignore
 
             return value
 
         except Exception as e:
             pass
-        
+
         return value
 
     @staticmethod
-    def setColumnValue(id: int, idx: int, rowID: int ,column: str, value: str) -> bool:
+    def setColumnValue(id: int, idx: int, rowID: int, column: str, value: str) -> bool:
         result = False
 
         dicts: dict = json.loads(value)
@@ -300,18 +302,19 @@ class DataTable(Model):
             raise ValueError("Invalid values detected")
 
         table_name = Identifier(DataTable._meta.db_table)
-        rowColumn = Identifier(DataTable.data.field.column) # type: ignore
+        rowColumn = Identifier(DataTable.data.field.column)  # type: ignore
         task_column = Identifier(DataTable.taskID.field.column)
-        semester_column = Identifier(DataTable.semester.field.column) # type: ignore
-        locked = Identifier(DataTable.locked.field.column) # type: ignore
+        semester_column = Identifier(DataTable.semester.field.column)  # type: ignore
+        locked = Identifier(DataTable.locked.field.column)  # type: ignore
         _column = Literal(column)
-        rowID=Literal(rowID) # type: ignore
+        rowID = Literal(rowID)  # type: ignore
         semester = Literal(idx)
         taskID = Literal(id)
         _value = Literal(value)
 
         with connection.cursor() as cursor:
-            sql_query = SQL("""
+            sql_query = SQL(
+                """
                             update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
                                 where {task_column} = {taskID} 
                                 and "id" = {rowID}
@@ -319,24 +322,24 @@ class DataTable(Model):
                                 and {rowColumn}::jsonb?{_column}
                                 and {locked} is false;
                             """
-                        ).format(
-                            table_name=table_name,
-                            rowColumn=rowColumn,
-                            _value=_value,
-                            task_column=task_column,
-                            taskID=taskID,
-                            rowID=rowID, # type: ignore
-                            semester_column=semester_column,
-                            semester=semester,
-                            locked=locked,
-                            _column=_column,
-                        )
+            ).format(
+                table_name=table_name,
+                rowColumn=rowColumn,
+                _value=_value,
+                task_column=task_column,
+                taskID=taskID,
+                rowID=rowID,  # type: ignore
+                semester_column=semester_column,
+                semester=semester,
+                locked=locked,
+                _column=_column,
+            )
 
-            cursor.execute(sql_query) # type: ignore
+            cursor.execute(sql_query)  # type: ignore
             result = (cursor.rowcount == 1) or result
 
         return result
-    
+
     @staticmethod
     def suggestValues(id: int, idx: int, column: str, value: str) -> list[str]:
         column_name = Literal(column)
@@ -344,13 +347,14 @@ class DataTable(Model):
         _value = Literal(f"%{value}%")
         task_column = Identifier(DataTable.taskID.field.column)
         taskID = Literal(id)
-        sem_column = Identifier(DataTable.semester.field.column) # type: ignore
+        sem_column = Identifier(DataTable.semester.field.column)  # type: ignore
         semID = Literal(idx)
-        data_column = Identifier(DataTable.data.field.column) # type: ignore
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
         suggests: list[str] = []
 
         with connection.cursor() as cursor:
-            sql_query = SQL('''
+            sql_query = SQL(
+                """
                             select "A"."option" 
                             from (
                                 select distinct {data_column}::jsonb ->> {column_name} as "option" 
@@ -359,7 +363,8 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
                             as "A" order by length("A"."option"), "A"."option" limit 5;
-            ''').format(
+            """
+            ).format(
                 data_column=data_column,
                 column_name=column_name,
                 table_name=table_name,
@@ -370,12 +375,12 @@ class DataTable(Model):
                 value=_value,
             )
 
-            cursor.execute(sql_query) # type: ignore
+            cursor.execute(sql_query)  # type: ignore
 
-            suggests = [col[0] for col in cursor.fetchall()]        
-            
+            suggests = [col[0] for col in cursor.fetchall()]
+
         return suggests
-    
+
     @staticmethod
     def suggestAllValues(id: int, column: str, value: str) -> list[str]:
         column_name = Literal(column)
@@ -383,12 +388,13 @@ class DataTable(Model):
         _value = Literal(f"%{value}%")
         task_column = Identifier(DataTable.taskID.field.column)
         taskID = Literal(id)
-        sem_column = Identifier(DataTable.semester.field.column) # type: ignore
-        data_column = Identifier(DataTable.data.field.column) # type: ignore
+        sem_column = Identifier(DataTable.semester.field.column)  # type: ignore
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
         suggests: list[str] = []
 
         with connection.cursor() as cursor:
-            sql_query = SQL('''
+            sql_query = SQL(
+                """
                             select "A"."option" 
                             from (
                                 select distinct {data_column}::jsonb ->> {column_name} as "option" 
@@ -397,7 +403,8 @@ class DataTable(Model):
                                 and {data_column}::jsonb ->> {column_name} like {value}
                                 ) 
                             as "A" order by length("A"."option"), "A"."option" limit 5;
-            ''').format(
+            """
+            ).format(
                 data_column=data_column,
                 column_name=column_name,
                 table_name=table_name,
@@ -407,12 +414,12 @@ class DataTable(Model):
                 value=_value,
             )
 
-            cursor.execute(sql_query) # type: ignore
+            cursor.execute(sql_query)  # type: ignore
 
-            suggests = [col[0] for col in cursor.fetchall()]        
-            
+            suggests = [col[0] for col in cursor.fetchall()]
+
         return suggests
-    
+
     @staticmethod
     def get_columns(id: int, idx: int) -> tuple[int, ColumnType]:
         table_name = Identifier(DataTable._meta.db_table)
@@ -426,26 +433,23 @@ class DataTable(Model):
         count: int = 0
 
         with connection.cursor() as cursor:
-            sql_query = (
-                SQL(
-                    """
+            sql_query = SQL(
+                """
                         select *
                         from (select distinct(jsonb_object_keys(max({data_column}::varchar)::jsonb)) as "option" 
                         from {table_name} where {taskID_column}={taskID} and {semester_column}={semID}) as "A" 
                         order by "A"."option";
                     """
-                )
-                .format(
-                    data_column=data_column,
-                    table_name=table_name,
-                    taskID_column=taskID_column,
-                    semester_column=semester_column,
-                    semID=semID,
-                    taskID=taskID,
-                )
+            ).format(
+                data_column=data_column,
+                table_name=table_name,
+                taskID_column=taskID_column,
+                semester_column=semester_column,
+                semID=semID,
+                taskID=taskID,
             )
 
-            cursor.execute(sql_query) # type: ignore
+            cursor.execute(sql_query)  # type: ignore
             columns = [col[0] for col in cursor.fetchall()]
             count = cursor.rowcount
 
@@ -464,42 +468,44 @@ class DataTable(Model):
 
         with connection.cursor() as cursor:
             sql_query = SQL(
-                    """
+                """
                     select distinct jsonb_object_keys("A"."data"::jsonb) as "data" 
                     from (select "semester", MAX({data_column}::varchar) as "data" from {table_name} 
                     where {taskID_column}={taskID} group by {semester_column}) as "A" order by "data";
                     """
-                ).format(
-                    data_column=data_column,
-                    table_name=table_name,
-                    taskID_column=taskID_column,
-                    semester_column=semester_column,
-                    taskID=taskID,
-                )
-            
-            cursor.execute(sql_query) # type: ignore
+            ).format(
+                data_column=data_column,
+                table_name=table_name,
+                taskID_column=taskID_column,
+                semester_column=semester_column,
+                taskID=taskID,
+            )
+
+            cursor.execute(sql_query)  # type: ignore
 
             columns = [col[0] for col in cursor.fetchall()]
             count = cursor.rowcount
 
         return count, segregateColumns(columns)
-    
+
     @staticmethod
     def get_complete_data(task: TaskTable, id: int, idx: str):
         table_name = Identifier(DataTable._meta.db_table)
-        data_column = Identifier(DataTable.data.field.column) # type: ignore
-        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
-        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
-        status_column = Identifier(DataTable.status.field.column) # type: ignore
-        taskID_column = Identifier(DataTable.taskID.field.column) # type: ignore
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+        status_column = Identifier(DataTable.status.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
-        
+
         records = CompleteMeta("", {})
         groupBy = Literal(task.groupByColumn)
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+            sql_query = SQL(
+                'select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID" limit 1;'
+            ).format(
                 data_column=data_column,
                 groupBy=groupBy,
                 locked_column=locked_column,
@@ -508,32 +514,33 @@ class DataTable(Model):
                 table_name=table_name,
                 taskID_column=taskID_column,
                 taskID=taskID,
-                identifier=identifier
+                identifier=identifier,
             )
 
-            cursor.execute(sql_query) # type: ignore
-            (ID, data) = cursor.fetchone() # type: ignore
+            cursor.execute(sql_query)  # type: ignore
+            (ID, data) = cursor.fetchone()  # type: ignore
             records = CompleteMeta(ID, json.loads(data))
 
         return records
 
     @staticmethod
     def get_complete_feed(task: TaskTable, id: int, idx: str):
-        
         table_name = Identifier(DataTable._meta.db_table)
-        data_column = Identifier(DataTable.data.field.column) # type: ignore
-        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
-        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
-        status_column = Identifier(DataTable.status.field.column) # type: ignore
-        taskID_column = Identifier(DataTable.taskID.field.column) # type: ignore
+        data_column = Identifier(DataTable.data.field.column)  # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+        status_column = Identifier(DataTable.status.field.column)  # type: ignore
+        taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
-        
+
         records = CompleteFeed("", False, False, None)
         groupBy = Literal(task.groupByColumn)
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID") as "A" limit 1;').format(
+            sql_query = SQL(
+                'select {data_column}::jsonb ->>{groupBy} as "ID", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and ({data_column}::jsonb ->>{groupBy})={identifier} group by "ID" limit 1;'
+            ).format(
                 data_column=data_column,
                 groupBy=groupBy,
                 locked_column=locked_column,
@@ -542,69 +549,75 @@ class DataTable(Model):
                 table_name=table_name,
                 taskID_column=taskID_column,
                 taskID=taskID,
-                identifier=identifier
+                identifier=identifier,
             )
 
-            cursor.execute(sql_query) # type: ignore
-            (ID, locked, issued, status) = cursor.fetchone() # type: ignore
+            cursor.execute(sql_query)  # type: ignore
+            (ID, locked, issued, status) = cursor.fetchone()  # type: ignore
             records = CompleteFeed(ID, locked, issued, status)
 
         return records
 
     @staticmethod
-    def set_complete_feed(task: TaskTable, id: int, idx: str, locked: bool | None = None, issued: bool | None = None, status: bool | None = None) -> int:
-        
+    def set_complete_feed(
+        task: TaskTable,
+        id: int,
+        idx: str,
+        locked: bool | None = None,
+        issued: bool | None = None,
+        status: bool | None = None,
+    ) -> int:
         table_name = Identifier(DataTable._meta.db_table)
-        locked_column = Identifier(DataTable.locked.field.column) # type: ignore
-        issued_column = Identifier(DataTable.issued.field.column) # type: ignore
-        status_column = Identifier(DataTable.status.field.column) # type: ignore
+        locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
+        issued_column = Identifier(DataTable.issued.field.column)  # type: ignore
+        status_column = Identifier(DataTable.status.field.column)  # type: ignore
         taskID_column = Identifier(DataTable.taskID.field.column)
-        rowColumn = Identifier(DataTable.data.field.column) # type: ignore
+        rowColumn = Identifier(DataTable.data.field.column)  # type: ignore
         identifier = Literal(idx)
         taskID = Literal(id)
-        
+
         updateQuery = SQL(", ")
-        
-        status = get_SQL_boolean(status) # type: ignore
-        
+
+        status = get_SQL_boolean(status)  # type: ignore
+
         query: list[Composable] = [SQL("{0}=%s" % status).format(status_column)]
-        
+
         if locked is not None:
-            locked = get_SQL_boolean(locked) # type: ignore
+            locked = get_SQL_boolean(locked)  # type: ignore
             query.append(SQL("{0}=%s" % locked).format(locked_column))
-        
+
         if issued is not None:
-            issued = get_SQL_boolean(issued) # type: ignore
+            issued = get_SQL_boolean(issued)  # type: ignore
             query.append(SQL("{0}=%s" % issued).format(issued_column))
-            
+
         updateQuery = SQL(", ").join(query)
-        
+
         groupBy = Literal(task.groupByColumn)
         updated: int = 0
-        
+
         with connection.cursor() as cursor:
+            sql_query = SQL(
+                "update {table_name} set {updateQuery} where {taskID_column}={taskID} and {rowColumn}::jsonb?{groupBy} and {rowColumn}::jsonb->>{groupBy}={identifier};"
+            ).format(
+                groupBy=groupBy,
+                updateQuery=updateQuery,
+                table_name=table_name,
+                taskID_column=taskID_column,
+                taskID=taskID,
+                rowColumn=rowColumn,
+                identifier=identifier,
+            )
 
-            sql_query = SQL('''
-                            update {table_name} set {updateQuery}
-                            where {taskID_column}={taskID} and {rowColumn}::jsonb?{groupBy} and {rowColumn}::jsonb->>{groupBy}={identifier};
-                            ''').format(
-                                groupBy=groupBy,
-                                updateQuery=updateQuery,
-                                table_name=table_name,
-                                taskID_column=taskID_column,
-                                taskID=taskID,
-                                rowColumn=rowColumn,
-                                identifier=identifier
-                            )
-
-            cursor.execute(sql_query) # type: ignore
+            cursor.execute(sql_query)  # type: ignore
             updated = cursor.rowcount
 
         return updated
 
+
 ############ TYPES ############
 type Assign = BaseManager[AssignTable]
 type Data = BaseManager[DataTable]
+
 
 class RowStatus(typing.NamedTuple):
     locked: bool
@@ -616,9 +629,11 @@ class RowStatus(typing.NamedTuple):
         yield self.exists
         yield self.value
 
+
 class CompleteMeta(typing.NamedTuple):
     ID: str
-    data: dict
+    data: dict[str, typing.Any]
+
 
 class CompleteFeed(typing.NamedTuple):
     ID: str
