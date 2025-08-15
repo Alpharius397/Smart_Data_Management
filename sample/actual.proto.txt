@@ -1,221 +1,217 @@
 
-$
-
-University
-University
-Universityòí
-@
-Database Management Systems!
-49981d
-
-gradeB
-
-mark79
-F
-!Probability and Statistics for CS!
-54479d
-
-gradeC
-
-mark79
-6
-Operating Systems!
-93760d
-
-gradeB
-
-mark33
-@
-Microprocessor Architecture!
-43750d
-
-gradeA
-
-mark61
-5
-Algorithm Design!
-35722d
-
-gradeE
-
-mark49
-C
-Software Engineering Principles 
-1459d
-
-gradeD
-
-mark40
-?
-Human-Computer Interaction!
-76160d
-
-gradeA
-
-mark62
-6
-Computer Networks!
-31016d
-
-gradeD
-
-mark90
+ òí
 8
 Discrete Structures!
 10069d
 
-gradeE
+mark88
 
-mark88
+gradeE
+C
+Software Engineering Principles 
+1459d
+
+mark40
+
+gradeD
 8
 Operations Research!
 99779d
 
-gradeF
+mark53
 
-mark53äß
-E
-"Object-Oriented Programming in C++
-4879d
+gradeF
+6
+Computer Networks!
+31016d
 
-gradeD	
-mark8
-C
-Introduction to Control Systems 
-57062d
+mark90
 
-gradeC	
-mark1
-8
-Signals and Systems!
-98264d
+gradeD
+6
+Operating Systems!
+93760d
 
-gradeD
+mark33
 
-mark86
+gradeB
+@
+Database Management Systems!
+49981d
+
+mark79
+
+gradeB
+F
+!Probability and Statistics for CS!
+54479d
+
+mark79
+
+gradeC
+@
+Microprocessor Architecture!
+43750d
+
+mark61
+
+gradeA
+?
+Human-Computer Interaction!
+76160d
+
+mark62
+
+gradeA
+5
+Algorithm Design!
+35722d
+
+mark49
+
+gradeEäß
 ?
 Engineering Mathematics II!
 99522d
 
-gradeD
+mark97
 
-mark97
-5
-Applied Chemistry 
-8800d
-
-gradeD
-
-mark69
-3
-Data Structures 
-6822d
-
-gradeC
-
-mark60
-:
-Computer Organization!
-50844d
-
-gradeC
-
-mark82
-7
-Analog Electronics!
-55376d
-
-gradeC
-
-mark15
+gradeD
 :
 Ethics in Engineering!
 25666d
 
-gradeF
+mark49
 
-mark49
+gradeF
+3
+Data Structures 
+6822d
+
+mark60
+
+gradeC
+E
+"Object-Oriented Programming in C++
+4879d	
+mark8
+
+gradeD
+C
+Introduction to Control Systems 
+57062d	
+mark1
+
+gradeC
+:
+Computer Organization!
+50844d
+
+mark82
+
+gradeC
+8
+Signals and Systems!
+98264d
+
+mark86
+
+gradeD
+5
+Applied Chemistry 
+8800d
+
+mark69
+
+gradeD
 9
 Digital Fundamentals!
 62600d
 
-gradeA
+mark38
 
-mark38ü÷
+gradeA
+7
+Analog Electronics!
+55376d
+
+mark15
+
+gradeCü÷
 >
 Engineering Mathematics I!
 58297d
 
-gradeC
+mark79
 
-mark79
-:
-Environmental Studies!
-84769d
-
-gradeD
-
-mark18
-3
-Applied Physics 
-3187d
-
-gradeD
-
-mark90
+gradeC
 9
 Engineering Graphics!
 35809d
 
-gradeE
+mark88
 
-mark88
-A
-Basic Electrical Engineering!
-28473d
+gradeE
+3
+Applied Physics 
+3187d
 
-gradeB
+mark90
 
-mark53
-F
-!Introduction to Materials Science!
-29712d
-
-gradeC
-
-mark32
-@
-Introduction to Programming!
-29999d
-
-gradeE
-
-mark71
-<
-Manufacturing Processes!
-14734d
-
-gradeB
-
-mark95
+gradeD
 =
 Fundamentals of Mechanics 
-18766d
+18766d	
+mark6
 
-gradeB	
-mark6
+gradeB
 ?
 Professional Communication!
 13573d
 
-gradeF
+mark75
 
-mark75
-SurnameCollins
-Date2020-12-03 00:00:00
-ID1
-	Last NameOsborne
+gradeF
+<
+Manufacturing Processes!
+14734d
+
+mark95
+
+gradeB
+A
+Basic Electrical Engineering!
+28473d
+
+mark53
+
+gradeB
+:
+Environmental Studies!
+84769d
+
+mark18
+
+gradeD
+@
+Introduction to Programming!
+29999d
+
+mark71
+
+gradeE
+F
+!Introduction to Materials Science!
+29712d
+
+mark32
+
+gradeC
+Reg no68482
 
 First nameRachael
-Exam Seat No250221
-Reg no68482
+Exam Seat No250221
+	Last NameOsborne
+ID1
+SurnameCollins
+Date2020-12-03 00:00:00

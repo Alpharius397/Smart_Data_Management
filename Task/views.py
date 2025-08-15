@@ -29,6 +29,7 @@ from tools.url_auth import (
     login_needed,
     semester_permission_check,
     task_permission_check,
+    require_http_methods
 )
 from User.models import RoleType, User, get_user, is_admin, is_manager
 from .models import AssignTable, DataTable
@@ -96,6 +97,7 @@ def getAssignForm(user: User, task: TaskTable) -> dict[str, list[ManagerList]]:
 
 ############ HTTP Request ############
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 def task_create(req: HttpRequest):
     if is_auth_get(req):
         user = get_user(req)
@@ -105,6 +107,7 @@ def task_create(req: HttpRequest):
 
 
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 @task_permission_check
 def task_edit(req: HttpRequest, id: int):
     user = get_user(req)
@@ -130,6 +133,7 @@ def task_edit(req: HttpRequest, id: int):
 
 
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 @task_permission_check
 def task_delete(req: HttpRequest, id: int):
     if is_auth_get(req):
@@ -153,6 +157,7 @@ def task_delete(req: HttpRequest, id: int):
 
 
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 @task_permission_check
 def sem_create(req: HttpRequest, id: int):
     if is_auth_get(req):
@@ -175,6 +180,7 @@ def sem_create(req: HttpRequest, id: int):
 
 
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_edit(req: HttpRequest, id: int, idx: int):
     if is_auth_get(req):
@@ -188,6 +194,7 @@ def sem_edit(req: HttpRequest, id: int, idx: int):
 
 
 @login_needed(admin_only=True)
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_delete(req: HttpRequest, id: int, idx: int):
     if is_auth_get(req):
@@ -201,6 +208,7 @@ def sem_delete(req: HttpRequest, id: int, idx: int):
 
 
 @login_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def get_task(req: HttpRequest, id: int):
     if is_auth_get(req):
@@ -214,6 +222,7 @@ def get_task(req: HttpRequest, id: int):
 
 ############ HTMX Request ############
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 def htmx_task_create(req: HttpRequest):
     user = get_user(req)
@@ -257,6 +266,7 @@ def htmx_task_create(req: HttpRequest):
 
 
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 @task_permission_check
 def htmx_task_edit(req: HttpRequest, id: int):
@@ -289,6 +299,7 @@ def htmx_task_edit(req: HttpRequest, id: int):
 
 
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 @task_permission_check
 def htmx_task_delete(req: HttpRequest, id: int):
@@ -320,6 +331,7 @@ def htmx_task_delete(req: HttpRequest, id: int):
 
 
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 @task_permission_check
 def htmx_sem_create(req: HttpRequest, id: int):
@@ -405,6 +417,7 @@ def htmx_sem_create(req: HttpRequest, id: int):
 
 
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
@@ -482,6 +495,7 @@ def htmx_sem_edit(req: HttpRequest, id: int, idx: int):
 
 
 @htmx_response
+@require_http_methods(['POST'])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
@@ -532,6 +546,7 @@ def htmx_sem_delete(req: HttpRequest, id: int, idx: int):
 
 
 @htmx_response
+@require_http_methods(['GET'])
 @auth_needed()
 @task_permission_check
 def htmx_get_task(req: HttpRequest, id: int):
@@ -569,6 +584,7 @@ def htmx_get_task(req: HttpRequest, id: int):
 
 
 @htmx_response
+@require_http_methods(['GET', 'PUT', 'DELETE'])
 @auth_needed(admin_only=True)
 @task_permission_check
 def assign_form(req: HttpRequest, id: int):
@@ -663,6 +679,7 @@ def assign_form(req: HttpRequest, id: int):
 
 
 @htmx_response
+@require_http_methods(['GET', 'PUT', 'DELETE', 'POST'])
 @auth_needed(admin_only=True)
 @task_permission_check
 def groupBy_form(req: HttpRequest, id: int):

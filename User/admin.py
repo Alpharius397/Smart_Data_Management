@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelChoiceField  # type: ignore
-from User.models import is_admin, get_post_id, User, Role
+from User.models import is_admin, User, Role
 from django.db.models import Q, QuerySet  # type: ignore
 from University.models import Branch
 from django.contrib.auth.models import User as __User  # type: ignore

@@ -1,17 +1,16 @@
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest  # type: ignore
 from tools.url_auth import (
-    htmx_response,
     is_auth_get,
-    is_hx_get,
-    auth_needed,
     login_needed,
+    require_http_methods
 )
 from User.models import get_user  # type: ignore
 from Crypto.Random.random import randint
 
 
 ############ HTTP Request ############
+@require_http_methods(['GET'])
 @login_needed()
 def account_view(req: HttpRequest):
     if is_auth_get(req):
@@ -30,39 +29,3 @@ def account_view(req: HttpRequest):
         return render(req, "User/index.html", context=context)
 
 
-############ HTMX Request ############
-@htmx_response
-@auth_needed()
-def get_username(req: HttpRequest):
-    if is_hx_get(req):
-        username = get_user(req).username
-        return render(
-            req, "User/HTMX/username/username.html", context={"username": username}
-        )
-
-
-@htmx_response
-@auth_needed()
-def get_email(req: HttpRequest):
-    user = get_user(req)
-    if is_hx_get(req):
-        return render(req, "User/HTMX/email/email.html", context={"email": user.email})
-
-
-@htmx_response
-@auth_needed()
-def get_password(req: HttpRequest):
-    if is_hx_get(req):
-        defaultPassword = "*" * randint(8, 20)
-        return render(
-            req,
-            "User/HTMX/password/password.html",
-            context={"password": defaultPassword},
-        )
-
-
-@htmx_response
-@auth_needed()
-def get_profile(req: HttpRequest):
-    if is_hx_get(req):
-        return render(req, "User/profile/profile.html")

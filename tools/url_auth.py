@@ -8,6 +8,9 @@ from tools.encrypt import authTokenCheck
 from User.models import (
     Role,
     User,
+    ais_admin,
+    ais_authenticated,
+    ais_manager,
     get_user,
     is_admin,
     is_authenticated,
@@ -23,7 +26,8 @@ from tools.errors import TokenExpired
 from Crypto.Random.random import randint
 from asgiref.sync import sync_to_async
 from tools.mails import email_send, validate_email  # type: ignore
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError # type: ignore
+from django.views.decorators.http import require_http_methods as _require_http_methods # type: ignore
 
 REQUEST_PARAMS = typing.ParamSpec("REQUEST_PARAMS")
 
@@ -75,6 +79,8 @@ def auth_page(req: HttpRequest) -> HttpResponse:
         + f"?next={req.path}&warning=Unauthenticated Request!"
     )
 
+def require_http_methods(request_method_list: list[typing.Literal['GET', 'POST', 'PUT', 'DELETE']]):
+    return _require_http_methods(request_method_list) # type: ignore
 
 def get_color(req: HttpRequest):
     try:
@@ -246,14 +252,14 @@ def aauth_needed(manager_only=False, admin_only=False):
             get_color(request)
             user = get_user(request)
 
-            if await sync_to_async(is_authenticated)(user):
+            if await ais_authenticated(user):
                 if not (manager_only or admin_only):  # both false
                     return await view_func(request, *args, **kwargs) or HttpResponse(
                         status=403
                     )
 
-                if (manager_only and is_manager(user)) or (
-                    admin_only and is_admin(user)
+                if (manager_only and (await ais_manager(user))) or (
+                    admin_only and (await ais_admin(user))
                 ):  # one of them is true
                     return await view_func(request, *args, **kwargs) or HttpResponse(
                         status=403

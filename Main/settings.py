@@ -255,9 +255,9 @@ ACCESS_PDF = os.environ.get("ACCESS_PDF", "3RvdpstRTj0HZWBvpFzF0fDScBjLFKzX")
 class settingsInterface:
     MEDIA_ROOT = MEDIA_ROOT
     MEDIA_URL = MEDIA_URL
-    APP_LOG = APP_LOG
-    DATA_LOG = DATA_LOG
-    SMTP_LOG = SMTP_LOG
+    APP_LOG: Path = APP_LOG
+    DATA_LOG: Path = DATA_LOG
+    SMTP_LOG: Path = SMTP_LOG
 
     LOGIN_URL = LOGIN_URL
 

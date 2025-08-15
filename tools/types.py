@@ -35,25 +35,25 @@ class Utils:
     
     @staticmethod
     def getInt(dictionary: dict, *keyString:Union[str,int]) -> int:
-        val: Union[Any] = Utils.__getValue(dictionary,*keyString)
+        val: Any = Utils.__getValue(dictionary,*keyString)
         
         return int() if (val is None) else int(val) # type: ignore
 
     @staticmethod
     def getStr(dictionary: dict, *keyString:Union[str,int]) -> str:
-        val: Union[Any] = Utils.__getValue(dictionary,*keyString)
+        val: Any = Utils.__getValue(dictionary,*keyString)
         
         return str() if (val is None) else str(val) # type: ignore
     
     @staticmethod
     def getList(dictionary: dict, *keyString:Union[str,int]) -> list:
-        val: Union[Any] = Utils.__getValue(dictionary,*keyString)
+        val: Any = Utils.__getValue(dictionary,*keyString)
         
         return list() if (val is None) else list(val) # type: ignore
     
     @staticmethod
     def getDict(dictionary: dict, *keyString:Union[str,int]) -> dict:
-        val: Union[Any] = Utils.__getValue(dictionary,*keyString)
+        val: Any = Utils.__getValue(dictionary,*keyString)
         
         return dict() if (val is None) else dict(val) # type: ignore
 

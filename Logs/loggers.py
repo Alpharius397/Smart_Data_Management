@@ -19,10 +19,10 @@ from User.models import (
     is_student,
 )  # type: ignore
 from Main.settings import settingsInterface as settings  # type: ignore
-from tools.typesCauseWhyNot import NullInt
 from django.db.models import Model  # type: ignore
 from django.db.models import CharField, DateTimeField, IntegerField
 import typing
+from tools.types import NullInt
 import datetime
 
 P = ParamSpec("P")

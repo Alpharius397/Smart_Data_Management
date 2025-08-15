@@ -1,5 +1,5 @@
 from typing import TypedDict
-from tools.typesCauseWhyNot import NullStr
+from tools.types import NullStr
 from User.models import User
 import datetime
 from django.utils import timezone  # type: ignore
@@ -18,7 +18,6 @@ class PayLoad:
         user: User,
         expire: datetime.datetime | None = None,
         type: str | None = None,
-        **kwargs: str | int,
     ):
         self.username: str = user.username
         self.userID: int = user.id

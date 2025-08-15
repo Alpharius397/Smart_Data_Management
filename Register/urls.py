@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path # type: ignore
 from .views import register_view, htmx_register_view, insti_change, branch_change
 
 app_name = "Register"

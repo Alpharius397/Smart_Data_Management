@@ -1,6 +1,5 @@
 from django.contrib import admin  # type: ignore
 from django.urls import path, re_path, include  # type: ignore
-from django.conf.urls.static import static  # type: ignore
 from django.conf import settings  # type: ignore
 from Main.views import serve_media
 
@@ -22,7 +21,7 @@ urlpatterns = [
         r"media/(?P<path>.*)$",
         serve_media,
         kwargs={"document_root": settings.MEDIA_ROOT},
-    ),  # type: ignore
+    )
 ]
 
 admin.site.site_header = "System Admin"

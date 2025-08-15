@@ -22,6 +22,7 @@ from tools.url_auth import (
     is_hx_put,
     login_needed,
     set_otp_response,
+    require_http_methods
 )
 from Mobile.url_auth import read_body_as_form
 from constants import (
@@ -57,6 +58,7 @@ def __dummy__(req: HttpRequest):
 
 ############ HTTP Request ############
 @login_needed()
+@require_http_methods(["POST", "GET"])
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Username")
 def username_form(req: HttpRequest):
     emailOk = bool(req.__getattribute__("emailOk"))
@@ -78,6 +80,7 @@ def username_form(req: HttpRequest):
 
 
 @login_needed()
+@require_http_methods(["POST", "GET"])
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Email")
 def email_form(req: HttpRequest):
     emailOk = bool(req.__getattribute__("emailOk"))
@@ -99,6 +102,7 @@ def email_form(req: HttpRequest):
 
 @get_user_from_session
 @login_needed()
+@require_http_methods(["POST", "GET"])
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Password")
 def password_form(req: HttpRequest):
     emailOk = bool(req.__getattribute__("emailOk"))
@@ -119,6 +123,7 @@ def password_form(req: HttpRequest):
 
 
 @login_needed()
+@require_http_methods(["POST", "GET"])
 @set_otp_response(OTP_SUBJECT, OTP_MESSAGE, "Account Deletion")
 def delete_form(req: HttpRequest):
     emailOk = bool(req.__getattribute__("emailOk"))
@@ -142,6 +147,7 @@ def delete_form(req: HttpRequest):
 ############ HTMX Request ############
 @htmx_response
 @auth_needed()
+@require_http_methods(["POST"])
 @check_otp_response
 def htmx_username_form(req: HttpRequest):
     if is_hx_post(req):
@@ -192,6 +198,7 @@ def htmx_username_form(req: HttpRequest):
 
 
 @htmx_response
+@require_http_methods(["POST"])
 @auth_needed()
 @check_otp_response
 def htmx_email_form(req: HttpRequest):
@@ -242,6 +249,7 @@ def htmx_email_form(req: HttpRequest):
 
 
 @htmx_response
+@require_http_methods(["POST"])
 @get_user_from_session
 @auth_needed()
 @check_otp_response
@@ -286,6 +294,7 @@ def htmx_password_form(req: HttpRequest):
         return render(req, "Change/HTMX/messages.html", context=context)
 
 
+@require_http_methods(["GET"])
 def forgot_password(req: HttpRequest):
     if req.method == "GET":
         return render(
@@ -294,6 +303,7 @@ def forgot_password(req: HttpRequest):
 
 
 @htmx_response
+@require_http_methods(["POST", "PUT"])
 @read_body_as_form
 @check_otp_response
 def send_otp_mail_password(req: SpecialHttpRequest):
@@ -353,6 +363,7 @@ def send_otp_mail_password(req: SpecialHttpRequest):
 
 
 @htmx_response
+@require_http_methods(["POST"])
 @auth_needed()
 @check_otp_response
 def htmx_delete_form(req: HttpRequest):

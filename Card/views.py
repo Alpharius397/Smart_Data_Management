@@ -1,95 +1,45 @@
 import json
-from typing import Any, NamedTuple, TypedDict, Literal
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Card.errors import CardIdMissing
+from Card.sockets import cardReadWebSocket, cardWriteWebSocket
 from Report.errors import DataNotLocked
-from Report.views import ReportData, SubjectProto, getProtoReport, getReport
-from University.models import Schema, Subject
+from Report.views import getProtoReport, getReport
+from University.models import Subject
 from Task.models import DataTable, TaskTable
 from User.models import (
-    aget_post_by_ID,
     get_post_id,
     get_user,
     get_post,
-    is_authenticated,
-    is_manager,
-    User,
 )
 from tools.encrypt import (
     decrypt_key,
-    decrypt_bytes,
     encrypt_text,
 )
-from tools.errors import TokenExpired
-from tools.get_image import expand_image
 from tools.url_auth import (
     is_auth_post,
     api_key_required,
     auth_needed,
     task_permission_check,
     token_check,
+    require_http_methods,
 )
 from Logs.loggers import APP_LOG, LogStructure, LogType
-from tools.utils import get_2_value, setSwalAlert
+from tools.utils import get_2_value
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
 from django.db import transaction  # type: ignore
 from django.utils import timezone  # type: ignore
 from constants import DEFAULT_ERROR
 from Main.models import (
-    AsyncRedisConnection,
-    ReadToken,
     RedisConnection,
     RedisDataBase,
     WriteToken,
 )
-from channels.generic.websocket import AsyncWebsocketConsumer, DenyConnection  # type: ignore
-from asgiref.sync import sync_to_async, async_to_sync
-from django.template.loader import render_to_string  # type: ignore
-from channels.layers import get_channel_layer  # type: ignore
-from protobuf.build.cardData import v3_pb2
-from base64 import b64encode
-
-############ TYPES ############
-
-
-class FetchJson(TypedDict):
-    data: str
-
-
-class ReadJson(TypedDict):
-    message: str
-    status: Literal["true", "false", "none"]
-    card: str
-    data: str
-
-
-class ConfirmJson(TypedDict):
-    message: str
-    status: Literal["true", "false", "none"]
-    card: str
-
-
-class SubjectMeta(TypedDict):
-    sem: int
-    marks: int
-
-
-class SemMeta(NamedTuple):
-    marks: int
-    total: int
-
-
-class EncryptData(TypedDict):
-    university: str
-    institute: str
-    branch: str
-    images: dict[str, str]
-    personal: dict[str, str]
-    sem_data: dict[int, dict[str, tuple[int, int]]]
+from Card.types import FetchJson, ConfirmJson, ReadJson
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 @api_key_required  # type: ignore
 @token_check(RedisDataBase.CARD_WRITE_TOKEN, close_after=False)
 @auth_needed(manager_only=True)
@@ -121,11 +71,19 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 
                 encrypted = encrypt_text(decrypt_key(writeToken["key"]), data)
 
+                card = Card(
+                    cardID=1,
+                    data=encrypted,
+                    done_by=user,
+                    decryption_key=writeToken["key"],
+                    belongs=user.role.belongs,
+                )
+                card.save()
                 with open("sample/test.proto.txt", "w") as f:
                     f.write(encrypted)
 
-                with open("sample/actual.proto.txt", "wb") as f:
-                    f.write(data)
+                with open("sample/actual.proto.txt", "wb") as g:
+                    g.write(data)
 
                 with open("sample/compress.txt", "w") as f:
                     f.write(
@@ -166,6 +124,7 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 @api_key_required  # type: ignore
 @token_check(RedisDataBase.CARD_WRITE_TOKEN)
 @auth_needed(manager_only=True)
@@ -232,8 +191,9 @@ def confirm_view(req: HttpRequest, id: int, idx: str, schema: int, token: str):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 @api_key_required  # type: ignore
-@token_check(RedisDataBase.CARD_READ_TOKEN)
+@token_check(RedisDataBase.CARD_READ_TOKEN, False)
 @auth_needed(manager_only=True)
 def read_view(req: HttpRequest, token: str):
     if is_auth_post(req):
@@ -265,235 +225,3 @@ def read_view(req: HttpRequest, token: str):
             return JsonResponse(
                 data={"status": "Card Data received failed"}, status=500
             )
-
-
-def cardWriteWebSocket(token: str, data: ConfirmJson):
-    try:
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(token, {"type": "card.write", **data})  # type: ignore
-    except Exception as e:
-        pass
-
-
-class CardWriteExeConsumer(AsyncWebsocketConsumer):
-    user: User
-    taskID: int
-    idx: int
-    token: str
-
-    async def auth_user(self) -> bool:
-        try:
-            user: User = self.user
-            managerFlag = await sync_to_async(is_manager)(user)
-            authFlag = await sync_to_async(is_authenticated)(user)
-
-            return bool(managerFlag and authFlag)
-        except Exception as e:
-            return False
-
-    async def auth_token(self) -> bool:
-        try:
-            async with AsyncRedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
-                data: WriteToken | ReadToken = await redis.getDict(self.token)  # type: ignore
-
-                processing = data.get("processing", None)
-                ID = data.get("ID", -1)
-
-                if (not isinstance(processing, bool)) or (
-                    isinstance(processing, bool) and (processing is not True)
-                ):
-                    raise TokenExpired()
-
-                user = await User.objects.aget(id=ID)
-
-                return self.user.id == user.id
-
-        except Exception as e:
-            return False
-
-    async def connect(self) -> None:
-        try:
-            self.taskID = self.scope["url_route"]["kwargs"]["id"]
-            self.idx = self.scope["url_route"]["kwargs"]["idx"]
-            self.token = self.scope["url_route"]["kwargs"]["token"]
-            self.user = self.scope["user"]
-
-            self.room_group_name = self.token
-
-            tokenFlags = await self.auth_token()
-            userFlags = await self.auth_user()
-
-            if not (tokenFlags and userFlags):
-                raise DenyConnection("Unauthenticated User")
-
-            await self.channel_layer.group_add(self.room_group_name, self.channel_name)  # type: ignore
-
-            await self.accept()
-
-        except DenyConnection as f:
-            raise f
-
-        except Exception as e:
-            raise DenyConnection("Invalid URL found!")
-
-    async def disconnect(self, code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)  # type: ignore
-
-    # Receive message from WebSocket
-    async def receive(self, text_data: str):  # type: ignore
-        APP_LOG.write_error(LogStructure().set_error(Exception("No Entry Here")))
-
-    async def card_write(self, event: ConfirmJson):
-        status = event.get("status", "none")
-        message = event.get("message", DEFAULT_ERROR)
-        context = setSwalAlert(title="Card Write")
-
-        match status:
-            case "true":
-                setSwalAlert(context, message, "success")
-            case "false":
-                setSwalAlert(context, message, "warning")
-            case _:
-                setSwalAlert(context, message)
-
-        await self.send(
-            text_data=render_to_string("Report/HTMX/write/end.html", context=context),
-            close=True,
-        )
-
-
-def cardReadWebSocket(token: str, data: ReadJson):  # type: ignore
-    try:
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(  # type: ignore
-            token,
-            {"type": "card.read", **data},
-        )
-
-    except Exception as e:
-        pass
-
-
-class CardReadExeConsumer(AsyncWebsocketConsumer):
-    user: User
-    token: str
-
-    async def auth_user(self) -> bool:
-        try:
-            user: User = self.user
-            managerFlag = await sync_to_async(is_manager)(user)
-            authFlag = await sync_to_async(is_authenticated)(user)
-
-            return bool(managerFlag and authFlag)
-        except Exception as e:
-            return False
-
-    async def auth_token(self) -> bool:
-        try:
-            async with AsyncRedisConnection(RedisDataBase.CARD_READ_TOKEN) as redis:
-                data: WriteToken | ReadToken = await redis.getDict(self.token)  # type: ignore
-
-                processing = data.get("processing", None)
-                ID = data.get("ID", -1)
-
-                if (not isinstance(processing, bool)) or (
-                    isinstance(processing, bool) and (processing is not True)
-                ):
-                    raise TokenExpired()
-
-                user = await User.objects.aget(id=ID)
-
-                return self.user.id == user.id
-
-        except Exception as e:
-            return False
-
-    async def connect(self) -> None:
-        try:
-            self.token = self.scope["url_route"]["kwargs"]["token"]
-            self.user = self.scope["user"]
-
-            self.room_group_name = self.token
-
-            tokenFlags = await self.auth_token()
-            userFlags = await self.auth_user()
-
-            if not (tokenFlags and userFlags):
-                raise DenyConnection("Unauthenticated User")
-
-            await self.channel_layer.group_add(self.room_group_name, self.channel_name)  # type: ignore
-
-            await self.accept()
-
-        except DenyConnection as f:
-            APP_LOG.write_error(LogStructure().set_error(f))
-            raise f
-
-        except Exception as e:
-            APP_LOG.write_error(LogStructure().set_error(e))
-            raise DenyConnection("Invalid URL found!")
-
-    async def disconnect(self, code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)  # type: ignore
-
-    async def receive(self, text_data: str):  # type: ignore
-        APP_LOG.write_error(LogStructure().set_error(Exception("No Entry Here")))
-
-    async def card_read(self, event: ReadJson):
-        status = event["status"]
-        cardID = event["card"]
-        data = event["data"]
-        message = event["data"]
-        context: dict = {}
-
-        match status:
-            case "true":
-                try:
-                    card = await Card.objects.aget(cardID=cardID)
-
-                    decrypted_data = decrypt_bytes(
-                        decrypt_key(card.decryption_key), data
-                    )
-
-                    protobufData = v3_pb2.CardData().FromString(decrypted_data)
-
-                    decrypted = ReportData(
-                        images={
-                            i: expand_image(b64encode(j).decode())
-                            for i, j in protobufData.image.items()
-                        },
-                        personal=dict(protobufData.personal.items()),
-                        sem_data={
-                            i: {
-                                a: SubjectProto(
-                                    id=b.id, total=b.total, other=dict(b.other.items())
-                                )
-                                for a, b in j.subject.items()
-                            }
-                            for i, j in protobufData.semester.items()
-                        },
-                    )
-                    context.update(
-                        (await Schema.agetSchema(protobufData.header.schema))
-                    )
-                    context.update(
-                        (
-                            await aget_post_by_ID(
-                                protobufData.header.university,
-                                protobufData.header.institute,
-                                protobufData.header.branch,
-                            )
-                        )
-                    )
-                    context.update(decrypted)
-                    setSwalAlert(context, message, "success")
-                except Exception as e:
-                    context["messages"] = ["Failed to parse card data!"]
-
-            case _:
-                context["messages"] = ["Failed to read card data"]
-
-        await self.send(
-            text_data=render_to_string("Dash/HTMX/report.html", context=context),
-            close=True,
-        )

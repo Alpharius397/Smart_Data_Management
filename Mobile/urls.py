@@ -1,4 +1,4 @@
-from django.urls import path, re_path, include
+from django.urls import path, include # type: ignore
 
 app_name = "Mobile"
 urlpatterns = [

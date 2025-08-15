@@ -11,6 +11,7 @@ from Mobile.url_auth import (
     read_body_as_json,
     student_auth_needed,
 )
+from django.views.decorators.http import require_http_methods
 from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
@@ -18,6 +19,7 @@ from Mobile.types import SubscriberResponse, CardResponse, CardData
 
 
 @csrf_exempt
+@require_http_methods(["GET", "POST"])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -56,7 +58,7 @@ def subscriber_check(req: HttpRequest):
         try:
             order_id = req.POST.get("order_id")
             payment_id = req.POST.get("payment_id")
-            cardID = req.POST.get("cardID")
+            cardID = str(req.POST.get("cardID"))
 
             if not (order_id and payment_id):
                 response["error"] = ["Payment was unsuccessful"]
@@ -106,6 +108,7 @@ def subscriber_check(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(["GET"])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed

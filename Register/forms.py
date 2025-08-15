@@ -1,6 +1,6 @@
 from Main.forms import MainForm
 from django import forms # type: ignore
-from django.urls import reverse # type: ignore
+from django.urls import reverse_lazy # type: ignore
 from University.models import University
 from User.models import RoleType
 
@@ -28,7 +28,7 @@ class RegisterForm(MainForm):
         required=True,
         queryset=University.objects.all(),
         widget=forms.Select(attrs={
-                'hx-get':"htmx/institute/",
+                'hx-get':reverse_lazy("Register:htmxInstitute"),
                 'hx-target':'#id_institute',
                 'hx-swap':'innerHTML',
                 'hx-trigger':'load,click'
@@ -39,7 +39,7 @@ class RegisterForm(MainForm):
         help_text='Choose the Institute',
         required=True,
         widget=forms.Select(attrs={
-                'hx-get':"htmx/branch/",
+                'hx-get':reverse_lazy("Register:htmxBranch"),
                 'hx-target':'#id_branch',
                 'hx-swap':'innerHTML',
                 'hx-trigger':'load,click'})

@@ -22,6 +22,7 @@ from tools.url_auth import (
     is_hx_put,
     auth_needed,
     login_needed,
+    require_http_methods
 )
 from Table.errors import (
     ColumnDoesNotExist,
@@ -300,6 +301,7 @@ def get_row_context(
 
 ########### HTTP Request #############
 @login_needed()
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_view(req: HttpRequest, id: int, idx: int):
     user = get_user(req)
@@ -313,13 +315,13 @@ def sem_view(req: HttpRequest, id: int, idx: int):
         elif is_manager(user):
             return render(req, "Table/HTML/table/manager.html", context=context)
 
-    return None
-
 @login_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def complete_view(req: HttpRequest, id: int):
     user = get_user(req)
     context: dict[str, int] = {"id": id}
+    
     if is_auth_get(req):
         get_color(req)
 
@@ -329,11 +331,11 @@ def complete_view(req: HttpRequest, id: int):
         elif is_manager(user):
             return render(req, "Table/HTML/complete.html", context=context)
 
-    return None
 
 ############ HTMX Request ############
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_column_view(req: HttpRequest, id: int, idx: int):
     if is_hx_get(req):
@@ -358,6 +360,7 @@ def sem_column_view(req: HttpRequest, id: int, idx: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_row_view(req: HttpRequest, id: int, idx: int):
     
@@ -379,6 +382,7 @@ def sem_row_view(req: HttpRequest, id: int, idx: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def sem_suggest_view(req: HttpRequest, id: int, idx: int):
     if is_hx_get(req):
@@ -398,6 +402,7 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @semester_permission_check
 def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_hx_get(req):
@@ -429,6 +434,7 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
         return render(req, "Table/HTMX/sem.refresh.html", context=context)
 
 @htmx_response
+@require_http_methods(['PUT', 'GET', 'POST'])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
@@ -560,6 +566,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
         return render(req, "Table/HTMX/update/text.html", context=context)
 
 @htmx_response
+@require_http_methods(['PUT', 'GET', 'POST'])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
@@ -706,6 +713,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def column_view(req: HttpRequest, id: int):
     if is_hx_get(req):
@@ -727,6 +735,7 @@ def column_view(req: HttpRequest, id: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def complete_row_view(req: HttpRequest, id: int):
     if is_hx_get(req):
@@ -750,6 +759,7 @@ def complete_row_view(req: HttpRequest, id: int):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def refresh_row(req: HttpRequest, id: int, idx: str):
     if is_hx_get(req):
@@ -761,6 +771,7 @@ def refresh_row(req: HttpRequest, id: int, idx: str):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(['GET'])
 @task_permission_check
 def suggest_view(req: HttpRequest, id: int):
     if is_hx_get(req):

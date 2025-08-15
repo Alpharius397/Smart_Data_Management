@@ -22,6 +22,7 @@ from tools.url_auth import (
     is_hx_put,
     login_needed,
     is_auth_get,
+    require_http_methods
 )
 from Task.models import TaskTable
 from tools.token import get_token, hash_token
@@ -90,6 +91,7 @@ def get_query(user: User) -> dict[str, Any]:
 
 ############ HTTP Request ############
 @login_needed()
+@require_http_methods(['GET'])
 def dash_board(req: HttpRequest):
     user = get_user(req)
     get_color(req)
@@ -102,6 +104,7 @@ def dash_board(req: HttpRequest):
 
 
 @login_needed(manager_only=True)
+@require_http_methods(['GET'])
 def read_screen(req: HttpRequest):
     if is_auth_get(req):
         user = get_user(req)
@@ -122,11 +125,9 @@ def read_screen(req: HttpRequest):
             },
         )
 
-    return None
-
-
 ############ HTMX Request ############
 @htmx_response
+@require_http_methods(['GET'])
 @auth_needed()
 def task_fetch(req: HttpRequest):
     user = get_user(req)
@@ -172,8 +173,8 @@ def task_fetch(req: HttpRequest):
             context={"managers": managers, "next": next_},
         )
 
-
 @htmx_response
+@require_http_methods(['PUT', 'DELETE'])
 @auth_needed(manager_only=True)
 def read_view(req: HttpRequest):
     user = get_user(req)

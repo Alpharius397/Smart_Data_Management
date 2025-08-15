@@ -13,6 +13,7 @@ from Mobile.url_auth import (
     jwt_required,
     student_auth_needed,
 )
+from tools.url_auth import require_http_methods
 from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from django.db import transaction  # type: ignore
@@ -22,6 +23,7 @@ from Mobile.Auth.forms import RegisterForm, LoginForm
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @read_body_as_json
 def mobile_login(req: HttpRequest):
     if req.method == "POST":
@@ -67,6 +69,7 @@ def mobile_login(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @read_body_as_json
 def mobile_register(req: HttpRequest):
     if req.method == "POST":
@@ -128,6 +131,7 @@ def mobile_register(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -163,6 +167,7 @@ def user_info(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 @read_body_as_json
 def get_university(req: HttpRequest):
     if req.method == "GET":
@@ -181,6 +186,7 @@ def get_university(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 @read_body_as_json
 def get_institute(req: HttpRequest):
     if req.method == "GET":
@@ -206,6 +212,7 @@ def get_institute(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['GET'])
 @read_body_as_json
 def get_branch(req: HttpRequest):
     if req.method == "GET":

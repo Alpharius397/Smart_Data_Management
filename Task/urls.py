@@ -1,5 +1,5 @@
 from django.urls import path # type: ignore
-from .views import *
+from .views import get_task, task_create, task_edit, task_delete, htmx_get_task, htmx_task_create, htmx_task_edit, htmx_task_delete, sem_create, sem_edit, sem_delete, htmx_sem_create, htmx_sem_edit, htmx_sem_delete, assign_form, groupBy_form
 
 app_name = "Task"
 urlpatterns = [

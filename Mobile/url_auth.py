@@ -1,25 +1,25 @@
 import json
 import typing
-from django.http import HttpRequest, JsonResponse, QueryDict  # type: ignore
+from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Main.models import RedisConnection, RedisDataBase
 from constants import DEFAULT_ERROR
 from User.models import User, get_user, is_authenticated_student
-from Main.settings import settingsInterface as settings
 from functools import wraps
 from django.utils import timezone  # type: ignore
 from tools.mails import email_send, validate_email  # type: ignore
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError # type: ignore
 from tools.url_auth import getOTP, compareOTP
 from Mobile.types import JwtToken, AccessPayLoad, RefreshPayLoad
+from tools.utils import tryCatchThis
 
 
 ############ UTILS ############
 def getRequestToken(req: HttpRequest):
     return JwtToken(
-        access=req.headers.__getattribute__("access"),
-        refresh=req.headers.__getattribute__("refresh"),
+        access=tryCatchThis(req.headers.__getattribute__, "")("access"),
+        refresh=tryCatchThis(req.headers.__getattribute__, "")("refresh"),
     )
 
 
@@ -240,7 +240,7 @@ def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
     return _wrapped_view
 
 
-def read_body_as_form(view_func: typing.Callable[..., JsonResponse | None]):
+def read_body_as_form(view_func: typing.Callable[..., JsonResponse | HttpResponse | None]):
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:

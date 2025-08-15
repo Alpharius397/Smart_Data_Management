@@ -25,6 +25,7 @@ from Change.forms import (
     DeleteAccount,
 )
 from tools.mails import send_success_mail, send_delete_mail
+from tools.url_auth import require_http_methods
 from constants import OTP_MESSAGE, OTP_SUBJECT
 
 
@@ -57,6 +58,7 @@ def __nothing_to_see_here__(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['GET', 'POST'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -73,6 +75,7 @@ def send_otp_mail(req: HttpRequest, mailType: Literal["username", "email", "pass
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @get_user_from_body
@@ -122,6 +125,7 @@ def password_form(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -177,6 +181,7 @@ def email_form(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -232,6 +237,7 @@ def username_form(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -277,6 +283,7 @@ def delete_form(req: HttpRequest):
 
 
 @csrf_exempt
+@require_http_methods(['POST'])
 @read_body_as_json
 def forgot_password(req: HttpRequest):
     if req.method == "POST":

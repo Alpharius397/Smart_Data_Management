@@ -1,5 +1,5 @@
-from django.urls import path
-from Table.views import *
+from django.urls import path # type: ignore
+from Table.views import complete_view, column_view, suggest_view, complete_row_view, refresh_row, sem_view, sem_column_view, sem_suggest_view, sem_row_view, sem_refresh_row, edit_form, edit_image_form
 
 app_name = "Table"
 urlpatterns = [

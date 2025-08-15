@@ -4,8 +4,10 @@ from .views import (
     fetch_data,
     confirm_view,
     read_view,
+)
+from .sockets import (
     CardReadExeConsumer,
-    CardWriteExeConsumer,
+    CardWriteExeConsumer
 )
 
 app_name = "Card"

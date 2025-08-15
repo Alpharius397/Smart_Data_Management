@@ -1,9 +1,7 @@
-from typing import Iterator, TypedDict, Literal, NamedTuple, Any
+from typing import Callable, Iterator, ParamSpec, TypeVar, TypedDict, Literal, NamedTuple, Any
 import typing
 from django.http import HttpRequest, QueryDict # type: ignore
-from tools.get_image import compress_image, expand_image
 from tools.errors import IncorrectDataFormat
-from constants import WRONG_IMAGE, WRONG_PERSONAL, WRONG_SEM
 
 
 ############ TYPES ############
@@ -94,54 +92,6 @@ def processSubjects(
     return mapping
 
 
-def deconstructSubjects(data: dict[str, str | list[str]], expand_images: bool = False):
-    """ Get subjects details from card """
-    
-    personal_info: dict[str, str] = {}
-    image_info: dict[str, str] = {}
-    semester_info: dict[int, dict[str, tuple[str, ...]]] = {}
-
-    for column, value in data.items():
-        _column: str = column
-
-        if (column[-2:]) == "PP":
-            assert isinstance(value, str), WRONG_PERSONAL
-            personal_info[_column] = value
-
-        elif (column[-2:]) == "II":
-            assert isinstance(value, str), WRONG_IMAGE
-
-            images = value.split(":")
-
-            assert len(images) == 3, WRONG_IMAGE
-
-            width, height, img = images
-
-            assert width.isnumeric() and height.isnumeric(), WRONG_IMAGE
-
-            img = (
-                expand_image(img, int(width), int(height))
-                if expand_images
-                else compress_image(img)
-            )
-
-            image_info[_column] = img
-
-        elif (column[-2]) == "S":
-            _sem = int(column[-1], 16)  # hex conversion
-
-            assert (
-                isinstance(value, list) and len(value) > 1 and len(value) < 4
-            ), WRONG_SEM
-
-            semester_info[_sem][_column] = tuple(value)
-
-        else:
-            raise IncorrectDataFormat()
-
-    return ReportStructure(personal_info, image_info, semester_info)
-
-
 def segregateColumns(columns: list[str]) -> ColumnType:
     image: list[str] = []
     text: list[str] = []
@@ -169,3 +119,14 @@ def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Lite
         return {}
     else:
         return {"text": text, "icon": icon, "title": title}
+
+P = ParamSpec('P')
+T = TypeVar('T')
+
+def tryCatchThis[T, **P](func: Callable[P, T], default: T) -> Callable[P, T]:
+    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return default
+    return inner

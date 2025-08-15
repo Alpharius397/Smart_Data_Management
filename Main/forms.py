@@ -13,8 +13,8 @@ class MainForm(Form):
         errorText = ""
 
         for field, error in self.errors.items():
-            if (l := self.declared_fields.get(field).label) is not None:
-                errorText += f"{l}: "
+            if ((l := self.declared_fields.get(field), None) is not None) and (l is not None and l.label is not None):
+                errorText += f"{l.label}: "
 
             errorText += ",".join([",".join(i) for i in error.data])
             errorText += "\n"

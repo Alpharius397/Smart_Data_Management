@@ -1,8 +1,6 @@
-from io import BytesIO
 from django.contrib import admin  # type: ignore
 from django.forms import ModelChoiceField  # type: ignore
 from django.http import HttpRequest  # type: ignore
-import pandas as pd
 from User.models import User, get_user, is_admin
 from .models import Subject, University, Institute, Branch, Color, Schema
 from .forms import ColorPickerForm, SubjectUpload
@@ -17,7 +15,7 @@ class UniversityAdmin(admin.ModelAdmin):
     search_help_text = "Search by University name"
 
     def get_queryset(self, request) -> QuerySet[University]:
-        user: User = request.user
+        user: User = get_user(request)
 
         if is_admin(user):
             return University.objects.filter(
@@ -40,7 +38,7 @@ class InstituteAdmin(admin.ModelAdmin):
     search_help_text = "Search by Institute or University name"
 
     def get_queryset(self, request) -> QuerySet[Institute]:
-        user: User = request.user
+        user: User = get_user(request)
 
         if is_admin(user):
             return Institute.objects.filter(id=user.role.belongs.institute.id)
@@ -59,7 +57,7 @@ class BranchAdmin(admin.ModelAdmin):
     search_help_text = "Search by Branch or Institute or University name"
 
     def get_queryset(self, request) -> QuerySet[Branch]:
-        user: User = request.user
+        user: User = get_user(request)
 
         if is_admin(user):
             return Branch.objects.filter(id=user.role.belongs.id)
@@ -100,7 +98,7 @@ class SubjectAdmin(admin.ModelAdmin):
         if is_admin(user):
             return Schema.objects.filter(branch=user.role.belongs)
 
-        elif user.is_superuser():
+        elif user.is_superuser:
             return Schema.objects.all()
 
         return Schema.objects.none()
@@ -149,7 +147,7 @@ class ColorAdmin(admin.ModelAdmin):
         if is_admin(user):
             return Color.objects.filter(Q(institute__id=user.role.belongs.institute.id))
 
-        elif user.is_superuser():
+        elif user.is_superuser:
             return Color.objects.all()
 
         return Color.objects.none()
@@ -182,7 +180,7 @@ class SchemaAdmin(admin.ModelAdmin):
         if is_admin(user):
             return Schema.objects.filter(branch=user.role.belongs)
 
-        elif user.is_superuser():
+        elif user.is_superuser:
             return Schema.objects.all()
 
         return Schema.objects.none()

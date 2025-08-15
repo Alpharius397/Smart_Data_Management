@@ -1,9 +1,11 @@
+import typing
 from django.contrib import messages  # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.http import HttpRequest  # type: ignore
 from django.db.models import Q  # type: ignore
 from Logs.loggers import LogType, APP_LOG, LogStructure, LogMessage
 from User.models import get_post_id
+from tools.types import NullStr
 from tools.url_auth import (
     login_needed,
     auth_needed,
@@ -11,6 +13,7 @@ from tools.url_auth import (
     is_hx_get,
     is_auth_get,
     get_user,
+    require_http_methods
 )
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Logs.forms import DateForm
@@ -28,12 +31,14 @@ COLUMNS_HEADING = (
 
 
 @login_needed()
+@require_http_methods(['GET'])
 def log_board(req: HttpRequest):
     if is_auth_get(req):
         return render(req, "Logs/HTML/dash.html", context={"form": DateForm()})
 
 
 @auth_needed()
+@require_http_methods(['GET'])
 @htmx_response
 def get_logs(req: HttpRequest):
     if is_hx_get(req):
@@ -48,9 +53,10 @@ def get_logs(req: HttpRequest):
 
         if f.is_valid():
             order: typing.Literal["after", "on", "before"] | str = str(
-                f.cleaned_data.get("query", None)
+                f.cleaned_data.get("query", "")
             )
-            date_log = f.cleaned_data.get("date", None)
+            
+            date_log = str(f.cleaned_data.get("date", ""))
 
             if order and date_log:
                 match order:
@@ -100,6 +106,7 @@ def get_logs(req: HttpRequest):
 
 
 @login_needed()
+@require_http_methods(['GET'])
 def single_log(req: HttpRequest, year: int, month: int, day: int):
     if is_auth_get(req):
         context = {"types": [], "columns": [], "day": day, "month": month, "year": year}
@@ -119,6 +126,7 @@ def single_log(req: HttpRequest, year: int, month: int, day: int):
 
 
 @auth_needed()
+@require_http_methods(['GET'])
 @htmx_response
 def search_log(req: HttpRequest, year: int, month: int, day: int):
     if is_hx_get(req):

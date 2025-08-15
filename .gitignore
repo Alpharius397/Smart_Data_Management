@@ -13,3 +13,4 @@ dump
 .env*
 app/
 *.pem
+*.deprecated*

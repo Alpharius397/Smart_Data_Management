@@ -23,6 +23,26 @@ from django.db import connection  # type: ignore
 from psycopg2.sql import SQL, Identifier, Literal, Composable  # type: ignore
 from tools.utils import ColumnType, get_SQL_boolean, segregateColumns
 
+############ Validators ############
+class UserValidator():
+    message = "User must exist and be a admin"
+    code = "invalid"
+    
+    def __init__(self, check_func: typing.Callable[[User], bool]):
+        self.check_func = check_func
+    
+    def __call__(self, userID: int,) -> None:
+        
+        from django.core.exceptions import ValidationError # type: ignore
+        
+        try:
+            user:User = User.objects.get(id=userID)
+            
+            if(not self.check_func(user)):
+                raise ValidationError(self.message, code=self.code, params={"value": user})
+            
+        except Exception as e:
+            raise ValidationError(self.message, code=self.code, params={"value": e})
 
 ############ MODEL ############
 class TaskTable(Model):
@@ -35,6 +55,8 @@ class TaskTable(Model):
         on_delete=SET_NULL,
         null=True,
         blank=True,
+        limit_choices_to={"role__role": RoleType.ADMIN.value},
+        validators=[UserValidator(is_admin)]
     )
 
     branch = ForeignKey(to=Branch, on_delete=RESTRICT, null=False, blank=False)
@@ -99,6 +121,7 @@ class AssignTable(Model):
         related_name="manager",
         verbose_name="Assigned User",
         limit_choices_to={"role__role": RoleType.MANAGER.value},
+        validators=[UserValidator(is_manager)]
     )
 
     class Meta:
@@ -315,13 +338,13 @@ class DataTable(Model):
         with connection.cursor() as cursor:
             sql_query = SQL(
                 """
-                            update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
-                                where {task_column} = {taskID} 
-                                and "id" = {rowID}
-                                and {semester_column}={semester}
-                                and {rowColumn}::jsonb?{_column}
-                                and {locked} is false;
-                            """
+                    update {table_name} set {rowColumn} = {rowColumn}::jsonb || {_value}::jsonb 
+                        where {task_column} = {taskID} 
+                        and "id" = {rowID}
+                        and {semester_column}={semester}
+                        and {rowColumn}::jsonb?{_column}
+                        and {locked} is false;
+                """
             ).format(
                 table_name=table_name,
                 rowColumn=rowColumn,

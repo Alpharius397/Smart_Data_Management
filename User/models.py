@@ -1,19 +1,16 @@
 from enum import Enum
-from PIL import Image
 from django.contrib.auth.models import User as _User  # type: ignore
 from django.db.models import (  # type: ignore
     OneToOneField,
     ForeignKey,
-    Model,
     RESTRICT,
     CharField,
-    ImageField,
+    Model,
     AutoField,
 )
 from django.http import HttpRequest  # type: ignore
 from University.models import Branch, University, Institute
-from constants import EMAIL_KEY
-from tools.typesCauseWhyNot import NullStr, NullInt
+from tools.types import NullStr, NullInt
 from typing import Iterator, TypedDict
 
 
@@ -94,23 +91,33 @@ class Role(Model):
 def is_manager(user: User) -> bool:
     try:
         return RoleType.isManager(user.role.role)
-    except:
+    except Exception:
         return False
 
+async def ais_manager(user: User) -> bool:
+    try:
+        return RoleType.isManager((await user.role).role)
+    except Exception:
+        return False
 
 def is_student(user: User) -> bool:
     try:
         return RoleType.isStudent(user.role.role)
-    except:
+    except Exception:
         return False
 
 
 def is_admin(user: User) -> bool:
     try:
         return RoleType.isAdmin(user.role.role)
-    except:
+    except Exception:
         return False
 
+async def ais_admin(user: User) -> bool:
+    try:
+        return RoleType.isAdmin((await user.role).role)
+    except Exception:
+        return False
 
 def get_user_by_id(id: int) -> NullStr:
     try:
@@ -141,7 +148,7 @@ def get_post(user: User) -> PostNameDict:
         institute = uni.name
         branch = uni.name
 
-    except:
+    except Exception:
         pass
 
     return PostNameDict(
@@ -177,6 +184,8 @@ def get_post_id(user: User) -> PostIdDict:
 def is_authenticated(user: User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
+async def ais_authenticated(user: User) -> bool:
+    return bool((user.is_authenticated) and (is_admin(user) or (await ais_manager(user))))
 
 def is_authenticated_student(user: User) -> bool:
     return bool((user.is_authenticated) and (is_student(user)))
@@ -236,5 +245,4 @@ async def aget_post_by_ID(university: int, institute: int, branch: int) -> PostN
         bra = await (await Branch.objects.aget(id=branch)).name
     except Exception:
         pass
-
     return PostNameDict(**{"university": uni, "institute": insti, "branch": bra})

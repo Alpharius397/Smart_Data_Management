@@ -1,17 +1,16 @@
 from django.utils import timezone  # type: ignore
 import io
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 from django.contrib import messages  # type: ignore
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.http import FileResponse, HttpRequest  # type: ignore
 from Report.errors import DataNotLocked, InvalidSchema, RedisFailed
-from University.models import SemMeta, Subject, Schema, SubjectMeta
+from University.models import Subject, Schema, SubjectMeta
 from Task.models import DataTable, TaskTable
 from Main.settings import settingsInterface as settings
 from User.models import (
     PostIdDict,
-    PostNameDict,
     get_post_id,
     get_user,
     is_admin,
@@ -35,6 +34,7 @@ from tools.url_auth import (
     semester_permission_check,
     task_permission_check,
     token_check,
+    require_http_methods,
 )
 from Report.forms import (
     CompleteFeedBack,
@@ -159,6 +159,7 @@ def getProtoReport(report: ReportData, header: PostIdDict, schema: int):
 
 ########### HTTP Request #############
 @login_needed()
+@require_http_methods(["GET"])
 @semester_permission_check
 def sem_view(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_auth_get(req):
@@ -168,6 +169,7 @@ def sem_view(req: HttpRequest, id: int, idx: int, rowID: int):
 
 
 @login_needed()
+@require_http_methods(["GET"])
 @task_permission_check
 def index_view(req: HttpRequest, id: int, idx: str):
     if is_auth_get(req):
@@ -183,6 +185,7 @@ def index_view(req: HttpRequest, id: int, idx: str):
         )
 
 
+@require_http_methods(["GET"])
 @aauth_needed()
 @async_task_permission_check  # type: ignore
 async def generate_report(req: HttpRequest, id: int, idx: str):
@@ -242,6 +245,7 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
 
 
 @pdf_access
+@require_http_methods(["GET"])
 @token_check(RedisDataBase.PDF_TOKEN, close_after=False)
 @login_needed()
 @task_permission_check
@@ -290,6 +294,7 @@ def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
 
 ############ HTMX Request ############
 @auth_needed()
+@require_http_methods(["GET"])
 @htmx_response
 def htmx_schema(req: HttpRequest):
     context: dict[str, list[tuple[int, str]]] = {"options": []}
@@ -326,6 +331,7 @@ def htmx_schema(req: HttpRequest):
 
 
 @auth_needed()
+@require_http_methods(["GET"])
 @htmx_response
 @task_permission_check
 def report_view(req: HttpRequest, id: int, idx: str):
@@ -353,10 +359,8 @@ def report_view(req: HttpRequest, id: int, idx: str):
                 for meta in subs.values():
                     columns[sem].update(meta["other"].keys())
 
-            context.update(post)
             context.update(report_data)
             context.update(schema_details)
-            context.update(get_post(user))
             context.update({"timestamp": timezone.now().strftime("%d/%m/%Y, %H:%M:%S")})
             context.update({"columns": columns, "schema": schema_id})
         except InvalidSchema as f:
@@ -375,6 +379,7 @@ def report_view(req: HttpRequest, id: int, idx: str):
 
 
 @htmx_response
+@require_http_methods(["GET", "POST"])
 @auth_needed()
 @task_permission_check
 def htmx_feedBack(req: HttpRequest, id: int, idx: str):
@@ -447,9 +452,15 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
 
             with transaction.atomic():
                 if form.is_valid():
-                    locked = form.cleaned_data.get("locked")
-                    status = form.cleaned_data.get("status")
-                    issued = form.cleaned_data.get("issued")
+                    locked: Literal["true", "false"] = str(
+                        form.cleaned_data.get("locked")
+                    )  # type: ignore
+                    status: Literal["true", "false", "none"] = str(
+                        form.cleaned_data.get("status")
+                    )  # type: ignore
+                    issued: Literal["true", "false"] = str(
+                        form.cleaned_data.get("issued")
+                    )  # type: ignore
 
                     updated = DataTable.set_complete_feed(
                         task,
@@ -458,7 +469,8 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
                         locked=get_2_value(locked),
                         status=get_3_value(status),
                         issued=get_2_value(issued),
-                    )  # type: ignore
+                    )
+
                     setSwalAlert(
                         context,
                         f"Status of {updated} records was updated successfully",
@@ -488,6 +500,7 @@ def htmx_feedBack(req: HttpRequest, id: int, idx: str):
 
 @htmx_response
 @auth_needed()
+@require_http_methods(["GET"])
 @task_permission_check
 def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int):
     context: dict[str, Any] = {"id": id, "idx": idx, "rowID": rowID}
@@ -511,6 +524,7 @@ def sem_report_view(req: HttpRequest, id: int, idx: int, rowID: int):
 
 
 @htmx_response
+@require_http_methods(["GET", "POST"])
 @auth_needed()
 @semester_permission_check
 def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
@@ -631,6 +645,7 @@ def sem_feed_view(req: HttpRequest, id: int, idx: int, rowID: int):
 
 
 @htmx_response
+@require_http_methods(["GET", "DELETE"])
 @auth_needed(manager_only=True)
 @task_permission_check
 def issue_view(req: HttpRequest, id: int, idx: str):

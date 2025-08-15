@@ -1,5 +1,4 @@
 from Crypto.Cipher import DES3, AES
-from Crypto.Hash import SHA256
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode as a64encode, b64decode as a64decode
 from datetime import datetime, timedelta
@@ -15,7 +14,6 @@ AES_IV_LENGTH: int = 16
 SHA256_LENGTH: int = 32
 BASE_64_LENGTH: int = 3
 DES_3_KEY_SIZE = 24
-
 
 def b64encode(s: bytes):
     return a64encode(pad(s, BASE_64_LENGTH), b"-_")

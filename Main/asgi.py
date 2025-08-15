@@ -8,7 +8,6 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Main.settings")
 asgi = get_asgi_application()
 
 import Card.urls
-import Dash.urls
 
 websocket_urlpatterns = [
     *Card.urls.websocket_urlpatterns,
