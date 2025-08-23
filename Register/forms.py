@@ -8,19 +8,19 @@ class RegisterForm(MainForm):
     username = forms.CharField(
         max_length=100, 
         required=True,
-        help_text='Enter the username'
+        help_text='Enter the username', label="Username"
     )
     
     email = forms.EmailField(
         max_length=255,
         required=True,
-        help_text='Enter the email'
+        help_text='Enter the email', label="Email"
     )
     
     level = forms.ChoiceField(
         help_text='Choose the role',
         required=True,
-        choices=[(RoleType.MANAGER.value,RoleType.MANAGER.value),(RoleType.ADMIN.value,RoleType.ADMIN.value)]
+        choices=[(RoleType.MANAGER.value,RoleType.MANAGER.value),(RoleType.ADMIN.value,RoleType.ADMIN.value)], label="Level"
     )
     
     university = forms.ModelChoiceField(
@@ -33,6 +33,7 @@ class RegisterForm(MainForm):
                 'hx-swap':'innerHTML',
                 'hx-trigger':'load,click'
                 })
+        , label="University"
         )
     
     institute = forms.CharField(
@@ -43,24 +44,32 @@ class RegisterForm(MainForm):
                 'hx-target':'#id_branch',
                 'hx-swap':'innerHTML',
                 'hx-trigger':'load,click'})
+        , label="Institute"
+        
     )
     
     branch = forms.CharField(
         help_text='Choose the Branch',
         required=True,
         widget=forms.Select()
+        , label="Branch"
+        
     )
     
     password = forms.CharField(
         widget=forms.PasswordInput(),
         help_text='Enter the password',
         required=True
+        , label="Password"
+        
     )
     
     confirm_password = forms.CharField(
         widget=forms.PasswordInput(),
         help_text='Re-enter the password',
         required=True
+        , label="Confirm Password"
+        
     )
     
     def clean_confirm_password(self):

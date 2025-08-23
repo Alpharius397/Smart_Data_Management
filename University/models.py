@@ -1,4 +1,5 @@
 from typing import NamedTuple, TypedDict
+from asgiref.sync import sync_to_async
 from django.db.models import (  # type: ignore
     CASCADE,
     CharField,
@@ -104,13 +105,13 @@ class Branch(Model):
 
 
 class Schema(Model):
-    id = AutoField(verbose_name="id", null=False, blank=True, primary_key=True)
+    id = AutoField(verbose_name="id", null=False, blank=True, primary_key=True)  # type: ignore
 
     name = CharField(
         max_length=200, null=False, unique=True, blank=False, verbose_name="Scheme Name"
-    )
+    )  # type: ignore
 
-    date = DateTimeField(default=timezone.now, verbose_name="Date of Creation")
+    date = DateTimeField(default=timezone.now, verbose_name="Date of Creation")  # type: ignore
 
     branch = ForeignKey(
         to=Branch, null=False, blank=False, on_delete=RESTRICT, related_name="schema"
@@ -124,34 +125,32 @@ class Schema(Model):
         blank=False,
         verbose_name="University Heading",
         default="University Heading",
-    )
+    )  # type: ignore
     instituteHeading = CharField(
         max_length=200,
         null=False,
         blank=False,
         verbose_name="Institute Heading",
         default="Institute Heading",
-    )
+    )  # type: ignore
     branchHeading = CharField(
         max_length=200,
         null=False,
         blank=False,
         verbose_name="Branch Heading",
         default="Branch Heading",
-    )
+    )  # type: ignore
 
     universityIcon = ImageField(
         verbose_name="University Icon",
         upload_to="schema/university",
         null=True,
-        default="schema/university/default.icon.png",
-    )
+    )  # type: ignore
     instituteIcon = ImageField(
         verbose_name="Institute Icon",
         upload_to="schema/institute",
         null=True,
-        default="schema/institute/default.icon.jpeg",
-    )
+    )  # type: ignore
 
     class Meta:
         verbose_name = "Schema"
@@ -168,24 +167,20 @@ class Schema(Model):
         try:
             obj.file
             return True
-        except:
+        except Exception:
             return False
 
     def save(self, *args, **kwargs):
         try:
             this = Schema.objects.get(id=self.id)
 
-            if (
-                Schema.check_file(this.universityIcon)
-                and (this.universityIcon != self.universityIcon)
-                and (this.universityIcon.name == "default.icon.png")
+            if Schema.check_file(this.universityIcon) and (
+                this.universityIcon != self.universityIcon
             ):
                 this.universityIcon.delete(False)
 
-            if (
-                Schema.check_file(this.instituteIcon)
-                and (this.instituteIcon != self.instituteIcon)
-                and (this.universityIcon.name == "default.icon.jpeg")
+            if Schema.check_file(this.instituteIcon) and (
+                this.instituteIcon != self.instituteIcon
             ):
                 this.instituteIcon.delete(False)
 
@@ -217,32 +212,14 @@ class Schema(Model):
             icon["university_heading"] = schema.universityHeading
             icon["institute_heading"] = schema.instituteHeading
             icon["branch_heading"] = schema.branchHeading
-        except Exception as e:
+        except Exception:
             pass
 
         return icon
 
     @staticmethod
     async def agetSchema(schema_id: int | str) -> "SchemaMeta":
-        icon = SchemaMeta(
-            university_icon="/media/schema/university/default.icon.png",
-            institute_icon="/media/schema/institute/default.icon.jpeg",
-            university_heading="University Heading",
-            institute_heading="Institute Heading",
-            branch_heading="Branch Heading",
-        )
-
-        try:
-            schema = await Schema.objects.aget(id=schema_id)
-            icon["university_icon"] = await schema.universityIcon.url
-            icon["institute_icon"] = await schema.instituteIcon.url
-            icon["university_heading"] = await schema.universityHeading
-            icon["institute_heading"] = await schema.instituteHeading
-            icon["branch_heading"] = await schema.branchHeading
-        except Exception:
-            pass
-
-        return icon
+        return await sync_to_async(Schema.getSchema)(schema_id)
 
 
 class Subject(Model):
@@ -347,7 +324,7 @@ class Color(Model):
         try:
             obj.file
             return True
-        except:
+        except Exception:
             return False
 
     def save(self, *args, **kwargs):

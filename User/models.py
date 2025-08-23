@@ -1,4 +1,5 @@
 from enum import Enum
+from asgiref.sync import sync_to_async
 from django.contrib.auth.models import User as _User  # type: ignore
 from django.db.models import (  # type: ignore
     OneToOneField,
@@ -67,8 +68,6 @@ class User(_User):
 
 
 class Role(Model):
-    id = AutoField(verbose_name="roleID", primary_key=True, null=False, blank=True)
-
     user = OneToOneField(to=User, on_delete=RESTRICT, related_name="role")  # type: ignore
 
     role = CharField(  # type: ignore
@@ -94,11 +93,10 @@ def is_manager(user: User) -> bool:
     except Exception:
         return False
 
+
 async def ais_manager(user: User) -> bool:
-    try:
-        return RoleType.isManager((await user.role).role)
-    except Exception:
-        return False
+    return await sync_to_async(is_manager)(user)
+
 
 def is_student(user: User) -> bool:
     try:
@@ -107,17 +105,20 @@ def is_student(user: User) -> bool:
         return False
 
 
+async def ais_student(user: User) -> bool:
+    return await sync_to_async(is_student)(user)
+
+
 def is_admin(user: User) -> bool:
     try:
         return RoleType.isAdmin(user.role.role)
     except Exception:
         return False
 
+
 async def ais_admin(user: User) -> bool:
-    try:
-        return RoleType.isAdmin((await user.role).role)
-    except Exception:
-        return False
+    return await sync_to_async(is_admin)(user)
+
 
 def get_user_by_id(id: int) -> NullStr:
     try:
@@ -184,11 +185,19 @@ def get_post_id(user: User) -> PostIdDict:
 def is_authenticated(user: User) -> bool:
     return bool((user.is_authenticated) and (is_admin(user) or is_manager(user)))
 
+
 async def ais_authenticated(user: User) -> bool:
-    return bool((user.is_authenticated) and (is_admin(user) or (await ais_manager(user))))
+    return bool(
+        (user.is_authenticated) and (is_admin(user) or (await ais_manager(user)))
+    )
+
 
 def is_authenticated_student(user: User) -> bool:
     return bool((user.is_authenticated) and (is_student(user)))
+
+
+async def ais_authenticated_student(user: User) -> bool:
+    return bool((user.is_authenticated) and (await ais_student(user)))
 
 
 def getID(user: User) -> int:
@@ -235,14 +244,4 @@ def get_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict
 
 
 async def aget_post_by_ID(university: int, institute: int, branch: int) -> PostNameDict:
-    uni: str = "University"
-    insti: str = "Institute"
-    bra: str = "Branch"
-
-    try:
-        uni = await (await University.objects.aget(id=university)).name
-        insti = await (await Institute.objects.aget(id=institute)).name
-        bra = await (await Branch.objects.aget(id=branch)).name
-    except Exception:
-        pass
-    return PostNameDict(**{"university": uni, "institute": insti, "branch": bra})
+    return await sync_to_async(get_post_by_ID)(university, institute, branch)

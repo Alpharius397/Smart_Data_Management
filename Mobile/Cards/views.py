@@ -1,5 +1,8 @@
+import json
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
+from Mobile.Cards.forms import HeadingForm
+from University.models import Branch, Institute, University
 from User.models import get_user
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Mobile.models import razorPayment
@@ -15,7 +18,8 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
-from Mobile.types import SubscriberResponse, CardResponse, CardData
+from Mobile.types import HeadingResponse, SubscriberResponse, CardResponse, CardData
+from tools.utils import tryCatchThis
 
 
 @csrf_exempt
@@ -24,7 +28,9 @@ from Mobile.types import SubscriberResponse, CardResponse, CardData
 @read_body_as_json
 @student_auth_needed
 def subscriber_check(req: HttpRequest):
-    response = SubscriberResponse(status=False, error=[], **getRequestToken(req))
+    response = SubscriberResponse(
+        status=False, error=[], key=None, **getRequestToken(req)
+    )
     user = get_user(req)
     status = 500
 
@@ -36,8 +42,9 @@ def subscriber_check(req: HttpRequest):
                 user__id=user.id, cardID__cardID__exact=cardID
             )
 
-            if paymentDone:
+            if paymentDone.exists():
                 response["status"] = True
+                response["key"] = paymentDone.first().cardID.decryption_key
                 status = 200
             else:
                 response["error"] = ["Payment is missing for this card!"]
@@ -131,6 +138,7 @@ def available_card(req: HttpRequest):
             available_card = (
                 razorPayment.objects.filter(Q(user=user))
                 .order_by("timestamp")
+                .reverse()
                 .defer("cardID", "timestamp")[page : page + MAX_RECORD]
             )
 
@@ -157,5 +165,39 @@ def available_card(req: HttpRequest):
                 .set_error(e)
             )
             response["error"] = [DEFAULT_ERROR]
+            
 
+        return JsonResponse(data=response, safe=False, status=status)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+@jwt_required  # type: ignore
+@read_body_as_json
+@student_auth_needed
+def get_heading(req: HttpRequest):
+    if is_auth_get_student(req):
+        f = HeadingForm(req.GET)
+        
+        response = HeadingResponse(
+            status=False, error=[], university=None, institute=None, branch=None, **getRequestToken(req)
+        )
+        status = 400
+        if f.is_valid():
+            uniID = str(f.cleaned_data.get("university", ""))
+            instiID = str(f.cleaned_data.get("institute", ""))
+            branchID = str(f.cleaned_data.get("branch", ""))
+            
+            """ Hacky  but okay """
+            university = tryCatchThis(University.objects.get, None)(id=uniID)
+            institute = tryCatchThis(Institute.objects.get, None)(id=instiID)
+            branch = tryCatchThis(Branch.objects.get, None)(id=branchID)
+            
+            response["university"] = None if (university is None) else university.name
+            response["institute"] = None if (institute is None) else institute.name
+            response["branch"] = None if (branch is None) else branch.name
+            response["status"] = True
+            status = 200
+        else:
+            response["error"] = f.getJsonErrors()
+            
         return JsonResponse(data=response, safe=False, status=status)

@@ -1,18 +1,26 @@
 import json
 import typing
+from asgiref.sync import sync_to_async
 from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Main.models import RedisConnection, RedisDataBase
+from Mobile.models import razorPayment
 from constants import DEFAULT_ERROR
-from User.models import User, get_user, is_authenticated_student
+from User.models import (
+    User,
+    get_user,
+    is_authenticated_student,
+    ais_authenticated_student,
+)
 from functools import wraps
 from django.utils import timezone  # type: ignore
 from tools.mails import email_send, validate_email  # type: ignore
-from django.core.exceptions import ValidationError # type: ignore
+from django.core.exceptions import ValidationError  # type: ignore
 from tools.url_auth import getOTP, compareOTP
 from Mobile.types import JwtToken, AccessPayLoad, RefreshPayLoad
 from tools.utils import tryCatchThis
+from Card.models import Card
 
 
 ############ UTILS ############
@@ -54,18 +62,35 @@ def student_auth_needed(
 
     return _wrapped_view
 
+def astudent_auth_needed(
+    view_func: typing.Callable[..., typing.Awaitable[JsonResponse | None]],
+):
+    """Wrapper for views that need authenticated users (JSON Version)"""
+
+    @wraps(view_func)
+    async def _wrapped_view(request: HttpRequest, *args, **kwargs):
+        if await ais_authenticated_student(get_user(request)):
+            return (await view_func(request, *args, **kwargs)) or JsonResponse(
+                data={"error": DEFAULT_ERROR}, status=403
+            )
+        return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+
+    return _wrapped_view
+
 
 def get_user_from_body(view_func: typing.Callable[..., JsonResponse | None]):
+    """ Get's user from Email param, if only user is anonymous. For Forgot Password Only """
     def __inner__(req: HttpRequest, *args, **kwargs):
         try:
-            email = str(req.__getattribute__(str(req.method)).get("Email"))
+            if req.user.is_anonymous:
+                email = str(req.__getattribute__(str(req.method)).get("Email"))
+                user = User.objects.get(email=email)
+                req.user = user
 
-            user = User.objects.get(email=email)
-
-            req.user = user
-
-        except Exception:
-            pass
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure().set_request(req, LogType.EXCEPTION).set_error(e)
+            )
 
         return view_func(req, *args, **kwargs) or JsonResponse(
             data={"error": DEFAULT_ERROR}, status=403
@@ -166,12 +191,12 @@ def jwt_required(
 
         if not auth_header.startswith("Bearer "):
             return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=401
+                {"error": "Authorization header missing or malformed"}, status=400
             )
 
         if not refresh_header.startswith("Bearer "):
             return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=401
+                {"error": "Authorization header missing or malformed"}, status=400
             )
 
         try:
@@ -223,6 +248,71 @@ def jwt_required(
     return _wrapped_view
 
 
+def ajwt_required(
+    view_func: typing.Callable[..., typing.Awaitable[JsonResponse | None]],
+):
+    @wraps(view_func)
+    async def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
+        auth_header = request.headers.get("Authorization", "")
+        refresh_header = request.headers.get("Refresh", "")
+
+        if not auth_header.startswith("Bearer "):
+            return JsonResponse(
+                {"error": "Authorization header missing or malformed"}, status=400
+            )
+
+        if not refresh_header.startswith("Bearer "):
+            return JsonResponse(
+                {"error": "Authorization header missing or malformed"}, status=400
+            )
+
+        try:
+            access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
+
+            access_payload = await AccessPayLoad.adecodeToken(AccessPayLoad, access)
+            refresh_payload = await RefreshPayLoad.adecodeToken(RefreshPayLoad, refresh)
+
+            if (
+                access_payload.expire < timezone.now()
+                and refresh_payload.expire < timezone.now()
+            ):
+                raise jwt.ExpiredSignatureError()
+
+            if access_payload.userID != refresh_payload.userID:
+                raise jwt.InvalidTokenError()
+
+            new_Token = bool(access_payload.expire < timezone.now())
+
+            access_token = access_payload.getToken(new_Token)
+            refresh_token = refresh_payload.getToken(new_Token)
+
+            user = await User.objects.aget(
+                id=access_payload.userID, username=access_payload.username
+            )
+
+            request.user = user
+            request.headers.__setattr__("access", access_token)
+            request.headers.__setattr__("refresh", refresh_token)
+            return (await view_func(request, *args, **kwargs)) or JsonResponse(
+                {"error": DEFAULT_ERROR}, status=403
+            )
+
+        except jwt.ExpiredSignatureError:
+            return JsonResponse({"error": "Token expired"}, status=401)
+
+        except jwt.InvalidTokenError:
+            return JsonResponse({"error": "Invalid token"}, status=401)
+
+        except User.DoesNotExist:
+            return JsonResponse({"error": "User not found"}, status=401)
+
+        except Exception as e:
+            APP_LOG.write_error(LogStructure().set_request(request, LogType.EXCEPTION).set_error(e))
+            return JsonResponse({"error": DEFAULT_ERROR}, status=500)
+
+    return _wrapped_view
+
+
 def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
@@ -230,7 +320,7 @@ def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
             if request.method not in ["GET", "POST", "PUT", "DELETE"]:
                 raise ValueError("Invalid Request Method")
             request.__setattr__(request.method, json.loads(request.body))
-        except Exception:
+        except Exception as e:
             pass
 
         return view_func(request, *args, **kwargs) or JsonResponse(
@@ -240,7 +330,9 @@ def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
     return _wrapped_view
 
 
-def read_body_as_form(view_func: typing.Callable[..., JsonResponse | HttpResponse | None]):
+def read_body_as_form(
+    view_func: typing.Callable[..., JsonResponse | HttpResponse | None],
+):
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:
@@ -251,5 +343,66 @@ def read_body_as_form(view_func: typing.Callable[..., JsonResponse | HttpRespons
             pass
 
         return view_func(request, *args, **kwargs)
+
+    return _wrapped_view
+
+
+def get_card(user: User, cardID: str) -> Card | None:
+    try:
+        return razorPayment.objects.get(
+            cardID__cardID=str(cardID), user__id=user.id
+        ).cardID
+    except razorPayment.DoesNotExist:
+        return None
+
+
+async def aget_card(user, cardID: str) -> Card | None:
+    return await sync_to_async(get_card)(user, cardID)
+
+
+def card_owner_check(
+    view_func: typing.Callable[..., JsonResponse | HttpResponse | None],
+):
+    """Checks whether or not user owns the card. Passes the card in request attr `'card'`"""
+
+    @wraps(view_func)
+    def _wrapped_view(request: HttpRequest, cardID: str, *args, **kwargs):
+        try:
+            user = get_user(request)
+
+            if (card := get_card(user, cardID)) is not None:
+                request.__setattr__("card", card)
+                return view_func(request, cardID, *args, **kwargs) or JsonResponse(
+                    data={"error": DEFAULT_ERROR}, status=403
+                )
+
+            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+        except Exception:
+            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+
+    return _wrapped_view
+
+
+def acard_owner_check(
+    view_func: typing.Callable[
+        ..., typing.Awaitable[JsonResponse | HttpResponse | None]
+    ],
+):
+    """Checks whether or not user owns the card. Passes the card in request attr `'card'`"""
+
+    @wraps(view_func)
+    async def _wrapped_view(request: HttpRequest, cardID: str, *args, **kwargs):
+        try:
+            user = get_user(request)
+
+            if (card := aget_card(user, cardID)) is not None:
+                request.__setattr__("card", card)
+                return (
+                    await view_func(request, cardID, *args, **kwargs)
+                ) or JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+
+            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+        except Exception:
+            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
 
     return _wrapped_view

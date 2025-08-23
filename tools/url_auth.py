@@ -14,6 +14,7 @@ from User.models import (
     get_user,
     is_admin,
     is_authenticated,
+    is_authenticated_student,
     is_manager,
 )
 from django.db.models import Q  # type: ignore
@@ -26,8 +27,8 @@ from tools.errors import TokenExpired
 from Crypto.Random.random import randint
 from asgiref.sync import sync_to_async
 from tools.mails import email_send, validate_email  # type: ignore
-from django.core.exceptions import ValidationError # type: ignore
-from django.views.decorators.http import require_http_methods as _require_http_methods # type: ignore
+from django.core.exceptions import ValidationError  # type: ignore
+from django.views.decorators.http import require_http_methods as _require_http_methods  # type: ignore
 
 REQUEST_PARAMS = typing.ParamSpec("REQUEST_PARAMS")
 
@@ -79,8 +80,12 @@ def auth_page(req: HttpRequest) -> HttpResponse:
         + f"?next={req.path}&warning=Unauthenticated Request!"
     )
 
-def require_http_methods(request_method_list: list[typing.Literal['GET', 'POST', 'PUT', 'DELETE']]):
-    return _require_http_methods(request_method_list) # type: ignore
+
+def require_http_methods(
+    request_method_list: list[typing.Literal["GET", "POST", "PUT", "DELETE"]],
+):
+    return _require_http_methods(request_method_list)  # type: ignore
+
 
 def get_color(req: HttpRequest):
     try:
@@ -99,6 +104,10 @@ def get_color(req: HttpRequest):
         req.session["branch_heading"] = role.belongs.name
     except Exception:
         pass
+
+
+async def aget_color(req: HttpRequest):
+    await sync_to_async(get_color)(req)
 
 
 def taskCheck(user: User, id: int):
@@ -231,7 +240,7 @@ def media_access(
 
         user = get_user(request)
 
-        if is_authenticated(user):
+        if is_authenticated(user) or is_authenticated_student(user):
             return view_func(request, *args, **kwargs) or HttpResponse(status=403)
 
         return HttpResponse(status=403)
@@ -249,7 +258,7 @@ def aauth_needed(manager_only=False, admin_only=False):
 
         @wraps(view_func)
         async def _wrapped_view(request: HttpRequest, *args, **kwargs):
-            get_color(request)
+            await aget_color(request)
             user = get_user(request)
 
             if await ais_authenticated(user):
@@ -261,7 +270,7 @@ def aauth_needed(manager_only=False, admin_only=False):
                 if (manager_only and (await ais_manager(user))) or (
                     admin_only and (await ais_admin(user))
                 ):  # one of them is true
-                    return await view_func(request, *args, **kwargs) or HttpResponse(
+                    return (await view_func(request, *args, **kwargs)) or HttpResponse(
                         status=403
                     )
 
@@ -387,7 +396,7 @@ def task_permission_check(
     def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
         user = get_user(request)
 
-        if (task := taskCheck(user, id)) != None:
+        if (task := taskCheck(user, id)) is not None:
             request.__setattr__("task", task)
             return view_func(request, id, *args, **kwargs) or HttpResponse(status=403)
 
@@ -398,7 +407,7 @@ def task_permission_check(
 
 def async_task_permission_check(
     view_func: typing.Callable[..., typing.Awaitable[HttpResponse | None]],
-) -> typing.Callable[..., typing.Awaitable[HttpResponse]]:
+):
     @wraps(view_func)
     async def _wrapped_view(request: HttpRequest, id: int, *args, **kwargs):
         user = get_user(request)

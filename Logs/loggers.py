@@ -238,10 +238,16 @@ class LogStructure:
 
         for method in LogStructure.METHODS:
             try:
-                attr: QueryDict = req.__getattribute__(method)
-                data[method] = attr.dict()
-            except AttributeError:
+                attr: QueryDict | dict = req.__getattribute__(method)
+                if isinstance(attr, dict):
+                    data[method] = attr
+                
+                elif isinstance(attr, QueryDict):
+                    data[method] = attr.dict()
+                    
+            except Exception as e:
                 pass
+                
 
         try:
             data["FILES"] = {
@@ -295,7 +301,7 @@ class LogStructure:
         **kwargs: typing.Any,
     ):
         self.request = LogStructure.get_request_data(req, logType, taskId, **kwargs)
-        return self
+        return self.set_meta(req)
 
     def set_error(self, error: Exception):
         self.error["timestamp"] = timezone.now()

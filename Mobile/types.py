@@ -71,11 +71,31 @@ class PayLoad:
         )
 
     @staticmethod
+    async def afrom_json(
+        classConstruct: type["PayLoad"],
+        userID: int,
+        username: str,
+        type: str,
+        expire: str,
+    ) -> "PayLoad":
+        user: User = await User.objects.aget(id=userID, username=username)
+        return classConstruct(
+            user=user, type=type, expire=datetime.datetime.fromisoformat(expire)
+        )
+
+    @staticmethod
     def decodeToken(classConstruct: type["PayLoad"], token: str) -> "PayLoad":
         data: dict[str, str] = jwt.decode(
             token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
         )
         return classConstruct.from_json(classConstruct, **data)  # type: ignore
+
+    @staticmethod
+    async def adecodeToken(classConstruct: type["PayLoad"], token: str) -> "PayLoad":
+        data: dict[str, str] = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+        return await classConstruct.afrom_json(classConstruct, **data)  # type: ignore
 
 
 class AccessPayLoad(PayLoad):
@@ -131,7 +151,7 @@ class RegisterResponse(TokenResponse):
 
 
 class SubscriberResponse(TokenResponse):
-    pass
+    key: NullStr
 
 
 class CardData(TypedDict):
@@ -150,7 +170,9 @@ class CardResponse(TokenResponse):
 class UserInfoResponse(TokenResponse):
     username: NullStr
     email: NullStr
-
+    university: NullStr
+    institute: NullStr
+    branch: NullStr
 
 class CredResponse(TokenResponse):
     pass
@@ -162,3 +184,8 @@ class DeleteResponse(TokenResponse):
 
 class OtpResponse(TokenResponse):
     pass
+
+class HeadingResponse(TokenResponse):
+    university: NullStr
+    institute: NullStr
+    branch: NullStr

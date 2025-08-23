@@ -23,7 +23,7 @@ from Mobile.Auth.forms import RegisterForm, LoginForm
 
 
 @csrf_exempt
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @read_body_as_json
 def mobile_login(req: HttpRequest):
     if req.method == "POST":
@@ -69,7 +69,7 @@ def mobile_login(req: HttpRequest):
 
 
 @csrf_exempt
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 @read_body_as_json
 def mobile_register(req: HttpRequest):
     if req.method == "POST":
@@ -131,7 +131,7 @@ def mobile_register(req: HttpRequest):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
@@ -143,6 +143,9 @@ def user_info(req: HttpRequest):
             status=False,
             error=[],
             email=None,
+            university=None,
+            institute=None,
+            branch=None,
             username=None,
             **getRequestToken(req),
         )
@@ -152,6 +155,9 @@ def user_info(req: HttpRequest):
         try:
             response["username"] = user.username
             response["email"] = user.email
+            response["branch"] = user.role.belongs.name
+            response["institute"] = user.role.belongs.institute.name
+            response["university"] = user.role.belongs.institute.university.name
             response["status"] = True
             status = 200
         except Exception as e:
@@ -167,7 +173,7 @@ def user_info(req: HttpRequest):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @read_body_as_json
 def get_university(req: HttpRequest):
     if req.method == "GET":
@@ -186,7 +192,7 @@ def get_university(req: HttpRequest):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @read_body_as_json
 def get_institute(req: HttpRequest):
     if req.method == "GET":
@@ -212,7 +218,7 @@ def get_institute(req: HttpRequest):
 
 
 @csrf_exempt
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @read_body_as_json
 def get_branch(req: HttpRequest):
     if req.method == "GET":

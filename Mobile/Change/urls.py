@@ -6,11 +6,12 @@ from .views import (
     email_form,
     password_form,
     delete_form,
+    forgot_form
 )
 
 urlpatterns = [
     re_path(
-        r"^mail/(?P<mailType>(username|email|password))$",
+        r"^mail/(?P<mailType>(username|email|password|delete))$",
         send_otp_mail,
     ),
     path("username", username_form),
@@ -18,4 +19,5 @@ urlpatterns = [
     path("email", email_form),
     path("delete", delete_form),
     path("forgot", forgot_password),
+    path('reset', forgot_form)
 ]

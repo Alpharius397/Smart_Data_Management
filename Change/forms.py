@@ -70,8 +70,8 @@ class PasswordChange(MainForm):
         help_text="Enter the password",
         label="Password",
     )
-
-    confirm_password = forms.CharField(
+    
+    ConfirmPassword = forms.CharField(
         widget=forms.PasswordInput(),
         min_length=10,
         max_length=100,
@@ -80,17 +80,19 @@ class PasswordChange(MainForm):
         label="Confirm password",
     )
 
-    def clean_Password(self):
+    def clean_ConfirmPassword(self):
         data = self.cleaned_data
 
         val_1 = data.get("Password", None)
-        val_2 = data.get("confirm_password", None)
+        val_2 = data.get("ConfirmPassword", None)
 
         if not (val_1 or val_2):
             raise forms.ValidationError("Both cannot be empty")
 
         if val_1 != val_2:
             raise forms.ValidationError("Both cannot be different")
+        
+        return val_2
 
 
 class DeleteAccount(MainForm):

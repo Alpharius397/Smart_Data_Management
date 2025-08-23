@@ -209,9 +209,7 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                     {ACCESS_PDF: settings.ACCESS_PDF, ACCESS_TOKEN: token}
                 )
                 await page.goto(
-                    (
-                        f"{req.scheme}://{settings.WEBSITE_HOST}{reverse('Report:pdf', kwargs={'id': id, 'idx': idx, 'token': token})}?schema={schema_id}"
-                    )
+                    req.build_absolute_uri(reverse('Report:pdf', kwargs={'id': id, 'idx': idx, 'token': token})+f'?schema={schema_id}')
                 )
 
                 _pdf_bytes = await page.pdf(
@@ -257,9 +255,10 @@ def pdf_report(req: HttpRequest, id: int, idx: str, token: str):
         schema_id = req.GET.get("schema", "")
 
         try:
+            post = get_post_id(user)
             task: TaskTable = req.__getattribute__("task")
             sem_dict = Subject.getSubjects(schema_id, post["branch"])  # type: ignore
-            """ post is NullStr cause logging, but don't worry it's int in this context """
+            """ post is NullInt cause logging, but don't worry it's int in this context """
 
             report_data = getReport(sem_dict, task, id, idx)
 

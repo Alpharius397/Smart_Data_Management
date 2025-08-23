@@ -17,17 +17,17 @@ class LoginForm(MainForm):
 
 class RegisterForm(MainForm):
     username = forms.CharField(
-        max_length=100, required=True, help_text="Enter the username"
+        max_length=100, required=True, help_text="Enter the username", label="Username"
     )
 
-    email = forms.EmailField(max_length=255, required=True, help_text="Enter the email")
+    email = forms.EmailField(max_length=255, required=True, help_text="Enter the email", label="Email")
 
     password = forms.CharField(
-        widget=forms.PasswordInput(), help_text="Enter the password", required=True
+        widget=forms.PasswordInput(), help_text="Enter the password", required=True, label="Password"
     )
 
     confirm_password = forms.CharField(
-        widget=forms.PasswordInput(), help_text="Re-enter the password", required=True
+        widget=forms.PasswordInput(), help_text="Re-enter the password", required=True, label="Confirm Password"
     )
 
     university = forms.IntegerField(

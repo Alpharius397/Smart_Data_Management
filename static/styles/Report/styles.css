@@ -349,10 +349,6 @@ select[name="locked"]:has(> option[value="false"]:checked) {
   border-radius: 0 0 8px 0;
 }
 
-.semester-data tr td {
-  width: 33%;
-}
-
 .semester-data td {
   text-align: left;
 }

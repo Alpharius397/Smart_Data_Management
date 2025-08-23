@@ -15,6 +15,7 @@ from tools.encrypt import (
 from tools.errors import TokenExpired
 from tools.get_image import expand_image
 from Logs.loggers import APP_LOG, LogStructure
+from tools.types import NullInt
 from tools.utils import setSwalAlert
 from Card.models import Card
 from constants import DEFAULT_ERROR
@@ -80,11 +81,10 @@ async def agetCardData(cardID: str, cardData: str) -> dict[str, Any]:
     return context
 
 
-def getCardData(cardID: str, cardData: str) -> dict[str, Any]:
+def getCardData(card: Card, sem: NullInt = None) -> dict[str, Any]:
     context: CardReport | dict = {}
 
-    card = Card.objects.get(cardID=cardID)
-    decrypted_data = decrypt_bytes(decrypt_key(card.decryption_key), cardData)
+    decrypted_data = decrypt_bytes(decrypt_key(card.decryption_key), card.data)
 
     protobufData = v3_pb2.CardData().FromString(decrypted_data)
 
@@ -100,6 +100,7 @@ def getCardData(cardID: str, cardData: str) -> dict[str, Any]:
                 for a, b in j.subject.items()
             }
             for i, j in protobufData.semester.items()
+            if ((sem is None) or ((sem is not None) and (i == sem)))
         },
     )
 
