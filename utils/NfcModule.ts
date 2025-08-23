@@ -1,12 +1,10 @@
 import { NativeEventEmitter, NativeModules } from 'react-native';
 import { DEFAULT_ERROR } from '../constants';
-import { CardJson } from '../types/card';
-import { NfcModuleType, NfcCardJson, NfcJson } from '../types/NfcModule';
-import decrypt_data from '../scripts/encryption';
-import { DES3_KEY } from '../secret';
-import Axios, { CARDS } from '../axios';
-import { subscriberCheckResponse } from '../types/screens/Login';
-import { check_format } from './DataChecker';
+import { NfcModuleType, NfcCardJson, NfcJson, subscriberSchema, subscriberType } from '../zod/screens/Home/NfcModule';
+import decrypt_data, { decrypt_key } from '../scripts/encryption';
+import Axios, { URL } from '../axios';
+import data from '../protobuf/test.proto';
+import { CardProto, CardProtoType } from '../zod/screens/Home/Scan';
 
 const { NfcModule } = NativeModules;
 const eventType = "onNfcScan";
@@ -15,19 +13,18 @@ const emitter = new NativeEventEmitter(NfcModule);
 
 const nfcModule: NfcModuleType = NfcModule
 
-async function checkCardValidity(uid: string): Promise<boolean> {
+async function checkCardValidity(uid: string): Promise<[boolean, Uint8Array | null]> {
     try{
-        let response = await Axios.get(CARDS, {
+        const response = await Axios.get(URL.CARD.STATUS, {
             params: {
                 cardID: uid
             }
         });
+        const {status, error, key}: subscriberType = await subscriberSchema.parseAsync(response.data);
 
-        const {status, error}: subscriberCheckResponse = response.data;
-
-        return (status === true) && (error === null);
+        return [(status === true) && (error.length === 0), decrypt_key(key)];
     } catch(err) {
-        return false;
+        return [false, null];
     }
 }
 
@@ -91,7 +88,7 @@ export function DESFireCheck(): Promise<NfcJson> {
 }
 
 export function setListener(
-    okCallBack: (data: CardJson) => void, 
+    okCallBack: (data: CardProtoType, uid: string) => void, 
     errorCallBack: (error: string) => void, 
     paymentNeeded: (cardID:string, message: string) => void,
 
@@ -99,9 +96,10 @@ export function setListener(
     cardFoundCallBack: () => void,
     validityCallBack: () => void,
 ): Promise<void> {
-    return new Promise<void>(() => {
+    return new Promise<void>(async () => {
         try {
-            emitter.addListener(eventType, async (nfc_data_card: string) => {
+            let nfc_data_card = `{"data": "${data}","ok": true,"uid": 1}`;
+            // emitter.addListener(eventType, async (nfc_data_card: string) => {
                 try{
                     cardFoundCallBack();
                     
@@ -118,21 +116,20 @@ export function setListener(
 
                     validityCallBack();
                     
-                    let ownsIt = await checkCardValidity(uid)
+                    let [ownsIt, key] = await checkCardValidity(uid)
+                    
 
                     if(ownsIt){
                         decryptCallBack();
-                        let nfcData: CardJson | null = decrypt_data(data, DES3_KEY);
-
-                        if(nfcData == null){
+                        let nfcData = await CardProto.safeParseAsync(decrypt_data(data, key));
+                        console.log(decrypt_data(data, key));
+                        if(nfcData.success === false){
+                            console.warn(nfcData.error)
                             errorCallBack("Failed to decrypt card data!")
+                        } else {
+                            okCallBack(nfcData.data, uid);
                         }
 
-                        if(check_format(nfcData)){
-                            okCallBack(nfcData);
-                        } else {
-                            errorCallBack("Failed to parse the card!")
-                        }
 
                     } else {
                         paymentNeeded(uid, "Card must be purchased first!");
@@ -144,7 +141,8 @@ export function setListener(
                 } finally {
                     emitter.removeAllListeners(eventType);
                 }
-            });
+            // }
+
         
         } catch(err){
             console.warn(err);

@@ -1,3 +1,5 @@
+import z from "zod"
+
 export type NfcJson = {
     ok: boolean,
     msg: string,
@@ -18,3 +20,13 @@ export interface NfcModuleType {
     setListener(callback: () => void): void
     endNfcScan(): Promise<void>
 }
+
+export const subscriberSchema = z.object({
+    status: z.boolean(),
+    error: z.array(z.string()),
+    access: z.string().nullable(),
+    refresh: z.string().nullable(),
+    key: z.string().nullable()
+});
+
+export type subscriberType = z.infer<typeof subscriberSchema>

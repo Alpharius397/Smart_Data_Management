@@ -1,16 +1,16 @@
-import { getGenericPassword, setGenericPassword, resetGenericPassword } from 'react-native-keychain';
+import { getGenericPassword, setGenericPassword, resetGenericPassword, UserCredentials } from 'react-native-keychain';
 
 const ACCESS_TOKEN = 'access';
 const REFRESH_TOKEN = 'refresh';
 
-export async function getAccessToken(): Promise<string | null> {
+async function getValue(service: string): Promise<UserCredentials | null> {
     try{
 
-        const token =  await getGenericPassword({ service: ACCESS_TOKEN}); 
+        const token =  await getGenericPassword({ service: service }); 
         
         if(token === false) throw new Error("Failed to retrieve token");
         else {
-            return token.password;
+            return token;
         }
 
     }
@@ -20,24 +20,9 @@ export async function getAccessToken(): Promise<string | null> {
     }
 }
 
-export async function getRefreshToken(): Promise<string | null> {
+async function removeValue(service: string): Promise<boolean> {
     try{
-        const token =  await getGenericPassword({ service: REFRESH_TOKEN }); 
-        
-        if(token === false) throw new Error("Failed to retrieve token");
-        else {
-            return token.password;
-        }
-    }
-    catch(error){
-        console.warn("Async Storage Error: ",error);
-        return error;
-    }
-}
-
-export async function removeAccessToken(): Promise<boolean> {
-    try{
-        const token =  await resetGenericPassword({ service: ACCESS_TOKEN }); 
+        const token =  await resetGenericPassword({ service: service }); 
         return token 
     }
     catch(error){
@@ -46,24 +31,12 @@ export async function removeAccessToken(): Promise<boolean> {
     }
 }
 
-export async function removeRefreshToken(): Promise<boolean> {
+async function setValue(name: string, value: string, service: string): Promise<boolean> {
     try{
-        const token =  await resetGenericPassword({ service: REFRESH_TOKEN }); 
-        return token        
-    }
-    catch(error){
-        console.warn("Async Storage Error: ",error);
-        return false;
-    }
-}
-
-
-export async function setAccessToken(value: string): Promise<boolean> {
-    try{
-        const token =  await setGenericPassword(ACCESS_TOKEN, value, { service: ACCESS_TOKEN }); 
+        const token =  await setGenericPassword(name, value, { service: service }); 
         console.log("Saving Value: ",value);
 
-        if(token === false) throw new Error("Failed to retrieve token");
+        if(token === false) throw new Error("Failed to save token");
         else {
             return true;
         }
@@ -72,20 +45,34 @@ export async function setAccessToken(value: string): Promise<boolean> {
         console.warn("Async Storage Error: ",error);
         return false;
     }
+}
+
+export async function getAccessToken(): Promise<string | null> {
+    const cred = await getValue(ACCESS_TOKEN);
+    
+    if(cred == null) return null;
+    else return cred.password;
+}
+
+export async function getRefreshToken(): Promise<string | null> {
+    const cred = await getValue(ACCESS_TOKEN);
+    
+    if(cred == null) return null;
+    else return cred.password;
+}
+
+export async function removeAccessToken(): Promise<boolean> {
+    return await removeValue(ACCESS_TOKEN);
+}
+
+export async function removeRefreshToken(): Promise<boolean> {
+    return await removeValue(REFRESH_TOKEN);
+}
+
+export async function setAccessToken(value: string): Promise<boolean> {
+    return await setValue(ACCESS_TOKEN, value, ACCESS_TOKEN);
 }
 
 export async function setRefreshToken(value: string): Promise<boolean> {
-    try{
-        const token =  await setGenericPassword(REFRESH_TOKEN, value, { service: REFRESH_TOKEN }); 
-        console.log("Saving Value: ",value);
-        
-        if(token === false) throw new Error("Failed to retrieve token");
-        else {
-            return true;
-        }
-    }
-    catch(error){
-        console.warn("Async Storage Error: ",error);
-        return false;
-    }
+    return await setValue(REFRESH_TOKEN, value, REFRESH_TOKEN);
 }

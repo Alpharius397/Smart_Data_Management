@@ -1,53 +1,30 @@
-import React from 'react';
-import { View, Text, StyleSheet,  ActivityIndicator, FlatList } from 'react-native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { ScrollView } from 'react-native-gesture-handler';
-import { CardMeta, CardsJson, InfiniteReactQuery } from '../../types/screens/Home';
-import { useInfiniteQuery } from '@tanstack/react-query'
-import Axios, { CARDS } from '../../axios';
-
-const Drawer = createDrawerNavigator();
-
-async function fetchCards({ pageParam = 0}: {pageParam: number}): Promise<CardsJson> {
-    try {
-        const a = await Axios.get(CARDS, {
-            params: {
-                page: pageParam
-            }
-        });
-
-        return a.data;
-
-    } catch(err) {
-        return {
-            cards: [],
-            nextPage: 0
-        }
-    }
-}
-
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet,  ActivityIndicator, FlatList, Image, RefreshControl } from 'react-native';
+import { useCard } from '../../hooks/screens/Home/Card';
+import { CardJson, CardMeta, CardReactList } from '../../zod/screens/Home/Card';
+import { DEFAULT_ERROR } from '../../constants';
 
 function LoadingPage(){
 
     return (
         <View style={waitStyles.container}>
-            <ActivityIndicator size="large" color="#4A90E2" style={{marginBottom: 15}} />
-            <Text style={waitStyles.text}> "Loading..." </Text>
+            <ActivityIndicator size="large" color="#4A90E2" />
+            <Text style={waitStyles.text}>Loading More Data...</Text>
         </View>
     );
 }
 
 const waitStyles = StyleSheet.create({
     container: {
-        flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 20,
+        flexDirection: 'row'
     },
     text: {
         fontSize: 18,
-        marginTop: 20,
-        marginBottom: 10,
+        margin: 'auto',
+        marginLeft: 10,
+        marginRight: 0,
         color: '#333',
         fontWeight: '500',
     },
@@ -55,76 +32,81 @@ const waitStyles = StyleSheet.create({
 
 const EmptyList = () => {
     return (
-        <View>
-            <Text>No Cards Purchased...</Text>
+        <View style={{...styles.container, flexGrow: 1}}>
+            <View style={{margin: 'auto'}}>
+                <Image source={require('../../assets/images/empty.png')} style={styles.image}/>
+                    <Text style={{marginLeft: 'auto', marginRight: 'auto', fontSize: 18, fontWeight: 'bold', color: '#666', fontStyle: 'italic'}}>No Cards Purchased</Text>
+            </View>
+        </View>
+    )
+}
+
+const ErrorList = () => {
+    return (
+        <View style={{...styles.container, flexGrow: 1}}>
+            <View style={{margin: 'auto'}}>
+                <Image source={require('../../assets/images/failed.png')} style={styles.image}/>
+                    <Text style={{marginLeft: 'auto', marginRight: 'auto', fontSize: 18, fontWeight: 'bold', color: '#666', fontStyle: 'italic'}}>{DEFAULT_ERROR}</Text>
+            </View>
         </View>
     )
 }
 
 const Card = ({ cardID, timestamp, university, institute, branch }: CardMeta) => {
 
-    const date = new Date(timestamp);
-
-    function formatDate(date: Date){
-        let h = date.getHours(), m = date.getMinutes(), d = date.getDay(), month = date.getMonth(), y = date.getFullYear();
-        let denote = (h>12)?('PM'):('AM');
-
-        return `${d%12}:${m} ${denote}, ${d}-${month}-${y}`;
-
-    }
+    const date = new Intl.DateTimeFormat("en-GB").format(timestamp);
 
     return (
         <View style={styles.card}>
             <Text style={styles.cardID}>Card ID: {cardID}</Text>
             <Text style={styles.owned}>Owned By: {university}-{institute}-{branch}</Text>
-            <Text style={styles.timestamp}>Purchased On: {formatDate(date)}</Text>
+            <Text style={styles.timestamp}>Purchased On: {date}</Text>
         </View>
     )
 }
 
 export function CardScreen() {
 
-    const { data, error, fetchNextPage, isFetching, refetch, isFetchingNextPage, hasNextPage } = useInfiniteQuery<CardsJson>({
-        queryKey: ['cards'],
-        //@ts-expect-error
-        queryFn: fetchCards,
-        getNextPageParam: (lastPage, pages) => {
-            if(lastPage.cards.length == 0) return undefined;
-            return lastPage.nextPage;
-        }
-    });
+    const {data, hasNextPage, isFetchingNextPage, fetchNextPage, refetch, isError} = useCard();
+    const flatList: CardReactList = [];
 
-    const flatList = [];
+    useEffect(() => {
+        if(data === undefined) return;
+        flatList.push(...data.pages.flatMap((card) => card.cards));
+    }, [data]);
 
-    if(data && data.pages){
-        //@ts-expect-error
-        flatList.push(...data.pages.flatMap((card: CardsJson) => card.cards));
-    }
-
-    flatList.reverse()
 
     return (
+        (!isError) ?
         <FlatList
-            contentContainerStyle={styles.container}
+            contentContainerStyle={{...styles.container, flexGrow: 1, flex: 1}}
             data={flatList}
-            keyExtractor={(item) => {return `${item.cardID}-${item.timestamp}`}}
+            keyExtractor={(item) => {return `${item.cardID}-${new Intl.DateTimeFormat("en-GB").format(item.timestamp)}`}}
             renderItem={({ item }) => <Card {...item} />}
-            ListEmptyComponent={<EmptyList/>}
+            ListEmptyComponent={(!(hasNextPage || isFetchingNextPage)) ? <EmptyList/> : null}
+            
             onEndReached={() => {
-                if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                if (hasNextPage && !isFetchingNextPage) fetchNextPage({cancelRefetch: false});
             }}
+
             onEndReachedThreshold={0.5}
             ListFooterComponent={
-                isFetchingNextPage ? <LoadingPage /> : null
+                (isFetchingNextPage || hasNextPage) ? <LoadingPage /> : null
             }
-            refreshing={false}
-            onRefresh={() => refetch()}
+            refreshControl={
+                <RefreshControl refreshing={false} onRefresh={refetch} title='Retry'/>
+            }
+        /> : 
+        <FlatList
+            contentContainerStyle={{...styles.container, flexGrow: 1, flex: 1}}
+            data={[]}
+            renderItem={() => (<></>)}
+            ListEmptyComponent={<ErrorList />}
         />
     )
 
 }
 
-// Styles
 const styles = StyleSheet.create({
     container: {
         padding: 16,
@@ -160,6 +142,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
     },
+    image: {
+        width: 300,
+        height: 300,
+        margin: 'auto',
+    }
 });
 
 

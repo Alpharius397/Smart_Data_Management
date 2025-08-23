@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// version 2
+
+message Header {
+  string university = 1;
+  string institute = 2;
+  string branch = 3;
+}
+
+message Subject {
+  repeated string row = 1;
+}
+
+message Semester {
+  map<string, Subject> semester = 1;
+}
+
+message Personal {
+  map<string, string> personal = 1;
+}
+
+message Image {
+  map<string, bytes> image = 1;
+}
+
+message CardData {
+  Header header = 1;
+  Semester semester = 2;
+  Personal personal = 3;
+  Image image = 4;
+}
