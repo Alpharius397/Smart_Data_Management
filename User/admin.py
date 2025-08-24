@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.forms import ModelChoiceField  # type: ignore
 from User.models import is_admin, User, Role
 from django.db.models import Q, QuerySet  # type: ignore
@@ -72,12 +71,12 @@ class RoleAdmin(admin.ModelAdmin):
 
         if is_admin(user):
             return Role.objects.filter(Q(belongs__id=user.role.belongs.id))
-        
+
         elif user.is_superuser:
             return Role.objects.all()
 
         return Role.objects.none()
-    
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs) -> ModelChoiceField:
         user: User = request.user
 
@@ -93,7 +92,9 @@ class RoleAdmin(admin.ModelAdmin):
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+
 admin.site.unregister(__User)
+
 
 @admin.register(__User)
 class UserAdmin(admin.ModelAdmin):

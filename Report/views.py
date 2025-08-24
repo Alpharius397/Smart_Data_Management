@@ -83,9 +83,7 @@ class ReportData(TypedDict):
 def writeBegin(user: User, token: str) -> bool:
     with RedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
         key = encrypt_key(generate_key(DES_3_KEY_SIZE))
-        return redis.setDict(
-            token, dict(WriteToken(ID=user.id, processing=True, key=key))
-        )
+        return redis.setDict(token, dict(WriteToken(ID=user.id, key=key)))
 
 
 def writeEnd(token: str) -> bool:
@@ -200,7 +198,7 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                 async_playwright() as p,
             ):
                 token = hash_token(get_token(), user.id)
-                await redis.setDict(token, dict(PdfToken(ID=user.id, processing=True)))
+                await redis.setDict(token, dict(PdfToken(ID=user.id)))
 
                 browser = await p.chromium.launch()
                 page = await browser.new_page()
@@ -209,7 +207,12 @@ async def generate_report(req: HttpRequest, id: int, idx: str):
                     {ACCESS_PDF: settings.ACCESS_PDF, ACCESS_TOKEN: token}
                 )
                 await page.goto(
-                    req.build_absolute_uri(reverse('Report:pdf', kwargs={'id': id, 'idx': idx, 'token': token})+f'?schema={schema_id}')
+                    req.build_absolute_uri(
+                        reverse(
+                            "Report:pdf", kwargs={"id": id, "idx": idx, "token": token}
+                        )
+                        + f"?schema={schema_id}"
+                    )
                 )
 
                 _pdf_bytes = await page.pdf(

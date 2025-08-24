@@ -1,4 +1,3 @@
-import json
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Mobile.Cards.forms import HeadingForm
@@ -165,9 +164,9 @@ def available_card(req: HttpRequest):
                 .set_error(e)
             )
             response["error"] = [DEFAULT_ERROR]
-            
 
         return JsonResponse(data=response, safe=False, status=status)
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -177,21 +176,26 @@ def available_card(req: HttpRequest):
 def get_heading(req: HttpRequest):
     if is_auth_get_student(req):
         f = HeadingForm(req.GET)
-        
+
         response = HeadingResponse(
-            status=False, error=[], university=None, institute=None, branch=None, **getRequestToken(req)
+            status=False,
+            error=[],
+            university=None,
+            institute=None,
+            branch=None,
+            **getRequestToken(req),
         )
         status = 400
         if f.is_valid():
             uniID = str(f.cleaned_data.get("university", ""))
             instiID = str(f.cleaned_data.get("institute", ""))
             branchID = str(f.cleaned_data.get("branch", ""))
-            
+
             """ Hacky  but okay """
             university = tryCatchThis(University.objects.get, None)(id=uniID)
             institute = tryCatchThis(Institute.objects.get, None)(id=instiID)
             branch = tryCatchThis(Branch.objects.get, None)(id=branchID)
-            
+
             response["university"] = None if (university is None) else university.name
             response["institute"] = None if (institute is None) else institute.name
             response["branch"] = None if (branch is None) else branch.name
@@ -199,5 +203,5 @@ def get_heading(req: HttpRequest):
             status = 200
         else:
             response["error"] = f.getJsonErrors()
-            
+
         return JsonResponse(data=response, safe=False, status=status)

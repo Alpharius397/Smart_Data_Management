@@ -7,19 +7,22 @@ from django.contrib.auth.models import Group  # type: ignore
 from tools.url_auth import htmx_response, is_hx_post, is_hx_get, require_http_methods
 from User.models import User, Role, RoleType
 from University.models import Institute, Branch
-from constants import DEFAULT_ERROR, WARNING
+from constants import DEFAULT_ERROR
 from django.db.models import Q  # type: ignore
 from django.urls import reverse  # type: ignore
 from django.db import transaction  # type: ignore
 from tools.utils import setSwalAlert
 
-@require_http_methods(['GET'])
+
+############ HTTP Request ############
+@require_http_methods(["GET"])
 def register_view(req: HttpRequest):
     return render(req, "Register/HTML/index.html", {"form": RegisterForm()})
 
 
+############ HTMX Request ############
 @htmx_response
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def htmx_register_view(req: HttpRequest):
     if is_hx_post(req):
         f = RegisterForm(req.POST)
@@ -84,7 +87,7 @@ def htmx_register_view(req: HttpRequest):
 
 
 @htmx_response
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def insti_change(req: HttpRequest):
     if is_hx_get(req):
         uni = req.GET.get("university", "")
@@ -106,7 +109,7 @@ def insti_change(req: HttpRequest):
 
 
 @htmx_response
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 def branch_change(req: HttpRequest):
     if is_hx_get(req):
         insti = req.GET.get("institute", "")

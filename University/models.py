@@ -126,6 +126,7 @@ class Schema(Model):
         verbose_name="University Heading",
         default="University Heading",
     )  # type: ignore
+
     instituteHeading = CharField(
         max_length=200,
         null=False,
@@ -133,6 +134,7 @@ class Schema(Model):
         verbose_name="Institute Heading",
         default="Institute Heading",
     )  # type: ignore
+
     branchHeading = CharField(
         max_length=200,
         null=False,

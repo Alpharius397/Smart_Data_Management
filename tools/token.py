@@ -1,12 +1,11 @@
 from hashlib import sha256
 from Crypto.Random.random import choice
 
-__TOKEN: str = "qwertyuiopasdfghjklzxcvbnm1234567890_-"
-__LENGTH: int = 32
+TOKEN: str = "qwertyuiopasdfghjklzxcvbnm1234567890_-"
+LENGTH: int = 32
 
-
-def get_token(size: int = __LENGTH):
-    return "".join([__upperCase__(choice(__TOKEN)) for _ in range(size)])
+def get_token(size: int = LENGTH):
+    return "".join([__upperCase__(choice(TOKEN)) for _ in range(size)])
 
 
 def hash_token(token: str, id: int) -> str:

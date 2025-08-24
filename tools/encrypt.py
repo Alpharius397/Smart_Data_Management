@@ -9,12 +9,15 @@ from Main.settings import settingsInterface as settings  # type: ignore
 from tools.token import get_token  # type: ignore
 from Crypto.Random.random import randint
 
+############ CONSTANTS ############
 DES_3_IV_LENGTH: int = 8
 AES_IV_LENGTH: int = 16
 SHA256_LENGTH: int = 32
 BASE_64_LENGTH: int = 3
 DES_3_KEY_SIZE = 24
 
+
+############ UTILS ############
 def b64encode(s: bytes):
     return a64encode(pad(s, BASE_64_LENGTH), b"-_")
 
@@ -27,9 +30,7 @@ def generate_key(size: int) -> bytes:
     return bytes([randint(0, 255) for _ in range(size)])
 
 
-# Encryption Function
-def encrypt_data(key: bytes, jsonObject: dict) -> str:
-    data = json.dumps(jsonObject).encode()
+def encryptionDES(data: bytes, key: bytes) -> str:
     compressed = zlib.compress(data, level=9)
     padded = pad(compressed, DES3.block_size)
 
@@ -42,50 +43,28 @@ def encrypt_data(key: bytes, jsonObject: dict) -> str:
     return b64encode(iv).decode()
 
 
-# Decryption Function
-def decrypt_data(key: bytes, encrypted_data: str) -> dict:
+def decryptionDES(encrypted_data: str, key: bytes) -> bytes:
     _encrypted = b64decode(encrypted_data)
     iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
 
     cipher = DES3.new(key, DES3.MODE_CBC, iv)
     decrypted = cipher.decrypt(encrypted)
-    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
-    return json.loads(decompressed.decode())
+    return zlib.decompress(unpad(decrypted, DES3.block_size))
+
+
+# Encryption Function
+def encrypt_data(key: bytes, jsonObject: dict) -> str:
+    data = json.dumps(jsonObject).encode()
+    return encryptionDES(data, key)
+
+
+def decrypt_data(key: bytes, encrypted_data: str) -> dict:
+    return json.loads(decryptionDES(encrypted_data, key).decode())
 
 
 def encrypt_text(key: bytes, value: str | bytes) -> str:
     data = value.encode() if (isinstance(value, str)) else value
-    compressed = zlib.compress(data, level=9)
-    padded = pad(compressed, DES3.block_size)
-
-    cipher = DES3.new(key, DES3.MODE_CBC)
-    encrypted = cipher.encrypt(padded)
-    iv = bytes(cipher.iv)  # type: ignore
-
-    iv += encrypted
-
-    return b64encode(iv).decode()
-
-
-# Decryption Function
-def decrypt_text(key: bytes, encrypted_data: str) -> str:
-    _encrypted = b64decode(encrypted_data)
-    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
-
-    cipher = DES3.new(key, DES3.MODE_CBC, iv)
-    decrypted = cipher.decrypt(encrypted)
-    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
-    return decompressed.decode()
-
-
-def decrypt_bytes(key: bytes, encrypted_data: str) -> bytes:
-    _encrypted = b64decode(encrypted_data)
-    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
-
-    cipher = DES3.new(key, DES3.MODE_CBC, iv)
-    decrypted = cipher.decrypt(encrypted)
-    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
-    return decompressed
+    return encryptionDES(data, key)
 
 
 def encrypt_key(key: str | bytes):
@@ -93,13 +72,7 @@ def encrypt_key(key: str | bytes):
 
 
 def decrypt_key(key: str):
-    _encrypted = b64decode(key)
-    iv, encrypted = _encrypted[:DES_3_IV_LENGTH], _encrypted[DES_3_IV_LENGTH:]
-
-    cipher = DES3.new(settings.DECRYPTION_KEY, DES3.MODE_CBC, iv)
-    decrypted = cipher.decrypt(encrypted)
-    decompressed = zlib.decompress(unpad(decrypted, DES3.block_size))
-    return decompressed
+    return decryptionDES(key, settings.DECRYPTION_KEY)
 
 
 def certificateToken() -> str:
@@ -154,5 +127,5 @@ def authTokenCheck(token: str):
         else:
             return True
 
-    except Exception as e:
+    except Exception:
         return False

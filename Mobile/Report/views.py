@@ -1,7 +1,7 @@
 import io
 from django.shortcuts import render  # type: ignore
 from django.urls import reverse  # type: ignore
-from django.http import FileResponse, HttpRequest, JsonResponse  # type: ignore
+from django.http import FileResponse, HttpRequest  # type: ignore
 from Card.sockets import getCardData
 from Main.settings import settingsInterface as settings
 from User.models import (
@@ -9,8 +9,6 @@ from User.models import (
 )
 from tools.signer import addSign
 from tools.url_auth import (
-    is_auth_get,
-    login_needed,
     pdf_access,
     token_check,
     require_http_methods,
@@ -37,7 +35,6 @@ from Mobile.url_auth import (
     astudent_auth_needed,
     student_auth_needed,
 )
-from django.views.decorators.csrf import csrf_exempt  # type: ignore
 
 
 @require_http_methods(["GET"])  # type: ignore
@@ -56,7 +53,7 @@ async def generate_report(req: HttpRequest, cardID: str):
                 async_playwright() as p,
             ):
                 token = hash_token(get_token(), user.id)
-                await redis.setDict(token, dict(PdfToken(ID=user.id, processing=True)))
+                await redis.setDict(token, dict(PdfToken(ID=user.id)))
 
                 browser = await p.chromium.launch()
                 page = await browser.new_page()
@@ -65,7 +62,13 @@ async def generate_report(req: HttpRequest, cardID: str):
                     {ACCESS_PDF: settings.ACCESS_PDF, ACCESS_TOKEN: token}
                 )
                 await page.goto(
-                    req.build_absolute_uri(reverse('Mobile:Mobile-Report:mobilePDF', kwargs={'cardID': cardID, 'token': token})+f'?sem={sem}')
+                    req.build_absolute_uri(
+                        reverse(
+                            "Mobile:Mobile-Report:mobilePDF",
+                            kwargs={"cardID": cardID, "token": token},
+                        )
+                        + f"?sem={sem}"
+                    )
                 )
 
                 _pdf_bytes = await page.pdf(
@@ -85,11 +88,10 @@ async def generate_report(req: HttpRequest, cardID: str):
 
                 pdf_bytes = await addSign(pdf_bytes, get_user(req))  # type: ignore
                 pdf_bytes.seek(0)
-                
-                with open('sample/test.pdf', 'wb') as f:
+
+                with open("sample/test.pdf", "wb") as f:
                     f.write(pdf_bytes.read())
                 pdf_bytes.seek(0)
-                
 
         except Exception as e:
             APP_LOG.write_error(
@@ -106,7 +108,7 @@ async def generate_report(req: HttpRequest, cardID: str):
 @pdf_access
 @require_http_methods(["GET"])
 @token_check(RedisDataBase.PDF_TOKEN, close_after=False)
-@student_auth_needed # type: ignore
+@student_auth_needed  # type: ignore
 @card_owner_check
 def mobile_pdf_report(req: HttpRequest, cardID: str, token: str):
     context = {"cardID": cardID}

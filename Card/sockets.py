@@ -10,7 +10,7 @@ from User.models import (
 )
 from tools.encrypt import (
     decrypt_key,
-    decrypt_bytes,
+    decryptionDES,
 )
 from tools.errors import TokenExpired
 from tools.get_image import expand_image
@@ -38,7 +38,7 @@ async def agetCardData(cardID: str, cardData: str) -> dict[str, Any]:
     context: CardReport | dict = {}
 
     card = await Card.objects.aget(cardID=cardID)
-    decrypted_data = decrypt_bytes(decrypt_key(card.decryption_key), cardData)
+    decrypted_data = decryptionDES(key=decrypt_key(card.decryption_key), encrypted_data=cardData)
 
     protobufData = v3_pb2.CardData().FromString(decrypted_data)
 
@@ -84,7 +84,7 @@ async def agetCardData(cardID: str, cardData: str) -> dict[str, Any]:
 def getCardData(card: Card, sem: NullInt = None) -> dict[str, Any]:
     context: CardReport | dict = {}
 
-    decrypted_data = decrypt_bytes(decrypt_key(card.decryption_key), card.data)
+    decrypted_data = decryptionDES(key=decrypt_key(card.decryption_key), encrypted_data=card.data)
 
     protobufData = v3_pb2.CardData().FromString(decrypted_data)
 
@@ -148,12 +148,9 @@ class CardWriteExeConsumer(AsyncWebsocketConsumer):
             async with AsyncRedisConnection(RedisDataBase.CARD_WRITE_TOKEN) as redis:
                 data: WriteToken | ReadToken = await redis.getDict(self.token)  # type: ignore
 
-                processing = data.get("processing", None)
-                ID = data.get("ID", -1)
+                ID = data.get("ID", None)
 
-                if (not isinstance(processing, bool)) or (
-                    isinstance(processing, bool) and (processing is not True)
-                ):
+                if ID is None:
                     raise TokenExpired()
 
                 user = await User.objects.aget(id=ID)
@@ -245,12 +242,9 @@ class CardReadExeConsumer(AsyncWebsocketConsumer):
             async with AsyncRedisConnection(RedisDataBase.CARD_READ_TOKEN) as redis:
                 data: WriteToken | ReadToken = await redis.getDict(self.token)  # type: ignore
 
-                processing = data.get("processing", None)
-                ID = data.get("ID", -1)
+                ID = data.get("ID", None)
 
-                if (not isinstance(processing, bool)) or (
-                    isinstance(processing, bool) and (processing is not True)
-                ):
+                if ID is None:
                     raise TokenExpired()
 
                 user = await User.objects.aget(id=ID)

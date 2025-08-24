@@ -1,14 +1,10 @@
 from typing import ParamSpec, TypedDict
-
-import redis.asyncio
-from tools.types import *
 from Main.settings import settingsInterface as settings
 from Logs.loggers import REDIS_LOG
 import redis
 import redis.asyncio as aRedis
 import json
 from enum import Enum
-
 
 
 P = ParamSpec("P")
@@ -19,7 +15,6 @@ class BaseDict(TypedDict):
 
 
 type TypedDictType = type[BaseDict]
-
 
 
 class RedisDataBase(Enum):
@@ -53,18 +48,15 @@ class RedisDataBase(Enum):
 
 class WriteToken(TypedDict):
     ID: int
-    processing: bool
     key: str
 
 
 class PdfToken(TypedDict):
     ID: int
-    processing: bool
 
 
 class ReadToken(TypedDict):
     ID: int
-    processing: bool
     data: str
 
 

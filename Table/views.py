@@ -1,5 +1,6 @@
 from io import BytesIO
 import typing
+import json
 from django.contrib import messages  # type: ignore
 from django.db.models import Q  # type: ignore
 from PIL import Image, UnidentifiedImageError  # type: ignore
@@ -22,7 +23,7 @@ from tools.url_auth import (
     is_hx_put,
     auth_needed,
     login_needed,
-    require_http_methods
+    require_http_methods,
 )
 from Table.errors import (
     ColumnDoesNotExist,
@@ -35,7 +36,6 @@ from tools.utils import get_string_value, get_2_value, get_3_value, setSwalAlert
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from django.http import QueryDict
 from constants import DEFAULT_ERROR, MAX_RECORD
-from Main.models import *
 from psycopg2.sql import SQL, Identifier, Literal, Composable  # type: ignore
 from tools.get_image import b64encode
 from django.db import connection  # type: ignore
@@ -46,32 +46,35 @@ class ManagerList(typing.NamedTuple):
     id: int
     username: str
 
+
 class UpdateStatus(typing.NamedTuple):
     updated: bool
     exists: bool
     locked: bool
 
+
 class Context(typing.NamedTuple):
     ID: str
     data: dict
-    locked: bool 
+    locked: bool
     issued: bool
     status: bool | None
-    
+
+
 ############ UTILS ############
 def get_sem_context(
-    req: HttpRequest, 
+    req: HttpRequest,
     id: int,
     idx: int,
     column: str = "",
     value: str = "",
-    issue: typing.Literal['true', 'false'] = "false",
-    status: typing.Literal['true', 'false', 'none'] = "none",
-    lock: typing.Literal['true', 'false'] = "false",
+    issue: typing.Literal["true", "false"] = "false",
+    status: typing.Literal["true", "false", "none"] = "none",
+    lock: typing.Literal["true", "false"] = "false",
     page: int = 0,
 ) -> dict[str, int | dict | str | bool]:
-    """ TODO: Change to Postgres cause the column might break this """
-    
+    """TODO: Change to Postgres cause the column might break this"""
+
     context: dict[str, int | dict | str | bool] = {"id": id, "idx": idx}
     user = get_user(req)
 
@@ -120,27 +123,28 @@ def get_sem_context(
                 "result": pd_data,
                 "start": page,
                 "max_record": page + MAX_RECORD,
-                "isAdmin": is_admin(user)
+                "isAdmin": is_admin(user),
             }
         )
-        
-    except Exception as e:
+
+    except Exception:
         context["error"] = DEFAULT_ERROR
 
     return context
 
+
 def get_context(
-    req: HttpRequest, 
+    req: HttpRequest,
     id: int,
     column: str = "",
     value: str = "",
-    issued: typing.Literal['true', 'false'] = "false",
-    status: typing.Literal['true', 'false', 'none'] = "none",
-    locked: typing.Literal['true', 'false'] = "false",
+    issued: typing.Literal["true", "false"] = "false",
+    status: typing.Literal["true", "false", "none"] = "none",
+    locked: typing.Literal["true", "false"] = "false",
     page: int = 0,
 ) -> dict[str, int | dict | str | bool]:
-    context: dict[str, Any] = {"id": id}
-    
+    context: dict[str, typing.Any] = {"id": id}
+
     table_name = Identifier(DataTable._meta.db_table)
     data_column = Identifier(DataTable.data.field.column)  # type: ignore
     locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
@@ -149,45 +153,52 @@ def get_context(
     taskID_column = Identifier(DataTable.taskID.field.column)  # type: ignore
     taskID = Literal(id)
     user = get_user(req)
-    
+
     try:
         task: TaskTable = req.__getattribute__("task")
-        
+
         if not task.groupByColumn:
             raise GroupByColumnDoesNotExist()
-        
+
         groupBy = Literal(task.groupByColumn)
         pageOffset = Literal(page)
         column = bytes.fromhex(column).decode()
         searching = status or issued or locked or (column and value)
-        
-        query: list[Composable] = [SQL('true')]
 
-        if(column and value):
-            sub_query = SQL('("A"."data"::jsonb->>{0}) like {1}').format(Literal(column), Literal(f"%{value}%"))
-            query.append(sub_query)
-        
-        if(locked):
-            sub_query = SQL('"A"."locked" is {0}'.format(get_string_value(get_2_value(locked))))
-            query.append(sub_query)
-            
-        if(issued):
-            sub_query = SQL('"A"."issued" is {0}'.format(get_string_value(get_2_value(issued))))
+        query: list[Composable] = [SQL("true")]
+
+        if column and value:
+            sub_query = SQL('("A"."data"::jsonb->>{0}) like {1}').format(
+                Literal(column), Literal(f"%{value}%")
+            )
             query.append(sub_query)
 
-            
-        if(status):
-            sub_query = SQL('"A"."status" is {0}'.format(get_string_value(get_3_value(status))))
+        if locked:
+            sub_query = SQL(
+                '"A"."locked" is {0}'.format(get_string_value(get_2_value(locked)))
+            )
             query.append(sub_query)
-        
-        searchQuery = SQL('{0}').format(
-            SQL(' and ').join(query)
-        )
-        
+
+        if issued:
+            sub_query = SQL(
+                '"A"."issued" is {0}'.format(get_string_value(get_2_value(issued)))
+            )
+            query.append(sub_query)
+
+        if status:
+            sub_query = SQL(
+                '"A"."status" is {0}'.format(get_string_value(get_3_value(status)))
+            )
+            query.append(sub_query)
+
+        searchQuery = SQL("{0}").format(SQL(" and ").join(query))
+
         records: list[Context] = []
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} group by "ID") as "A" where {searchQuery} order by "A"."ID" limit 5 offset {pageOffset};').format(
+            sql_query = SQL(
+                'select * from (select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} group by "ID") as "A" where {searchQuery} order by "A"."ID" limit 5 offset {pageOffset};'
+            ).format(
                 data_column=data_column,
                 groupBy=groupBy,
                 locked_column=locked_column,
@@ -199,12 +210,14 @@ def get_context(
                 taskID=taskID,
                 pageOffset=pageOffset,
             )
-            
-            cursor.execute(sql_query) # type: ignore
+
+            cursor.execute(sql_query)  # type: ignore
 
             for col in cursor.fetchall():
                 ID, Data, Locked, Issued, Status = col
-                records.append(Context(ID or "", json.loads(Data), Locked, Issued, Status))
+                records.append(
+                    Context(ID or "", json.loads(Data), Locked, Issued, Status)
+                )
 
         pd_data = {
             (row.ID): {
@@ -225,26 +238,30 @@ def get_context(
                 "result": pd_data,
                 "start": page,
                 "max_record": page + MAX_RECORD,
-                "isAdmin": is_admin(user)
+                "isAdmin": is_admin(user),
             }
         )
-    
+
     except GroupByColumnDoesNotExist as f:
-        context['error'] = f.get_error()
-    
-    except Exception as e:        
-        APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+        context["error"] = f.get_error()
+
+    except Exception as e:
+        APP_LOG.write_info(
+            LogStructure()
+            .set_request(req, LogType.EXCEPTION)
+            .set_meta(req)
+            .set_error(e)
+        )
         context["error"] = DEFAULT_ERROR
 
     return context
 
+
 def get_row_context(
-    req: HttpRequest, 
-    id: int,
-    idx: str
+    req: HttpRequest, id: int, idx: str
 ) -> dict[str, int | dict | str | bool]:
-    context: dict[str, Any] = {"id": id}
-    
+    context: dict[str, typing.Any] = {"id": id}
+
     table_name = Identifier(DataTable._meta.db_table)
     data_column = Identifier(DataTable.data.field.column)  # type: ignore
     locked_column = Identifier(DataTable.locked.field.column)  # type: ignore
@@ -254,14 +271,16 @@ def get_row_context(
     taskID = Literal(id)
     rowID = Literal(idx)
     user = get_user(req)
-    
+
     try:
         task: TaskTable = req.__getattribute__("task")
         groupBy = Literal(task.groupByColumn)
         isAdmin = is_admin(user)
-        
+
         with connection.cursor() as cursor:
-            sql_query = SQL('select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and {data_column}::jsonb ->>{groupBy}={rowID} group by "ID" limit 1;').format(
+            sql_query = SQL(
+                'select {data_column}::jsonb ->>{groupBy} as "ID", jsonsum({data_column}::jsonb)::jsonb as "data", bool_and({locked_column}) as "locked", bool_and({issued_column}) as "issued", bool_and({status_column}) as "status" from {table_name} where {taskID_column}={taskID} and {data_column}::jsonb ->>{groupBy}={rowID} group by "ID" limit 1;'
+            ).format(
                 data_column=data_column,
                 groupBy=groupBy,
                 locked_column=locked_column,
@@ -270,14 +289,14 @@ def get_row_context(
                 table_name=table_name,
                 taskID_column=taskID_column,
                 taskID=taskID,
-                rowID=rowID
+                rowID=rowID,
             )
 
-            cursor.execute(sql_query) # type: ignore
-            
-            ID, Data, Locked, Issued, Status = cursor.fetchone() # type: ignore
+            cursor.execute(sql_query)  # type: ignore
+
+            ID, Data, Locked, Issued, Status = cursor.fetchone()  # type: ignore
             record = Context(ID, json.loads(Data), Locked, Issued, Status)
-            
+
             pd_data = {
                 (record.ID): {
                     "status": record.status,
@@ -292,16 +311,22 @@ def get_row_context(
                 "result": pd_data,
             }
         )
-        
+
     except Exception as e:
-        APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+        APP_LOG.write_info(
+            LogStructure()
+            .set_request(req, LogType.EXCEPTION)
+            .set_meta(req)
+            .set_error(e)
+        )
         context["error"] = DEFAULT_ERROR
 
     return context
 
+
 ########### HTTP Request #############
 @login_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @semester_permission_check
 def sem_view(req: HttpRequest, id: int, idx: int):
     user = get_user(req)
@@ -315,13 +340,14 @@ def sem_view(req: HttpRequest, id: int, idx: int):
         elif is_manager(user):
             return render(req, "Table/HTML/table/manager.html", context=context)
 
+
 @login_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def complete_view(req: HttpRequest, id: int):
     user = get_user(req)
     context: dict[str, int] = {"id": id}
-    
+
     if is_auth_get(req):
         get_color(req)
 
@@ -335,7 +361,7 @@ def complete_view(req: HttpRequest, id: int):
 ############ HTMX Request ############
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @semester_permission_check
 def sem_column_view(req: HttpRequest, id: int, idx: int):
     if is_hx_get(req):
@@ -352,18 +378,22 @@ def sem_column_view(req: HttpRequest, id: int, idx: int):
             context["count"] = count
 
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             messages.error(req, DEFAULT_ERROR)
-            
+
         return render(req, "Table/HTMX/column.html", context=context)
 
 
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @semester_permission_check
 def sem_row_view(req: HttpRequest, id: int, idx: int):
-    
     if is_hx_get(req):
         column = req.GET.get("column", "")
         value = req.GET.get("search", "")
@@ -375,14 +405,17 @@ def sem_row_view(req: HttpRequest, id: int, idx: int):
             page = int(req.GET.get("page", "0"))
         except Exception as e:
             page = 0
-            
-        context = get_sem_context(req, id, idx, column, value, issue, status, lock, page) # type: ignore
+
+        context = get_sem_context(
+            req, id, idx, column, value, issue, status, lock, page
+        )  # type: ignore
 
         return render(req, "Table/HTMX/sem.row.html", context=context)
 
+
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def sem_suggest_view(req: HttpRequest, id: int, idx: int):
     if is_hx_get(req):
@@ -396,20 +429,26 @@ def sem_suggest_view(req: HttpRequest, id: int, idx: int):
             context["option"] = suggestions
 
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
-        
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
         return render(req, "Table/HTMX/suggests.html", context=context)
+
 
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @semester_permission_check
 def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
     if is_hx_get(req):
-        context: dict[str, Any] = {"id": id, "idx": idx}
+        context: dict[str, typing.Any] = {"id": id, "idx": idx}
 
         try:
-            records = DataTable.objects.get(taskID__id=id,semester=idx,id=rowID)
+            records = DataTable.objects.get(taskID__id=id, semester=idx, id=rowID)
 
             pd_data = {
                 (records.id): {
@@ -429,12 +468,18 @@ def sem_refresh_row(req: HttpRequest, id: int, idx: int, rowID: int):
 
         except Exception as e:
             context["error"] = DEFAULT_ERROR
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
-            
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
+
         return render(req, "Table/HTMX/sem.refresh.html", context=context)
 
+
 @htmx_response
-@require_http_methods(['PUT', 'GET', 'POST'])
+@require_http_methods(["PUT", "GET", "POST"])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
@@ -442,7 +487,14 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
         body = QueryDict(req.body)
         column: str = body.get("column", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID,"column": column, "locked": False, "value": ""}
+        context = {
+            "id": id,
+            "idx": idx,
+            "rowID": rowID,
+            "column": column,
+            "locked": False,
+            "value": "",
+        }
 
         try:
             column = bytes.fromhex(column).decode()
@@ -450,7 +502,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             if column[-1:] == "I":
                 raise OnlyTextAllowed(column[:-1])
 
-            locked, exists, value = DataTable.getColumnValue(id, idx, rowID ,column)
+            locked, exists, value = DataTable.getColumnValue(id, idx, rowID, column)
 
             if not exists:
                 raise ColumnDoesNotExist(idx, column[:-1])
@@ -460,7 +512,7 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
 
             if locked:
                 raise RowLocked(idx)
-            
+
             context["error"] = False
 
         except ColumnDoesNotExist as f:
@@ -473,11 +525,20 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, g.get_error(), title="Data (Text) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Text) Updation")
-            
+            setSwalAlert(
+                context,
+                "Invalid Column Name detected! Request Aborted",
+                title="Data (Text) Updation",
+            )
+
         except Exception as e:
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
 
         return render(req, "Table/HTMX/edit/edit_form.html", context=context)
 
@@ -516,10 +577,19 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, g.get_error(), title="Data (Text) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Text) Updation")
-            
+            setSwalAlert(
+                context,
+                "Invalid Column Name detected! Request Aborted",
+                title="Data (Text) Updation",
+            )
+
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Text) Updation")
 
         return render(req, "Table/HTMX/normal/normal.html", context=context)
@@ -528,27 +598,51 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
         column = req.POST.get("column", "")
         value = req.POST.get("value", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID,"updated": False, "column": column,"locked": False, "value": "Data Not Found", **setSwalAlert(title="Data (Text) Updation")}
+        context = {
+            "id": id,
+            "idx": idx,
+            "rowID": rowID,
+            "updated": False,
+            "column": column,
+            "locked": False,
+            "value": "Data Not Found",
+            **setSwalAlert(title="Data (Text) Updation"),
+        }
         try:
             column = bytes.fromhex(column).decode()
 
             if column[-1:] == "I":
                 raise OnlyTextAllowed(column[:-1])
 
-            updated = DataTable.setColumnValue(id, idx, rowID, column, json.dumps({column: value}))
+            updated = DataTable.setColumnValue(
+                id, idx, rowID, column, json.dumps({column: value})
+            )
             locked, exists, value = DataTable.getColumnValue(id, idx, rowID, column)
 
             context["updated"] = updated
             context["locked"] = locked
             context["value"] = value
-            
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx).set_meta(req))
+
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(
+                    req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx
+                )
+                .set_meta(req)
+            )
 
             if updated:
-                setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
+                setSwalAlert(
+                    context,
+                    f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated",
+                    "success",
+                )
 
             else:
-                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!")
+                setSwalAlert(
+                    context,
+                    f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!",
+                )
 
         except RowLocked as a:
             setSwalAlert(context, a.get_error())
@@ -558,15 +652,21 @@ def edit_form(req: HttpRequest, id: int, idx: int, rowID: int):
 
         except ValueError:
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
-            
+
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR)
-            
+
         return render(req, "Table/HTMX/update/text.html", context=context)
 
+
 @htmx_response
-@require_http_methods(['PUT', 'GET', 'POST'])
+@require_http_methods(["PUT", "GET", "POST"])
 @auth_needed(admin_only=True)
 @semester_permission_check
 def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
@@ -596,7 +696,7 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
 
             if locked:
                 raise RowLocked(idx)
-            
+
             context["error"] = False
 
         except RowLocked as a:
@@ -606,10 +706,19 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, g.get_error(), title="Data (Image) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
-            
+            setSwalAlert(
+                context,
+                "Invalid Column Name detected! Request Aborted",
+                title="Data (Image) Updation",
+            )
+
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/edit/edit_image_form.html", context=context)
@@ -640,7 +749,6 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             context["locked"] = locked
             context["value"] = value
             context["error"] = False
-            
 
         except RowLocked as a:
             setSwalAlert(context, a.get_error(), title="Data (Image) Updation")
@@ -649,10 +757,19 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
             setSwalAlert(context, g.get_error(), title="Data (Image) Updation")
 
         except ValueError:
-            setSwalAlert(context, "Invalid Column Name detected! Request Aborted", title="Data (Image) Updation")
-            
+            setSwalAlert(
+                context,
+                "Invalid Column Name detected! Request Aborted",
+                title="Data (Image) Updation",
+            )
+
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR, title="Data (Image) Updation")
 
         return render(req, "Table/HTMX/normal/normal_image.html", context=context)
@@ -660,7 +777,16 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
     elif is_hx_post(req):
         column = req.POST.get("column", "")
 
-        context = {"id": id, "idx": idx, "rowID": rowID, "updated": False, "column": column, **setSwalAlert(title="Data (Image) Updation"), "locked": True, "value":""}
+        context = {
+            "id": id,
+            "idx": idx,
+            "rowID": rowID,
+            "updated": False,
+            "column": column,
+            **setSwalAlert(title="Data (Image) Updation"),
+            "locked": True,
+            "value": "",
+        }
         try:
             image = req.FILES["file"]
             column = bytes.fromhex(column).decode()
@@ -677,20 +803,35 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
                     f"{IMAGE.width}:{IMAGE.height}:{b64encode(b.getvalue()).decode()}"
                 )
 
-                updated = DataTable.setColumnValue(id, idx, rowID, column, json.dumps({column: value}))
+                updated = DataTable.setColumnValue(
+                    id, idx, rowID, column, json.dumps({column: value})
+                )
 
                 context["updated"] = updated
-                
+
             locked, exists, value = DataTable.getColumnValue(id, idx, rowID, column)
             context["locked"] = locked
             context["value"] = value
 
             if updated:
-                setSwalAlert(context, f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated", "success")
-                APP_LOG.write_info(LogStructure().set_request(req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx).set_meta(req))
+                setSwalAlert(
+                    context,
+                    f"Column '{column[:-1]}' of Row ID: '{rowID}' was successfully updated",
+                    "success",
+                )
+                APP_LOG.write_info(
+                    LogStructure()
+                    .set_request(
+                        req, LogType.DATA_EDIT, column=column, rowID=rowID, semester=idx
+                    )
+                    .set_meta(req)
+                )
 
             else:
-                setSwalAlert(context, f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!")
+                setSwalAlert(
+                    context,
+                    f"Updating Column '{column[:-1]}' of Row ID: '{rowID}' failed!",
+                )
 
         except RowLocked as a:
             setSwalAlert(context, a.get_error())
@@ -700,20 +841,25 @@ def edit_image_form(req: HttpRequest, id: int, idx: int, rowID: int):
 
         except ValueError:
             setSwalAlert(context, "Invalid Column Name detected! Request Aborted")
-            
+
         except UnidentifiedImageError:
             setSwalAlert(context, "Invalid Image Uploaded! Request Aborted")
-            
+
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR)
-            
+
         return render(req, "Table/HTMX/update/image.html", context=context)
 
 
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def column_view(req: HttpRequest, id: int):
     if is_hx_get(req):
@@ -727,15 +873,20 @@ def column_view(req: HttpRequest, id: int):
             context["count"] = count
 
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
             setSwalAlert(context, DEFAULT_ERROR)
-        
+
         return render(req, "Table/HTMX/column.html", context=context)
 
 
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def complete_row_view(req: HttpRequest, id: int):
     if is_hx_get(req):
@@ -744,22 +895,22 @@ def complete_row_view(req: HttpRequest, id: int):
         issue = req.GET.get("issue", "")
         status = req.GET.get("status", "")
         lock = req.GET.get("lock", "")
-        user = get_user(req)
-        
+
         try:
             page = int(req.GET.get("page", "0"))
-        except Exception as e:
+        except Exception:
             page = 0
-        
-        context = get_context(req, id, column, value ,issue ,status ,lock, page) # type: ignore
+
+        context = get_context(req, id, column, value, issue, status, lock, page)  # type: ignore
 
         return render(req, "Table/HTMX/row.html", context=context)
 
     return HttpResponse(status=403)
 
+
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def refresh_row(req: HttpRequest, id: int, idx: str):
     if is_hx_get(req):
@@ -769,9 +920,10 @@ def refresh_row(req: HttpRequest, id: int, idx: str):
 
     return HttpResponse(status=403)
 
+
 @htmx_response
 @auth_needed()
-@require_http_methods(['GET'])
+@require_http_methods(["GET"])
 @task_permission_check
 def suggest_view(req: HttpRequest, id: int):
     if is_hx_get(req):
@@ -785,7 +937,11 @@ def suggest_view(req: HttpRequest, id: int):
             context["option"] = suggestions
 
         except Exception as e:
-            APP_LOG.write_info(LogStructure().set_request(req, LogType.EXCEPTION).set_meta(req).set_error(e))
+            APP_LOG.write_info(
+                LogStructure()
+                .set_request(req, LogType.EXCEPTION)
+                .set_meta(req)
+                .set_error(e)
+            )
 
         return render(req, "Table/HTMX/suggests.html", context=context)
-

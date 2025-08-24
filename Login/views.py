@@ -1,7 +1,6 @@
 from django.shortcuts import render  # type: ignore
 from Login.forms import LoginForm  # type: ignore
 from django.http import HttpRequest  # type: ignore
-from Login.forms import LoginForm
 from django.urls import reverse  # type: ignore
 from django.contrib.auth import login, authenticate  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
@@ -10,7 +9,9 @@ from tools.url_auth import is_hx_post, htmx_response, require_http_methods
 from constants import SUCCESS, WARNING, DEFAULT_ERROR
 from tools.utils import setSwalAlert
 
-@require_http_methods(['GET'])
+
+############ HTTP Request ############
+@require_http_methods(["GET"])
 def login_view(req: HttpRequest):
     if req.method == "GET":
         success = req.GET.get(SUCCESS, "")
@@ -27,8 +28,9 @@ def login_view(req: HttpRequest):
         return render(req, "Login/HTML/index.html", context)
 
 
+############ HTMX Request ############
 @htmx_response
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def htmx_login_view(req: HttpRequest):
     context = {"error": False, **setSwalAlert(title="Login Process")}
 

@@ -1,6 +1,8 @@
 import json
+from logging import error
 import typing
 from asgiref.sync import sync_to_async
+from django.db.models import F
 from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
@@ -21,6 +23,35 @@ from tools.url_auth import getOTP, compareOTP
 from Mobile.types import JwtToken, AccessPayLoad, RefreshPayLoad
 from tools.utils import tryCatchThis
 from Card.models import Card
+
+
+############ CONSTANTS ############
+class BaseData(typing.TypedDict):
+    status: bool
+    error: list[str]
+
+
+class BaseResponse(typing.TypedDict):
+    data: BaseData
+    status: int
+    safe: bool
+
+
+DEFAULT_ERROR_JSON = JsonResponse(
+    **BaseResponse(
+        data=BaseData(error=[DEFAULT_ERROR], status=False), safe=False, status=401
+    )
+)
+
+JWT_FAILED = JsonResponse(
+    **BaseResponse(
+        data=BaseData(
+            error=["Authorization header missing or malformed"], status=False
+        ),
+        safe=False,
+        status=400,
+    )
+)
 
 
 ############ UTILS ############
@@ -55,12 +86,11 @@ def student_auth_needed(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         if is_authenticated_student(get_user(request)):
-            return view_func(request, *args, **kwargs) or JsonResponse(
-                data={"error": DEFAULT_ERROR}, status=403
-            )
-        return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return view_func(request, *args, **kwargs) or DEFAULT_ERROR_JSON
+        return DEFAULT_ERROR_JSON
 
     return _wrapped_view
+
 
 def astudent_auth_needed(
     view_func: typing.Callable[..., typing.Awaitable[JsonResponse | None]],
@@ -70,16 +100,15 @@ def astudent_auth_needed(
     @wraps(view_func)
     async def _wrapped_view(request: HttpRequest, *args, **kwargs):
         if await ais_authenticated_student(get_user(request)):
-            return (await view_func(request, *args, **kwargs)) or JsonResponse(
-                data={"error": DEFAULT_ERROR}, status=403
-            )
-        return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return (await view_func(request, *args, **kwargs)) or DEFAULT_ERROR_JSON
+        return DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
 
 def get_user_from_body(view_func: typing.Callable[..., JsonResponse | None]):
-    """ Get's user from Email param, if only user is anonymous. For Forgot Password Only """
+    """Get's user from Email param, if only user is anonymous. For Forgot Password Only"""
+
     def __inner__(req: HttpRequest, *args, **kwargs):
         try:
             if req.user.is_anonymous:
@@ -92,9 +121,7 @@ def get_user_from_body(view_func: typing.Callable[..., JsonResponse | None]):
                 LogStructure().set_request(req, LogType.EXCEPTION).set_error(e)
             )
 
-        return view_func(req, *args, **kwargs) or JsonResponse(
-            data={"error": DEFAULT_ERROR}, status=403
-        )
+        return view_func(req, *args, **kwargs) or DEFAULT_ERROR_JSON
 
     return __inner__
 
@@ -129,21 +156,18 @@ def set_otp_student_response(
                         redis.setText(str(user.id), otp, set_once=set_once)
 
                     request.__setattr__("emailOk", True)
-                return view_func(request, *args, **kwargs) or JsonResponse(
-                    data={"error": DEFAULT_ERROR}, status=403
-                )
+
+                return view_func(request, *args, **kwargs) or DEFAULT_ERROR_JSON
 
             except ValidationError:
                 request.__setattr__("emailOk", False)
-                return view_func(request, *args, **kwargs) or JsonResponse(
-                    data={"error": DEFAULT_ERROR}, status=403
-                )
+                return view_func(request, *args, **kwargs) or DEFAULT_ERROR_JSON
 
             except Exception as e:
                 APP_LOG.write_error(
                     LogStructure().set_request(request, LogType.EXCEPTION).set_error(e)
                 )
-                return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+                return DEFAULT_ERROR_JSON
 
         return _wrapped_view
 
@@ -174,9 +198,7 @@ def check_otp_student_response(
         except Exception:
             pass
 
-        return view_func(request, *args, **kwargs) or JsonResponse(
-            data={"error": DEFAULT_ERROR}, status=403
-        )
+        return view_func(request, *args, **kwargs) or DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
@@ -190,14 +212,10 @@ def jwt_required(
         refresh_header = request.headers.get("Refresh", "")
 
         if not auth_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=400
-            )
+            return JWT_FAILED
 
         if not refresh_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=400
-            )
+            return JWT_FAILED
 
         try:
             access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
@@ -227,23 +245,41 @@ def jwt_required(
             request.headers.__setattr__("access", access_token)
             request.headers.__setattr__("refresh", refresh_token)
             return view_func(request, *args, **kwargs) or JsonResponse(
-                {"error": DEFAULT_ERROR}, status=403
+                {"error": DEFAULT_ERROR}, status=401
             )
 
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"error": "Token expired"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Token Expired"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except jwt.InvalidTokenError:
-            return JsonResponse({"error": "Invalid token"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid Token"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except User.DoesNotExist:
-            return JsonResponse({"error": "User not found"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid User"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except Exception as e:
             APP_LOG.write_error(
                 LogStructure().set_error(e).set_request(request, LogType.EXCEPTION)
             )
-            return JsonResponse({"error": DEFAULT_ERROR}, status=500)
+            return DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
@@ -257,14 +293,10 @@ def ajwt_required(
         refresh_header = request.headers.get("Refresh", "")
 
         if not auth_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=400
-            )
+            return JWT_FAILED
 
         if not refresh_header.startswith("Bearer "):
-            return JsonResponse(
-                {"error": "Authorization header missing or malformed"}, status=400
-            )
+            return JWT_FAILED
 
         try:
             access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
@@ -293,22 +325,40 @@ def ajwt_required(
             request.user = user
             request.headers.__setattr__("access", access_token)
             request.headers.__setattr__("refresh", refresh_token)
-            return (await view_func(request, *args, **kwargs)) or JsonResponse(
-                {"error": DEFAULT_ERROR}, status=403
-            )
+            return (await view_func(request, *args, **kwargs)) or DEFAULT_ERROR_JSON
 
         except jwt.ExpiredSignatureError:
-            return JsonResponse({"error": "Token expired"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Token Expired"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except jwt.InvalidTokenError:
-            return JsonResponse({"error": "Invalid token"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid Token"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except User.DoesNotExist:
-            return JsonResponse({"error": "User not found"}, status=401)
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid User"]),
+                    status=403,
+                    safe=False,
+                )
+            )
 
         except Exception as e:
-            APP_LOG.write_error(LogStructure().set_request(request, LogType.EXCEPTION).set_error(e))
-            return JsonResponse({"error": DEFAULT_ERROR}, status=500)
+            APP_LOG.write_error(
+                LogStructure().set_error(e).set_request(request, LogType.EXCEPTION)
+            )
+            return DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
@@ -320,12 +370,10 @@ def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
             if request.method not in ["GET", "POST", "PUT", "DELETE"]:
                 raise ValueError("Invalid Request Method")
             request.__setattr__(request.method, json.loads(request.body))
-        except Exception as e:
+        except Exception:
             pass
 
-        return view_func(request, *args, **kwargs) or JsonResponse(
-            data={"error": DEFAULT_ERROR}, status=403
-        )
+        return view_func(request, *args, **kwargs) or DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
@@ -372,13 +420,11 @@ def card_owner_check(
 
             if (card := get_card(user, cardID)) is not None:
                 request.__setattr__("card", card)
-                return view_func(request, cardID, *args, **kwargs) or JsonResponse(
-                    data={"error": DEFAULT_ERROR}, status=403
-                )
+                return view_func(request, cardID, *args, **kwargs) or DEFAULT_ERROR_JSON
 
-            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return DEFAULT_ERROR_JSON
         except Exception:
-            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return DEFAULT_ERROR_JSON
 
     return _wrapped_view
 
@@ -399,10 +445,10 @@ def acard_owner_check(
                 request.__setattr__("card", card)
                 return (
                     await view_func(request, cardID, *args, **kwargs)
-                ) or JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+                ) or DEFAULT_ERROR_JSON
 
-            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return DEFAULT_ERROR_JSON
         except Exception:
-            return JsonResponse(data={"error": DEFAULT_ERROR}, status=403)
+            return DEFAULT_ERROR_JSON
 
     return _wrapped_view

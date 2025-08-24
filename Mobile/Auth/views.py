@@ -130,7 +130,6 @@ def mobile_register(req: HttpRequest):
         return JsonResponse(data=response, safe=False, status=status)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 @jwt_required  # type: ignore
 @read_body_as_json
@@ -172,7 +171,6 @@ def user_info(req: HttpRequest):
         return JsonResponse(data=response, safe=False, status=status)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 @read_body_as_json
 def get_university(req: HttpRequest):
@@ -191,7 +189,6 @@ def get_university(req: HttpRequest):
         return JsonResponse(data={"options": list(uni)}, safe=False)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 @read_body_as_json
 def get_institute(req: HttpRequest):
@@ -217,7 +214,6 @@ def get_institute(req: HttpRequest):
         return JsonResponse(data={"options": list(institute)}, safe=False)
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 @read_body_as_json
 def get_branch(req: HttpRequest):

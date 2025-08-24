@@ -7,7 +7,6 @@ from django.db.models import (  # type: ignore
     RESTRICT,
     CharField,
     Model,
-    AutoField,
 )
 from django.http import HttpRequest  # type: ignore
 from University.models import Branch, University, Institute

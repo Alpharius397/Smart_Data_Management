@@ -4,7 +4,6 @@ from pyhanko.pdf_utils import images
 from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
 from pyhanko.sign import fields, signers
 from asgiref.sync import sync_to_async
-
 from User.models import User
 
 SIGNER = signers.SimpleSigner.load(

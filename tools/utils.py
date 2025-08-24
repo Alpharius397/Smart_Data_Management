@@ -1,6 +1,16 @@
-from typing import Callable, Iterator, ParamSpec, TypeVar, TypedDict, Literal, NamedTuple, Any
+from functools import wraps
+from typing import (
+    Callable,
+    Iterator,
+    ParamSpec,
+    TypeVar,
+    TypedDict,
+    Literal,
+    NamedTuple,
+    Any,
+)
 import typing
-from django.http import HttpRequest, QueryDict # type: ignore
+from django.http import HttpRequest, QueryDict  # type: ignore
 from tools.errors import IncorrectDataFormat
 
 
@@ -31,7 +41,7 @@ class ColumnType(NamedTuple):
 
 
 ############ UTILS ############
-def get_2_value(value: Literal['true', 'false']) -> bool:
+def get_2_value(value: Literal["true", "false"]) -> bool:
     assert value in [
         "true",
         "false",
@@ -42,7 +52,8 @@ def get_2_value(value: Literal['true', 'false']) -> bool:
     else:
         return False
 
-def get_3_value(value: Literal['true', 'false', 'none']) -> bool | None:
+
+def get_3_value(value: Literal["true", "false", "none"]) -> bool | None:
     assert value in [
         "true",
         "false",
@@ -56,25 +67,42 @@ def get_3_value(value: Literal['true', 'false', 'none']) -> bool | None:
     else:
         return False
 
-def get_string_value(value: bool | None) -> Literal['true', 'false', 'none']:
-    match(value):
-        case True: return 'true'
-        case False: return 'false'
-        case None: return 'none'
-        case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
+
+def get_string_value(value: bool | None) -> Literal["true", "false", "none"]:
+    assert (value is None) or (
+        isinstance(value, bool)
+    ), f"'value' should be of type bool or none. got: {type(value)}"
+
+    match value:
+        case True:
+            return "true"
+        case False:
+            return "false"
+        case None:
+            return "none"
+
 
 def textAnnotate(column: str) -> str:
     return f"{column}T"
 
-def get_SQL_boolean(value: bool | None) -> Literal['true', 'false', 'null']:
-    match(value):
-        case True: return 'true'
-        case False: return 'false'
-        case None: return 'null'
-        case _: raise ValueError(f"'value' should be of type bool or None. Got: {type(value)}")
+
+def get_SQL_boolean(value: bool | None) -> Literal["true", "false", "null"]:
+    assert (value is None) or (
+        isinstance(value, bool)
+    ), f"'value' should be of type bool or none. got: {type(value)}"
+
+    match value:
+        case True:
+            return "true"
+        case False:
+            return "false"
+        case None:
+            return "null"
+
 
 def imageAnnotate(column: str):
     return f"{column}I"
+
 
 def processSubjects(
     columns: list[str],
@@ -97,7 +125,6 @@ def segregateColumns(columns: list[str]) -> ColumnType:
     text: list[str] = []
 
     for column in columns:
-
         if (column[-1:]) == "T":
             text.append(column)
 
@@ -109,10 +136,15 @@ def segregateColumns(columns: list[str]) -> ColumnType:
 
     return ColumnType(image, text)
 
-def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Literal['success', 'error', 'warning','info'] = 'error', title: str = ''):
-    
+
+def setSwalAlert(
+    context: dict[str, typing.Any] = {},
+    text: str = "",
+    icon: Literal["success", "error", "warning", "info"] = "error",
+    title: str = "",
+):
     if context:
-        if ("title" in context):
+        if "title" in context:
             context.update({"text": text, "icon": icon})
         else:
             context.update({"text": text, "icon": icon, "title": title})
@@ -120,13 +152,17 @@ def setSwalAlert(context: dict[str, typing.Any] = {}, text: str = '', icon: Lite
     else:
         return {"text": text, "icon": icon, "title": title}
 
-P = ParamSpec('P')
-T = TypeVar('T')
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
 
 def tryCatchThis[T, **P](func: Callable[P, T], default: T) -> Callable[P, T]:
+    @wraps(func)
     def inner(*args: P.args, **kwargs: P.kwargs) -> T:
         try:
             return func(*args, **kwargs)
         except Exception:
             return default
+
     return inner

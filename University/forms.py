@@ -9,7 +9,6 @@ from django.forms import (
     FileField,
 )  # type: ignore
 from django.db import transaction  # type: ignore
-from django.core.exceptions import ValidationError  # type: ignore
 import pandas as pd
 from Logs.loggers import APP_LOG, LogStructure
 from constants import DEFAULT_ERROR  # type: ignore

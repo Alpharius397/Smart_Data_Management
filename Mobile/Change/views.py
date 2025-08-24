@@ -7,7 +7,6 @@ from constants import DEFAULT_ERROR
 from Mobile.url_auth import (
     get_user_from_body,
     getRequestToken,
-    is_auth_get_student,
     is_auth_post_student,
     jwt_required,
     read_body_as_json,
@@ -27,13 +26,19 @@ from tools.mails import send_success_mail, send_delete_mail
 from tools.url_auth import require_http_methods
 from constants import OTP_MESSAGE, OTP_SUBJECT
 
+
 def getMailMsg(mailType: Literal["username", "email", "password", "delete"]):
-    match(mailType):
-        case "username": return "Username"
-        case "email": return "Email"
-        case "password": return "Password"
-        case "delete": return "Account Deletion"
-        
+    match mailType:
+        case "username":
+            return "Username"
+        case "email":
+            return "Email"
+        case "password":
+            return "Password"
+        case "delete":
+            return "Account Deletion"
+
+
 def __nothing_to_see_here_trust_me__(req: HttpRequest):
     response = OtpResponse(status=False, error=[], **getRequestToken(req))
     status = 500
@@ -67,12 +72,14 @@ def __nothing_to_see_here__(req: HttpRequest):
 @jwt_required  # type: ignore
 @read_body_as_json
 @student_auth_needed
-def send_otp_mail(req: HttpRequest, mailType: Literal["username", "email", "password", "delete"]):
-    
+def send_otp_mail(
+    req: HttpRequest, mailType: Literal["username", "email", "password", "delete"]
+):
     if is_auth_post_student(req):
         return set_otp_student_response(
             OTP_SUBJECT, OTP_MESSAGE, getMailMsg(mailType), set_once=False
         )(__nothing_to_see_here_trust_me__)(req)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -81,12 +88,22 @@ def forgot_password(req: HttpRequest):
     if req.method == "POST":
         try:
             email = str(req.POST.get("Email"))
-            user = User.objects.get(email=email) # No need to validate has we validate it in set_otp
+            user = User.objects.get(
+                email=email
+            )  # No need to validate has we validate it in set_otp
 
             req.user = user
 
         except User.DoesNotExist:
-            return JsonResponse(data=OtpResponse(status=False, error=["Email is not registered"], access=None, refresh=None), status=400)
+            return JsonResponse(
+                data=OtpResponse(
+                    status=False,
+                    error=["Email is not registered"],
+                    access=None,
+                    refresh=None,
+                ),
+                status=400,
+            )
 
         except Exception as e:
             APP_LOG.write_info(
@@ -99,6 +116,7 @@ def forgot_password(req: HttpRequest):
         return set_otp_student_response(
             OTP_SUBJECT, OTP_MESSAGE, getMailMsg("password"), set_once=False
         )(__nothing_to_see_here__)(req)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -149,6 +167,7 @@ def password_form(req: HttpRequest):
 
         return JsonResponse(data=response, status=status)
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 @read_body_as_json
@@ -197,6 +216,7 @@ def forgot_form(req: HttpRequest):
             status = 400
 
         return JsonResponse(data=response, status=status)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
