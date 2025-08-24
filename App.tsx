@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationIndependentTree, NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -11,6 +11,7 @@ import Delete from './screens/Settings/Delete.Account';
 import Forgot from './screens/Forgot';
 import { View } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {AlertNotificationRoot} from 'react-native-alert-notification';
 
 const Stack = createStackNavigator();
 const queryClient = new QueryClient()
@@ -19,22 +20,24 @@ function AppStack(){
 
   return (
     <QueryClientProvider client={queryClient}>
-    {/** @ts-ignore */}
-      <Stack.Navigator 
-        screenOptions={{
-        headerTitle:'',
-        headerTransparent:true,
-        headerLeft: () => {return <View></View>}
-      }}>
-        <Stack.Screen name="Login" component={Login}/>
-        <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Username" component={Username} />
-        <Stack.Screen name="Password" component={Password} />
-        <Stack.Screen name="Email" component={Email} />
-        <Stack.Screen name="Delete" component={Delete} />
-        <Stack.Screen name="Forgot" component={Forgot} />
-    </Stack.Navigator>
+      <AlertNotificationRoot>
+        {/** @ts-ignore */}
+        <Stack.Navigator 
+          screenOptions={{
+          headerTitle:'',
+          headerTransparent:true,
+          headerLeft: () => {return <View></View>}
+        }}>
+          <Stack.Screen name="Login" component={Login}/>
+          <Stack.Screen name="Register" component={Register} />
+          <Stack.Screen name="Card" component={Home} />
+          <Stack.Screen name="Username" component={Username} />
+          <Stack.Screen name="Password" component={Password} />
+          <Stack.Screen name="Email" component={Email} />
+          <Stack.Screen name="Delete" component={Delete} />
+          <Stack.Screen name="Forgot" component={Forgot} />
+      </Stack.Navigator>
+    </AlertNotificationRoot>
   </QueryClientProvider>
   );
 }

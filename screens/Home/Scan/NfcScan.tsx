@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image,  ActivityIndicator, Animated, Easing, TouchableHighlight, Button } from 'react-native';
+import { View, Text, StyleSheet, Image,  ActivityIndicator, Animated, Easing, TouchableHighlight, Button, RefreshControl } from 'react-native';
 import generate_image from '../../../scripts/image';
 import { ScrollView } from 'react-native-gesture-handler';
-import { showAlert } from '../../../utils/alert';
 import { useLoadingText } from '../../../hooks/screens/Home/Purchase';
 import { CardProtoType, HeaderProtoType, ImageArray, ImageProtoType, PersonalArray, PersonalProtoType, SemesterData, SemesterProtoType, SubjectArray} from '../../../zod/screens/Home/Scan';
 import { useHeader, useNFC, useScan } from '../../../hooks/screens/Home/Scan';
 import { LoadingParams } from '../../../zod/screens/Home/Card';
 import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
-import { useCard } from '.';
+import { useCard } from './context';
 import { URL } from '../../../axios';
 import { useReport } from '../../../hooks/screens/Home/Report';
+import {ALERT_TYPE, Dialog, Toast} from 'react-native-alert-notification';
 
 function LoadingScreen({ loadingText, children}: LoadingParams ){
     const pulseAnim = React.useRef(new Animated.Value(1)).current;
@@ -74,7 +74,13 @@ function HeaderRender({ university, institute, branch }: HeaderProtoType){
 
     const {transform, isError, isLoading} = useHeader({ university, institute, branch })
     
-    if(isError) showAlert("Heading Fetch", "Failed to fetch Header Details");
+    if(isError){
+        Toast.show({
+            type: ALERT_TYPE.WARNING,
+            title: "Heading Fetch",
+            textBody: "Failed to fetch Header Details",
+        });
+    }         
 
     return (
         <View style={styles.headerBox}>
@@ -142,12 +148,17 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
     const nfcSupport = useNFC();
     const [loadingState, cardFoundCallBack, validityCallBack, decryptCallBack] = useLoadingText();
     const [isScanningNFC, startScan, endScan] = useScan(okCallBack, errorCallBack, paymentNeeded, timeoutCallback, cardFoundCallBack, validityCallBack, decryptCallBack);
-    const { setCard } = useCard();
+    const { setCard, card } = useCard();
     const [cardID, setCardID] = useState<string>(null);
 
 
     function timeoutCallback() {
-        showAlert("NFC Scan", "NFC Scan Timeout. Please try again!");
+        Dialog.show({
+            type: ALERT_TYPE.INFO,
+            title: "NFC Scan",
+            button: 'Ok',
+            textBody: "NFC Scan Timeout. Please try again!",
+        });
     }
 
     function okCallBack(data: CardProtoType, uid: string){
@@ -157,13 +168,26 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
     }
 
     function errorCallBack(error: string){
-        showAlert("NFC Scan", `NFC Scan Failed! ${error}`);
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "NFC Scan",
+            button: 'Ok',
+            textBody: `NFC Scan Failed! ${error}`,
+        });
     }
 
     function paymentNeeded(cardID: string, message: string){
-        showAlert("Payment Needed", message);
-        setCard(cardID)
-        switchPurchase();
+        Dialog.show({
+            type: ALERT_TYPE.INFO,
+            title: "Payment Needed",
+            button: 'Proceed',
+            textBody: message,
+            onPressButton: () => {
+                Dialog.hide();
+                setCard(cardID)
+                switchPurchase();
+            }
+        });
     }
 
     const NfcScanButton = () => {
@@ -190,7 +214,7 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
 
                     {(nfcData !== null) && (cardID !== null) && (
                         <TouchableHighlight onPress={useReport(URL.REPORT(cardID, null))} style={{margin: 5}}>
-                            <Text style={styles.scanButton}>
+                            <Text style={styles.fullDownButton}>
                                 Download Full Report
                             </Text>
                         </TouchableHighlight>
@@ -278,7 +302,7 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
     
         return (
             <View style={styles.semInfo}>
-                <Text style={styles.semPart}>Semester Info</Text>
+                <Text style={styles.semPart}>Semester Report</Text>
                     <ScrollView contentContainerStyle={styles.scroll}>
                         {semData.map(({ semester, subjects}, index) => (
                             <View key={index + "Header"} style={styles.semTable}>
@@ -295,7 +319,7 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
                                     </View>
                                 </ScrollView>
                                 <TouchableHighlight onPress={useReport(URL.REPORT(cardID, semester))} style={{margin: 5}}>
-                                <Text style={styles.scanButton}>
+                                <Text style={styles.downButton}>
                                     Download Semester {semester} Report
                                 </Text>
                             </TouchableHighlight>
@@ -306,6 +330,16 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
         );
     }
 
+    function scanState(){
+        setNfcData(prev => null);
+        startScan();
+    }
+
+    useEffect(() => {
+        setNfcData(null);
+    }, [card])
+
+
     const TableView = () => {
 
         if(nfcData === null){
@@ -313,7 +347,7 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
         }
 
         return (
-            <ScrollView contentContainerStyle={styles.scroll}>
+            <ScrollView contentContainerStyle={styles.scroll} refreshControl={<RefreshControl onRefresh={scanState} refreshing={false}></RefreshControl>}>
 
                 <View style={styles.table}>
                     <HeaderRender university={nfcData.header.university} institute={nfcData.header.institute} branch={nfcData.header.branch} />
@@ -327,11 +361,7 @@ export default function ScanScreen({ switchPurchase }: {switchPurchase: () => vo
         );
     }
 
-    function scanState(){
-        setNfcData(null);
-        setCard(null);
-        startScan();
-    }
+
 
     return (
         <>
@@ -412,7 +442,7 @@ const styles = StyleSheet.create({
 
     headerBox:{
         display:'flex',
-        backgroundColor:'lightblue',
+        backgroundColor:'#1565C0',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 5,
@@ -436,7 +466,8 @@ const styles = StyleSheet.create({
         textAlignVertical:'center',
         marginBottom:8,
         marginTop:8,
-        
+        fontWeight: '900',
+        fontSize: 16
     },
     semInfo:{
         marginTop:10,
@@ -445,7 +476,7 @@ const styles = StyleSheet.create({
         borderWidth:1
     },
     semPart:{
-        backgroundColor:'lightblue',
+        backgroundColor:'#1565C0',
         padding:8,
         textAlign:'center',
         color:'white',
@@ -464,12 +495,30 @@ const styles = StyleSheet.create({
         width:500
     },
     scanButton: {
-        backgroundColor: 'lightblue',
+        backgroundColor: '#4A90E2',
         borderRadius: 5,
         padding: 10,
         color: 'white',
         fontWeight: 'bold',
         fontSize: 18,
+        textAlign: 'center'
+    },
+    downButton: {
+        backgroundColor: '#FF9800',
+        borderRadius: 5,
+        padding: 10,
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
+        textAlign: 'center'
+    },
+    fullDownButton: {
+        backgroundColor: '#28A745',
+        borderRadius: 5,
+        padding: 10,
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 16,
         textAlign: 'center'
     },
     imageNoNfc: {

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Text, TextInput, Button, StyleSheet, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
-import { showAlert } from '../utils/alert';
 import { DEFAULT_ERROR } from '../constants';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +10,7 @@ import { ForgotPasswordSchema, ForgotPasswordType, ForgotSchema, ForgotType } fr
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { StackParam } from '../zod/screens';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 type ForgotContext = {
     setEmailPage: () => void,
@@ -38,9 +38,34 @@ function PasswordChange({ navigation }: StackParam){
     });
 
     const success = () => {
-        showAlert("Password Change", "Your password was successfully updated!");
         setEmailPage();
         navigation.navigate("Login");
+
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Password Reset",
+            button: 'Ok',
+            textBody: "Your password was successfully changed",
+        });
+    };
+
+
+    const failure = (error: string[]) => {
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Password Reset",
+            button: 'Ok',
+            textBody: "Failed due to: " + error.join('\n'),
+        });
+    };
+
+    const error = () => {
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Password Reset",
+            button: 'Ok',
+            textBody: DEFAULT_ERROR,
+        });
     };
 
     useFocusEffect(
@@ -58,13 +83,6 @@ function PasswordChange({ navigation }: StackParam){
             }, [navigation])
     );
 
-    const failure = (error: string[]) => {
-        showAlert("Password Change", "Failed due to: " + error.join('\n'));
-    };
-
-    const error = () => {
-        showAlert("Password Change", DEFAULT_ERROR);
-    };
 
     const [submit, isPending] = useChangeHook('forgot', success, failure, error);
     const [timer, handleSendOTP] = useForgotOtpHook(email);
@@ -152,12 +170,6 @@ function EnterEmail({ navigation }: StackParam){
 
     const {setEmail, setPasswordPage} = useEmail();
 
-    const success = () => {
-        showAlert("Account Retrieval", "OTP has been send for password reset");
-        setEmail(getValues("Email"));
-        setTimeout(setPasswordPage, 2000);
-    };
-
     useFocusEffect(
         React.useCallback(() => {
             const onBackPress = () => {
@@ -173,12 +185,37 @@ function EnterEmail({ navigation }: StackParam){
             }, [navigation])
     );
 
+
+    const success = () => {
+
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Account Retrieval",
+            button: 'Ok',
+            textBody: "OTP has been send for password reset",
+        });
+
+        setEmail(getValues("Email"));
+        setTimeout(setPasswordPage, 2000);
+    };
+
+
     const failure = (error: string[]) => {
-        showAlert("Account Retrieval", "Failed due to: " + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Account Retrieval",
+            button: 'Ok',
+            textBody: "Failed due to: " + error.join('\n'),
+        });
     };
 
     const error = () => {
-        showAlert("Account Retrieval", DEFAULT_ERROR);
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Account Retrieval",
+            button: 'Ok',
+            textBody: DEFAULT_ERROR,
+        });
     };
 
     const [sendOTP, isPending] = useOTP('forgot', success, failure, error);

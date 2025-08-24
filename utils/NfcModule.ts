@@ -141,7 +141,7 @@ export function setListener(
                 } finally {
                     emitter.removeAllListeners(eventType);
                 }
-            // }
+            // });
 
         
         } catch(err){

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { showAlert } from '../utils/alert';
 import { useItems, useRegister } from '../hooks/screens/Register';
 import { DEFAULT_ERROR } from '../constants';
 import { Picker } from '@react-native-picker/picker';
@@ -9,6 +8,7 @@ import { registerSchema, RegisterFormData } from '../zod/screens/Register';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Popup from '.';
 import { StackParam } from '../zod/screens';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 export default function Register({ navigation }: StackParam) {
 
@@ -27,16 +27,33 @@ export default function Register({ navigation }: StackParam) {
     });
 
     const success = () => {
-        showAlert("Register Process", "Register was successful! Redirecting to Home");
-        navigation.navigate("Home");
+        navigation.navigate("Login");
+
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Register Process",
+            button: 'Ok',
+            textBody: "Registration was successful!",
+        });
     };
 
+
     const failure = (error: string[]) => {
-        showAlert("Register Process", "Register Failed for the following reasons:" + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Register Process",
+            button: 'Ok',
+            textBody: "Failed due to: " + error.join('\n'),
+        });
     };
 
     const error = () => {
-        showAlert("Register Process", DEFAULT_ERROR);
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Register Process",
+            button: 'Ok',
+            textBody: DEFAULT_ERROR,
+        });
     };
 
     const [submit, isPending] = useRegister(success, failure, error);

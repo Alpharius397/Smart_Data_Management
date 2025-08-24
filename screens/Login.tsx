@@ -1,6 +1,5 @@
 import React from 'react';
 import { Text, TextInput, Button, StyleSheet, StatusBar, SafeAreaView } from 'react-native';
-import { showAlert } from '../utils/alert';
 import { DEFAULT_ERROR } from '../constants';
 import { useLogin } from '../hooks/screens/Login';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,6 +8,7 @@ import { LoginForm, LoginSchema } from '../zod/screens/Login';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Popup from '.';
 import { StackParam } from '../zod/screens';
+import {ALERT_TYPE, Dialog, Toast} from 'react-native-alert-notification';
 
 export default function Login({ navigation }: StackParam) {
     
@@ -22,16 +22,31 @@ export default function Login({ navigation }: StackParam) {
     });
 
     const success = () => {
-        showAlert("Login Process", "Login was successful! Redirecting to Home");
-        navigation.navigate("Home");
+        navigation.navigate("Card");
+        Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'Authentication Status',
+            autoClose: 1000,
+            textBody: 'Login Successful'
+        });            
     };
 
     const failure = (error: string[]) => {
-        showAlert("Login Process", "Login Failed for the following reasons: " + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Authentication Status',
+            button: 'Try Again?',
+            textBody: error.join('\n')
+        });    
     };
 
     const error = () => {
-        showAlert("Login Process", DEFAULT_ERROR);
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: 'Authentication Status',
+            button: 'Ok',
+            textBody: DEFAULT_ERROR
+        });  
     };
 
     const [submit, isPending] = useLogin(success, failure, error);

@@ -1,50 +1,23 @@
 import React from 'react';
 import { Text, TextInput, Button, StyleSheet, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
-import { showAlert } from '../../utils/alert';
-import { DEFAULT_ERROR } from '../../constants';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Popup from '..';
 import { useChangeHook, useOtpHook } from '../../hooks/screens/Settings/OTP';
 import { EmailType, EmailChangeSchema } from '../../zod/screens/Settings/Change';
-import { HomeParam } from '../../zod/screens/Home/Card';
-import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { StackParam } from '../../zod/screens';
+import { changeCallbacks, customNavigation } from '../../hooks/screens/Settings/Alert';
 
-export default function ChangeUsername({ navigation }: HomeParam) {
+export default function ChangeEmail({ navigation }: StackParam) {
     const { control, handleSubmit, formState: { errors, isValid } } = useForm<EmailType>({
         resolver: zodResolver(EmailChangeSchema),
         mode: "onChange",
     });
+    
+    customNavigation(navigation);
 
-    const success = () => {
-        showAlert("Email Change", "Your email was successfully updated!");
-        navigation.navigate("Login");
-    };
-
-    useFocusEffect(
-        React.useCallback(() => {
-            const onBackPress = () => {
-                // Custom navigation here
-                // @ts-ignore
-                navigation.navigate("Home", {screen: "Settings"});
-                return true; 
-            };
-        
-            BackHandler.addEventListener("hardwareBackPress", onBackPress);
-        
-            return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-            }, [navigation])
-    );
-
-    const failure = (error: string[]) => {
-        showAlert("Email Change", "Failed due to: " + error.join('\n'));
-    };
-
-    const error = () => {
-        showAlert("Email Change", DEFAULT_ERROR);
-    };
+    const {success, error, failure} = changeCallbacks(navigation, 'email');
 
     const [submit, isPending] = useChangeHook('username', success, failure, error);
     const [timer, handleSendOTP] = useOtpHook('username');

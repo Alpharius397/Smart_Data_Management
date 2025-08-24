@@ -12,7 +12,7 @@ export default function App({ navigation }: StackParam) {
     
     return (
         //@ts-ignore
-        <Tab.Navigator>
+        <Tab.Navigator >
             <Tab.Screen 
                 name="Home" 
                 component={CardScreen} 

@@ -1,28 +1,40 @@
 import React from 'react';
-import { Text, StyleSheet, TouchableHighlight } from 'react-native';
+import { Text, StyleSheet, TouchableHighlight, View, Image } from 'react-native';
 import { beginPayment, generateOption } from '../../../razorpay/payment';
-import { showAlert } from '../../../utils/alert';
 import { ErrorJsonType } from '../../../zod/razorpay';
 import { usePurchaser } from '../../../hooks/screens/Home/Purchase';
 import { PurchaseSchema } from '../../../zod/screens/Home/Purchase';
 import Popup from '../..';
-import { useCard } from '.';
+import { useCard } from './context';
+import {ALERT_TYPE, Dialog} from 'react-native-alert-notification';
 
 export default function PaymentScreen({ switchToScan }: {switchToScan: () => void}) {
 
     const { card } = useCard();
 
     const paymentGUIOk = () => {
-        showAlert("Payment Status", "Payment Successful! Please re-scan the card");
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Payment Status",
+            textBody: "Payment Successful! Please re-scan the card",
+        });
         switchToScan()
     } 
 
     const paymentGUIError = () => {
-        showAlert("Payment Status", "Failed to send Payment Status!");
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "Payment Status",
+            textBody: "Failed to send Payment Status!",
+        });
     }
 
     const paymentGUIFailed = (error: string[]) => {
-        showAlert("Payment Status", "Failed to send Payment Status for the following reasons: " + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "Payment Status",
+            textBody:"Failed to send Payment Status for the following reasons: " + error.join('\n'),
+        });
     }
 
     const [purchaseCard, isLoading] = usePurchaser(paymentGUIOk, paymentGUIFailed, paymentGUIError);
@@ -32,7 +44,11 @@ export default function PaymentScreen({ switchToScan }: {switchToScan: () => voi
     }
 
     function paymentError(error_data: ErrorJsonType){
-        showAlert("Payment Failed", `Payment Failed for the following reason: ${error_data.reason}, done by: ${error_data.source}, at step: ${error_data.step}`);
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: "Payment Status",
+            textBody:`Payment Failed for the following reason: ${error_data.reason}, done by: ${error_data.source}, at step: ${error_data.step}`,
+        });
     }
 
     function onClick() {
@@ -40,14 +56,25 @@ export default function PaymentScreen({ switchToScan }: {switchToScan: () => voi
     }
 
     return (
-        <>
+        <View style={styles.centeredContainer}>
+        
+        <Image source={require('../../../assets/images/payment.png')} style={styles.imageNoNfc}/>
+        <View style={styles.horizontal}>
             <Popup visible={isLoading} message='Processing Payment'/>
+
             <TouchableHighlight onPress={onClick}>
-                <Text style={styles.scanButton}>
+                <Text style={styles.payment}>
                     Begin Payment
                 </Text>
             </TouchableHighlight>
-        </>
+            <TouchableHighlight onPress={switchToScan}>
+                <Text style={styles.scanButton}>
+                    Back to Scanning
+                </Text>
+            </TouchableHighlight>
+        </View>
+        
+        </View>
     )
 
 }
@@ -55,19 +82,41 @@ export default function PaymentScreen({ switchToScan }: {switchToScan: () => voi
 // Styles
 const styles = StyleSheet.create({
     scanButton: {
-        backgroundColor: 'lightblue',
+        backgroundColor: '#4A90E2',
         borderRadius: 5,
         padding: 10,
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 18
+        fontSize: 18,
+        margin: 5,
+        textAlign: 'center'
+
     },
     centeredContainer: {
-        flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        flex: 1,
         padding: 16,
     },
+    payment: {
+        backgroundColor: "#F57C00",
+        borderRadius: 5,
+        padding: 10,
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 18,
+        margin: 5,
+        textAlign: 'center'
+
+    },
+    horizontal: {
+        flex: 1,
+        justifyContent:'space-around',
+        padding: 16,
+    },
+    imageNoNfc: {
+        width: 300,
+        height: 300,
+        margin: 'auto',
+    }
     
 });
 

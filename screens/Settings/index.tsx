@@ -6,31 +6,72 @@ import ShimmerPlaceholder from 'react-native-shimmer-placeholder';
 import LinearGradient from 'react-native-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useProfile } from '../../hooks/screens/Settings/Profile';
+import {ALERT_TYPE, Dialog, Toast} from 'react-native-alert-notification';
 
 export default function SettingsScreen ({ navigation }: StackParam) {
     
     const {profileData, refetch, isLoading}= useProfile();
 
     const goToUsername = () => {
-        navigation.navigate("Username")
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Username Change',
+            button: 'Proceed',
+            textBody: "Are you sure about this?",
+            onPressButton: () => { navigation.navigate("Username")}
+        });
     };
 
     const goToEmail = () => {
-        navigation.navigate("Email")
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Email Change',
+            button: 'Proceed',
+            textBody: "Are you sure about this?",
+            onPressButton: () => { navigation.navigate("Email")}
+        });
     };
 
     const goToPassword = () => {
-        navigation.navigate("Password")
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Password Change',
+            button: 'Proceed',
+            textBody: "Are you sure about this?",
+            onPressButton: () => { navigation.navigate("Password")}
+        });
     };
 
     const goToDelete = () => {
-        navigation.navigate("Delete")
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Account Deletion Change',
+            button: 'Proceed',
+            textBody: "Are you sure about this?",
+            onPressButton: () => { navigation.navigate("Delete")}
+        });
     };
 
     const handleLogout = () => {
-        removeAccessToken();
-        removeRefreshToken();
-        navigation.navigate("Login");
+        Dialog.show({
+            type: ALERT_TYPE.WARNING,
+            title: 'Logout Request',
+            button: 'Proceed',
+            textBody: "Are you sure about this?",
+            onPressButton: () => {
+                Dialog.hide();
+                removeAccessToken();
+                removeRefreshToken();
+                navigation.navigate("Login");
+                Toast.show({
+                    type: ALERT_TYPE.SUCCESS,
+                    title: 'Authentication Status',
+                    autoClose: 1000,
+                    textBody: 'Logout Successful'
+                });      
+            }
+        });
+
     };
 
     return (
@@ -39,7 +80,14 @@ export default function SettingsScreen ({ navigation }: StackParam) {
         }>
 
             <View style={styles.profileContainer}>
+            <ShimmerPlaceholder
+                    visible={!isLoading}
+                    style={styles.usernamePlaceholder}
+                    shimmerStyle={styles.usernamePlaceholder}
+                    LinearGradient={LinearGradient}
+                >
                 <Text style={{...styles.email, marginBottom: 10}}> Student at {profileData.university} - {profileData.institute} - {profileData.branch}</Text>
+            </ShimmerPlaceholder>
                 <Image source={require("../../assets/images/default.profile.png")} style={styles.profileImage} />
                 <ShimmerPlaceholder
                     visible={!isLoading}
@@ -83,10 +131,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         padding: 20,
+        paddingTop: 0,
     },
     profileContainer: {
         alignItems: 'center',
         marginVertical: 30,
+        marginTop: 10,
     },
     profileImage: {
         width: 100,
@@ -97,6 +147,7 @@ const styles = StyleSheet.create({
     usernamePlaceholder: {
         margin: 0,
         marginTop: 5,
+        marginBottom: 5,
         borderRadius: 4,
     },
     username: {

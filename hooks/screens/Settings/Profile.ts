@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 async function fetchInfo(): Promise<UserInfo> {
     try {
         await new Promise((res) => {
-            setTimeout(res, 1000);
+            setTimeout(res, 5000);
         })
         const response = await Axios.get(URL.AUTH.USER);
 

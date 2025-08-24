@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import {onErrorType, onFailureType, onSuccessType, useAuthHook} from '../..';
 import { URL } from '../../../axios';
 import { DEFAULT_ERROR, OTP_RETRY_TIMEOUT } from '../../../constants';
-import { showAlert } from '../../../utils/alert';
 import z from 'zod';
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
-type ChangeType = 'username' | 'password' | 'email' | 'delete' | 'forgot'
+export type ChangeType = 'username' | 'password' | 'email' | 'delete' | 'forgot'
 
 function getMailUrl(type: ChangeType){
     switch(type){
@@ -40,15 +40,30 @@ export function useChangeHook(type: ChangeType, onSuccess: onSuccessType, onFail
 export function useOtpHook(type: ChangeType): [number, () => void] {
 
     const otpSuccess = () => {
-        showAlert("OTP Alert", "OTP has been sent to your registered email!");
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: "OTP has been sent to your registered email!",
+        });
     };
     
     const otpFailure = (error: string[]) => {
-        showAlert("OTP Alert", "Failed to send OTP due to: " + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: "Failed to send OTP due to: " + error.join('\n'),
+        });
     };
     
     const otpError = () => {
-        showAlert("OTP Alert", DEFAULT_ERROR);
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: DEFAULT_ERROR,
+        });
     };
     
     const [sendOTP, isPending] = useOTP(type, otpSuccess, otpFailure, otpError);
@@ -80,15 +95,30 @@ export function useOtpHook(type: ChangeType): [number, () => void] {
 export function useForgotOtpHook(email: string): [number, () => void] {
 
     const otpSuccess = () => {
-        showAlert("OTP Alert", "OTP has been sent to the given email!");
+        Dialog.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: "OTP has been sent to your registered email!",
+        });
     };
     
     const otpFailure = (error: string[]) => {
-        showAlert("OTP Alert", "Failed to send OTP due to: " + error.join('\n'));
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: "Failed to send OTP due to: " + error.join('\n'),
+        });
     };
     
     const otpError = () => {
-        showAlert("OTP Alert", DEFAULT_ERROR);
+        Dialog.show({
+            type: ALERT_TYPE.DANGER,
+            title: "OTP Alert",
+            button: 'Ok',
+            textBody: DEFAULT_ERROR,
+        });
     };
     
     const [sendOTP] = useOTP('forgot', otpSuccess, otpFailure, otpError);

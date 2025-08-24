@@ -1,50 +1,23 @@
 import React from 'react';
 import { Text, TextInput, Button, StyleSheet, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
-import { showAlert } from '../../utils/alert';
-import { DEFAULT_ERROR } from '../../constants';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Popup from '..';
 import { useChangeHook, useOtpHook } from '../../hooks/screens/Settings/OTP';
 import { PasswordType, PasswordChangeSchema } from '../../zod/screens/Settings/Change';
-import { HomeParam } from '../../zod/screens/Home/Card';
-import { BackHandler } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { changeCallbacks, customNavigation } from '../../hooks/screens/Settings/Alert';
+import { StackParam } from '../../zod/screens';
 
-export default function ChangePassword({ navigation }: HomeParam) {
+export default function ChangePassword({ navigation }: StackParam) {
     const { control, handleSubmit, formState: { errors, isValid } } = useForm<PasswordType>({
         resolver: zodResolver(PasswordChangeSchema),
         mode: "onChange",
     });
 
-    const success = () => {
-        showAlert("Password Change", "Your password was successfully updated!");
-        navigation.navigate("Login");
-    };
+    customNavigation(navigation);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            const onBackPress = () => {
-                // Custom navigation here
-                // @ts-ignore
-                navigation.navigate("Home", {screen: "Settings"});
-                return true; 
-            };
-        
-            BackHandler.addEventListener("hardwareBackPress", onBackPress);
-        
-            return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-            }, [navigation])
-    );
-
-    const failure = (error: string[]) => {
-        showAlert("Password Change", "Failed due to: " + error.join('\n'));
-    };
-
-    const error = () => {
-        showAlert("Password Change", DEFAULT_ERROR);
-    };
+    const {success, error, failure} = changeCallbacks(navigation, 'password');
 
     const [submit, isPending] = useChangeHook('username', success, failure, error);
     const [timer, handleSendOTP] = useOtpHook('username');

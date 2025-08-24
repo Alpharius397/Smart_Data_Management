@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet,  ActivityIndicator, FlatList, Image, RefreshControl } from 'react-native';
 import { useCard } from '../../hooks/screens/Home/Card';
-import { CardJson, CardMeta, CardReactList } from '../../zod/screens/Home/Card';
+import { CardMeta, CardReactList } from '../../zod/screens/Home/Card';
 import { DEFAULT_ERROR } from '../../constants';
 
 function LoadingPage(){

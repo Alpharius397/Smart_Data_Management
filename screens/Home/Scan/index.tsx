@@ -1,24 +1,17 @@
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
 import ScanScreen from "./NfcScan";
 import PaymentScreen from "./Payment";
 import { RefreshControl, StyleSheet, ScrollView } from 'react-native';
 import { StackParam } from "../../../zod/screens";
+import { Context } from "./context";
 
-type ContextType = {
-    card: string | null,
-    setCard: (cardID: string) => void
-}
-const Context = createContext({card: null, setCard: (cardID: string)=>{}});
-
-export function useCard(): ContextType {
-    return useContext(Context);
-}
 
 export default function ScanSection({ navigation }: StackParam ){
     const [card, setCard] = useState<string | null>(null);
     const [isScan, setScan] = useState<boolean>(true);
 
     const setScanning = () => {
+        console.error(1)
         setCard(null);
         setScan(true);
     }
@@ -37,11 +30,7 @@ export default function ScanSection({ navigation }: StackParam ){
 
     return (
         <Context.Provider value={{card, setCard}}>
-            <ScrollView contentContainerStyle={styles.centeredContainer} 
-                refreshControl={
-                    <RefreshControl onRefresh={setScanning} refreshing={false}></RefreshControl>
-                    }
-                >
+            <ScrollView contentContainerStyle={styles.centeredContainer}>
                 <Component />
                 
             </ScrollView>
