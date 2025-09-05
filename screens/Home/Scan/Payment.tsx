@@ -39,8 +39,8 @@ export default function PaymentScreen({ switchToScan }: {switchToScan: () => voi
 
     const [purchaseCard, isLoading] = usePurchaser(paymentGUIOk, paymentGUIFailed, paymentGUIError);
 
-    function paymentSuccess(order_id: string, payment_id: string){
-        purchaseCard({data: {cardID: card, order_id, payment_id}, validator: PurchaseSchema});
+    function paymentSuccess(order_id: string, payment_id: string, razorpay_signature: string){
+        purchaseCard({data: {cardID: card, order_id, payment_id, razorpay_signature}, validator: PurchaseSchema});
     }
 
     function paymentError(error_data: ErrorJsonType){

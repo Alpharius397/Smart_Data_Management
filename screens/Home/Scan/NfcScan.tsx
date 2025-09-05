@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image,  ActivityIndicator, Animated, Easing, TouchableHighlight, Button, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, Image,  ActivityIndicator, Animated, Easing, TouchableHighlight, RefreshControl } from 'react-native';
 import generate_image from '../../../scripts/image';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useLoadingText } from '../../../hooks/screens/Home/Purchase';

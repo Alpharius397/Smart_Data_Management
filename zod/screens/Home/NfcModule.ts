@@ -24,9 +24,8 @@ export interface NfcModuleType {
 export const subscriberSchema = z.object({
     status: z.boolean(),
     error: z.array(z.string()),
-    access: z.string().nullable(),
-    refresh: z.string().nullable(),
-    key: z.string().nullable()
+    key: z.string().nullable(),
+    decryptionKey: z.string().nullable()
 });
 
 export type subscriberType = z.infer<typeof subscriberSchema>

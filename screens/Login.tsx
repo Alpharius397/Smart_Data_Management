@@ -9,6 +9,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Popup from '.';
 import { StackParam } from '../zod/screens';
 import {ALERT_TYPE, Dialog, Toast} from 'react-native-alert-notification';
+import { generateRsa } from '../scripts/encryption';
+import { setPrivateKey, setPublicKey } from '../storage';
 
 export default function Login({ navigation }: StackParam) {
     
@@ -22,7 +24,14 @@ export default function Login({ navigation }: StackParam) {
     });
 
     const success = () => {
+
+        generateRsa().then((key) => {
+            setPrivateKey(key.private);
+            setPublicKey(key.public);
+        });
+
         navigation.navigate("Card");
+
         Toast.show({
             type: ALERT_TYPE.SUCCESS,
             title: 'Authentication Status',

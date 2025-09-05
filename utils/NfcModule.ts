@@ -5,6 +5,7 @@ import decrypt_data, { decrypt_key } from '../scripts/encryption';
 import Axios, { URL } from '../axios';
 import data from '../protobuf/test.proto';
 import { CardProto, CardProtoType } from '../zod/screens/Home/Scan';
+import { getPublicKey } from '../storage';
 
 const { NfcModule } = NativeModules;
 const eventType = "onNfcScan";
@@ -15,14 +16,15 @@ const nfcModule: NfcModuleType = NfcModule
 
 async function checkCardValidity(uid: string): Promise<[boolean, Uint8Array | null]> {
     try{
+        const pubKey = await getPublicKey();
         const response = await Axios.get(URL.CARD.STATUS, {
             params: {
-                cardID: uid
+                cardID: uid,
+                pubKey
             }
         });
-        const {status, error, key}: subscriberType = await subscriberSchema.parseAsync(response.data);
-
-        return [(status === true) && (error.length === 0), decrypt_key(key)];
+        const {status, error, key, decryptionKey}: subscriberType = await subscriberSchema.parseAsync(response.data);
+        return [((status) === true) && (error.length === 0), await decrypt_key(key, decryptionKey)];
     } catch(err) {
         return [false, null];
     }
@@ -122,7 +124,7 @@ export function setListener(
                     if(ownsIt){
                         decryptCallBack();
                         let nfcData = await CardProto.safeParseAsync(decrypt_data(data, key));
-                        console.log(decrypt_data(data, key));
+
                         if(nfcData.success === false){
                             console.warn(nfcData.error)
                             errorCallBack("Failed to decrypt card data!")

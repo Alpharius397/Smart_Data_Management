@@ -40,7 +40,7 @@ export function beginPayment(option: OptionJson, successCallback: SuccessCallBac
             let jsonData = CheckoutJson.safeParse(data);
 
             if(jsonData.success === true){
-                successCallback(jsonData.data.razorpay_order_id, jsonData.data.razorpay_payment_id);
+                successCallback(jsonData.data.razorpay_order_id, jsonData.data.razorpay_payment_id, jsonData.data.razorpay_signature);
             } else {
                 errorCallback({code: 'RazorPay-Fail', description: 'Failed to parse Razorpay Response', source: 'Razorpay', step: 'After Payment', reason: 'Zod', metadata:{}});
 

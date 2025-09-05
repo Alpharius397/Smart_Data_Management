@@ -101,6 +101,9 @@ export function CardScreen() {
             contentContainerStyle={{...styles.container, flexGrow: 1, flex: 1}}
             data={[]}
             renderItem={() => (<></>)}
+            refreshControl={
+                <RefreshControl refreshing={false} onRefresh={refetch} title='Retry'/>
+            }
             ListEmptyComponent={<ErrorList />}
         />
     )

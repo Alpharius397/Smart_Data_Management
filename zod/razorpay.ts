@@ -18,15 +18,15 @@ export type OptionJson = {
     }
 }
 
+export type JsonSerialized<T> = string;
+
 export type CheckoutError = {
     description: JsonSerialized<ErrorJsonType>
 }
 
-export type SuccessCallBack = (order_id: string, payment_id: string) => void
+export type SuccessCallBack = (order_id: string, payment_id: string, razorpay_signature: string) => void
 
 export type ErrorCallBack = (error_data: ErrorJsonType) => void
-
-export type JsonSerialized<T> = string;
 
 export const ErrorJson = z.object({
     code: validString,
@@ -42,6 +42,7 @@ export const ErrorJson = z.object({
 export const CheckoutJson = z.object({
     razorpay_order_id: validString,
     razorpay_payment_id: validString,
+    razorpay_signature: validString,
 });
 
 

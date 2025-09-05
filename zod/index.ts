@@ -12,8 +12,8 @@ export const zodError = ZodError
 export const AuthResponse = z.object({
     status: z.boolean(),
     error: z.array(z.string()),
-    access: z.string().nullable(),
-    refresh: z.string().nullable()
+    access: z.string().nullish(),
+    refresh: z.string().nullish()
 })
 
 export const QueryAuthResponse = z.discriminatedUnion("type", [

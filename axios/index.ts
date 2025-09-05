@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getAccessToken, getRefreshToken, setAccessToken, setRefreshToken } from '../storage'
 import { validNumber, validString } from '../zod';
 import z from 'zod';
@@ -8,6 +8,7 @@ export const URL = {
     AUTH: { // auth/
         USER: `${BASE_URL}/auth/user`,
         LOGIN: `${BASE_URL}/auth/login`,
+        REFRESH: `${BASE_URL}/auth/refresh`, // refresh tokens here
         REGISTER: `${BASE_URL}/auth/register`,
         UNIVERSITY: `${BASE_URL}/auth/university`,
         INSTITUTE: `${BASE_URL}/auth/institute`,
@@ -38,7 +39,8 @@ export const URL = {
         }
 
     },
-    REPORT: function (cardID: string, sem:string){ // report/ -> these are dynamic, function call this
+    /** report -> these are dynamic, function call this */
+    REPORT: function (cardID: string, sem:string){ 
         const card = validString.parse(`${cardID}`);
         const Sem = z.string().nullable().parse(sem);
 
@@ -58,11 +60,9 @@ Axios.interceptors.request.use(
     async (config) => {
         try {
             const token = await getAccessToken(); 
-            const refresh = await getRefreshToken(); 
 
-            if ((token !== null) && (refresh !== null) && (config.headers)) {
+            if ((token !== null) && (config.headers)) {
                 config.headers.Authorization = `Bearer ${token}`;
-                config.headers.Refresh = `Bearer ${refresh}`;
             }
 
         } catch (error) {
@@ -80,19 +80,45 @@ Axios.interceptors.request.use(
 Axios.interceptors.response.use(
     async (response) => {
 
+        const {access, refresh}: {access?: string | null, refresh?: string | null} = response.data;
+
+        if((!!access)) await setAccessToken(access); 
+        if((!!refresh)) await setRefreshToken(refresh); 
+
+        return response;    
+    },
+
+    async (error: AxiosError) => {
+        let config = error.config;
+        if(config.url === URL.AUTH.REFRESH) return Promise.reject(error);
+        
+        const refreshToken = await getRefreshToken();
+        
+        if (!refreshToken) return Promise.reject(error);
+
         try {
-            const {access, refresh} = response.data;
+            const { data } = await axios.post(URL.AUTH.REFRESH, {}, {
+                headers: {
+                    Refresh: `Bearer ${refreshToken}`,
+                    'Request-Origin': BASE_URL,
+                    'Content-Type': 'application/json',
+                }
+            });
     
-            if((access !== undefined) && (access !== null)) await setAccessToken(access); 
-            if((refresh !== undefined) && (refresh !== null)) await setRefreshToken(refresh); 
+            const {access, refresh}: {access?: string | null, refresh?: string | null} = data;
+            
+            if((!!access)) await setAccessToken(access); 
+            if((!!refresh)) await setRefreshToken(refresh); 
+    
+            config.headers.Authorization = `Bearer ${data.access}`;
+            return Axios(config);
 
         } catch(err){
-            console.warn(err);
+            return Promise.reject(err);
         }
-        
-        return response;    
+
     }
 );
 
-export default Axios
+export default Axios;
 

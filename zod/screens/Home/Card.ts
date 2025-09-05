@@ -1,5 +1,4 @@
 import { ReactNode } from "react"
-import { StackNavigationProp } from '@react-navigation/stack';
 import * as z from "zod";
 import { validString } from '../../';
 

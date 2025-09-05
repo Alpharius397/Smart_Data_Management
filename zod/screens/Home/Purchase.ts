@@ -4,7 +4,8 @@ import { validString } from '../../';
 export const PurchaseSchema = z.object({
     cardID: validString,
     order_id: validString,
-    payment_id: validString
+    payment_id: validString,
+    razorpay_signature: validString
 });
 
 export type PurchaseType = z.infer<typeof PurchaseSchema>;
