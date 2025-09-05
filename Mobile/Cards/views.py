@@ -1,3 +1,5 @@
+from hashlib import sha256
+import hmac
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Mobile.Cards.forms import HeadingForm
@@ -6,19 +8,20 @@ from User.models import get_user
 from constants import DEFAULT_ERROR, MAX_RECORD
 from Mobile.models import razorPayment
 from Mobile.url_auth import (
-    getRequestToken,
     is_auth_get_student,
     is_auth_post_student,
     jwt_required,
     read_body_as_json,
     student_auth_needed,
 )
-from django.views.decorators.http import require_http_methods
 from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from Card.models import Card
 from Mobile.types import HeadingResponse, SubscriberResponse, CardResponse, CardData
+from tools.encrypt import encryptionRSA, verify_signature
+from tools.url_auth import require_http_methods
 from tools.utils import tryCatchThis
+from Main.settings import settingsInterface as settings
 
 
 @csrf_exempt
@@ -28,7 +31,7 @@ from tools.utils import tryCatchThis
 @student_auth_needed
 def subscriber_check(req: HttpRequest):
     response = SubscriberResponse(
-        status=False, error=[], key=None, **getRequestToken(req)
+        status=False, error=[], key=None, decryptionKey=None
     )
     user = get_user(req)
     status = 500
@@ -36,14 +39,17 @@ def subscriber_check(req: HttpRequest):
     if is_auth_get_student(req):  # Check if user has paid money
         try:
             cardID = str(req.GET.get("cardID"))
+            pubKey = str(req.GET.get("pubKey"))
 
             paymentDone = razorPayment.objects.filter(
                 user__id=user.id, cardID__cardID__exact=cardID
             )
 
-            if paymentDone.exists():
+            if (paymentDone.exists() and ((payment := paymentDone.first()) is not None)):
+                response["decryptionKey"] = encryptionRSA(settings.DECRYPTION_KEY, pubKey)
                 response["status"] = True
-                response["key"] = paymentDone.first().cardID.decryption_key
+                response["key"] = payment.cardID.decryption_key
+            
                 status = 200
             else:
                 response["error"] = ["Payment is missing for this card!"]
@@ -64,9 +70,10 @@ def subscriber_check(req: HttpRequest):
         try:
             order_id = req.POST.get("order_id")
             payment_id = req.POST.get("payment_id")
-            cardID = str(req.POST.get("cardID"))
+            cardID = req.POST.get("cardID")
+            razorpay_signature = req.POST.get("razorpay_signature")
 
-            if not (order_id and payment_id):
+            if not (order_id and payment_id and razorpay_signature):
                 response["error"] = ["Payment was unsuccessful"]
                 status = 402
 
@@ -87,16 +94,21 @@ def subscriber_check(req: HttpRequest):
                         response["status"] = True
                         status = 409
                     else:
-                        payment = razorPayment(
-                            order_id=order_id,
-                            payment_id=payment_id,
-                            user=req.user,
-                            cardID=cardID,
-                        )
-                        payment.save()
+                        if verify_signature(order_id, payment_id, razorpay_signature):
+                            payment = razorPayment(
+                                order_id=order_id,
+                                payment_id=payment_id,
+                                user=req.user,
+                                cardID=cardID,
+                            )
+                            payment.save()
 
-                        response["status"] = True
-                        status = 200
+                            response["status"] = True
+                            status = 200
+                            
+                        else:
+                            status = 403
+                            response["error"] = ["Invalid Signature of Payment"]
                 else:
                     response["error"] = ["CardID was not found"]
                     status = 404
@@ -122,7 +134,7 @@ def available_card(req: HttpRequest):
     if is_auth_get_student(req):
         cards: list[CardData] = []
         response = CardResponse(
-            status=False, error=[], cards=cards, nextPage=0, **getRequestToken(req)
+            status=False, error=[], cards=cards, nextPage=0
         )
 
         user = get_user(req)
@@ -183,8 +195,8 @@ def get_heading(req: HttpRequest):
             university=None,
             institute=None,
             branch=None,
-            **getRequestToken(req),
         )
+        
         status = 400
         if f.is_valid():
             uniID = str(f.cleaned_data.get("university", ""))

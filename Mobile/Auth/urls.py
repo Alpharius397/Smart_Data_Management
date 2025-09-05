@@ -1,6 +1,7 @@
-from django.urls import path
+from django.urls import path # type: ignore
 from Mobile.Auth.views import (
     mobile_login,
+    mobile_refresh,
     mobile_register,
     user_info,
     get_university,
@@ -15,4 +16,5 @@ urlpatterns = [
     path("university", get_university),
     path("institute", get_institute),
     path("branch", get_branch),
+    path("refresh", mobile_refresh)
 ]

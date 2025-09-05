@@ -6,7 +6,6 @@ from Logs.loggers import APP_LOG, LogStructure, LogType
 from constants import DEFAULT_ERROR
 from Mobile.url_auth import (
     get_user_from_body,
-    getRequestToken,
     is_auth_post_student,
     jwt_required,
     read_body_as_json,
@@ -40,7 +39,7 @@ def getMailMsg(mailType: Literal["username", "email", "password", "delete"]):
 
 
 def __nothing_to_see_here_trust_me__(req: HttpRequest):
-    response = OtpResponse(status=False, error=[], **getRequestToken(req))
+    response = OtpResponse(status=False, error=[])
     status = 500
     send_ok = req.__getattribute__("emailOk")
 
@@ -54,7 +53,7 @@ def __nothing_to_see_here_trust_me__(req: HttpRequest):
 
 
 def __nothing_to_see_here__(req: HttpRequest):
-    response = OtpResponse(status=False, error=[], access=None, refresh=None)
+    response = OtpResponse(status=False, error=[])
     status = 500
     send_ok = req.__getattribute__("emailOk")
 
@@ -99,8 +98,6 @@ def forgot_password(req: HttpRequest):
                 data=OtpResponse(
                     status=False,
                     error=["Email is not registered"],
-                    access=None,
-                    refresh=None,
                 ),
                 status=400,
             )
@@ -127,7 +124,7 @@ def forgot_password(req: HttpRequest):
 def password_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = PasswordChange(req.POST)
-        response = CredResponse(status=False, error=[], **getRequestToken(req))
+        response = CredResponse(status=False, error=[])
         status = 500
 
         if f.is_valid():
@@ -177,7 +174,7 @@ def password_form(req: HttpRequest):
 def forgot_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = PasswordChange(req.POST)
-        response = CredResponse(status=False, error=[], **getRequestToken(req))
+        response = CredResponse(status=False, error=[])
         status = 500
 
         if f.is_valid():
@@ -227,7 +224,7 @@ def forgot_form(req: HttpRequest):
 def email_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = EmailChange(req.POST)
-        response = CredResponse(status=False, error=[], **getRequestToken(req))
+        response = CredResponse(status=False, error=[])
         status = 500
 
         if f.is_valid():
@@ -284,7 +281,7 @@ def email_form(req: HttpRequest):
 def username_form(req: HttpRequest):
     if is_auth_post_student(req):
         f = UsernameChange(req.POST)
-        response = CredResponse(status=False, error=[], **getRequestToken(req))
+        response = CredResponse(status=False, error=[])
         status = 500
 
         if f.is_valid():
@@ -340,7 +337,7 @@ def username_form(req: HttpRequest):
 @check_otp_student_response
 def delete_form(req: HttpRequest):
     if is_auth_post_student(req):
-        response = DeleteResponse(status=False, error=[], **getRequestToken(req))
+        response = DeleteResponse(status=False, error=[])
         f = DeleteAccount(req.POST)
         status = 500
 

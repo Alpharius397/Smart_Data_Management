@@ -6,8 +6,6 @@ from django.utils import timezone  # type: ignore
 import jwt
 import json
 from Main.settings import settingsInterface as settings
-import typing
-
 
 class PayLoad:
     __type: str = "Base"
@@ -22,25 +20,20 @@ class PayLoad:
         self.username: str = user.username
         self.userID: int = user.id
         self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
+        self.expire = expire if (expire is not None) else (timezone.now() + datetime.timedelta(minutes=self.expire_minutes))
 
-    def to_json(self, newToken: bool = False) -> dict[str, str | int]:
+    def to_json(self) -> dict[str, str | int]:
         return {
             "userID": self.userID,
             "username": self.username,
             "type": self.type,
-            "expire": (
-                (self.expire if (not newToken) else timezone.now())
-                + datetime.timedelta(minutes=self.expire_minutes)
-            ).isoformat(),
+            "expire": self.expire.isoformat(),
         }
 
-    def getToken(self, newToken: bool = False):
-        return str(
-            jwt.encode(
-                self.to_json(newToken), settings.JWT_SECRET, settings.JWT_ALGORITHM
+    def getToken(self):
+        return jwt.encode(
+                self.to_json(), settings.JWT_SECRET, settings.JWT_ALGORITHM
             )
-        )
 
     def isCorrectType(self) -> bool:
         return self.type == self.__type
@@ -51,9 +44,7 @@ class PayLoad:
                 "userID": self.userID,
                 "username": self.username,
                 "type": self.type,
-                "expire": (
-                    self.expire + datetime.timedelta(minutes=self.expire_minutes)
-                ).isoformat(),
+                "expire": self.expire.isoformat(),
             }
         )
 
@@ -111,7 +102,7 @@ class AccessPayLoad(PayLoad):
         self.username: str = user.username
         self.userID: int = user.id
         self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
+        self.expire = expire if (expire is not None) else (timezone.now() + datetime.timedelta(minutes=self.expire_minutes))
 
 
 class RefreshPayLoad(PayLoad):
@@ -127,31 +118,32 @@ class RefreshPayLoad(PayLoad):
         self.username: str = user.username
         self.userID: int = user.id
         self.type = type if (type is not None) else self.__type
-        self.expire = expire if (expire is not None) else timezone.now()
+        self.expire = expire if (expire is not None) else (timezone.now() + datetime.timedelta(minutes=self.expire_minutes))
 
 
-class JwtToken(typing.TypedDict):
-    access: str
-    refresh: str
-
-
-class TokenResponse(TypedDict):
-    access: NullStr
-    refresh: NullStr
+class MobileResponse(TypedDict):
     status: bool
     error: list[str]
 
 
-class LoginResponse(TokenResponse):
+class LoginResponse(MobileResponse):
+    access: NullStr
+    refresh: NullStr
+
+class TokenResponse(MobileResponse):
+    access: NullStr
+
+class RefreshResponse(MobileResponse):
+    access: NullStr
+    refresh: NullStr
+    
+class RegisterResponse(MobileResponse):
     pass
 
 
-class RegisterResponse(TokenResponse):
-    pass
-
-
-class SubscriberResponse(TokenResponse):
+class SubscriberResponse(MobileResponse):
     key: NullStr
+    decryptionKey: NullStr
 
 
 class CardData(TypedDict):
@@ -162,30 +154,30 @@ class CardData(TypedDict):
     branch: str
 
 
-class CardResponse(TokenResponse):
+class CardResponse(MobileResponse):
     cards: list[CardData]
     nextPage: int
 
 
-class UserInfoResponse(TokenResponse):
+class UserInfoResponse(MobileResponse):
     username: NullStr
     email: NullStr
     university: NullStr
     institute: NullStr
     branch: NullStr
 
-class CredResponse(TokenResponse):
+class CredResponse(MobileResponse):
     pass
 
 
-class DeleteResponse(TokenResponse):
+class DeleteResponse(MobileResponse):
     pass
 
 
-class OtpResponse(TokenResponse):
+class OtpResponse(MobileResponse):
     pass
 
-class HeadingResponse(TokenResponse):
+class HeadingResponse(MobileResponse):
     university: NullStr
     institute: NullStr
     branch: NullStr

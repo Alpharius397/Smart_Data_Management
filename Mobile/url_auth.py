@@ -1,8 +1,6 @@
 import json
-from logging import error
 import typing
 from asgiref.sync import sync_to_async
-from django.db.models import F
 from django.http import HttpRequest, HttpResponse, JsonResponse, QueryDict  # type: ignore
 import jwt
 from Logs.loggers import APP_LOG, LogStructure, LogType
@@ -20,7 +18,7 @@ from django.utils import timezone  # type: ignore
 from tools.mails import email_send, validate_email  # type: ignore
 from django.core.exceptions import ValidationError  # type: ignore
 from tools.url_auth import getOTP, compareOTP
-from Mobile.types import JwtToken, AccessPayLoad, RefreshPayLoad
+from Mobile.types import AccessPayLoad
 from tools.utils import tryCatchThis
 from Card.models import Card
 
@@ -55,12 +53,11 @@ JWT_FAILED = JsonResponse(
 
 
 ############ UTILS ############
-def getRequestToken(req: HttpRequest):
-    return JwtToken(
-        access=tryCatchThis(req.headers.__getattribute__, "")("access"),
-        refresh=tryCatchThis(req.headers.__getattribute__, "")("refresh"),
-    )
+def getAccessToken(req: HttpRequest):
+    return tryCatchThis(req.headers.__getattribute__, "")("access")
 
+def getRefreshToken(req: HttpRequest):
+    return tryCatchThis(req.headers.__getattribute__, "")("refresh"),
 
 def is_auth_get_student(req: HttpRequest) -> bool:
     return bool(is_authenticated_student(get_user(req)) and req.method == "GET")
@@ -209,41 +206,27 @@ def jwt_required(
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
         auth_header = request.headers.get("Authorization", "")
-        refresh_header = request.headers.get("Refresh", "")
 
         if not auth_header.startswith("Bearer "):
             return JWT_FAILED
 
-        if not refresh_header.startswith("Bearer "):
-            return JWT_FAILED
-
         try:
-            access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
+            access = auth_header.split(" ")[1]
 
             access_payload = AccessPayLoad.decodeToken(AccessPayLoad, access)
-            refresh_payload = RefreshPayLoad.decodeToken(RefreshPayLoad, refresh)
 
             if (
                 access_payload.expire < timezone.now()
-                and refresh_payload.expire < timezone.now()
             ):
                 raise jwt.ExpiredSignatureError()
-
-            if access_payload.userID != refresh_payload.userID:
-                raise jwt.InvalidTokenError()
-
-            new_Token = bool(access_payload.expire < timezone.now())
-
-            access_token = access_payload.getToken(new_Token)
-            refresh_token = refresh_payload.getToken(new_Token)
 
             user = User.objects.get(
                 id=access_payload.userID, username=access_payload.username
             )
 
             request.user = user
-            request.headers.__setattr__("access", access_token)
-            request.headers.__setattr__("refresh", refresh_token)
+            request.headers.__setattr__("access", access)
+            
             return view_func(request, *args, **kwargs) or JsonResponse(
                 {"error": DEFAULT_ERROR}, status=401
             )
@@ -290,41 +273,27 @@ def ajwt_required(
     @wraps(view_func)
     async def _wrapped_view(request: HttpRequest, *args, **kwargs) -> JsonResponse:
         auth_header = request.headers.get("Authorization", "")
-        refresh_header = request.headers.get("Refresh", "")
 
         if not auth_header.startswith("Bearer "):
             return JWT_FAILED
 
-        if not refresh_header.startswith("Bearer "):
-            return JWT_FAILED
 
         try:
-            access, refresh = auth_header.split(" ")[1], refresh_header.split(" ")[1]
+            access = auth_header.split(" ")[1]
 
             access_payload = await AccessPayLoad.adecodeToken(AccessPayLoad, access)
-            refresh_payload = await RefreshPayLoad.adecodeToken(RefreshPayLoad, refresh)
 
             if (
                 access_payload.expire < timezone.now()
-                and refresh_payload.expire < timezone.now()
             ):
                 raise jwt.ExpiredSignatureError()
-
-            if access_payload.userID != refresh_payload.userID:
-                raise jwt.InvalidTokenError()
-
-            new_Token = bool(access_payload.expire < timezone.now())
-
-            access_token = access_payload.getToken(new_Token)
-            refresh_token = refresh_payload.getToken(new_Token)
 
             user = await User.objects.aget(
                 id=access_payload.userID, username=access_payload.username
             )
 
             request.user = user
-            request.headers.__setattr__("access", access_token)
-            request.headers.__setattr__("refresh", refresh_token)
+            request.headers.__setattr__("access", True)
             return (await view_func(request, *args, **kwargs)) or DEFAULT_ERROR_JSON
 
         except jwt.ExpiredSignatureError:
@@ -364,6 +333,7 @@ def ajwt_required(
 
 
 def read_body_as_json(view_func: typing.Callable[..., JsonResponse | None]):
+    
     @wraps(view_func)
     def _wrapped_view(request: HttpRequest, *args, **kwargs):
         try:

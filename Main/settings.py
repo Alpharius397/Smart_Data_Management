@@ -251,6 +251,7 @@ EMAIL_USE_TLS = True
 
 ACCESS_PDF = os.environ.get("ACCESS_PDF", "3RvdpstRTj0HZWBvpFzF0fDScBjLFKzX")
 
+RAZORPAY_SECRET = os.environ.get("RAZORPAY_SECRET", "3RvdpstRTj0HZWBvpFzF0fDScBjLFKzX").encode()
 
 class settingsInterface:
     MEDIA_ROOT = MEDIA_ROOT
@@ -283,3 +284,4 @@ class settingsInterface:
     ACCESS_PDF = ACCESS_PDF
 
     WEBSITE_HOST = WEBSITE_HOST
+    RAZORPAY_SECRET = RAZORPAY_SECRET

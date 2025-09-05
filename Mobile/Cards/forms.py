@@ -19,3 +19,11 @@ class HeadingForm(MainForm):
         help_text="Choose the Branch", 
         required=True
     )
+
+class KeyForm(MainForm):
+    pubKey = forms.CharField(
+        label="Branch",
+        help_text="Choose the Branch", 
+        required=True,
+        max_length=256
+    )

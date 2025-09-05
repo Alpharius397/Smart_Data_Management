@@ -1,15 +1,18 @@
-from django.http import HttpRequest, JsonResponse  # type: ignore
+from django.http import HttpRequest, JsonResponse # type: ignore
+import jwt  # type: ignore
 from Logs.loggers import APP_LOG, LogStructure, LogType
 from Register.errors import UserExists
 from University.models import Branch, University, Institute
 from constants import DEFAULT_ERROR
 from Mobile.url_auth import (
-    AccessPayLoad,
-    RefreshPayLoad,
+    DEFAULT_ERROR_JSON,
+    JWT_FAILED,
+    BaseData,
+    BaseResponse,
+    getAccessToken,
     read_body_as_json,
     is_auth_get_student,
     get_user,
-    getRequestToken,
     jwt_required,
     student_auth_needed,
 )
@@ -18,8 +21,9 @@ from django.db.models import Q  # type: ignore
 from django.views.decorators.csrf import csrf_exempt  # type: ignore
 from django.db import transaction  # type: ignore
 from User.models import User, Role, RoleType, is_student
-from Mobile.types import LoginResponse, RegisterResponse, UserInfoResponse
+from Mobile.types import AccessPayLoad, LoginResponse, RefreshPayLoad, RefreshResponse, RegisterResponse, UserInfoResponse
 from Mobile.Auth.forms import RegisterForm, LoginForm
+from django.utils import timezone  # type: ignore
 
 
 @csrf_exempt
@@ -73,7 +77,7 @@ def mobile_login(req: HttpRequest):
 @read_body_as_json
 def mobile_register(req: HttpRequest):
     if req.method == "POST":
-        response = RegisterResponse(access=None, refresh=None, status=False, error=[])
+        response = RegisterResponse(status=False, error=[])
         status = 500
         f = RegisterForm(req.POST)
 
@@ -129,6 +133,70 @@ def mobile_register(req: HttpRequest):
 
         return JsonResponse(data=response, safe=False, status=status)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@read_body_as_json
+def mobile_refresh(req: HttpRequest):
+    if req.method == "POST":
+        
+        response = RefreshResponse(status=False, error=[], access=None, refresh=None)
+        
+        refreshToken = req.headers.get("Refresh", "")
+        
+        if not refreshToken.startswith("Bearer "):
+            return JWT_FAILED
+
+        try:
+            refresh = refreshToken.split(" ")[1]
+
+            refresh_payload = RefreshPayLoad.decodeToken(RefreshPayLoad, refresh)
+            if (
+                refresh_payload.expire < timezone.now()
+            ):
+                raise jwt.ExpiredSignatureError()
+
+            user = User.objects.get(
+                id=refresh_payload.userID, username=refresh_payload.username
+            )
+
+            response["access"] = AccessPayLoad(user).getToken()
+            response["refresh"] = RefreshPayLoad(user).getToken()
+            response["status"] = True
+            
+            return JsonResponse(data=response, safe=False, status=200)
+
+        except jwt.ExpiredSignatureError:
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Token Expired"]),
+                    status=403,
+                    safe=False,
+                )
+            )
+
+        except jwt.InvalidTokenError:
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid Token"]),
+                    status=403,
+                    safe=False,
+                )
+            )
+
+        except User.DoesNotExist:
+            return JsonResponse(
+                **BaseResponse(
+                    data=BaseData(status=False, error=["Invalid User"]),
+                    status=403,
+                    safe=False,
+                )
+            )
+
+        except Exception as e:
+            APP_LOG.write_error(
+                LogStructure().set_error(e).set_request(req, LogType.EXCEPTION)
+            )
+            return DEFAULT_ERROR_JSON
 
 @require_http_methods(["GET"])
 @jwt_required  # type: ignore
@@ -146,7 +214,6 @@ def user_info(req: HttpRequest):
             institute=None,
             branch=None,
             username=None,
-            **getRequestToken(req),
         )
 
         status = 500

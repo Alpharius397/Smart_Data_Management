@@ -1,4 +1,5 @@
-from Crypto.Cipher import DES3, AES
+from Crypto.Cipher import DES3, AES, PKCS1_v1_5
+from Crypto.PublicKey import RSA
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode as a64encode, b64decode as a64decode
 from datetime import datetime, timedelta
@@ -8,6 +9,8 @@ import json
 from Main.settings import settingsInterface as settings  # type: ignore
 from tools.token import get_token  # type: ignore
 from Crypto.Random.random import randint
+from hashlib import sha256
+import hmac
 
 ############ CONSTANTS ############
 DES_3_IV_LENGTH: int = 8
@@ -42,6 +45,11 @@ def encryptionDES(data: bytes, key: bytes) -> str:
 
     return b64encode(iv).decode()
 
+def encryptionRSA(data: bytes, key: str) -> str:
+    pub_key = RSA.import_key(key)
+    cipher_rsa = PKCS1_v1_5.new(pub_key)
+    wrapped = cipher_rsa.encrypt(data)
+    return b64encode(wrapped).decode()
 
 def decryptionDES(encrypted_data: str, key: bytes) -> bytes:
     _encrypted = b64decode(encrypted_data)
@@ -128,4 +136,15 @@ def authTokenCheck(token: str):
             return True
 
     except Exception:
+        return False
+
+def verify_signature(order_id: str, payment_id: str, razorpay_signature: str):
+
+    message = '{}|{}'.format(order_id, payment_id)
+
+    signature = hmac.new(settings.RAZORPAY_SECRET, msg=bytes(message, 'utf-8'), digestmod=sha256).hexdigest()
+    
+    if(razorpay_signature == signature):
+        return True
+    else:
         return False
