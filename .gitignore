@@ -41,3 +41,5 @@ app-example
 *.java
 *.vscode
 *.vs
+*NfcCustom.kt
+.env
