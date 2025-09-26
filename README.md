@@ -24,8 +24,6 @@ This work was carried out as part of an internship, focusing on solving real-wor
   - Adopted **React Query** for declarative data fetching, caching, and background sync.  
   - Leveraged **Protocol Buffers (protobuf)** for compact, strongly typed, and efficient data serialization.  
 
----
-
 ## Tech Stack  
 - **TypeScript** – Core application logic and data handling  
 - **React Native** – Cross-platform mobile app development  
