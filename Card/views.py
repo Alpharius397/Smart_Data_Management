@@ -1,4 +1,4 @@
-import json
+import json # type: ignore
 from django.http import HttpRequest, JsonResponse  # type: ignore
 from Card.errors import CardIdMissing
 from Card.sockets import cardReadWebSocket, cardWriteWebSocket
@@ -79,23 +79,7 @@ def fetch_data(req: HttpRequest, id: int, idx: str, schema: int, token: str):
                     belongs=user.role.belongs,
                 )
                 card.save()
-                with open("sample/test.proto.txt", "w") as f:
-                    f.write(encrypted)
-
-                with open("sample/actual.proto.txt", "wb") as g:
-                    g.write(data)
-
-                with open("sample/compress.txt", "w") as f:
-                    f.write(
-                        encrypt_text(
-                            decrypt_key(writeToken["key"]),
-                            json.dumps({**report_data, **get_post(user)}),
-                        )
-                    )
-
-                with open("sample/decompress.txt", "w") as f:
-                    f.write(json.dumps({**report_data, **get_post(user)}))
-
+                
                 APP_LOG.write_info(
                     LogStructure()
                     .set_request(req, LogType.CARD_DATA_FETCH, id, rowID=idx)

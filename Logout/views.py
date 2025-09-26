@@ -10,4 +10,3 @@ from tools.url_auth import require_http_methods
 def logout_view(req:HttpRequest) -> HttpResponse:
     logout(req)
     return redirect(reverse(settings.LOGIN_URL) + f'?{SUCCESS}=Logout Successfully')
-
